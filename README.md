@@ -1,4 +1,4 @@
-hacs
+HACS
 ====
 
-High-Level Compiler Generator based on CRSX
+High-Level Compiler Generator based on CRSX.
