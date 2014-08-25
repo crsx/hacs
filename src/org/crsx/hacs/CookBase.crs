@@ -1,0 +1,211 @@
+// CookBase.crs: CRSX3 SUPPORT LIBRARY FOR HACS PREPROCESSOR OPERATIONS.
+//
+// Declarations here depend only on the Prelude and the Raw syntax.
+//
+CookBase[(
+
+$Use["org/crsx/hacs/Prelude.crs"];
+
+// Syntax and sorts of raw terms (%raw...⟪...⟫).
+$Use["org/crsx/hacs/Raw.crs"];
+
+// Syntax and sorts of text (%n⟪...⟫).
+$CheckGrammar["net.sf.crsx.text.Text"];
+$Use["net/sf/crsx/text/Text.crs"];
+
+$Lax;
+
+/////////////////////////////////////////////////////////////////////
+// LOCATION EXTRACTION.
+
+$StringEntrySort ::=( STRING[$String]; );
+
+{$String : $StringEntrySort}MakeLocation :: $String;
+{#L}MakeLocation → MakeLocation2[$[{#L}Get[$StringEntrySort],"$FileLocation",STRING[""]], $[{#L}Get[$StringEntrySort],"$LineLocation",STRING[""]], $[{#L}Get[$StringEntrySort],"$ColumnLocation",STRING[""]]] ;
+MakeLocation2[$StringEntrySort, $StringEntrySort, $StringEntrySort] :: $String;
+MakeLocation2[STRING[#file], STRING[#line], STRING[#column]] → $[:,#file," ",#line,":",#column] ;
+
+/////////////////////////////////////////////////////////////////////
+// MODULE NAME MANIPULATION.
+
+FullName[$String] :: $String;
+-[Data[#Name],Copy[#Name]]: FullName[#Name] → $[Replace, $[Replace, #Name, "/","."], "\"", ""] ;
+BaseClassOf[$String] :: $String;
+-[Data[#Name],Copy[#Name]]: BaseClassOf[#Name]  → $[If, $[Contains,#Name,"."], BaseClassOf[$[AfterFirst,#Name,"."]], $[Replace,#Name,"\"",""]] ;
+FullPrefix[$String] :: $String;
+-[Data[#Name],Copy[#Name]]: FullPrefix[#Name] → $[Replace, $[Replace, $[Replace, #Name, ".","$"], "/","$"], "\"", ""] ;
+ParsePrefix[$String] :: $String;
+-[Data[#Name],Copy[#Name]]: ParsePrefix[#Name] → $[If, $[Contains,#Name,"."], ParsePrefix[$[AfterFirst,#Name,"."]], $[DownCase,$[Replace,#Name,"\"",""]]] ;
+
+/////////////////////////////////////////////////////////////////////
+// SORT EXTRACTION.
+
+ScopeSortName[RawScopeSort] :: $String;
+ScopeSortName[%rawScopeSort⟪ #Sort# #Repeat# [ #SubstituteSorts# ] ⟫] → SortNameWithRepeat[#Sort#, #Repeat#] ;
+-[Free[v::Text]]:
+ScopeSortName[%rawScopeSort⟪ [ v : #Sort# ] ⟫                  ] → SortName[#Sort#] ;
+-[Free[v::Text]]:
+ScopeSortName[%rawBindersScopeSort⟪ [ v : #Sort# ] #BindersScopeSort# ⟫] → ScopeSortName[#BindersScopeSort#] ;
+
+ScopeSortMetaVar[RawScopeSort, $Numeric] :: $String;
+-[Discard[#SubstituteSorts#]]: ScopeSortMetaVar[%rawScopeSort⟪ #Sort# [ #SubstituteSorts# ] ⟫, #n] → SortMetaVar[#Sort#, #n] ;
+-[Free[v::Text]]: ScopeSortMetaVar[%rawScopeSort⟪ [ v : #Sort# ] ⟫                  , #n] → SortMetaVar[#Sort#, #n] ;
+
+SortName[RawSort] :: $String;
+-[Data[#Sort]]: SortName[#Sort] → SortName2[#Sort] ;
+
+SortName2[RawSort] :: $String;
+SortName2[           %rawSort⟪ #SortName# #MetaVariables# #SimpleSorts# ⟫] → SortName1[#SortName#] ;
+SortName2[$[NotMatch,%rawSort⟪ #SortName# #MetaVariables# #SimpleSorts# ⟫,#]] →  $[Show,#] ;
+
+SortName1[$String] :: $String;
+SortName1[#SortName] → #SortName ;
+
+BaseSortName[RawSort] :: $String;
+-[Data[#Sort]]: BaseSortName[#Sort] → BaseSortName2[#Sort] ;
+BaseSortName2[RawSort] :: $String;
+BaseSortName2[           %rawSort⟪ #SortName# #MetaVariables# #SimpleSorts# ⟫] → #SortName# ;
+BaseSortName2[$[NotMatch,%rawSort⟪ #SortName# #MetaVariables# #SimpleSorts# ⟫,#]] →  "BAD" ;
+
+SortVar[RawSort] :: $String;
+-[Data[#Sort]]: SortVar[#Sort] → SortVar2[#Sort] ;
+SortVar2[RawSort] :: $String;
+-[Data[#SortName]]: SortVar2[           %rawSort⟪ #SortName# #MetaVariables# #SimpleSorts# ⟫] → SortVar3[#SortName#, #MetaVariables#] ;
+                    SortVar2[$[NotMatch,%rawSort⟪ #SortName# #MetaVariables# #SimpleSorts# ⟫,#]] →  "bad" ;
+SortVar3[$String, $List[$String]] :: $String;
+SortVar3[#SortName, ()] → $[:,"v",#SortName] ;
+SortVar3[#SortName, (#MetaVar;)] → $[:,"v",#SortName,$[Replace,#MetaVar,"#",""]] ;
+
+SortMetaVar[RawSort, $Numeric] :: $String;
+-[Data[#Sort]]: SortMetaVar[#Sort, #n] → SortMetaVar2[#Sort, #n] ;
+SortMetaVar2[RawSort, $Numeric] :: $String;
+SortMetaVar2[           %rawSort⟪ #SortName# #MetaVariable# #SimpleSorts# ⟫,    #n] → #MetaVariable# ;
+SortMetaVar2[           %rawSort⟪ #SortName#                #SimpleSorts# ⟫,    #n] → $[:,"#_",#SortName#,"_",$[FormatNumber,#n]] ;
+SortMetaVar2[$[NotMatch,%rawSort⟪ #SortName# #MetaVariables# #SimpleSorts# ⟫,#], #n] →  "#bad" ;
+
+RuleTopSort[RawRule, $String] :: $String;
+RuleTopSort[%rawRule⟪ #Priority# #Construction1# : #Construction2# → #Term# ⟫, #FallBack]
+→
+TermTopSort[#Construction2#, #FallBack]
+;
+
+TermTopSort[RawTerm, $String] :: $String;
+-[Free[v::Text]]:
+TermTopSort[%rawTerm⟪ v #Attributes# ⟫, #FallbackSortName] → SortName1[CheckString[#FallbackSortName]] ;
+-[Free[v::Text]]:
+TermTopSort[%rawTerm⟪ #Constructor1# #Repeat1# v #Attributes# ⟫, #FallbackSortName] → SortRepeatString[#Constructor1#, #Repeat1#] ;
+TermTopSort[RAW-Unparsed[#Unparsed, #Attributes], #FallbackSortName] → SortName1[CheckString[#FallbackSortName]] ;
+TermTopSort[RAW-UnparsedSorted[#SortName, #Repeat, #Unparsed, #Attributes#], #FallbackSortName] → SortName1[#SortName] ;
+TermTopSort[%rawTerm⟪ #Constructor# ( #Scopes# ) #Attributes# ⟫, #FallbackSortName] → SortName1[CheckString[#FallbackSortName]] ;
+TermTopSort[%rawTerm⟪ #Constructor1# #Repeat1# #Constructor2# ( #Scopes# ) #Attributes# ⟫, #FallbackSortName] → SortRepeatString[#Constructor1#, #Repeat1#] ;
+TermTopSort[%rawTerm⟪ #MetaVariable# [ #Terms# ] #Attributes# ⟫, #FallbackSortName] → SortName1[CheckString[#FallbackSortName]] ;
+TermTopSort[%rawTerm⟪ #Constructor1# #Repeat1# #MetaVariable# [ #Terms# ] #Attributes# ⟫, #FallbackSortName] → SortRepeatString[#Constructor1#, #Repeat1#] ;
+TermTopSort[%rawTerm⟪ #Literal# #Attributes# ⟫, #FallbackSortName] → SortName1[CheckString[#FallbackSortName]] ;
+TermTopSort[RAW-Special[#v, #Concrete], #FallbackSortName] → SortName1[CheckString[#FallbackSortName]] ;
+
+CheckString[$String] :: $String;
+CheckString[#String] → #String ; //$[IfEmpty, #String, CookError[$[:,"Impossible HACS component ",#String]], #String] ;
+
+AttributeName[RawAttribute] :: $String;
+AttributeName[%rawAttribute⟪ #AttributeKind# #AttributeName# #AttributeValue# ⟫] → #AttributeName# ;
+
+
+/////////////////////////////////////////////////////////////////////
+// REPEATS.
+
+∀ a . IfSingletonRepeat[RawRepeat, a, a] :: a;
+IfSingletonRepeat[%rawRepeat⟪ ⟫, #1, #2] → #1 ;
+IfSingletonRepeat[%rawRepeat⟪ ? ⟫, #1, #2] → #2 ;
+IfSingletonRepeat[%rawRepeat⟪ * ⟫, #1, #2] → #2 ;
+IfSingletonRepeat[%rawRepeat⟪ + ⟫, #1, #2] → #2 ;
+IfSingletonRepeat[%rawRepeat⟪ + _ #RegExpLeaf# ⟫, #1, #2] → #2 ;
+
+NestedRepeat[RawRepeat, RawRepeat] :: RawRepeat;
+NestedRepeat-single-single:   NestedRepeat[%rawRepeat⟪ ⟫, %rawRepeat⟪ ⟫]                                     → %rawRepeat⟪ ⟫ ;
+NestedRepeat-single-maybe :   NestedRepeat[%rawRepeat⟪ ⟫, %rawRepeat⟪ ? ⟫]                                   → %rawRepeat⟪ ? ⟫ ;
+NestedRepeat-single-many:     NestedRepeat[%rawRepeat⟪ ⟫, %rawRepeat⟪ * ⟫]                                   → %rawRepeat⟪ * ⟫ ;
+NestedRepeat-single-some:     NestedRepeat[%rawRepeat⟪ ⟫, %rawRepeat⟪ + ⟫]                                   → %rawRepeat⟪ + ⟫ ;
+NestedRepeat-single-somesep:  NestedRepeat[%rawRepeat⟪ ⟫, %rawRepeat⟪ + _ #RegExpLeaf2# ⟫]                   → %rawRepeat⟪ + _ #RegExpLeaf2# ⟫ ;
+NestedRepeat-maybe-single:    NestedRepeat[%rawRepeat⟪ ? ⟫, %rawRepeat⟪ ⟫]                                   → %rawRepeat⟪ ? ⟫ ;
+NestedRepeat-maybe-maybe :    NestedRepeat[%rawRepeat⟪ ? ⟫, %rawRepeat⟪ ? ⟫]                                 → %rawRepeat⟪ ? ⟫ ;
+NestedRepeat-maybe-many:      NestedRepeat[%rawRepeat⟪ ? ⟫, %rawRepeat⟪ * ⟫]                                 → %rawRepeat⟪ * ⟫ ;
+NestedRepeat-maybe-some:      NestedRepeat[%rawRepeat⟪ ? ⟫, %rawRepeat⟪ + ⟫]                                 → %rawRepeat⟪ * ⟫ ;
+NestedRepeat-maybe-somesep:   NestedRepeat[%rawRepeat⟪ ? ⟫, %rawRepeat⟪ + _ #RegExpLeaf2# ⟫]                 → $[Error,"Cannot nest ? in +_'...' repeater."] ;
+NestedRepeat-many-single:     NestedRepeat[%rawRepeat⟪ * ⟫, %rawRepeat⟪ ⟫]                                   → %rawRepeat⟪ * ⟫ ;
+NestedRepeat-many-maybe :     NestedRepeat[%rawRepeat⟪ * ⟫, %rawRepeat⟪ ? ⟫]                                 → %rawRepeat⟪ * ⟫ ;
+NestedRepeat-many-many:       NestedRepeat[%rawRepeat⟪ * ⟫, %rawRepeat⟪ * ⟫]                                 → %rawRepeat⟪ * ⟫ ;
+NestedRepeat-many-some:       NestedRepeat[%rawRepeat⟪ * ⟫, %rawRepeat⟪ + ⟫]                                 → %rawRepeat⟪ * ⟫ ;
+NestedRepeat-many-somesep:    NestedRepeat[%rawRepeat⟪ * ⟫, %rawRepeat⟪ + _ #RegExpLeaf2# ⟫]                 → $[Error,"Cannot nest * in +_'...' repeater."] ;
+NestedRepeat-some-single:     NestedRepeat[%rawRepeat⟪ + ⟫, %rawRepeat⟪ ⟫]                                   → %rawRepeat⟪ + ⟫ ;
+NestedRepeat-some-maybe :     NestedRepeat[%rawRepeat⟪ + ⟫, %rawRepeat⟪ ? ⟫]                                 → %rawRepeat⟪ * ⟫ ;
+NestedRepeat-some-many:       NestedRepeat[%rawRepeat⟪ + ⟫, %rawRepeat⟪ * ⟫]                                 → %rawRepeat⟪ * ⟫ ;
+NestedRepeat-some-some:       NestedRepeat[%rawRepeat⟪ + ⟫, %rawRepeat⟪ + ⟫]                                 → %rawRepeat⟪ + ⟫ ;
+NestedRepeat-some-somesep:    NestedRepeat[%rawRepeat⟪ + ⟫, %rawRepeat⟪ + _ #RegExpLeaf2# ⟫]                 → %rawRepeat⟪ + _ #RegExpLeaf2# ⟫ ;
+NestedRepeat-somesep-single:  NestedRepeat[%rawRepeat⟪ + _ #RegExpLeaf1# ⟫, %rawRepeat⟪ ⟫]                   → %rawRepeat⟪ + _ #RegExpLeaf1# ⟫ ;
+NestedRepeat-somesep-maybe :  NestedRepeat[%rawRepeat⟪ + _ #RegExpLeaf1# ⟫, %rawRepeat⟪ ? ⟫]                 → $[Error,"Cannot nest +_'...' in ? repeater."] ;
+NestedRepeat-somesep-many:    NestedRepeat[%rawRepeat⟪ + _ #RegExpLeaf1# ⟫, %rawRepeat⟪ * ⟫]                 → $[Error,"Cannot nest +_'...' in * repeater."] ;
+NestedRepeat-somesep-some:    NestedRepeat[%rawRepeat⟪ + _ #RegExpLeaf1# ⟫, %rawRepeat⟪ + ⟫]                 → $[Error,"Cannot nest +_'...' in + repeater."] ;
+NestedRepeat-somesep-somesep: NestedRepeat[%rawRepeat⟪ + _ #RegExpLeaf1# ⟫, %rawRepeat⟪ + _ #RegExpLeaf2# ⟫] → $[Error,"Cannot nest +_'...' in another +_'...' repeater."] ;
+
+SortNameWithRepeat[RawSort, RawRepeat] :: $String;
+SortNameWithRepeat[#Sort, #Repeat] → SortNameWithRepeat1[SortName[#Sort], #Repeat] ;
+SortNameWithRepeat1[$String, RawRepeat] :: $String;
+-[Data[#FullSortName]] : SortNameWithRepeat1[#FullSortName, #Repeat] → If[SameString["", #FullSortName], "", SortNameWithRepeat2[#FullSortName, #Repeat]] ;
+SortNameWithRepeat2[$String, RawRepeat] :: $String;
+SortNameWithRepeat2[#FullSortName, %rawRepeat⟪ ⟫] → #FullSortName ;
+SortNameWithRepeat2[#FullSortName, %rawRepeat⟪ ? ⟫] → $[:,#FullSortName,"_Maybe"] ;
+SortNameWithRepeat2[#FullSortName, %rawRepeat⟪ * ⟫] → $[:,#FullSortName,"_MaybeSome"] ;
+SortNameWithRepeat2[#FullSortName, %rawRepeat⟪ + ⟫] → $[:,#FullSortName,"_Some"] ;
+SortNameWithRepeat2[#FullSortName, %rawRepeat⟪ + _ #RegExpLeaf# ⟫] → RegExpLeafSuffix[#RegExpLeaf#, $[:,#FullSortName,"_Some_"]] ;
+
+SortRepeatString[$String, RawRepeat] :: $String;
+-[Data[#SortName]]: SortRepeatString[#SortName, #Repeat] → $[IfEmpty, #SortName, "", SortRepeatString2[#SortName, #Repeat]] ;
+SortRepeatString2[$String, RawRepeat] :: $String;
+SortRepeatString2[#SortName, %rawRepeat⟪ ⟫] → #SortName ;
+SortRepeatString2[#SortName, %rawRepeat⟪ ? ⟫] → $[:,#SortName,"?"] ;
+SortRepeatString2[#SortName, %rawRepeat⟪ * ⟫] → $[:,#SortName,"*"] ;
+SortRepeatString2[#SortName, %rawRepeat⟪ + ⟫] → $[:,#SortName,"+"] ;
+SortRepeatString2[#SortName, %rawRepeat⟪ + _ #RegExpLeaf# ⟫] → RegExpLeafSuffix[#RegExpLeaf#, $[:,#SortName,"+_"]] ;
+
+RegExpLeafSuffix[RawRegExpSimple, $String] :: $String;
+-[Data[#String#]]: RegExpLeafSuffix[%rawRegExpLeaf⟪ #String# ⟫, #prefix] → $[:,#prefix,#String#] ;
+-[Data[#Word#]]:   RegExpLeafSuffix[%rawRegExpLeaf⟪ #Word# ⟫,   #prefix] → $[:,#prefix,#Word#] ;
+
+RegExpLeafWord[RawRegExpSimple] :: $String;
+-[Data[#String#]]: RegExpLeafWord[%rawRegExpLeaf⟪ #String# ⟫] → $[Rescape, #String#] ;
+-[Data[#Word#]]:   RegExpLeafWord[%rawRegExpLeaf⟪ #Word# ⟫] → #Word# ;
+
+/////////////////////////////////////////////////////////////////////
+// PRODUCTION NAMES.
+
+ProductionName[$String] :: Text;
+-[Data[#SortName]]: ProductionName[#SortName] → %n⟪†« #SortName »⟫ ;
+
+TokenName[$String] :: Text;
+-[Data[#SortName]]: TokenName[#SortName] → %n⟪T†« $[Mangle,$[Trim,#SortName]] »⟫ ;
+
+ProductionNameWithPrec[$String, $Numeric] :: Text;
+-[Data[#SortName,#Prec],Copy[#SortName,#Prec]]: ProductionNameWithPrec[#SortName, #Prec] → ProductionName[$[If, $[NumericEqual,#Prec,0], #SortName, $[:,#SortName,$[FormatNumber,#Prec]]]] ;
+
+ProductionNameWithPrecRepeat[$String, $Numeric, RawRepeat] :: Text;
+ProductionNameWithPrecRepeat[#SortName, #Prec, %rawRepeat⟪ ⟫] → ProductionNameWithPrec[#SortName, #Prec] ;
+ProductionNameWithPrecRepeat[#SortName, #Prec, %rawRepeat⟪ ? ⟫]→ %n⟪« ProductionNameWithPrec[#SortName, #Prec] »_Maybe⟫ ;
+ProductionNameWithPrecRepeat[#SortName, #Prec, %rawRepeat⟪ * ⟫]→ %n⟪« ProductionNameWithPrec[#SortName, #Prec] »_MaybeSome⟫ ;
+-[Data[#RegExpSimple#]]:
+ProductionNameWithPrecRepeat[#SortName, #Prec, %rawRepeat⟪ + ⟫]→ %n⟪« ProductionNameWithPrec[#SortName, #Prec] »_Some⟫ ;
+-[Data[#RegExpLeaf#]]:
+ProductionNameWithPrecRepeat[#SortName, #Prec, %rawRepeat⟪ + _ #RegExpLeaf# ⟫]→ %n⟪« ProductionNameWithPrec[#SortName, #Prec] »« RegExpLeafName["", #RegExpLeaf#] »⟫ ;
+
+RegExpLeafName[$String, RawRegExpSimple] :: Text;
+-[Data[#SortName,#String#]]:      RegExpLeafName[#SortName, %rawRegExpLeaf⟪ #String# ⟫] → %n⟪†«#SortName»_SomeS†« $[Mangle,#String#] »⟫ ;
+-[Data[#SortName,#Word#]]:        RegExpLeafName[#SortName, %rawRegExpLeaf⟪ #Word# ⟫] → %n⟪†«#SortName»_SomeW†« $[Mangle,#Word#] »⟫ ;
+
+/////////////////////////////////////////////////////////////////////
+// ERRORS.
+
+∀ a . CookError[$String] :: a;
+-[Data[#message]]: CookError[#message] → $[Error, #message] ;
+
+/////////////////////////////////////////////////////////////////////
+
+)] //CookBase

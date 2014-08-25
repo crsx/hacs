@@ -1,0 +1,8 @@
+auto/
+*~
+*.aux
+*.bbl
+*.blg
+*.log
+*.toc
+*.out

@@ -1,0 +1,167 @@
+/* PG Grammar for HACS module org.crsx.samples.Lambda. */
+
+/* INTERFACE. */
+
+class org.crsx.samples.LambdaParser : <Term>,
+  <Construction>
+
+prefix lambda
+
+////METAPG: declarations
+////METAPG: %{
+////METAPG: String unconcrete(String s) {return s.substring(1, s.length()-1).trim();}
+////METAPG: String unmeta(String s, int skip) {return s.substring(1+skip, s.length()-1).trim();}
+////METAPG: %}
+
+%{
+TOKEN_MGR_DECLS : { int nesting; int nestedState;} /* Used by all nesting constructs. */
+%}
+
+
+////METASORTS: /* META-TERM SORTS. */
+////METASORTS:
+////METASORTS: Sort_M_Lambda_sTerm ::= (
+  ////METASORTS: Node_M_Lambda_sNAME[TagSort_M_Lambda_sNAME, $List[Sort_M_Lambda_sScope]];
+  ////METASORTS: Node_M_Lambda_sV[TagSort_M_Lambda_sV, $List[Sort_M_Lambda_sScope]];
+  ////METASORTS: Node_M_Lambda_sE[TagSort_M_Lambda_sE, $List[Sort_M_Lambda_sScope]];
+  ////METASORTS: );
+////METASORTS:
+////METASORTS: Sort_M_Lambda_sScope ::= (
+  ////METASORTS: Tag_M_Lambda_sBinder[binder :: Sort_M_Lambda_sTerm . Sort_M_Lambda_sScope];
+  ////METASORTS: Tag_M_Lambda_sSubterm[Sort_M_Lambda_sTerm]; 
+////METASORTS: );
+
+
+/* GRAMMAR. */
+
+
+/* Productions for NAME token. */
+
+<NAME> ::= 
+  ////METAPG: meta1_NAME:unconcrete |
+  ////METAPG: meta2_NAME$$:[[unmeta(#,4)]]:{ [[ hxornaked("lambdaHxPresorted_NAME") ]] } |
+  {TOKEN_M_Lambda_sNAME} NAME$ .
+////SORT: Sort_M_Lambda_sNAME ::= ( TOKEN_M_Lambda_sNAME[$String]; );
+
+////METAPG: %{
+////METAPG: /* Meta token for NAME. */ 
+////METAPG: TOKEN : { < T_meta1_NAME : ("\u27e8" (" ")* "NAME" (" ")* "\u27e9") > }
+////METAPG: MORE : { < "\u27e8" (" ")* "NAME" (" ")* ~["\u27e8","\u27e9"] > { nesting = 0; nestedState = curLexState; } : IN_META_NAME }
+////METAPG: <IN_META_NAME> MORE : { "\u27e8" { nesting = 1; } : IN_NESTED_META_NAME }
+////METAPG: <IN_NESTED_META_NAME> MORE : { "\u27e8" { nesting++; } }
+////METAPG: <IN_NESTED_META_NAME> MORE : { "\u27e9" { if (--nesting <= 0) SwitchTo(IN_META_NAME); } }
+////METAPG: <IN_META_NAME> TOKEN : { < T_meta2_NAME : "\u27e9" > { SwitchTo(nestedState); } }
+////METAPG: <IN_META_NAME,IN_NESTED_META_NAME> MORE : { < ~[] > }
+////METAPG: %}
+
+////METAPG: /* Hx terms of NAME token sort. */
+////METAPG: <Hx_NAME> (HX) ::= (HX_TOKEN_NAME)?  <HxPresorted_NAME> .
+////METAPG: <HxSorted_NAME> (HX) ::= HX_TOKEN_NAME <HxPresorted_NAME> .
+////METAPG: <HxPresorted_NAME> (HX) ::=
+////METAPG:   {HX_M_VariableUseSorted} ({NAME}) ({HX_M_RepeatSingle}) (HX_VARIABLE!!!) <HxAttributes>
+////METAPG: | {HX_M_MetaApplicationSorted} ({NAME}) ({HX_M_RepeatSingle}) (HX_META_VARIABLE$) ( HX_LBRACKET <HxTerms>  HX_RBRACKET | {$Nil} ) <HxAttributes>
+////METAPG: | {HX_M_UnparsedSorted} ({NAME}) ({HX_M_RepeatSingle}) (HX_CONCRETE$:unconcrete) <HxAttributes>
+////METAPG: .
+////METAPG: token HX_TOKEN_NAME (HX) ::= "NAME" .
+
+
+/* Productions for V sort with (highest) precedence 0. */
+
+<V> ::= 
+  ////METAPG: meta1_V:unconcrete |
+  ////METAPG: meta2_V$$:[[unmeta(#,1)]]:{ [[ hxornaked("lambdaHxPresorted_V") ]] } |
+   <NAME>!!!:#_NAME_1  {{#_NAME_1}}  . 
+
+
+////SORT: TagSort_M_Lambda_sV ::= ( Tag_M_Lambda_sV_xNAME;  );
+////METAELIM: Node_M_Lambda_sV[Tag_M_Lambda_sV_xNAME, (#_NAME_1;)]; 
+
+////METAPG: %{
+////METAPG: /* Meta token for V. */ 
+////METAPG: TOKEN : { < T_meta1_V : ("\u27e8" (" ")* "V" (" ")* "\u27e9") > }
+////METAPG: MORE : { < "\u27e8" (" ")* "V" (" ")* ~["\u27e8","\u27e9"] > { nesting = 0; nestedState = curLexState; } : IN_META_V }
+////METAPG: <IN_META_V> MORE : { "\u27e8" { nesting = 1; } : IN_NESTED_META_V }
+////METAPG: <IN_NESTED_META_V> MORE : { "\u27e8" { nesting++; } }
+////METAPG: <IN_NESTED_META_V> MORE : { "\u27e9" { if (--nesting <= 0) SwitchTo(IN_META_V); } }
+////METAPG: <IN_META_V> TOKEN : { < T_meta2_V : "\u27e9" > { SwitchTo(nestedState); } }
+////METAPG: <IN_META_V,IN_NESTED_META_V> MORE : { < ~[] > }
+////METAPG: %}
+
+////METAPG: /* Hx terms of V production sort. */
+////METAPG: <Hx_V> (HX) ::= (HX_TOKEN_V)?  <HxPresorted_V> .
+////METAPG: <HxSorted_V> (HX) ::= HX_TOKEN_V <HxPresorted_V> .
+////METAPG: <HxPresorted_V> (HX) ::=
+////METAPG:   {HX_M_VariableUseSorted} ({V}) ({HX_M_RepeatSingle}) (HX_VARIABLE!!!) <HxAttributes>
+////METAPG: | {HX_M_MetaApplicationSorted} ({V}) ({HX_M_RepeatSingle}) (HX_META_VARIABLE$) ( HX_LBRACKET <HxTerms> HX_RBRACKET | {$Nil} ) <HxAttributes>
+////METAPG: | {HX_M_ConstructionSorted} ({V}) ({HX_M_RepeatSingle}) (HX_CONSTRUCTOR$) ( HX_LBRACKET <HxScopes> HX_RBRACKET | HX_LPAREN <HxTerms> HX_RPAREN | {$Nil} ) <HxAttributes>
+////METAPG: | {HX_M_UnparsedSorted} ({V}) ({HX_M_RepeatSingle}) (HX_CONCRETE$:unconcrete) <HxAttributes>
+////METAPG: 
+////METAPG: .
+////METAPG: token HX_TOKEN_V (HX) ::= "V" .
+////METAPG: 
+
+/* Productions for E sort with precedence 0. */
+
+<E> ::= ("(" <E>:#1 ")" {{ Node_M_Lambda_sE[Tag_M_Lambda_sE_x_xM_x_x28, (#1;)]}} 
+  | ("\u03bb" <V>^x "." <E>[x]:#_E_1  {{ Node_M_Lambda_sE[Tag_M_Lambda_sE_x_xM_x_xu03bb, (#_E_1;)]}}  
+  |  <E1>:#_E_1  {{#_E_1}} )) . 
+
+
+////SORT: TagSort_M_Lambda_sE ::= ( Tag_M_Lambda_sE_x_xM_x_x28; Tag_M_Lambda_sE_x_xM_x_xu03bb; Tag_M_Lambda_sE_xE;  );
+ ////METAELIM: Node_M_Lambda_sE[Tag_M_Lambda_sE_x_xM_x_x28, (#1;)]; 
+////METAELIM: Node_M_Lambda_sE[Tag_M_Lambda_sE_x_xM_x_xu03bb, (#_E_1;)];
+ ////METAELIM: Node_M_Lambda_sE[Tag_M_Lambda_sE_xE, (#_E_1;)]; 
+
+/* Productions for E sort with precedence 1. */
+
+<E1> ::= ( <E1>:#_E_1  <E2>:#_E_2  {{ Node_M_Lambda_sE[Tag_M_Lambda_sE1_xE, (#_E_1; #_E_2;)]}}  
+  |  <E2>:#_E_1  {{#_E_1}} ) . 
+
+
+////SORT: TagSort_M_Lambda_sE ::= ( Tag_M_Lambda_sE1_xE; Tag_M_Lambda_sE1_xE;  );
+ ////METAELIM: Node_M_Lambda_sE[Tag_M_Lambda_sE1_xE, (#_E_1; #_E_2;)];  ////METAELIM: Node_M_Lambda_sE[Tag_M_Lambda_sE1_xE, (#_E_1;)]; 
+
+
+
+/* Productions for E sort with (highest) precedence 2. */
+
+<E2> ::= 
+  ////METAPG: meta1_E:unconcrete |
+  ////METAPG: meta2_E$$:[[unmeta(#,1)]]:{ [[ hxornaked("lambdaHxPresorted_E") ]] } |
+   <V>:#_V_1  {{ Node_M_Lambda_sE[Tag_M_Lambda_sE2_xV, (#_V_1;)]}}  . 
+
+
+////SORT: TagSort_M_Lambda_sE ::= ( Tag_M_Lambda_sE2_xV;  );
+////METAELIM: Node_M_Lambda_sE[Tag_M_Lambda_sE2_xV, (#_V_1;)]; 
+
+////METAPG: %{
+////METAPG: /* Meta token for E. */ 
+////METAPG: TOKEN : { < T_meta1_E : ("\u27e8" (" ")* "E" (" ")* "\u27e9") > }
+////METAPG: MORE : { < "\u27e8" (" ")* "E" (" ")* ~["\u27e8","\u27e9"] > { nesting = 0; nestedState = curLexState; } : IN_META_E }
+////METAPG: <IN_META_E> MORE : { "\u27e8" { nesting = 1; } : IN_NESTED_META_E }
+////METAPG: <IN_NESTED_META_E> MORE : { "\u27e8" { nesting++; } }
+////METAPG: <IN_NESTED_META_E> MORE : { "\u27e9" { if (--nesting <= 0) SwitchTo(IN_META_E); } }
+////METAPG: <IN_META_E> TOKEN : { < T_meta2_E : "\u27e9" > { SwitchTo(nestedState); } }
+////METAPG: <IN_META_E,IN_NESTED_META_E> MORE : { < ~[] > }
+////METAPG: %}
+
+
+
+////METAPG: /* Hx terms of E production sort. */
+////METAPG: <Hx_E> (HX) ::= (HX_TOKEN_E)?  <HxPresorted_E> .
+////METAPG: <HxSorted_E> (HX) ::= HX_TOKEN_E <HxPresorted_E> .
+////METAPG: <HxPresorted_E> (HX) ::=
+////METAPG:   {HX_M_VariableUseSorted} ({E}) ({HX_M_RepeatSingle}) (HX_VARIABLE!!!) <HxAttributes>
+////METAPG: | {HX_M_MetaApplicationSorted} ({E}) ({HX_M_RepeatSingle}) (HX_META_VARIABLE$) ( HX_LBRACKET <HxTerms> HX_RBRACKET | {$Nil} ) <HxAttributes>
+////METAPG: | {HX_M_ConstructionSorted} ({E}) ({HX_M_RepeatSingle}) (HX_CONSTRUCTOR$) ( HX_LBRACKET <HxScopes> HX_RBRACKET | HX_LPAREN <HxTerms> HX_RPAREN | {$Nil} ) <HxAttributes>
+////METAPG: | {HX_M_UnparsedSorted} ({E}) ({HX_M_RepeatSingle}) (HX_CONCRETE$:unconcrete) <HxAttributes>
+////METAPG: 
+////METAPG: .
+////METAPG: token HX_TOKEN_E (HX) ::= "E" .
+////METAPG: 
+
+
+
+/* TOKENS. */
+
+token NAME ::= ['a'-'z'] ( ['a'-'z','0'-'9','_'] )*   . skip ::= " " . 

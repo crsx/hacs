@@ -1,0 +1,402 @@
+%% $Id: lecture-setup.tex,v 1.12 2013/12/05 04:28:18 krisrose Exp $
+
+%% Format.
+\usepackage[utf8]{inputenc}
+\usepackage{comment}
+\usepackage{amsmath,amssymb,amsthm,stmaryrd,textcomp}
+\usepackage[normalem]{ulem}
+\usepackage{pgfpages}
+\usepackage{utf8math}
+\usepackage{url}
+\usepackage{xspace}
+\usepackage{fancyvrb,alltt}
+\usepackage{graphicx}
+\usepackage{color}
+\definecolor{gray}{gray}{0.5}
+\definecolor{lightgray}{rgb}{.9,.9,.9}
+\definecolor{darkgray}{rgb}{.4,.4,.4}
+\definecolor{purple}{rgb}{0.65, 0.12, 0.82}
+\preparecolorset{rgb}{}{}{%
+AliceBlue,.94,.972,1;%
+AntiqueWhite,.98,.92,.844;%
+Aqua,0,1,1;%
+Aquamarine,.498,1,.83;%
+Azure,.94,1,1;%
+Beige,.96,.96,.864;%
+Bisque,1,.894,.77;%
+Black,0,0,0;%
+BlanchedAlmond,1,.92,.804;%
+Blue,0,0,1;%
+BlueViolet,.54,.17,.888;%
+Brown,.648,.165,.165;%
+BurlyWood,.87,.72,.53;%
+CadetBlue,.372,.62,.628;%
+Chartreuse,.498,1,0;%
+Chocolate,.824,.41,.116;%
+Coral,1,.498,.312;%
+CornflowerBlue,.392,.585,.93;%
+Cornsilk,1,.972,.864;%
+Crimson,.864,.08,.235;%
+Cyan,0,1,1;%
+DarkBlue,0,0,.545;%
+DarkCyan,0,.545,.545;%
+DarkGoldenrod,.72,.525,.044;%
+DarkGray,.664,.664,.664;%
+DarkGreen,0,.392,0;%
+DarkGrey,.664,.664,.664;%
+DarkKhaki,.74,.716,.42;%
+DarkMagenta,.545,0,.545;%
+DarkOliveGreen,.332,.42,.185;%
+DarkOrange,1,.55,0;%
+DarkOrchid,.6,.196,.8;%
+DarkRed,.545,0,0;%
+DarkSalmon,.912,.59,.48;%
+DarkSeaGreen,.56,.736,.56;%
+DarkSlateBlue,.284,.24,.545;%
+DarkSlateGray,.185,.31,.31;%
+DarkSlateGrey,.185,.31,.31;%
+DarkTurquoise,0,.808,.82;%
+DarkViolet,.58,0,.828;%
+DeepPink,1,.08,.576;%
+DeepSkyBlue,0,.75,1;%
+DimGray,.41,.41,.41;%
+DimGrey,.41,.41,.41;%
+DodgerBlue,.116,.565,1;%
+FireBrick,.698,.132,.132;%
+FloralWhite,1,.98,.94;%
+ForestGreen,.132,.545,.132;%
+Fuchsia,1,0,1;%
+Gainsboro,.864,.864,.864;%
+GhostWhite,.972,.972,1;%
+Gold,1,.844,0;%
+Goldenrod,.855,.648,.125;%
+Gray,.5,.5,.5;%
+Green,0,.5,0;%
+GreenYellow,.68,1,.185;%
+Grey,.5,.5,.5;%
+Honeydew,.94,1,.94;%
+HotPink,1,.41,.705;%
+IndianRed,.804,.36,.36;%
+Indigo,.294,0,.51;%
+Ivory,1,1,.94;%
+Khaki,.94,.9,.55;%
+Lavender,.9,.9,.98;%
+LavenderBlush,1,.94,.96;%
+LawnGreen,.488,.99,0;%
+LemonChiffon,1,.98,.804;%
+LightBlue,.68,.848,.9;%
+LightCoral,.94,.5,.5;%
+LightCyan,.88,1,1;%
+LightGoldenrod,.933,.867,.51;%
+LightGoldenrodYellow,.98,.98,.824;%
+LightGray,.828,.828,.828;%
+LightGreen,.565,.932,.565;%
+LightGrey,.828,.828,.828;%
+LightPink,1,.712,.756;%
+LightSalmon,1,.628,.48;%
+LightSeaGreen,.125,.698,.668;%
+LightSkyBlue,.53,.808,.98;%
+LightSlateBlue,.518,.44,1;%
+LightSlateGray,.468,.532,.6;%
+LightSlateGrey,.468,.532,.6;%
+LightSteelBlue,.69,.77,.87;%
+LightYellow,1,1,.88;%
+Lime,0,1,0;%
+LimeGreen,.196,.804,.196;%
+Linen,.98,.94,.9;%
+Magenta,1,0,1;%
+Maroon,.5,0,0;%
+MediumAquamarine,.4,.804,.668;%
+MediumBlue,0,0,.804;%
+MediumOrchid,.73,.332,.828;%
+MediumPurple,.576,.44,.86;%
+MediumSeaGreen,.235,.7,.444;%
+MediumSlateBlue,.484,.408,.932;%
+MediumSpringGreen,0,.98,.604;%
+MediumTurquoise,.284,.82,.8;%
+MediumVioletRed,.78,.084,.52;%
+MidnightBlue,.098,.098,.44;%
+MintCream,.96,1,.98;%
+MistyRose,1,.894,.884;%
+Moccasin,1,.894,.71;%
+NavajoWhite,1,.87,.68;%
+Navy,0,0,.5;%
+NavyBlue,0,0,.5;%
+OldLace,.992,.96,.9;%
+Olive,.5,.5,0;%
+OliveDrab,.42,.556,.136;%
+Orange,1,.648,0;%
+OrangeRed,1,.27,0;%
+Orchid,.855,.44,.84;%
+PaleGoldenrod,.932,.91,.668;%
+PaleGreen,.596,.985,.596;%
+PaleTurquoise,.688,.932,.932;%
+PaleVioletRed,.86,.44,.576;%
+PapayaWhip,1,.936,.835;%
+PeachPuff,1,.855,.725;%
+Peru,.804,.52,.248;%
+Pink,1,.752,.796;%
+Plum,.868,.628,.868;%
+PowderBlue,.69,.88,.9;%
+Purple,.5,0,.5;%
+Red,1,0,0;%
+RosyBrown,.736,.56,.56;%
+RoyalBlue,.255,.41,.884;%
+SaddleBrown,.545,.27,.075;%
+Salmon,.98,.5,.448;%
+SandyBrown,.956,.644,.376;%
+SeaGreen,.18,.545,.34;%
+Seashell,1,.96,.932;%
+Sienna,.628,.32,.176;%
+Silver,.752,.752,.752;%
+SkyBlue,.53,.808,.92;%
+SlateBlue,.415,.352,.804;%
+SlateGray,.44,.5,.565;%
+SlateGrey,.44,.5,.565;%
+Snow,1,.98,.98;%
+SpringGreen,0,1,.498;%
+SteelBlue,.275,.51,.705;%
+Tan,.824,.705,.55;%
+Teal,0,.5,.5;%
+Thistle,.848,.75,.848;%
+Tomato,1,.39,.28;%
+Turquoise,.25,.88,.815;%
+Violet,.932,.51,.932;%
+VioletRed,.816,.125,.565;%
+Wheat,.96,.87,.7;%
+White,1,1,1;%
+WhiteSmoke,.96,.96,.96;%
+Yellow,1,1,0;%
+YellowGreen,.604,.804,.196}
+\usepackage{hyperref}
+\usepackage{rcs}
+
+%% Macros.
+\newcommand{\HAX}{\text{HACS}\xspace}
+\newcommand{\CRSX}{\text{CRSX}\xspace}
+\newcommand{\ie}{\textit{i.e.}\xspace}
+\newcommand{\eg}{\textit{e.g.}\xspace}
+\newcommand{\etc}{\textit{etc.}\xspace}
+\newcommand{\aka}{\textit{aka.}\xspace}
+\newcommand{\TBD}[1][]{\textit{To Be Done…#1}\marginpar{\bf TBD}}
+
+\newcommand*{\cf}[1]{\texttt{\small #1}}
+\newcommand*{\si}[1]{\textit{\small #1}}
+\newcommand*{\surl}[1]{\mbox{\small\url{#1}}}
+
+\newcommand{\http}[1]{\href{http://#1}{\emph{#1}}}
+\newcommand{\mailto}[1]{\href{mailto:#1}{\emph{#1}}}
+
+\newcommand{\qqquad}{{\qquad\quad}}
+\newcommand{\qqqquad}{{\qquad\qquad}}
+\newcommand{\opt}{{\ensuremath{_{\text{\it opt}}}}}
+
+\def\SubScript{\textit{SubScript}\xspace}
+\def\vacuum{\endgraf\vskip 0pt plus 1filll\relax}
+\def\tup#1{\ensuremath{\left\langle{#1}\right\rangle}}
+\def\mc#1{\fbox{\ensuremath{#1}}}
+
+\def\first{\textsc{first}}
+\def\follow{\textsc{follow}}
+\def\tup#1{\ensuremath{\left\langle{#1}\right\rangle}}
+\def\q#1{\,\text{``#1''}\,}
+\def\qm#1{\,\text{``\ensuremath{#1}''}\,}
+\def\t#1{\textbf{#1}}
+\def\nt#1{{\textit{#1}}}
+
+\def\alertonly#1#2#3{\alert<#1>{\only<#2>{#3}}}
+\def\alertthen#1#2#3{\alert<#1>{\uncover<#2>{#3}}}
+
+%% WORKING \Cases{...} (based on \cases from plain TeX -- the one in
+%% AMS-LaTeX is seriously buggy):
+\makeatletter
+\def\Cases#1{\mbox{$
+  \left\{\,\vcenter{\let\\=\cr \normalbaselines\m@th
+    \ialign{$\vphantom(##\hfil$&\quad##\hfil\crcr#1\crcr}}\right.$}}
+\makeatother
+
+%% Environments.
+
+%% Comments.
+\RequirePackage{verbatim}
+\def\ignoreenvironment#1{%
+  \expandafter\let\csname #1\endcsname=\comment
+  \expandafter\let\csname end#1\endcsname=\endcomment}
+
+%% Problem/solution...
+\def\setupdefault{\ignoreenvironment{solution}}
+\def\setupsolutions{\newenvironment{solution}[1][Answer]{\color{gray}\proof[##1]}{\endproof}}
+\def\afterdash#1-#2-#3@@{#2}
+\csname setup\expandafter\afterdash\jobname-default-@@\endcsname
+%\expandafter\def\expandafter\setupafterdashjobcs\expandafter{\csname setup\expandafter\afterdash\jobname-default-@@\endcsname}
+%\setupafterdashjobcs
+
+%% Old code listings.
+\usepackage{fancyvrb}
+\CustomVerbatimEnvironment{code}{Verbatim}{tabsize=4,fontsize=\small,numbers=left,numberblanklines=false,xleftmargin=\parindent}
+\CustomVerbatimCommand{\inputcode}{VerbatimInput}{tabsize=4,fontsize=\footnotesize,numbers=left,numberblanklines=false,xleftmargin=\parindent}
+%\DefineShortVerb{\"} % makes " work in verbatim even when \active
+
+%% New code listings...
+\usepackage{listings}
+\lstset{basicstyle=\ttfamily}
+
+%% HACS.
+\def\Identifier#1{#1}
+\def\Keyword#1{\textsf{\bf#1}}
+
+\lstdefinelanguage{HACS}{basicstyle=\fontfamily{ccr}\selectfont,%
+  extendedchars=true,inputencoding=utf8,sensitive,%
+  identifierstyle=\Identifier,%
+  string=[d]{"},morestring=[d]{'},upquote=true,stringstyle=\ttfamily,showstringspaces=true,%
+  comment=[l]{//},morecomment=[s]{/*}{*/},commentstyle=\color{blue}\rm,%
+  keywordstyle=\Keyword,%
+  keywords={attribute,data,fragment,import,module,nested,property,rule,scheme,simplify,sort,%
+    space,static,sugar,symbol,tag,token,default,error},%
+  literate=%
+    {⟦}{{\ensuremath{\llbracket}}}1 {⟧}{{\ensuremath{\rrbracket}}}1 {⟨}{{\ensuremath{\langle}}}1 {⟩}{{\ensuremath{\rangle}}}1 %
+    {→}{{\ensuremath{\rightarrow}}}2 {↑}{{\ensuremath{\uparrow}}}1 {↓}{{\ensuremath{\downarrow}}}1 {¬}{{\ensuremath{\lnot}}}2 {¶}{{\P}}1 %
+    {ε}{{\ensuremath{\varepsilon}}}1 {…}{{\ensuremath{\dots}}}2 {∧}{{\ensuremath{\!\wedge}}}2 {∨}{{\ensuremath{\!\vee}}}2 {↦}{{\ensuremath{\mapsto}}}2 %
+}[comments,strings,keywords]
+%%
+\lstnewenvironment{hacs}[1][]{\lstset{language=HACS,basewidth={.55em,.45em},columns=flexible,#1}\upshape}{}
+\newcommand\inputhacs[2][]{\lstinputlisting[language=HACS,basewidth={.55em,.45em},columns=flexible,#1]{#2}}
+\newcommand\hacsc{\lstinline[language=HACS]}
+%\lstMakeShortInline[language=HACS,columns=fullflexible]"
+
+%% Tiger.
+\lstdefinelanguage{Tiger}{basicstyle=\normalsize,%
+  extendedchars=true,inputencoding=utf8,sensitive,%
+  identifierstyle=\textit,%
+  string=[d]{"},upquote=true,stringstyle=\ttfamily,showstringspaces=true,%
+  comment=[s]{/*}{*/},commentstyle=\color{gray}\rm,%
+  keywordstyle=\bfseries,%
+  keywords={type,array,of,var,function,nil,let,in,end,if,then,else,break,while,do},%
+  literate=%
+    {≡}{{\ensuremath{\equiv}}}1 %
+}[comments,strings,keywords]
+%%
+\lstnewenvironment{tiger}[1][]{\lstset{language=Tiger,basewidth={.5em,.35em},columns=flexible,#1}\upshape}{}
+\newcommand\inputtiger[2][]{\lstinputlisting[language=Tiger,basewidth={.5em,.35em},columns=flexible,#1]{#2}}
+\newcommand\tigerc{\lstinline[language=Tiger]}
+
+\lstdefinelanguage{JavaScript}{
+  keywords={break, case, catch, continue, debugger, default, delete, do, else, false, finally, for, function, if, in, instanceof, new, null, return, switch, this, throw, true, try, typeof, var, while, with, class, export, throw, implements, import, this, extends},
+  morecomment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  morestring=[b]',
+  morestring=[b]",
+  ndkeywords={boolean, any, number, string, void},
+  keywordstyle=\color{blue}\bfseries,
+  ndkeywordstyle=\color{darkgray}\bfseries,
+  identifierstyle=\color{black},
+  commentstyle=\color{purple}\ttfamily,
+  stringstyle=\color{red}\ttfamily,
+  sensitive=true
+}
+
+\lstnewenvironment{JavaScript}[1][]{\lstset{
+   language=JavaScript,
+   backgroundcolor=\color{lightgray},
+   extendedchars=true,
+   basicstyle=\ttfamily,
+   showstringspaces=false,
+   showspaces=false,
+   numbers=left,
+   numberstyle=\scriptsize,
+   numbersep=7pt,
+   numberblanklines=false,
+   tabsize=2,
+   breaklines=true,
+   showtabs=false,
+   captionpos=b,
+   #1
+}\upshape}{}
+
+\newcommand\inputJavaScript[2][]{\lstset{
+   language=JavaScript,
+   backgroundcolor=\color{lightgray},
+   extendedchars=true,
+   basicstyle=\ttfamily,
+   showstringspaces=false,
+   showspaces=false,
+   numbers=left,
+   numberstyle=\scriptsize,
+   numbersep=7pt,
+   tabsize=2,
+   breaklines=true,
+   showtabs=false,
+   captionpos=b,
+   #1
+}{#2}}
+
+\newcommand\JS[1][]{\lstinline[
+   language=JavaScript,
+   backgroundcolor=\color{lightgray},
+   extendedchars=true,
+   basicstyle=\small\ttfamily,
+   showstringspaces=false,
+   showspaces=false,
+   #1]}
+
+%% Identifiers
+\newcommand{\set}[1]{\textit{#1}}
+\newcommand{\op}[1]{\ensuremath{\operatorname{#1}}}
+
+%% Last to pickup right catcodes...
+\usepackage[graph,arrow,curve,color,tips,frame]{xy}
+\def\mtxt#1{\hbox{\footnotesize$\begin{array}{l}#1\end{array}$}}
+
+\let\next\relax %workaround...
+
+%% T diagram helpers
+\def\teediagram#1{\xygraph{!{(0.6,0):}#1}}
+\newgraphescape{I}#1#2#3#4{
+  []*+[#4]{#1}="I#1#2#3..s"
+  [d]*+[#4]{#2}="I#1#2#3..m"
+  (
+  []!{ "I#1#2#3..m"."I#1#2#3..s"="I#1#2#3.m";
+       "I#1#2#3..s"."I#1#2#3..m"="I#1#2#3.s" }
+    , "I#1#2#3.s"!{+UL}
+    -@[#4] "I#1#2#3.s"!{+UR}
+    -@[#4] "I#1#2#3.s"!{+DR}
+    -@[#4] "I#1#2#3.s"!{+DL}
+    -@[#4] "I#1#2#3.s"!{+UL}
+  )
+}
+\newgraphescape{C}#1#2#3#4#5{
+  []*+[#5]{#1}="C#1#2#3#4..s" :@[#5] [rr] *+[#5]{#2}="C#1#2#3#4..t"
+  [dl]*+[#5]{#3}="C#1#2#3#4.m"
+  (
+    []!{ "C#1#2#3#4..s"."C#1#2#3#4..t"="C#1#2#3#4.s";
+         "C#1#2#3#4..t"."C#1#2#3#4..s"="C#1#2#3#4.t" }
+    , "C#1#2#3#4.s"!{+UL}
+    -@[#5] "C#1#2#3#4.s"!{+UR}
+    -@[#5] "C#1#2#3#4.s"!{+DR}
+    -@[#5] "C#1#2#3#4.m"!{+UR}
+    -@[#5] "C#1#2#3#4.m"!{+DR}
+    -@[#5] "C#1#2#3#4.m"!{+DL}
+    -@[#5] "C#1#2#3#4.m"!{+UL}
+    -@[#5] "C#1#2#3#4.s"!{+DL}
+    -@[#5] "C#1#2#3#4.s"!{+UL}
+  )
+}
+\newgraphescape{W}#1#2#3#4#5{
+  []*+[#5]{#1}="I#1#2#3#4..s" :[rrrr] *+[#5]{#2}="I#1#2#3#4..t"
+  [dll]*+[#5]{#3}="I#1#2#3#4.m"
+  !{ "I#1#2#3#4..s"."I#1#2#3#4..t"="I#1#2#3#4.t"
+     ."I#1#2#3#4..s"="I#1#2#3#4.s" }
+  ( "I#1#2#3#4.s"!{+UL}
+    -@[#5] "I#1#2#3#4.s"!{+UR}
+    -@[#5] "I#1#2#3#4.s"!{+DR}
+    -@[#5] "I#1#2#3#4.m"!{+UR}
+    -@[#5] "I#1#2#3#4.m"!{+DR}
+    -@[#5] "I#1#2#3#4.m"!{+DL}
+    -@[#5] "I#1#2#3#4.m"!{+UL}
+    -@[#5] "I#1#2#3#4.s"!{+DL}
+    -@[#5] "I#1#2#3#4.s"!{+UL}
+  )
+}
+
+\newcommand{\circled}[1]{\text{\scriptsize$\vcenter{\xygraph{*+[o][F-]{#1}}}$}}
+\newcommand{\Circled}[1]{\text{\scriptsize$\vcenter{\xygraph{*+[o][F=]{#1}}}$}}

@@ -1,0 +1,4773 @@
+PG[(
+  Boolean ::= (B_TRUE; B_FALSE; ) ;
+  CONSUMPTION_SORT ::= (C_BUFFER[$String, $Numeric]; C_LEFTRECURSIVE[$String, $Numeric]; ) ;
+  {$String : DeclarationMapEntry}DeclarationMap ::= (DM; ) ;
+  
+    DeclarationMapEntry
+    ::=
+    (
+     DME_NONE;
+     DME_STRING[$String];
+     DME_TOKEN[$String];
+     DME_NAMES[NameSet];
+     DME_SORT[$List[Define], $String, NameSet, Wrapper, Boolean];
+     DME_ALIAS[HxSort];
+     DME_ATTRIBUTE[HxAttributeKind, $String, HxAttributeForm, $List[HxAttributeOption]];
+    )
+   ;
+  
+    {$String : $StringEntrySort}Define
+    ::=
+    (
+     D_SYNTHESIZES[$String];
+     D_FORM[HxForm, FormKind];
+     D_RULE[HxRule, $String, Boolean];
+     D_NONE;
+     (D_ABSTRACTION a : HxSortParam . Define);
+    )
+   ;
+   FormKind ::= (FK_SYMBOL[$Boolean]; FK_ALIAS; FK_SUGAR[HxTerm]; FK_SCHEME[NameSet]; FK_DATA[$List[$String]]; ) ;
+   {$String : $StringEntrySort}HxAttribute ::= (HX_M_Attribute[HxAttributeKind, $String, HxAttributeValue]; ) ;
+  
+    {$String : $StringEntrySort}HxAttributeForm
+    ::=
+    (HX_M_AttributeFormSimple[HxSort]; HX_M_AttributeFormMap[HxSort, HxSort]; HX_M_AttributeFormSet[HxSort]; )
+   ;
+   {$String : $StringEntrySort}HxAttributeKind ::= (HX_M_AttributeKindDown; HX_M_AttributeKindUp; ) ;
+   {$String : $StringEntrySort}HxAttributeOption ::= (HX_M_AttributeOption[$String, $String]; ) ;
+  
+    {$String : $StringEntrySort}HxAttributeValue
+    ::=
+    (
+     HX_M_AttributeKeyValue[HxTerm, HxTerm];
+     HX_M_AttributeKey[HxTerm];
+     HX_M_AttributeNotKey[HxTerm];
+     HX_M_AttributeValue[HxTerm];
+    )
+   ;
+  
+    {$String : $StringEntrySort}HxDeclaration
+    ::=
+    (
+     HX_M_anonymous[$List[HxSortAlternative]];
+     HX_M_sort[HX_M_no__start, $String, HxRepeat, HxSortAbstraction];
+     HX_M_token[$String, $List[HxRegExpChoice]];
+     HX_M_import[$String, $List[$String]];
+     HX_M_embedded__module[HxEmbeddedModule];
+     HX_M_rule[HxRule];
+     HX_M_space[$List[HxRegExpChoice]];
+     HX_M_nestedDeclarations[$List[HxDeclaration]];
+     HX_M_fragment[$String, $List[HxRegExpChoice]];
+     HX_M_attribute[HxAttributeKind, $String, HxAttributeForm, $List[HxAttributeOption]];
+    )
+   ;
+   {$String : $StringEntrySort}HxEmbeddedModule ::= (HX_M_module[$String, $List[HxDeclaration]]; ) ;
+  
+    {$String : $StringEntrySort}HxForm
+    ::=
+    (
+     HX-FormParsedSorted[$String, HxParsedForm, $Numeric, $List[HxInheritedRef]];
+     HX-FormParsed[HxParsedForm, $Numeric, $List[HxInheritedRef]];
+     HX-FormConstruction[$String, $List[HxScopeSort], $List[HxInheritedRef]];
+    )
+   ;
+   {$String : $StringEntrySort}HxInheritedRef ::= (HX_M_InheritedRef[$String]; ) ;
+   {$String : $StringEntrySort}HxModule ::= (HX_M_top__module[HxEmbeddedModule]; ) ;
+  
+    {$String : $StringEntrySort}HxParsedForm
+    ::=
+    (
+     HX-ParsedFormWord[$String, HxParsedForm];
+     HX-ParsedFormDone;
+     HX-ParsedFormSpace[$String, HxParsedForm];
+     HX-ParsedFormTerm[HxScopeSortPrecRepeat, HxParsedForm];
+    )
+   ;
+   {$String : $StringEntrySort}HxPriority ::= (HX_M_default; HX_M_priority; HX_M_Normal; ) ;
+  
+    {$String : $StringEntrySort}HxRegExpChoice
+    ::=
+    (HX_M_nested[HxRegExpSimple, HxRegExpSimple]; HX_M_RegExpConcat[$List[HxRegExpUnit]]; )
+   ;
+  
+    {$String : $StringEntrySort}HxRegExpClass
+    ::=
+    (
+     HX-RegExpClassDone;
+     HX-RegExpClassRange[$String, $String, HxRegExpClass];
+     HX-RegExpClassChar[$String, HxRegExpClass];
+     HX-RegExpClassNot[HxRegExpClass];
+    )
+   ;
+  
+    {$String : $StringEntrySort}HxRegExpSimple
+    ::=
+    (
+     HX_M_RegExpAny;
+     HX_M_RegExpClass[HxRegExpClass];
+     HX_M_RegExpString[$String];
+     HX_M_RegExpRef[$String];
+     HX_M_RegExpNest[$List[HxRegExpChoice]];
+     HX_M_RegExpWord[$String];
+    )
+   ;
+   {$String : $StringEntrySort}HxRegExpUnit ::= (HX_M_RegExpUnit[HxRegExpSimple, HxRepeat]; ) ;
+  
+    {$String : $StringEntrySort}HxRepeat
+    ::=
+    (HX_M_RepeatMaybeSome; HX_M_RepeatMaybe; HX_M_RepeatSingle; HX_M_RepeatSomeSep[HxRegExpSimple]; HX_M_RepeatSome; )
+   ;
+   {$String : $StringEntrySort}HxRule ::= (HX_M_Rule[HxPriority, HxTerm, HxTerm, HxTerm]; ) ;
+   {$String : $StringEntrySort}HxScope ::= (HX_M_Scope[$List[$String], HxTerm]; ) ;
+  
+    {$String : $StringEntrySort}HxScopeSort
+    ::=
+    (
+     HX_M_ScopeSortBinder[v"$String", HxSort];
+     HX_M_BinderScopeSort[v"$String", HxSort, HxScopeSort];
+     HX_M_ScopeSort[HxSort, HxRepeat, $List[HxSubstituteSort]];
+    )
+   ;
+  
+    {$String : $StringEntrySort}HxScopeSortPrecRepeat
+    ::=
+    (HX_M_ScopeSortPrecRepeat[HxScopeSort, $Numeric, HxRepeat]; )
+   ;
+  
+    {$String : $StringEntrySort}HxSort
+    ::=
+    (HX-SortParam[HxSort]; HX_M_Sort[HxSort, $List[HxSort]]; HX_M_SortName[$String, $List[$String]]; )
+   ;
+  
+    {$String : $StringEntrySort}HxSortAbstraction
+    ::=
+    (
+     (HX_M_SortAbstractionParam a_21 : HxSortParam . HxSortAbstraction);
+     HX_M_SortAbstractionBody[$List[HxSortAlternative]];
+    )
+   ;
+  
+    {$String : $StringEntrySort}HxSortAlternative
+    ::=
+    (
+     HX_M_symbol[HxForm];
+     HX_M_SynthesizedRef[$String];
+     HX_M_sugar[HxForm, HxTerm];
+     HX_M_scheme[HxForm];
+     HX_M_static[HxForm];
+     HX_M_data[HxForm, $List[$String]];
+    )
+   ;
+  
+    {$String : $StringEntrySort}HxSubstituteSort
+    ::=
+    (HX_M_SubstituteSort[v"$String", HxSort]; HX_M_SubstituteNoSort[v"$String"]; )
+   ;
+  
+    {$String : $StringEntrySort}HxTerm
+    ::=
+    (
+     HX_M_Literal[$String, $List[HxAttribute]];
+     HX_M_VariableUseSorted[$String, HxRepeat, v"$String", $List[HxAttribute]];
+     HX_M_MetaApplication[$String, $List[HxTerm], $List[HxAttribute]];
+     HX-Unparsed[$String, $List[HxAttribute]];
+     HX_M_MetaApplicationSorted[$String, HxRepeat, $String, $List[HxTerm], $List[HxAttribute]];
+     HX-OMITTED;
+     HX-Special[$String, Text];
+     HX_M_LiteralSorted[$String, HxRepeat, $String, $List[HxAttribute]];
+     HX_M_ConstructionSorted[$String, HxRepeat, $String, $List[HxScope], $List[HxAttribute]];
+     HX_M_VariableUse[v"$String", $List[HxAttribute]];
+     HX_M_Construction[$String, $List[HxScope], $List[HxAttribute]];
+     HX-UnparsedSorted[$String, HxRepeat, $String, $List[HxAttribute]];
+    )
+   ;
+  (∀ a_8 .  Lifted[a_8] ::= (LIFTED[a_8]; BOTTOM; ) );
+   NameSet ::= (NAME_SET[$String]; ) ;
+   Ok ::= (OK; ) ;
+   PFK_SORT ::= (PFK[HxParsedForm, FormKind]; ) ;
+   Text ::= (variable; $TextNil; $TextCons[Text-Part, Text]; ) ;
+  
+    Text-Part
+    ::=
+    (
+     $TextChars[$String];
+     $TextGroup[Text];
+     $TextBreak[$String];
+     $TextString[Text];
+     $TextIndent[Text];
+     $TextEmbed[Text];
+     $TextSeparator;
+    )
+   ;
+   {$String : Text}TextMapSort ::= (TEXT_MAP[$List[$String]]; ) ;
+   Wrapper ::= (WRAPPER[HxParsedForm]; NO_WRAPPER; ) ;
+  AddName[NameSet, $String] :: NameSet ;
+  Prelude-AddName-1[Data[#Names, #Name], Copy[#Names, #Name]] :
+    AddName[NAME_SET[#Names], #Name]
+    →
+    NAME_SET[
+     $[
+      IfEmpty,
+      #Name,
+      #Names,
+      $[
+       IfEmpty,
+       #Names,
+       $[:, ";", #Name, ";"],
+       $[If, $[Contains, #Names, $[:, ";", #Name, ";"]], #Names, $[:, #Names, #Name, ";"]]]]]
+   ;
+  AddNameNumber[NameSet, $Numeric] :: NameSet ;
+  Prelude-AddNameNumber-1[Data[#Number]] : AddNameNumber[#Names, #Number] → AddName[#Names, $[FormatNumber, #Number]]
+   ;
+  And[Boolean, Boolean] :: Boolean ;
+  Prelude-And-1 : And[B_TRUE, #] → # ;
+  Prelude-And-2 : And[B_FALSE, #] → B_FALSE ;
+  (∀ a_58 . Append[$List[a_58], $List[a_58]] :: $List[a_58] );
+  Prelude-Append-1 : Append[(), #tail] → #tail ;
+  Prelude-Append-2 : Append[(#1; #s), #tail] → (#1; Append[#s, #tail]) ;
+  (∀ a_10 . AsText[a_10] :: Text );
+  Text-AsText-1 : AsText[#text] → #text ;
+  AttributeFormSyntax[$String, HxAttributeForm, $List[HxAttributeOption]] :: Text ;
+  AttributeFormSyntax-1 :
+    AttributeFormSyntax[#ModuleName, HX_M_AttributeFormSimple[#Sort#], #AttributeOptions]
+    →
+    $TextCons[
+     $TextChars["HX_LPAREN {HX_M_AttributeValue} <Hx_"],
+     $TextCons[$TextChars[PG-SortName[#Sort#]], $TextCons[$TextChars["> HX_RPAREN"], $TextNil]]]
+   ;
+  AttributeFormSyntax-2 :
+    AttributeFormSyntax[#ModuleName, HX_M_AttributeFormSet[#Sort#], #AttributeOptions]
+    →
+    $TextCons[
+     $TextChars["HX_LBRACE {HX_M_AttributeKey} <Hx_"],
+     $TextCons[$TextChars[PG-SortName[#Sort#]], $TextCons[$TextChars["> HX_RBRACE"], $TextNil]]]
+   ;
+  AttributeFormSyntax-3 :
+    AttributeFormSyntax[#ModuleName, HX_M_AttributeFormMap[#Sort1#, #Sort2#], #AttributeOptions]
+    →
+    $TextCons[
+     $TextChars["HX_LBRACE {HX_M_AttributeKeyValue} <Hx_"],
+     $TextCons[
+      $TextChars[PG-SortName[#Sort1#]],
+      $TextCons[
+       $TextChars["> HX_COLON <Hx_"],
+       $TextCons[$TextChars[PG-SortName[#Sort2#]], $TextCons[$TextChars["> HX_RBRACE"], $TextNil]]]]]
+   ;
+  AttributeKindCategory[HxAttributeKind] :: Text ;
+  AttributeKindCategory-1 :
+    AttributeKindCategory[HX_M_AttributeKindUp]
+    →
+    $TextCons[$TextChars["Synthesized"], $TextNil]
+   ;
+  AttributeKindCategory-2 :
+    AttributeKindCategory[HX_M_AttributeKindDown]
+    →
+    $TextCons[$TextChars["Inherited"], $TextNil]
+   ;
+  AttributeKindIndicator[HxAttributeKind] :: Text ;
+  AttributeKindIndicator-1 :
+    AttributeKindIndicator[HX_M_AttributeKindUp]
+    →
+    $TextCons[$TextChars["({HX_M_AttributeKindUp})"], $TextNil]
+   ;
+  AttributeKindIndicator-2 :
+    AttributeKindIndicator[HX_M_AttributeKindDown]
+    →
+    $TextCons[$TextChars["({HX_M_AttributeKindDown})"], $TextNil]
+   ;
+  AttributeKindToken[HxAttributeKind] :: Text ;
+  AttributeKindToken-1 : AttributeKindToken[HX_M_AttributeKindUp] → $TextCons[$TextChars["HX_UP"], $TextNil] ;
+  AttributeKindToken-2 : AttributeKindToken[HX_M_AttributeKindDown] → $TextCons[$TextChars["HX_DOWN"], $TextNil] ;
+  AttributeName[HxAttribute] :: $String ;
+  AttributeName-1 :
+    AttributeName[HX_M_Attribute[#AttributeKind#, #AttributeName#, #AttributeValue#]]
+    →
+    #AttributeName#
+   ;
+  CheckString[$String] :: $String ;
+  CheckString-1 : CheckString[#String] → #String ;
+  (∀ a_89 . Concat[$List[$List[a_89]]] :: $List[a_89] );
+  Prelude-Concat-1 : Concat[()] → () ;
+  Prelude-Concat-2 : Concat[((); #ss)] → Concat[#ss] ;
+  Prelude-Concat-3 : Concat[((#1; #s); #ss)] → (#1; Concat[(#s; #ss)]) ;
+  ContainsName[NameSet, $String] :: Boolean ;
+  Prelude-ContainsName-1[Data[#Names, #Name]] :
+    ContainsName[NAME_SET[#Names], #Name]
+    →
+    $[If, $[Contains, #Names, $[:, ";", #Name, ";"]], B_TRUE, B_FALSE]
+   ;
+  (∀ a_68 . CookError[$String] :: a_68 );
+  CookError-1[Data[#message]] : CookError[#message] → $[Error, #message] ;
+  (∀ a_35 b . Drop[Lifted[a_35], x : a_35 . $sort[b], b] :: b );
+  Prelude-Drop-1 : Drop[LIFTED[#], a_57 . #1[a_57], #2] → #1[#] ;
+  Prelude-Drop-2 : Drop[BOTTOM, a_87 . #1[a_87], #2] → #2 ;
+  EmptyTextMap :: TextMapSort ;
+  Prelude-EmptyTextMap-1 : EmptyTextMap → TEXT_MAP[()] ;
+  ExtractSubstitutedSort[HxSubstituteSort] :: Text ;
+  ExtractSubstitutedSort-1[Free[(v1 :: Text) ]] :
+    ExtractSubstitutedSort[HX_M_SubstituteSort[v1, #Sort2#]]
+    →
+    $TextCons[$TextEmbed[AsText[v1]], $TextNil]
+   ;
+  FirstName[NameSet] :: $String ;
+  Prelude-FirstName-1[Data[#Names]] : FirstName[NAME_SET[#Names]] → $[BeforeFirst, $[AfterFirst, #Names, ";"], ";"] ;
+  (∀ a_54 b_59 . Fold[x_64 : a_54 z : b_59 . $sort[b_59], $List[a_54], b_59] :: b_59 );
+  Prelude-Fold-1 : Fold[x_3 z_53 . #[x_3, z_53], (), #z] → #z ;
+  Prelude-Fold-2 : Fold[x_53 z_64 . #[x_53, z_64], (#x; #xs), #z] → #[#x, Fold[x_83 z_58 . #[x_83, z_58], #xs, #z]] ;
+  (∀ c b_79 a_19 . Fold2[x_85 : a_19 y : b_79 z_96 : c . $sort[c], $List[a_19], $List[b_79], c] :: c );
+  Prelude-Fold2-1 : Fold2[x_8 y_90 z_8 . #[x_8, y_90, z_8], (), #_, #z] → #z ;
+  Prelude-Fold2-2 : Fold2[x_32 y_70 z_21 . #[x_32, y_70, z_21], #_, (), #z] → #z ;
+  Prelude-Fold2-3 :
+    Fold2[x_31 y_44 z_89 . #[x_31, y_44, z_89], (#x; #xs), (#y; #ys), #z]
+    →
+    #[#x, #y, Fold2[x_89 y_5 z_59 . #[x_89, y_5, z_59], #xs, #ys, #z]]
+   ;
+  (∀ b_55 . FoldNamesWhen[ok : Ok x_39 : $String y_76 : b_55 . $sort[b_55], NameSet, b_55] :: b_55 );
+  Prelude-FoldNamesWhen-1 :
+    FoldNamesWhen[ok_52 x_30 y_55 . #[ok_52, x_30, y_55], #List, #Base]
+    →
+    FoldWhen[ok_2 x_10 y_59 . #[ok_2, x_10, y_59], NameSetList[#List], #Base]
+   ;
+  (∀ b_64 a_12 . FoldWhen[ok_23 : Ok x_60 : a_12 z_61 : b_64 . $sort[b_64], $List[a_12], b_64] :: b_64 );
+  Prelude-FoldWhen-1 : FoldWhen[ok_38 x_87 z_48 . #[ok_38, x_87, z_48], (), #z] → #z ;
+  Prelude-FoldWhen-2 :
+    FoldWhen[ok_43 x_20 z_33 . #[ok_43, x_20, z_33], (#x; #xs), #z]
+    →
+    #[OK, #x, FoldWhen[ok_48 x_21 z_94 . #[ok_48, x_21, z_94], #xs, #z]]
+   ;
+  HasNames[NameSet] :: Boolean ;
+  Prelude-HasNames-1[Data[#Names]] :
+    HasNames[NAME_SET[#Names]]
+    →
+    $[IfEmpty, #Names, B_FALSE, $[If, $[Equal, #Names, ";"], B_FALSE, B_TRUE]]
+   ;
+  (∀ a_66 . Hd[$List[a_66]] :: a_66 );
+  Prelude-Hd-1 : Hd[(#; ##)] → # ;
+  Prelude-Hd-2 : Hd[()] → $[Error, "Hd of empty list"] ;
+  (∀ a_28 . If[Boolean, a_28, a_28] :: a_28 );
+  Prelude-If-1 : If[B_TRUE, #1, #2] → #1 ;
+  Prelude-If-2 : If[B_FALSE, #1, #2] → #2 ;
+  (∀ a_70 . IfAliasKind[FormKind, a_70, a_70] :: a_70 );
+  IfAliasKind-1 : IfAliasKind[FK_ALIAS, #1, #2] → #1 ;
+  IfAliasKind-2 : IfAliasKind[FK_SYMBOL[#IsStatic], #1, #2] → #1 ;
+  IfAliasKind-3[Data[#Kind]] :
+    IfAliasKind[$[NotMatch, FK_ALIAS, $[NotMatch, FK_SYMBOL[#IsStatic], #Kind]], #1, #2]
+    →
+    #2
+   ;
+  (∀ a_48 b_11 . IfEmpty[$List[a_48], b_11, b_11] :: b_11 );
+  Prelude-IfEmpty-1 : IfEmpty[(), #1, #2] → #1 ;
+  Prelude-IfEmpty-2 : IfEmpty[(#; ##), #1, #2] → #2 ;
+  (∀ a_13 b_40 . IfLifted[Lifted[a_13], b_40, b_40] :: b_40 );
+  Prelude-IfLifted-1 : IfLifted[LIFTED[#], #1, #2] → #1 ;
+  Prelude-IfLifted-2 : IfLifted[BOTTOM, #1, #2] → #2 ;
+  (∀ b_34 a_53 . IfSingleton[$List[a_53], b_34, b_34] :: b_34 );
+  Prelude-IfSingleton-1 : IfSingleton[(), #1, #2] → #2 ;
+  Prelude-IfSingleton-2 : IfSingleton[(#; ##), #1, #2] → IfEmpty[##, #1, #2] ;
+  (∀ a_75 . IfSingletonRepeat[HxRepeat, a_75, a_75] :: a_75 );
+  IfSingletonRepeat-1 : IfSingletonRepeat[HX_M_RepeatSingle, #1, #2] → #1 ;
+  IfSingletonRepeat-2 : IfSingletonRepeat[HX_M_RepeatMaybe, #1, #2] → #2 ;
+  IfSingletonRepeat-3 : IfSingletonRepeat[HX_M_RepeatMaybeSome, #1, #2] → #2 ;
+  IfSingletonRepeat-4 : IfSingletonRepeat[HX_M_RepeatSome, #1, #2] → #2 ;
+  IfSingletonRepeat-5 : IfSingletonRepeat[HX_M_RepeatSomeSep[#RegExpLeaf#], #1, #2] → #2 ;
+  {$String : DeclarationMapEntry}InheritedMapNames :: NameSet ;
+  InheritedMapNames-1 :
+    {#DM}
+    InheritedMapNames
+    →
+    FoldWhen[ok_67 k ns . {#DM}KeepInheritedMapEntry[ok_67, k, ns], $[{#DM}Keys[$String]], NoNames]
+   ;
+  {$String : DeclarationMapEntry}InheritedNames :: NameSet ;
+  InheritedNames-1 :
+    {#DM}
+    InheritedNames
+    →
+    FoldWhen[ok_10 k_52 ns_30 . {#DM}KeepInheritedEntry[ok_10, k_52, ns_30], $[{#DM}Keys[$String]], NoNames]
+   ;
+  (∀ a_51 . JoinMappedTextMaps[x_42 : a_51 . TextMapSort, $List[a_51]] :: TextMapSort );
+  Prelude-JoinMappedTextMaps-1[Data[#List]] :
+    JoinMappedTextMaps[x_71 . #[x_71], #List]
+    →
+    JoinMappedTextMaps2[x_96 . #[x_96], #List, EmptyTextMap]
+   ;
+  (∀ a_15 . JoinMappedTextMaps2[x_70 : a_15 . TextMapSort, $List[a_15], TextMapSort] :: TextMapSort );
+  Prelude-JoinMappedTextMaps2-1[Data[#Map]] : JoinMappedTextMaps2[x_66 . #[x_66], (), #Map] → #Map ;
+  Prelude-JoinMappedTextMaps2-2[Data[#Map]] :
+    JoinMappedTextMaps2[x_54 . #[x_54], (#t; #ts), #Map]
+    →
+    JoinTextMaps[#[#t], JoinMappedTextMaps2[x_94 . #[x_94], #ts, #Map]]
+   ;
+  JoinTextMaps[TextMapSort, TextMapSort] :: TextMapSort ;
+  Prelude-JoinTextMaps-1 :
+    JoinTextMaps[{#map1}TEXT_MAP[#Keys1], #TextMap2]
+    →
+    {#map1}
+    JoinTextMaps2[#Keys1, #TextMap2]
+   ;
+  {$String : Text}JoinTextMaps2[$List[$String], TextMapSort] :: TextMapSort ;
+  Prelude-JoinTextMaps2-1 : {#map1}JoinTextMaps2[(), #TextMap2] → #TextMap2 ;
+  Prelude-JoinTextMaps2-2 :
+    {#map1}
+    JoinTextMaps2[(#Key1; #Keys1), {#map2}TEXT_MAP[#Keys2]]
+    →
+    $[
+     {#map2}
+     IfDef,
+     #Key1,
+     {#map1}
+     JoinTextMaps2[#Keys1, {#map2}TEXT_MAP[#Keys2]],
+     {#map1}
+     JoinTextMaps2[#Keys1, {#map2; #Key1 : $[{#map1}Get[Text], #Key1]}TEXT_MAP[(#Key1; #Keys2)]]]
+   ;
+  {$String : DeclarationMapEntry}KeepInheritedEntry[Ok, $String, NameSet] :: NameSet ;
+  KeepInheritedEntry-1 :
+    {#DM}
+    KeepInheritedEntry[OK, #name, #synthesized]
+    →
+    KeepInheritedEntry1[$[{#DM}Get[DeclarationMapEntry], #name, DME_NONE], #synthesized]
+   ;
+  KeepInheritedEntry1[DeclarationMapEntry, NameSet] :: NameSet ;
+  KeepInheritedEntry1-1[Data[#entry]] :
+    KeepInheritedEntry1[#entry, #synthesized]
+    →
+    KeepInheritedEntry2[#entry, #synthesized]
+   ;
+  KeepInheritedEntry2[DeclarationMapEntry, NameSet] :: NameSet ;
+  KeepInheritedEntry2-1 :
+    KeepInheritedEntry2[DME_ATTRIBUTE[HX_M_AttributeKindDown, #name, #form, #options], #synthesized]
+    →
+    AddName[#synthesized, #name]
+   ;
+  KeepInheritedEntry2-2 :
+    KeepInheritedEntry2[$[NotMatch, DME_ATTRIBUTE[HX_M_AttributeKindDown, #name, #form, #options], #_], #synthesized]
+    →
+    #synthesized
+   ;
+  {$String : DeclarationMapEntry}KeepInheritedMapEntry[Ok, $String, NameSet] :: NameSet ;
+  KeepInheritedMapEntry-1 :
+    {#DM}
+    KeepInheritedMapEntry[OK, #name, #inheritedmaps]
+    →
+    KeepInheritedMapEntry1[$[{#DM}Get[DeclarationMapEntry], #name, DME_NONE], #inheritedmaps]
+   ;
+  KeepInheritedMapEntry1[DeclarationMapEntry, NameSet] :: NameSet ;
+  KeepInheritedMapEntry1-1[Data[#entry]] :
+    KeepInheritedMapEntry1[#entry, #inheritedmaps]
+    →
+    KeepInheritedMapEntry2[#entry, #inheritedmaps]
+   ;
+  KeepInheritedMapEntry2[DeclarationMapEntry, NameSet] :: NameSet ;
+  KeepInheritedMapEntry2-1 :
+    KeepInheritedMapEntry2[DME_ATTRIBUTE[HX_M_AttributeKindDown, #name, HX_M_AttributeFormMap[#Sort1#, #Sort2#], #options], #inheritedmaps]
+    →
+    AddName[#inheritedmaps, #name]
+   ;
+  KeepInheritedMapEntry2-2 :
+    KeepInheritedMapEntry2[
+     $[NotMatch, DME_ATTRIBUTE[HX_M_AttributeKindDown, #name, HX_M_AttributeFormMap[#Sort1#, #Sort2#], #options], #_],
+     #inheritedmaps]
+    →
+    #inheritedmaps
+   ;
+  {$String : DeclarationMapEntry}KeepSynthesizedEntry[Ok, $String, NameSet] :: NameSet ;
+  KeepSynthesizedEntry-1 :
+    {#DM}
+    KeepSynthesizedEntry[OK, #name, #synthesized]
+    →
+    KeepSynthesizedEntry1[$[{#DM}Get[DeclarationMapEntry], #name, DME_NONE], #synthesized]
+   ;
+  KeepSynthesizedEntry1[DeclarationMapEntry, NameSet] :: NameSet ;
+  KeepSynthesizedEntry1-1[Data[#entry]] :
+    KeepSynthesizedEntry1[#entry, #synthesized]
+    →
+    KeepSynthesizedEntry2[#entry, #synthesized]
+   ;
+  KeepSynthesizedEntry2[DeclarationMapEntry, NameSet] :: NameSet ;
+  KeepSynthesizedEntry2-1 :
+    KeepSynthesizedEntry2[DME_ATTRIBUTE[HX_M_AttributeKindUp, #name, #form, #options], #synthesized]
+    →
+    AddName[#synthesized, #name]
+   ;
+  KeepSynthesizedEntry2-2 :
+    KeepSynthesizedEntry2[$[NotMatch, DME_ATTRIBUTE[HX_M_AttributeKindUp, #name, #form, #options], #_], #synthesized]
+    →
+    #synthesized
+   ;
+  {$String : DeclarationMapEntry}KeepSynthesizedMapEntry[Ok, $String, NameSet] :: NameSet ;
+  KeepSynthesizedMapEntry-1 :
+    {#DM}
+    KeepSynthesizedMapEntry[OK, #name, #synthesizedmaps]
+    →
+    KeepSynthesizedMapEntry1[$[{#DM}Get[DeclarationMapEntry], #name, DME_NONE], #synthesizedmaps]
+   ;
+  KeepSynthesizedMapEntry1[DeclarationMapEntry, NameSet] :: NameSet ;
+  KeepSynthesizedMapEntry1-1[Data[#entry]] :
+    KeepSynthesizedMapEntry1[#entry, #synthesizedmaps]
+    →
+    KeepSynthesizedMapEntry2[#entry, #synthesizedmaps]
+   ;
+  KeepSynthesizedMapEntry2[DeclarationMapEntry, NameSet] :: NameSet ;
+  KeepSynthesizedMapEntry2-1 :
+    KeepSynthesizedMapEntry2[DME_ATTRIBUTE[HX_M_AttributeKindUp, #name, HX_M_AttributeFormMap[#Sort1#, #Sort2#], #options], #synthesizedmaps]
+    →
+    AddName[#synthesizedmaps, #name]
+   ;
+  KeepSynthesizedMapEntry2-2 :
+    KeepSynthesizedMapEntry2[
+     $[NotMatch, DME_ATTRIBUTE[HX_M_AttributeKindUp, #name, HX_M_AttributeFormMap[#Sort1#, #Sort2#], #options], #_],
+     #synthesizedmaps]
+    →
+    #synthesizedmaps
+   ;
+  (∀ b_14 a_94 . Map[x_16 : a_94 . $sort[b_14], $List[a_94]] :: $List[b_14] );
+  Prelude-Map-1 : Map[x_77 . #[x_77], ()] → () ;
+  Prelude-Map-2 : Map[x_95 . #[x_95], (#1; #s)] → (#[#1]; Map[x_129 . #[x_129], #s]) ;
+  (∀ a_85 b_8 . MapWhen[ok_33 : Ok x_14 : a_85 . $sort[b_8], $List[a_85]] :: $List[b_8] );
+  Prelude-MapWhen-1 : MapWhen[ok_70 x_187 . #[ok_70, x_187], ()] → () ;
+  Prelude-MapWhen-2 :
+    MapWhen[ok_49 x_51 . #[ok_49, x_51], (#1; #s)]
+    →
+    (#[OK, #1]; MapWhen[ok_93 x_1 . #[ok_93, x_1], #s])
+   ;
+  NameSetList[NameSet] :: $List[$String] ;
+  Prelude-NameSetList-1[Data[#Names]] : NameSetList[#Names] → If[HasNames[#Names], NameSetList1[#Names], ()] ;
+  NameSetList1[NameSet] :: $List[$String] ;
+  Prelude-NameSetList1-1 :
+    NameSetList1[NAME_SET[#Names]]
+    →
+    $[Split, $[Substring, #Names, 1, $[Minus, $[Length, #Names], 1]], ";"]
+   ;
+  NestedRepeat[HxRepeat, HxRepeat] :: HxRepeat ;
+  NestedRepeat-many-many : NestedRepeat[HX_M_RepeatMaybeSome, HX_M_RepeatMaybeSome] → HX_M_RepeatMaybeSome ;
+  NestedRepeat-many-maybe : NestedRepeat[HX_M_RepeatMaybeSome, HX_M_RepeatMaybe] → HX_M_RepeatMaybeSome ;
+  NestedRepeat-many-single : NestedRepeat[HX_M_RepeatMaybeSome, HX_M_RepeatSingle] → HX_M_RepeatMaybeSome ;
+  NestedRepeat-many-some : NestedRepeat[HX_M_RepeatMaybeSome, HX_M_RepeatSome] → HX_M_RepeatMaybeSome ;
+  NestedRepeat-many-somesep :
+    NestedRepeat[HX_M_RepeatMaybeSome, HX_M_RepeatSomeSep[#RegExpLeaf2#]]
+    →
+    $[Error, "Cannot nest * in +_\'...\' repeater."]
+   ;
+  NestedRepeat-maybe-many : NestedRepeat[HX_M_RepeatMaybe, HX_M_RepeatMaybeSome] → HX_M_RepeatMaybeSome ;
+  NestedRepeat-maybe-maybe : NestedRepeat[HX_M_RepeatMaybe, HX_M_RepeatMaybe] → HX_M_RepeatMaybe ;
+  NestedRepeat-maybe-single : NestedRepeat[HX_M_RepeatMaybe, HX_M_RepeatSingle] → HX_M_RepeatMaybe ;
+  NestedRepeat-maybe-some : NestedRepeat[HX_M_RepeatMaybe, HX_M_RepeatSome] → HX_M_RepeatMaybeSome ;
+  NestedRepeat-maybe-somesep :
+    NestedRepeat[HX_M_RepeatMaybe, HX_M_RepeatSomeSep[#RegExpLeaf2#]]
+    →
+    $[Error, "Cannot nest ? in +_\'...\' repeater."]
+   ;
+  NestedRepeat-single-many : NestedRepeat[HX_M_RepeatSingle, HX_M_RepeatMaybeSome] → HX_M_RepeatMaybeSome ;
+  NestedRepeat-single-maybe : NestedRepeat[HX_M_RepeatSingle, HX_M_RepeatMaybe] → HX_M_RepeatMaybe ;
+  NestedRepeat-single-single : NestedRepeat[HX_M_RepeatSingle, HX_M_RepeatSingle] → HX_M_RepeatSingle ;
+  NestedRepeat-single-some : NestedRepeat[HX_M_RepeatSingle, HX_M_RepeatSome] → HX_M_RepeatSome ;
+  NestedRepeat-single-somesep :
+    NestedRepeat[HX_M_RepeatSingle, HX_M_RepeatSomeSep[#RegExpLeaf2#]]
+    →
+    HX_M_RepeatSomeSep[#RegExpLeaf2#]
+   ;
+  NestedRepeat-some-many : NestedRepeat[HX_M_RepeatSome, HX_M_RepeatMaybeSome] → HX_M_RepeatMaybeSome ;
+  NestedRepeat-some-maybe : NestedRepeat[HX_M_RepeatSome, HX_M_RepeatMaybe] → HX_M_RepeatMaybeSome ;
+  NestedRepeat-some-single : NestedRepeat[HX_M_RepeatSome, HX_M_RepeatSingle] → HX_M_RepeatSome ;
+  NestedRepeat-some-some : NestedRepeat[HX_M_RepeatSome, HX_M_RepeatSome] → HX_M_RepeatSome ;
+  NestedRepeat-some-somesep :
+    NestedRepeat[HX_M_RepeatSome, HX_M_RepeatSomeSep[#RegExpLeaf2#]]
+    →
+    HX_M_RepeatSomeSep[#RegExpLeaf2#]
+   ;
+  NestedRepeat-somesep-many :
+    NestedRepeat[HX_M_RepeatSomeSep[#RegExpLeaf1#], HX_M_RepeatMaybeSome]
+    →
+    $[Error, "Cannot nest +_\'...\' in * repeater."]
+   ;
+  NestedRepeat-somesep-maybe :
+    NestedRepeat[HX_M_RepeatSomeSep[#RegExpLeaf1#], HX_M_RepeatMaybe]
+    →
+    $[Error, "Cannot nest +_\'...\' in ? repeater."]
+   ;
+  NestedRepeat-somesep-single :
+    NestedRepeat[HX_M_RepeatSomeSep[#RegExpLeaf1#], HX_M_RepeatSingle]
+    →
+    HX_M_RepeatSomeSep[#RegExpLeaf1#]
+   ;
+  NestedRepeat-somesep-some :
+    NestedRepeat[HX_M_RepeatSomeSep[#RegExpLeaf1#], HX_M_RepeatSome]
+    →
+    $[Error, "Cannot nest +_\'...\' in + repeater."]
+   ;
+  NestedRepeat-somesep-somesep :
+    NestedRepeat[HX_M_RepeatSomeSep[#RegExpLeaf1#], HX_M_RepeatSomeSep[#RegExpLeaf2#]]
+    →
+    $[Error, "Cannot nest +_\'...\' in another +_\'...\' repeater."]
+   ;
+  NewLine :: Text ;
+  Prelude-NewLine-1 : NewLine → $TextCons[$TextChars["\u21b2"], $TextNil] ;
+  NoNames :: NameSet ;
+  Prelude-NoNames-1 : NoNames → NAME_SET[";"] ;
+  NumberToText[$Numeric] :: Text ;
+  Prelude-NumberToText-1[Data[#n]] : NumberToText[#n] → $TextCons[$TextChars[$[FormatNumber, #n]], $TextNil] ;
+  Or[Boolean, Boolean] :: Boolean ;
+  Prelude-Or-1 : Or[B_TRUE, #] → B_TRUE ;
+  Prelude-Or-2 : Or[B_FALSE, #] → # ;
+  PG[HxModule] :: Text ;
+  PG-1 :
+    PG[HX_M_top__module[HX_M_module[#ModuleName#, #Declarations#]]]
+    →
+    PG1[#ModuleName#, PG-ResolveImports[#Declarations#, #ModuleName#]]
+   ;
+  PG-AttributeCollection[FormKind, $String, $Numeric, Text, Boolean] :: Text ;
+  AttributeCollection-1 :
+    PG-AttributeCollection[#ModuleName, #Kind, #SortName, #Prec, #Construct, B_FALSE]
+    →
+    #Construct
+   ;
+  AttributeCollection-2 :
+    PG-AttributeCollection[#ModuleName, #Kind, #SortName, #Prec, #Construct, B_TRUE]
+    →
+    $TextCons[
+     $TextChars["<"],
+     $TextCons[
+      $TextEmbed[AsText[PG-ProductionNameWithPrecText[#SortName, #Prec]]],
+      $TextCons[$TextChars["LR "], $TextCons[$TextEmbed[AsText[#Construct]], $TextCons[$TextChars[">"], $TextNil]]]]]
+   ;
+  PG-AttributeProduction[FormKind, $String, $Numeric, Boolean] :: TextMapSort ;
+  AttributeProduction-1 :
+    PG-AttributeProduction[#ModuleName, #dontcare, #SortName, #Prec, #IsLeftRecursive]
+    →
+    EmptyTextMap
+   ;
+  PG-BaseSortName[HxSort] :: $String ;
+  BaseSortName-1[Data[#Sort]] : PG-BaseSortName[#Sort] → PG-BaseSortName2[#Sort] ;
+  PG-BaseSortName2[HxSort] :: $String ;
+  BaseSortName2-1 :
+    PG-BaseSortName2[HX_M_Sort[HX_M_SortName[#SortName#, #MetaVariables#], #SimpleSorts#]]
+    →
+    #SortName#
+   ;
+  BaseSortName2-2 :
+    PG-BaseSortName2[$[NotMatch, HX_M_Sort[HX_M_SortName[#SortName#, #MetaVariables#], #SimpleSorts#], #]]
+    →
+    "BAD"
+   ;
+  PG-DeclareRegExp[$List[HxRegExpChoice], $String, $String] :: Text ;
+  DeclareRegExp-1 :
+    PG-DeclareRegExp[(#RegExpChoice; #RegExp), #ModuleName, #id]
+    →
+    $TextCons[
+     $TextEmbed[AsText[PG-DeclareRegExpChoice[#RegExpChoice, #ModuleName, #id]]],
+     $TextCons[$TextEmbed[AsText[PG-DeclareRegExp[#RegExp, #ModuleName, #id]]], $TextNil]]
+   ;
+  DeclareRegExp-2 : PG-DeclareRegExp[(), #ModuleName, #id] → $TextNil ;
+  PG-DeclareRegExpChoice[HxRegExpChoice, $String, $String] :: Text ;
+  DeclareRegExpChoice-1 :
+    PG-DeclareRegExpChoice[HX_M_nested[#RegExpSimple1#, #RegExpSimple2#], #ModuleName, #id]
+    →
+    $TextCons[
+     $TextBreak["\n"],
+     $TextCons[
+      $TextChars["%{"],
+      $TextCons[
+       $TextBreak["\n"],
+       $TextCons[
+        $TextChars["/* token "],
+        $TextCons[
+         $TextChars[#id],
+         $TextCons[
+          $TextChars[". */"],
+          $TextCons[
+           $TextBreak["\n"],
+           $TextCons[
+            $TextChars["MORE : { < "],
+            $TextCons[
+             $TextEmbed[AsText[PG-InlineRegExpSimple[#RegExpSimple1#, #ModuleName, #id]]],
+             $TextCons[
+              $TextChars[" > { nesting = 0; nestedState = curLexState; } : IN_"],
+              $TextCons[
+               $TextEmbed[AsText[PG-TokenNameText[#id]]],
+               $TextCons[
+                $TextChars[" }"],
+                $TextCons[
+                 $TextBreak["\n"],
+                 $TextCons[
+                  $TextChars["<IN_"],
+                  $TextCons[
+                   $TextEmbed[AsText[PG-TokenNameText[#id]]],
+                   $TextCons[
+                    $TextChars["> MORE : { < "],
+                    $TextCons[
+                     $TextEmbed[AsText[PG-InlineRegExpSimple[#RegExpSimple1#, #ModuleName, #id]]],
+                     $TextCons[
+                      $TextChars[" > { nesting = 1; } : IN_NESTED_"],
+                      $TextCons[
+                       $TextEmbed[AsText[PG-TokenNameText[#id]]],
+                       $TextCons[
+                        $TextChars[" }"],
+                        $TextCons[
+                         $TextBreak["\n"],
+                         $TextCons[
+                          $TextChars["<IN_NESTED_"],
+                          $TextCons[
+                           $TextEmbed[AsText[PG-TokenNameText[#id]]],
+                           $TextCons[
+                            $TextChars["> MORE : { < "],
+                            $TextCons[
+                             $TextEmbed[AsText[PG-InlineRegExpSimple[#RegExpSimple1#, #ModuleName, #id]]],
+                             $TextCons[
+                              $TextChars[" > { nesting++; } }"],
+                              $TextCons[
+                               $TextBreak["\n"],
+                               $TextCons[
+                                $TextChars["<IN_NESTED_"],
+                                $TextCons[
+                                 $TextEmbed[AsText[PG-TokenNameText[#id]]],
+                                 $TextCons[
+                                  $TextChars["> MORE : { < "],
+                                  $TextCons[
+                                   $TextEmbed[AsText[PG-InlineRegExpSimple[#RegExpSimple2#, #ModuleName, #id]]],
+                                   $TextCons[
+                                    $TextChars[" > { if (--nesting <= 0) SwitchTo(IN_"],
+                                    $TextCons[
+                                     $TextEmbed[AsText[PG-TokenNameText[#id]]],
+                                     $TextCons[
+                                      $TextChars["); } }"],
+                                      $TextCons[
+                                       $TextBreak["\n"],
+                                       $TextCons[
+                                        $TextChars["<IN_"],
+                                        $TextCons[
+                                         $TextEmbed[AsText[PG-TokenNameText[#id]]],
+                                         $TextCons[
+                                          $TextChars["> "],
+                                          $TextCons[
+                                           $TextChars[$[If, $[Equal, #id, "space$"], "SKIP", "TOKEN"]],
+                                           $TextCons[
+                                            $TextChars[" : { < T_NESTED_"],
+                                            $TextCons[
+                                             $TextEmbed[AsText[PG-TokenNameText[#id]]],
+                                             $TextCons[
+                                              $TextChars[" : "],
+                                              $TextCons[
+                                               $TextEmbed[AsText[PG-InlineRegExpSimple[#RegExpSimple2#, #ModuleName, #id]]],
+                                               $TextCons[
+                                                $TextChars[" > { SwitchTo(nestedState); } }"],
+                                                $TextCons[
+                                                 $TextBreak["\n"],
+                                                 $TextCons[
+                                                  $TextChars["<IN_"],
+                                                  $TextCons[
+                                                   $TextEmbed[AsText[PG-TokenNameText[#id]]],
+                                                   $TextCons[
+                                                    $TextChars[",IN_NESTED_"],
+                                                    $TextCons[
+                                                     $TextEmbed[AsText[PG-TokenNameText[#id]]],
+                                                     $TextCons[
+                                                      $TextChars["> MORE : { < ~[] > }"],
+                                                      $TextCons[
+                                                       $TextBreak["\n"],
+                                                       $TextCons[$TextChars["%}"], $TextCons[$TextBreak["\n"], $TextNil]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+   ;
+  DeclareRegExpChoice-2 :
+    PG-DeclareRegExpChoice[HX_M_RegExpConcat[#RegExpUnits#], #ModuleName, #id]
+    →
+    PG-DeclareRegExpUnits[#RegExpUnits#, #ModuleName, #id]
+   ;
+  PG-DeclareRegExpSimple[HxRegExpSimple, $String, $String] :: Text ;
+  DeclareRegExpSimple-1 : PG-DeclareRegExpSimple[HX_M_RegExpString[#String#], #ModuleName, #id] → $TextNil ;
+  DeclareRegExpSimple-2 : PG-DeclareRegExpSimple[HX_M_RegExpWord[#Word#], #ModuleName, #id] → $TextNil ;
+  DeclareRegExpSimple-3 : PG-DeclareRegExpSimple[HX_M_RegExpRef[#FragmentRef#], #ModuleName, #id] → $TextNil ;
+  DeclareRegExpSimple-4 : PG-DeclareRegExpSimple[HX_M_RegExpAny, #ModuleName, #id] → $TextNil ;
+  DeclareRegExpSimple-5 : PG-DeclareRegExpSimple[HX_M_RegExpClass[#RegExpClass#], #ModuleName, #id] → $TextNil ;
+  DeclareRegExpSimple-6 :
+    PG-DeclareRegExpSimple[HX_M_RegExpNest[#RegExp#], #ModuleName, #id]
+    →
+    PG-DeclareRegExp[#RegExp#, #ModuleName, #id]
+   ;
+  PG-DeclareRegExpUnit[HxRegExpUnit, $String, $String] :: Text ;
+  DeclareRegExpUnit-1 :
+    PG-DeclareRegExpUnit[HX_M_RegExpUnit[#RegExpSimple#, HX_M_RepeatSingle], #ModuleName, #id]
+    →
+    PG-DeclareRegExpSimple[#RegExpSimple#, #ModuleName, #id]
+   ;
+  DeclareRegExpUnit-2 :
+    PG-DeclareRegExpUnit[HX_M_RegExpUnit[#RegExpSimple#, HX_M_RepeatMaybe], #ModuleName, #id]
+    →
+    PG-DeclareRegExpSimple[#RegExpSimple#, #ModuleName, #id]
+   ;
+  DeclareRegExpUnit-3 :
+    PG-DeclareRegExpUnit[HX_M_RegExpUnit[#RegExpSimple#, HX_M_RepeatMaybeSome], #ModuleName, #id]
+    →
+    PG-DeclareRegExpSimple[#RegExpSimple#, #ModuleName, #id]
+   ;
+  DeclareRegExpUnit-4 :
+    PG-DeclareRegExpUnit[HX_M_RegExpUnit[#RegExpSimple#, HX_M_RepeatSome], #ModuleName, #id]
+    →
+    PG-DeclareRegExpSimple[#RegExpSimple#, #ModuleName, #id]
+   ;
+  DeclareRegExpUnit-5 :
+    PG-DeclareRegExpUnit[HX_M_RegExpUnit[#RegExpSimple#, HX_M_RepeatSomeSep[#RegExpLeaf#]], #ModuleName, #id]
+    →
+    $TextCons[
+     $TextEmbed[AsText[PG-DeclareRegExpSimple[#RegExpSimple#, #ModuleName, #id]]],
+     $TextCons[$TextEmbed[AsText[PG-DeclareRegExpSimple[#RegExpLeaf#, #ModuleName, #id]]], $TextNil]]
+   ;
+  PG-DeclareRegExpUnits[$List[HxRegExpUnit], $String, $String] :: Text ;
+  DeclareRegExpUnits-1 :
+    PG-DeclareRegExpUnits[(#RegExpUnit#; #RegExpUnits#), #ModuleName, #id]
+    →
+    $TextCons[
+     $TextEmbed[AsText[PG-DeclareRegExpUnit[#RegExpUnit#, #ModuleName, #id]]],
+     $TextCons[$TextEmbed[AsText[PG-DeclareRegExpUnits[#RegExpUnits#, #ModuleName, #id]]], $TextNil]]
+   ;
+  DeclareRegExpUnits-2 : PG-DeclareRegExpUnits[(), #ModuleName, #id] → $TextNil ;
+  PG-DefineLessEqual[Define, Define] :: Boolean ;
+  DLE-Abstraction-Form : PG-DefineLessEqual[(D_ABSTRACTION a_20 . #D1[a_20]), D_FORM[#F2, #K2]] → B_TRUE ;
+  DLE-Abstraction-Rule : PG-DefineLessEqual[(D_ABSTRACTION a_49 . #D1[a_49]), D_RULE[#R2, #S2, #D2]] → B_TRUE ;
+  DLE-Abstraction-Synthesizes : PG-DefineLessEqual[(D_ABSTRACTION a_23 . #D1[a_23]), D_SYNTHESIZES[#A2]] → B_TRUE ;
+  DLE-Form-Abstraction : PG-DefineLessEqual[D_FORM[#F1, #K1], (D_ABSTRACTION a_22 . #D2[a_22])] → B_FALSE ;
+  DLE-Form-Form : PG-DefineLessEqual[D_FORM[#F1, #FK1], D_FORM[#F2, #FK2]] → PG-FormLess[#F1, #F2] ;
+  DLE-Form-Rule : PG-DefineLessEqual[D_FORM[#F1, #K1], D_RULE[#R2, #S2, #D2]] → B_TRUE ;
+  DLE-Form-Synthesizes : PG-DefineLessEqual[D_FORM[#F1, #K1], D_SYNTHESIZES[#A2]] → B_TRUE ;
+  DLE-Rule-Abstraction : PG-DefineLessEqual[D_RULE[#R1, #S1, #D1], (D_ABSTRACTION a_95 . #D2[a_95])] → B_FALSE ;
+  DLE-Rule-Form : PG-DefineLessEqual[D_RULE[#R1, #S1, #D1], D_FORM[#F2, #K2]] → B_FALSE ;
+  DLE-Rule-Rule : PG-DefineLessEqual[D_RULE[#R1, #S1, #D1], D_RULE[#R2, #S2, #D2]] → B_FALSE ;
+  DLE-Rule-Synthesizes : PG-DefineLessEqual[D_RULE[#R1, #S1, #D1], D_SYNTHESIZES[#A2]] → B_FALSE ;
+  DLE-Syntesizes-Synthesizes : PG-DefineLessEqual[D_SYNTHESIZES[#A1], D_SYNTHESIZES[#A2]] → B_FALSE ;
+  DLE-Synthesizes-Abstraction : PG-DefineLessEqual[D_SYNTHESIZES[#A1], (D_ABSTRACTION a_11 . #D2[a_11])] → B_FALSE ;
+  DLE-Synthesizes-Form : PG-DefineLessEqual[D_SYNTHESIZES[#A1], D_FORM[#F2, #K2]] → B_FALSE ;
+  DLE-Synthesizes-Rule : PG-DefineLessEqual[D_SYNTHESIZES[#A1], D_RULE[#R2, #S2, #D2]] → B_TRUE ;
+  DefineLessEqual-1 :
+    PG-DefineLessEqual[(D_ABSTRACTION a_190 . #Define1[a_190]), (D_ABSTRACTION a_6 . #Define2[a_6])]
+    →
+    (PG-DefineLessEqual2 a_61 . PG-DefineLessEqual[#Define1[a_61], #Define2[a_61]])
+   ;
+  (PG-DefineLessEqual2 a_16 : HxSortParam . Boolean) :: Boolean ;
+  DefineLessEqual2-1 : (PG-DefineLessEqual2 a_72 . B_TRUE) → B_TRUE ;
+  DefineLessEqual2-2 : (PG-DefineLessEqual2 a_65 . B_FALSE) → B_FALSE ;
+  PG-DefinePrec[Define] :: $Numeric ;
+  DefinePrec-1 : PG-DefinePrec[(D_ABSTRACTION a_81 . #Define[a_81])] → PG-DefinePrec[#Define[dummy]] ;
+  DefinePrec-2 :
+    PG-DefinePrec[D_FORM[HX_M_FormParsedSorted[#Name, #ParsedForm, #Precedence, #InheritedRefs], #Kind]]
+    →
+    #Precedence
+   ;
+  DefinePrec-3 :
+    PG-DefinePrec[D_FORM[HX_M_FormParsed[#ParsedForm, #Precedence, #InheritedRefs], #Kind]]
+    →
+    #Precedence
+   ;
+  DefinePrec-4 : PG-DefinePrec[D_FORM[HX_M_FormConstruction[#Constructor, #ScopeSorts, #InheritedRefs], #Kind]] → 0 ;
+  DefinePrec-5 : PG-DefinePrec[D_SYNTHESIZES[#AttributeName]] → 0 ;
+  DefinePrec-6 : PG-DefinePrec[D_RULE[#Rule, #SortName, #IsData]] → 0 ;
+  PG-DefineWrapper[Define, $String, Wrapper] :: Wrapper ;
+  DefineWrapper-1 :
+    PG-DefineWrapper[(D_ABSTRACTION a_96 . #Define[a_96]), #Name, #Wrapper]
+    →
+    PG-DefineWrapper[#Define[dummy], #Name, #Wrapper]
+   ;
+  DefineWrapper-2 :
+    PG-DefineWrapper[D_FORM[HX_M_FormParsedSorted[#Name, #ParsedForm, #Prec, #InheritedRefs], #Kind], #Name, #Wrapper]
+    →
+    PG-DefineWrapperForm[#ParsedForm, #Prec, #Kind, #Name, #Wrapper]
+   ;
+  DefineWrapper-3 :
+    PG-DefineWrapper[D_FORM[HX_M_FormParsed[#ParsedForm, #Prec, #InheritedRefs], #Kind], #Name, #Wrapper]
+    →
+    PG-DefineWrapperForm[#ParsedForm, #Prec, #Kind, #Name, #Wrapper]
+   ;
+  DefineWrapper-4 :
+    PG-DefineWrapper[D_FORM[HX_M_FormConstruction[#Constructor, #ScopeSorts, #InheritedRefs], #Kind], #Name, #Wrapper]
+    →
+    #Wrapper
+   ;
+  DefineWrapper-5 : PG-DefineWrapper[D_SYNTHESIZES[#AttributeName], #Name, #Wrapper] → #Wrapper ;
+  DefineWrapper-6 : PG-DefineWrapper[D_RULE[#Rule, #SortName, #IsData], #Name, #Wrapper] → #Wrapper ;
+  PG-DefineWrapperForm[HxParsedForm, $Numeric, FormKind, $String, Wrapper] :: Wrapper ;
+  DefineWrapperForm-1 :
+    PG-DefineWrapperForm[#ParsedForm, #Prec, FK_SUGAR[#Term], #Name, #OldWrapper]
+    →
+    PG-DefineWrapperSugar[#ParsedForm, $False, #ParsedForm, #Prec, #Term, #Name, #OldWrapper]
+   ;
+  DefineWrapperForm-2 :
+    PG-DefineWrapperForm[#ParsedForm, #Prec, $[NotMatch, FK_SUGAR[#Term], #Kind], #Name, #OldWrapper]
+    →
+    #OldWrapper
+   ;
+  PG-DefineWrapperSugar[HxParsedForm, $Boolean, HxParsedForm, $Numeric, HxTerm, $String, Wrapper] :: Wrapper ;
+  DefineWrapperSugar-1[Data[#Prec1, #Prec]] :
+    PG-DefineWrapperSugar[
+     HX_M_ParsedFormTerm[HX_M_ScopeSortPrecRepeat[#ScopeSort1, #Prec1, #Repeat1], #ParsedForm1],
+     #Candidate,
+     #TopParsedForm,
+     #TopPrec,
+     #TopTerm,
+     #Name,
+     #OldWrapper]
+    →
+    $[
+     If,
+     #Candidate,
+     #OldWrapper,
+     $[
+      If,
+      $[LessThan, #TopPrec, #Prec1],
+      #OldWrapper,
+      PG-DefineWrapperSugar[#ParsedForm1, $True, #TopParsedForm, #TopPrec, #TopTerm, #Name, #OldWrapper]]]
+   ;
+  DefineWrapperSugar-2 :
+    PG-DefineWrapperSugar[HX_M_ParsedFormWord[#Word, #ParsedForm], #Candidate, #TopParsedForm, #TopPrec, #TopTerm, #Name, #OldWrapper]
+    →
+    PG-DefineWrapperSugar[#ParsedForm, #Candidate, #TopParsedForm, #TopPrec, #TopTerm, #Name, #OldWrapper]
+   ;
+  DefineWrapperSugar-3 :
+    PG-DefineWrapperSugar[HX_M_ParsedFormSpace[#Space, #ParsedForm], #Candidate, #TopParsedForm, #TopPrec, #TopTerm, #Name, #OldWrapper]
+    →
+    PG-DefineWrapperSugar[#ParsedForm, #Candidate, #TopParsedForm, #TopPrec, #TopTerm, #Name, #OldWrapper]
+   ;
+  DefineWrapperSugar-4 :
+    PG-DefineWrapperSugar[HX_M_ParsedFormDone, $False, #TopParsedForm, #TopPrec, #TopTerm, #Name, #OldWrapper]
+    →
+    #OldWrapper
+   ;
+  DefineWrapperSugar-5 :
+    PG-DefineWrapperSugar[HX_M_ParsedFormDone, $True, #TopParsedForm, #TopPrec, #TopTerm, #Name, #OldWrapper]
+    →
+    WRAPPER[#TopParsedForm]
+   ;
+  {$String : DeclarationMapEntry}PG-Expand[$List[PFK_SORT], $String, $Numeric, Boolean] :: Text ;
+  Expand-1 :
+    {#DM}
+    PG-Expand[#ModuleName, #PrecPFKs, #SortName, #Prec, #Last?]
+    →
+    {#DM}
+    PG-LeftRecursive[#ModuleName, #PrecPFKs, #SortName, #Prec, #Last?, (), ()]
+   ;
+  {$String : DeclarationMapEntry}PG-Finish[NameSet] :: DeclarationMap ;
+  Finish-1 : {#DM}PG-Finish[#Names] → {#DM}PG-Finish0[#Names, #Names] ;
+  {$String : DeclarationMapEntry}PG-Finish0[NameSet, NameSet] :: DeclarationMap ;
+  Finish0-1 : {#DM}PG-Finish0[#RestNames, #Names] → {#DM}PG-Finish1[HasNames[#RestNames], #RestNames, #Names] ;
+  {$String : DeclarationMapEntry}PG-Finish1[Boolean, NameSet, NameSet] :: DeclarationMap ;
+  Finish1-1 :
+    {#DM}
+    PG-Finish1[B_FALSE, #RestNames, #Names]
+    →
+    {#DM}
+    PG-Finish9[#Names, {#DM}InheritedNames, {#DM}InheritedMapNames, {#DM}SynthesizedNames, {#DM}SynthesizedMapNames]
+   ;
+  Finish1-2 :
+    {#DM}
+    PG-Finish1[B_TRUE, #RestNames, #Names]
+    →
+    {#DM}
+    PG-Finish2[FirstName[#RestNames], RemoveFirstName[#RestNames], #Names]
+   ;
+  {$String : DeclarationMapEntry}PG-Finish2[$String, NameSet, NameSet] :: DeclarationMap ;
+  Finish2-1[Data[#Name]] :
+    {#DM}
+    PG-Finish2[#Name, #RestNames, #Names]
+    →
+    {#DM}
+    PG-Finish3[$[{#DM}Get[DeclarationMapEntry], #Name, DME_NONE], #RestNames, #Names]
+   ;
+  {$String : DeclarationMapEntry}PG-Finish3[DeclarationMapEntry, NameSet, NameSet] :: DeclarationMap ;
+  Finish3-1 : {#DM}PG-Finish3[DME_NONE, #RestNames, #Names] → {#DM}PG-Finish0[#RestNames, #Names] ;
+  Finish3-2 : {#DM}PG-Finish3[DME_TOKEN[#Name], #RestNames, #Names] → {#DM}PG-Finish0[#RestNames, #Names] ;
+  Finish3-3 :
+    {#DM}
+    PG-Finish3[DME_ATTRIBUTE[#AttributeKind1, #AttributeName1, #AttributeForm1, #AttributeOptions1], #RestNames, #Names]
+    →
+    {#DM}
+    PG-Finish0[#RestNames, #Names]
+   ;
+  Finish3-4 :
+    {#DM}
+    PG-Finish3[DME_SORT[#Defines1, #Name1, #Precs1, #Wrapper1, #IsStart], #RestNames, #Names]
+    →
+    {#DM}
+    PG-Finish4[#Precs1, 0, #Name1, #RestNames, #Names]
+   ;
+  {$String : DeclarationMapEntry}PG-Finish4[NameSet, $Numeric, $String, NameSet, NameSet] :: DeclarationMap ;
+  Finish4-1[Data[#Precs]] :
+    {#DM}
+    PG-Finish4[#Precs, #MaxPrec, #Name, #RestNames, #Names]
+    →
+    {#DM}
+    PG-Finish5[HasNames[#Precs], #Precs, #MaxPrec, #Name, #RestNames, #Names]
+   ;
+  {$String : DeclarationMapEntry}PG-Finish5[Boolean, NameSet, $Numeric, $String, NameSet, NameSet] :: DeclarationMap ;
+  Finish5-1 :
+    {#DM}
+    PG-Finish5[B_FALSE, #Precs, #MaxPrec, #Name, #RestNames, #Names]
+    →
+    {#DM}
+    PG-Finish7[#MaxPrec, #Name, #RestNames, #Names]
+   ;
+  Finish5-2 :
+    {#DM}
+    PG-Finish5[B_TRUE, #Precs, #MaxPrec, #Name, #RestNames, #Names]
+    →
+    {#DM}
+    PG-Finish6[FirstName[#Precs], RemoveFirstName[#Precs], #MaxPrec, #Name, #RestNames, #Names]
+   ;
+  {$String : DeclarationMapEntry}PG-Finish6[$String, NameSet, $Numeric, $String, NameSet, NameSet] :: DeclarationMap ;
+  Finish6-1[Data[#Prec, #Precs, #MaxPrec]] :
+    {#DM}
+    PG-Finish6[#Prec, #Precs, #MaxPrec, #Name, #RestNames, #Names]
+    →
+    {#DM}
+    PG-Finish4[
+     #Precs,
+     $[If, $[GreaterThan, $[Decimal, #Prec], #MaxPrec], $[Decimal, #Prec], #MaxPrec],
+     #Name,
+     #RestNames,
+     #Names]
+   ;
+  {$String : DeclarationMapEntry}PG-Finish7[$Numeric, $String, NameSet, NameSet] :: DeclarationMap ;
+  Finish7-1[Data[#Prec, #Name], Share[#RestNames, #Names]] :
+    {#DM}
+    PG-Finish7[#Prec, #Name, #RestNames, #Names]
+    →
+    $[
+     If,
+     $[GreaterThan, #Prec, 0],
+     {#DM}
+     PG-InsertDefine[
+      PG-LinkDefine[#Name, #Prec],
+      B_FALSE,
+      "",
+      #Name,
+      #Names,
+      ¹ok_1 s ss . PG-then-Finish7[¹ok_1, $[Minus, #Prec, 1], s, #RestNames, ss]],
+     {#DM}
+     PG-Finish0[#RestNames, #Names]]
+   ;
+  {$String : DeclarationMapEntry}PG-Finish9[NameSet, NameSet, NameSet, NameSet, NameSet] :: DeclarationMap ;
+  Finish9-1 :
+    {#DM}
+    PG-Finish9[#Names, #InheritedNames, #InheritedMapNames, #SynthesizedNames, #SynthesizedMapNames]
+    →
+    {
+     #DM;
+     $AllSynthesizedNames : DME_NAMES[#SynthesizedNames];
+     $AllInheritedNames : DME_NAMES[#InheritedNames];
+     $AllSynthesizedMapNames : DME_NAMES[#SynthesizedMapNames];
+     $AllInheritedMapNames : DME_NAMES[#InheritedMapNames];
+     $AllNames : DME_NAMES[#Names]}
+    
+    DM[#Names]
+   ;
+  PG-FormInheritedAttributes[HxForm] :: NameSet ;
+  FormInheritedAttributes-1 :
+    PG-FormInheritedAttributes[HX_M_FormParsedSorted[#Name, #ParsedForm, #Prec, #InheritedRefs]]
+    →
+    PG-InheritedRefsList[#InheritedRefs]
+   ;
+  FormInheritedAttributes-2 :
+    PG-FormInheritedAttributes[HX_M_FormParsed[#ParsedForm, #Prec, #InheritedRefs]]
+    →
+    PG-InheritedRefsList[#InheritedRefs]
+   ;
+  FormInheritedAttributes-3 :
+    PG-FormInheritedAttributes[HX_M_FormConstruction[#Constructor, #ScopeSorts, #InheritedRefs]]
+    →
+    PG-InheritedRefsList[#InheritedRefs]
+   ;
+  PG-FormLess[HxForm, HxForm] :: Boolean ;
+  FormLess-1[Data[#Prec1, #Prec2]] :
+    PG-FormLess[
+     HX_M_FormParsedSorted[#Name1, #ParsedForm1, #Prec1, #InheritedRefs1],
+     HX_M_FormParsedSorted[#Name2, #ParsedForm2, #Prec2, #InheritedRefs2]]
+    →
+    $[
+     If,
+     $[NumericEqual, #Prec1, #Prec2],
+     PG-ParsedFormLess[#ParsedForm1, #ParsedForm2],
+     $[If, $[LessThan, #Prec1, #Prec2], B_TRUE, B_FALSE]]
+   ;
+  FormLess-2[Data[#Prec1, #Prec2]] :
+    PG-FormLess[
+     HX_M_FormParsed[#ParsedForm1, #Prec1, #InheritedRefs1],
+     HX_M_FormParsedSorted[#Name2, #ParsedForm2, #Prec2, #InheritedRefs2]]
+    →
+    $[
+     If,
+     $[NumericEqual, #Prec1, #Prec2],
+     PG-ParsedFormLess[#ParsedForm1, #ParsedForm2],
+     $[If, $[LessThan, #Prec1, #Prec2], B_TRUE, B_FALSE]]
+   ;
+  FormLess-3[Data[#Prec1, #Prec2]] :
+    PG-FormLess[
+     HX_M_FormParsedSorted[#Name1, #ParsedForm1, #Prec1, #InheritedRefs1],
+     HX_M_FormParsed[#ParsedForm2, #Prec2, #InheritedRefs2]]
+    →
+    $[
+     If,
+     $[NumericEqual, #Prec1, #Prec2],
+     PG-ParsedFormLess[#ParsedForm1, #ParsedForm2],
+     $[If, $[LessThan, #Prec1, #Prec2], B_TRUE, B_FALSE]]
+   ;
+  FormLess-4[Data[#Prec1, #Prec2]] :
+    PG-FormLess[HX_M_FormParsed[#ParsedForm1, #Prec1, #InheritedRefs1], HX_M_FormParsed[#ParsedForm2, #Prec2, #InheritedRefs2]]
+    →
+    $[
+     If,
+     $[NumericEqual, #Prec1, #Prec2],
+     PG-ParsedFormLess[#ParsedForm1, #ParsedForm2],
+     $[If, $[LessThan, #Prec1, #Prec2], B_TRUE, B_FALSE]]
+   ;
+  FormLess-5 : PG-FormLess[HX_M_FormConstruction[#Constructor1, #ScopeSorts1, #InheritedRefs1], #Form2] → B_FALSE ;
+  FormLess-6 :
+    PG-FormLess[
+     HX_M_FormParsedSorted[#Name1, #ParsedForm1, #Prec1, #InheritedRefs1],
+     HX_M_FormConstruction[#Constructor2, #ScopeSorts2, #InheritedRefs2]]
+    →
+    B_TRUE
+   ;
+  FormLess-7 :
+    PG-FormLess[
+     HX_M_FormParsed[#ParsedForm1, #Prec1, #InheritedRefs1],
+     HX_M_FormConstruction[#Constructor2, #ScopeSorts2, #InheritedRefs2]]
+    →
+    B_TRUE
+   ;
+  PG-InheritedRefsList[$List[HxInheritedRef]] :: NameSet ;
+  InheritedRefsList-1 : PG-InheritedRefsList[()] → NoNames ;
+  InheritedRefsList-2 :
+    PG-InheritedRefsList[(HX_M_InheritedRef[#AttributeName1#]; #refs)]
+    →
+    AddName[PG-InheritedRefsList[#refs], #AttributeName1#]
+   ;
+  PG-InlineRegExp[$List[HxRegExpChoice], $String, $String] :: Text ;
+  InlineRegExp-1 :
+    PG-InlineRegExp[(#RegExpChoice; #RegExp), #ModuleName, #id]
+    →
+    $TextCons[
+     $TextIndent[$TextCons[$TextEmbed[AsText[PG-InlineRegExpChoice[#RegExpChoice, #ModuleName, #id]]], $TextNil]],
+     $TextCons[$TextChars[" "], $TextCons[$TextEmbed[AsText[PG-InlineRegExp2[#RegExp, #ModuleName, #id]]], $TextNil]]]
+   ;
+  PG-InlineRegExp2[$List[HxRegExpChoice], $String, $String] :: Text ;
+  InlineRegExp2-1 :
+    PG-InlineRegExp2[(#RegExpChoice; #RegExp), #ModuleName, #id]
+    →
+    $TextCons[
+     $TextChars["| "],
+     $TextCons[
+      $TextIndent[$TextCons[$TextEmbed[AsText[PG-InlineRegExpChoice[#RegExpChoice, #ModuleName, #id]]], $TextNil]],
+      $TextCons[$TextChars[" "], $TextCons[$TextEmbed[AsText[PG-InlineRegExp2[#RegExp, #ModuleName, #id]]], $TextNil]]]]
+   ;
+  InlineRegExp2-2 : PG-InlineRegExp2[(), #ModuleName, #id] → $TextNil ;
+  PG-InlineRegExpChoice[HxRegExpChoice, $String, $String] :: Text ;
+  InlineRegExpChoice-1 :
+    PG-InlineRegExpChoice[HX_M_nested[#RegExpSimple1#, #RegExpSimple2#], #ModuleName, #id]
+    →
+    $TextCons[$TextChars["NESTED_"], $TextCons[$TextEmbed[AsText[PG-TokenNameText[#id]]], $TextNil]]
+   ;
+  InlineRegExpChoice-2 :
+    PG-InlineRegExpChoice[HX_M_RegExpConcat[#RegExpUnits#], #ModuleName, #id]
+    →
+    PG-InlineRegExpUnits[#RegExpUnits#, #ModuleName, #id]
+   ;
+  PG-InlineRegExpClass1[HxRegExpClass, $String, $String] :: Text ;
+  InlineRegExpClass1-1 :
+    PG-InlineRegExpClass1[HX_M_RegExpClassNot[#RegExpClass], #ModuleName, #id]
+    →
+    $TextCons[
+     $TextChars["~["],
+     $TextCons[
+      $TextEmbed[AsText[PG-InlineRegExpClass2[#RegExpClass, #ModuleName, #id, $TextNil]]],
+      $TextCons[$TextChars["]"], $TextNil]]]
+   ;
+  InlineRegExpClass1-2 :
+    PG-InlineRegExpClass1[$[NotMatch, HX_M_RegExpClassNot[#_], #RegExpClass], #ModuleName, #id]
+    →
+    $TextCons[
+     $TextChars["["],
+     $TextCons[
+      $TextEmbed[AsText[PG-InlineRegExpClass2[#RegExpClass, #ModuleName, #id, $TextNil]]],
+      $TextCons[$TextChars["]"], $TextNil]]]
+   ;
+  PG-InlineRegExpClass2[HxRegExpClass, $String, $String, Text] :: Text ;
+  InlineRegExpClass2-1 :
+    PG-InlineRegExpClass2[HX_M_RegExpClassChar[#Char, #RegExpClass], #ModuleName, #id, #sep]
+    →
+    $TextCons[
+     $TextEmbed[AsText[#sep]],
+     $TextCons[
+      $TextEmbed[AsText[PG-InlineRegExpRangeChar[#Char, #ModuleName, #id]]],
+      $TextCons[
+       $TextEmbed[AsText[PG-InlineRegExpClass2[#RegExpClass, #ModuleName, #id, $TextCons[$TextChars[","], $TextNil]]]],
+       $TextNil]]]
+   ;
+  InlineRegExpClass2-2 :
+    PG-InlineRegExpClass2[HX_M_RegExpClassRange[#lo, #hi, #RegExpClass], #ModuleName, #id, #sep]
+    →
+    $TextCons[
+     $TextEmbed[AsText[#sep]],
+     $TextCons[
+      $TextEmbed[AsText[PG-InlineRegExpRangeChar[#lo, #ModuleName, #id]]],
+      $TextCons[
+       $TextChars["-"],
+       $TextCons[
+        $TextEmbed[AsText[PG-InlineRegExpRangeChar[#hi, #ModuleName, #id]]],
+        $TextCons[
+         $TextEmbed[AsText[PG-InlineRegExpClass2[#RegExpClass, #ModuleName, #id, $TextCons[$TextChars[","], $TextNil]]]],
+         $TextNil]]]]]
+   ;
+  InlineRegExpClass2-3 : PG-InlineRegExpClass2[HX_M_RegExpClassDone, #ModuleName, #id, #sep] → $TextNil ;
+  PG-InlineRegExpRangeChar[$String, $String, $String] :: Text ;
+  InlineRegExpRangeChar-1[Data[#RegExpRangeStartChar#]] :
+    PG-InlineRegExpRangeChar[#RegExpRangeStartChar#, #ModuleName, #id]
+    →
+    $[
+     If,
+     $[Equal, #RegExpRangeStartChar#, "\'"],
+     $TextCons[$TextChars["\"\'\""], $TextNil],
+     $TextCons[$TextChars["\'"], $TextCons[$TextChars[#RegExpRangeStartChar#], $TextCons[$TextChars["\'"], $TextNil]]]]
+   ;
+  PG-InlineRegExpSimple[HxRegExpSimple, $String, $String] :: Text ;
+  InlineRegExpSimple-1 :
+    PG-InlineRegExpSimple[HX_M_RegExpString[#String#], #ModuleName, #id]
+    →
+    $TextCons[$TextChars[#String#], $TextNil]
+   ;
+  InlineRegExpSimple-2 :
+    PG-InlineRegExpSimple[HX_M_RegExpWord[#Word#], #ModuleName, #id]
+    →
+    $TextCons[$TextChars[Stringify[#Word#]], $TextNil]
+   ;
+  InlineRegExpSimple-3 :
+    PG-InlineRegExpSimple[HX_M_RegExpRef[#FragmentRef#], #ModuleName, #id]
+    →
+    $TextCons[$TextEmbed[AsText[PG-TokenNameText[#FragmentRef#]]], $TextNil]
+   ;
+  InlineRegExpSimple-4 :
+    PG-InlineRegExpSimple[HX_M_RegExpAny, #ModuleName, #id]
+    →
+    PG-InlineRegExpSimple[
+     HX_M_RegExpClass[
+      HX_M_RegExpClassNot[HX_M_RegExpClassChar["\\n", HX_M_RegExpClassChar["\\r", HX_M_RegExpClassChar["\\f", HX_M_RegExpClassDone]]]]],
+     #ModuleName,
+     #id]
+   ;
+  InlineRegExpSimple-5 :
+    PG-InlineRegExpSimple[HX_M_RegExpClass[#RegExpClass#], #ModuleName, #id]
+    →
+    PG-InlineRegExpClass1[#RegExpClass#, #ModuleName, #id]
+   ;
+  InlineRegExpSimple-6 :
+    PG-InlineRegExpSimple[HX_M_RegExpNest[#RegExp#], #ModuleName, #id]
+    →
+    $TextCons[
+     $TextChars["( "],
+     $TextCons[$TextEmbed[AsText[PG-InlineRegExp[#RegExp#, #ModuleName, #id]]], $TextCons[$TextChars[" )"], $TextNil]]]
+   ;
+  PG-InlineRegExpUnit[HxRegExpUnit, $String, $String] :: Text ;
+  InlineRegExpUnit-1 :
+    PG-InlineRegExpUnit[HX_M_RegExpUnit[#RegExpSimple#, HX_M_RepeatSingle], #ModuleName, #id]
+    →
+    PG-InlineRegExpSimple[#RegExpSimple#, #ModuleName, #id]
+   ;
+  InlineRegExpUnit-2 :
+    PG-InlineRegExpUnit[HX_M_RegExpUnit[#RegExpSimple#, HX_M_RepeatMaybe], #ModuleName, #id]
+    →
+    $TextCons[
+     $TextChars["( "],
+     $TextCons[
+      $TextEmbed[AsText[PG-InlineRegExpSimple[#RegExpSimple#, #ModuleName, #id]]],
+      $TextCons[$TextChars[" )?"], $TextNil]]]
+   ;
+  InlineRegExpUnit-3 :
+    PG-InlineRegExpUnit[HX_M_RegExpUnit[#RegExpSimple#, HX_M_RepeatMaybeSome], #ModuleName, #id]
+    →
+    $TextCons[
+     $TextChars["( "],
+     $TextCons[
+      $TextEmbed[AsText[PG-InlineRegExpSimple[#RegExpSimple#, #ModuleName, #id]]],
+      $TextCons[$TextChars[" )*"], $TextNil]]]
+   ;
+  InlineRegExpUnit-4 :
+    PG-InlineRegExpUnit[HX_M_RegExpUnit[#RegExpSimple#, HX_M_RepeatSome], #ModuleName, #id]
+    →
+    $TextCons[
+     $TextChars["( "],
+     $TextCons[
+      $TextEmbed[AsText[PG-InlineRegExpSimple[#RegExpSimple#, #ModuleName, #id]]],
+      $TextCons[$TextChars[" )+"], $TextNil]]]
+   ;
+  InlineRegExpUnit-5 :
+    PG-InlineRegExpUnit[HX_M_RegExpUnit[#RegExpSimple#, HX_M_RepeatSomeSep[#RegExpLeaf#]], #ModuleName, #id]
+    →
+    $TextCons[
+     $TextChars["( "],
+     $TextCons[
+      $TextEmbed[AsText[PG-InlineRegExpSimple[#RegExpSimple#, #ModuleName, #id]]],
+      $TextCons[
+       $TextChars[" ( "],
+       $TextCons[
+        $TextEmbed[AsText[PG-InlineRegExpSimple[#RegExpLeaf#, #ModuleName, #id]]],
+        $TextCons[
+         $TextChars[" "],
+         $TextCons[
+          $TextEmbed[AsText[PG-InlineRegExpSimple[#RegExpSimple#, #ModuleName, #id]]],
+          $TextCons[$TextChars[" )* )"], $TextNil]]]]]]]
+   ;
+  PG-InlineRegExpUnits[$List[HxRegExpUnit], $String, $String] :: Text ;
+  InlineRegExpUnits-1 :
+    PG-InlineRegExpUnits[(#RegExpUnit#; #RegExpUnits#), #ModuleName, #id]
+    →
+    $TextCons[
+     $TextEmbed[AsText[PG-InlineRegExpUnit[#RegExpUnit#, #ModuleName, #id]]],
+     $TextCons[$TextChars[" "], $TextCons[$TextEmbed[AsText[PG-InlineRegExpUnits[#RegExpUnits#, #ModuleName, #id]]], $TextNil]]]
+   ;
+  InlineRegExpUnits-2 : PG-InlineRegExpUnits[(), #ModuleName, #id] → $TextNil ;
+  {$String : DeclarationMapEntry}PG-InsertDefine[Define, Boolean, $String, $String, NameSet, ¹ok_82 : Ok s_83 : $String ss_39 : NameSet . DeclarationMap]
+    ::
+    DeclarationMap
+   ;
+  InsertDefine-1[Data[#Name], Share[#Define, #]] :
+    {#DM}
+    PG-InsertDefine[#Define, #IsStart, #ModuleName, #Name, #Names, ¹ok_39 s_61 ss_70 . #[¹ok_39, s_61, ss_70]]
+    →
+    {#DM}
+    PG-InsertDefine1[
+     $[{#DM}Get[DeclarationMapEntry], #Name, DME_NONE],
+     #Define,
+     #IsStart,
+     #ModuleName,
+     #Name,
+     #Names,
+     ¹ok_199 s_58 ss_56 . #[¹ok_199, s_58, ss_56]]
+   ;
+  {$String : DeclarationMapEntry}PG-InsertDefine1[
+     DeclarationMapEntry,
+     Define,
+     Boolean,
+     $String,
+     $String,
+     NameSet,
+     ¹ok_75 : Ok s_97 : $String ss_30 : NameSet . DeclarationMap]
+    ::
+    DeclarationMap
+   ;
+  InsertDefine1-1 :
+    {#DM}
+    PG-InsertDefine1[
+     DME_SORT[#existingDefines1, #Name1, #Precs1, #Wrapper1, #IsStart1],
+     #newDefine,
+     #IsStart,
+     #ModuleName,
+     #Name,
+     #Names,
+     ¹ok_85 s_14 ss_31 . #[¹ok_85, s_14, ss_31]]
+    →
+    {#DM}
+    PG-InsertDefine4[
+     PG-InsertDefine2[#existingDefines1, #newDefine],
+     AddNameNumber[#Precs1, PG-DefinePrec[#newDefine]],
+     #Name1,
+     #Names,
+     PG-DefineWrapper[#newDefine, #Name, #Wrapper1],
+     Or[#IsStart1, #IsStart],
+     ¹ok_30 s_24 ss_76 . #[¹ok_30, s_24, ss_76]]
+   ;
+  InsertDefine1-2 :
+    {#DM}
+    PG-InsertDefine1[DME_NONE, #newDefine, #IsStart, #ModuleName, #Name, #Names, ¹ok_188 s_50 ss_86 . #[¹ok_188, s_50, ss_86]]
+    →
+    {#DM}
+    PG-InsertDefine1b[
+     #Name,
+     #Names,
+     #newDefine,
+     AddNameNumber[NoNames, PG-DefinePrec[#newDefine]],
+     PG-DefineWrapper[#newDefine, #Name, NO_WRAPPER],
+     #IsStart,
+     ¹ok_78 s_77 ss_89 . #[¹ok_78, s_77, ss_89]]
+   ;
+  {$String : DeclarationMapEntry}PG-InsertDefine1b[
+     $String,
+     NameSet,
+     Define,
+     NameSet,
+     Wrapper,
+     Boolean,
+     ¹ok_80 : Ok s_55 : $String ss_157 : NameSet . DeclarationMap]
+    ::
+    DeclarationMap
+   ;
+  InsertDefine1b-1[Data[#newDefine, #Name, #Precs, #Wrapper]] :
+    {#DM}
+    PG-InsertDefine1b[#Name, #Names, #newDefine, #Precs, #Wrapper, #IsStart, ¹ok_13 s_39 ss_85 . #[¹ok_13, s_39, ss_85]]
+    →
+    {#DM; #Name : DME_SORT[(#newDefine; ), #Name, #Precs, #Wrapper, #IsStart]}
+    #[OK, #Name, AddName[#Names, #Name]]
+   ;
+  PG-InsertDefine2[$List[Define], Define] :: $List[Define] ;
+  InsertDefine2-1 : PG-InsertDefine2[(), #newDefine] → (#newDefine; ) ;
+  InsertDefine2-2 :
+    PG-InsertDefine2[(#Define1; #Defines), #newDefine]
+    →
+    PG-InsertDefine3[PG-DefineLessEqual[#newDefine, #Define1], #newDefine, #Define1, #Defines]
+   ;
+  PG-InsertDefine3[Boolean, Define, Define, $List[Define]] :: $List[Define] ;
+  InsertDefine3-1 : PG-InsertDefine3[B_TRUE, #newDefine, #Define1, #Defines] → (#newDefine; #Define1; #Defines) ;
+  InsertDefine3-2 :
+    PG-InsertDefine3[B_FALSE, #newDefine, #Define1, #Defines]
+    →
+    (#Define1; PG-InsertDefine2[#Defines, #newDefine])
+   ;
+  {$String : DeclarationMapEntry}PG-InsertDefine4[
+     $List[Define],
+     NameSet,
+     $String,
+     NameSet,
+     Wrapper,
+     Boolean,
+     ¹ok_71 : Ok s_60 : $String ss_63 : NameSet . DeclarationMap]
+    ::
+    DeclarationMap
+   ;
+  InsertDefine4-1[Data[#Defines, #Name, #Precs, #Wrapper]] :
+    {#DM}
+    PG-InsertDefine4[#Defines, #Precs, #Name, #Names, #Wrapper, #IsStart, ¹ok_19 s_64 ss_80 . #[¹ok_19, s_64, ss_80]]
+    →
+    {#DM; #Name : DME_SORT[#Defines, #Name, #Precs, #Wrapper, #IsStart]}
+    #[OK, #Name, #Names]
+   ;
+  {$String : DeclarationMapEntry}PG-InsertDefines[$List[Define], Boolean, $String, $String, NameSet, ¹ok_20 : Ok s_15 : $String ss_82 : NameSet . DeclarationMap]
+    ::
+    DeclarationMap
+   ;
+  InsertDefines-1 :
+    {#DM}
+    PG-InsertDefines[(), #IsStart, #ModuleName, #Name, #Names, ¹ok_98 s_99 ss_37 . #[¹ok_98, s_99, ss_37]]
+    →
+    {#DM}
+    #[OK, #Name, #Names]
+   ;
+  InsertDefines-2 :
+    {#DM}
+    PG-InsertDefines[(#Define; #Defines), #IsStart, #ModuleName, #Name, #Names, ¹ok_6 s_62 ss_87 . #[¹ok_6, s_62, ss_87]]
+    →
+    {#DM}
+    PG-InsertDefine[
+     #Define,
+     #IsStart,
+     #ModuleName,
+     #Name,
+     #Names,
+     ¹ok1 s1 ss1 . PG-then-InsertDefines[¹ok1, #Defines, #IsStart, #ModuleName, s1, ss1, ¹ok2 s2 ss2 . #[¹ok2, s2, ss2]]]
+   ;
+  PG-LastName[$String] :: $String ;
+  LastName-1[Data[#Name]] :
+    PG-LastName[#Name]
+    →
+    $[If, $[Contains, #Name, "."], PG-LastName[$[AfterFirst, #Name, "."]], $[Replace, #Name, "\"", ""]]
+   ;
+  {$String : DeclarationMapEntry}PG-LeftRecursive[$List[PFK_SORT], $String, $Numeric, Boolean, $List[PFK_SORT], $List[PFK_SORT]]
+    ::
+    Text
+   ;
+  LeftRecursive-1 :
+    {#DM}
+    PG-LeftRecursive[#ModuleName, (#PFK1; #PFKs), #SortName, #Prec, #Last?, #LeftRecursivePFKs, #OtherPFKs]
+    →
+    {#DM}
+    PG-LeftRecursive2[
+     #ModuleName,
+     PG-isLeftRecursive[#SortName, #Prec, #PFK1],
+     #PFK1,
+     #PFKs,
+     #SortName,
+     #Prec,
+     #Last?,
+     #LeftRecursivePFKs,
+     #OtherPFKs]
+   ;
+  LeftRecursive-2 :
+    {#DM}
+    PG-LeftRecursive[#ModuleName, (), #SortName, #Prec, #Last?, #LeftRecursivePFKs, #OtherPFKs]
+    →
+    IfEmpty[
+     #LeftRecursivePFKs,
+     {#DM}
+     PG-Produce[#ModuleName, #SortName, #Prec, #Last?, #OtherPFKs, C_BUFFER[#SortName, #Prec]],
+     {#DM}
+     PG-ProduceBody[
+      #ModuleName,
+      #LeftRecursivePFKs,
+      2,
+      ($TextCons[$TextChars["#1"], $TextNil]; ),
+      ($TextCons[$TextChars["LR"], $TextNil]; ),
+      C_LEFTRECURSIVE[#SortName, #Prec],
+      in after .
+       $TextCons[
+        $TextChars["/* Handle left recursion. */"],
+        $TextCons[
+         $TextBreak["\n"],
+         $TextCons[
+          $TextChars["<"],
+          $TextCons[
+           $TextEmbed[AsText[PG-ProductionNameWithPrecText[#SortName, #Prec]]],
+           $TextCons[
+            $TextChars["LR #1> ::= "],
+            $TextCons[
+             $TextIndent[
+              $TextCons[$TextEmbed[AsText[in]], $TextCons[$TextBreak["\n"], $TextCons[$TextChars["| {{#1}}"], $TextNil]]]],
+             $TextCons[
+              $TextBreak["\n"],
+              $TextCons[
+               $TextChars["."],
+               $TextCons[
+                $TextBreak["\n"],
+                $TextCons[
+                 $TextEmbed[AsText[TextFoldMap[after, $TextCons[$TextBreak["\n"], $TextNil]]]],
+                 $TextCons[
+                  $TextBreak["\n"],
+                  $TextCons[
+                   $TextEmbed[
+                    AsText[
+                     {#DM}
+                     PG-Produce[#ModuleName, #SortName, #Prec, #Last?, #OtherPFKs, C_LEFTRECURSIVE[#SortName, #Prec]]]],
+                   $TextNil]]]]]]]]]]]]]]
+   ;
+  {$String : DeclarationMapEntry}PG-LeftRecursive2[Boolean, PFK_SORT, $List[PFK_SORT], $String, $Numeric, Boolean, $List[PFK_SORT], $List[PFK_SORT]]
+    ::
+    Text
+   ;
+  LeftRecursive2-1 :
+    {#DM}
+    PG-LeftRecursive2[#ModuleName, B_TRUE, #PFK1, #PFKs, #SortName, #Prec, #Last?, #LeftRecursivePFKs, #OtherPFKs]
+    →
+    {#DM}
+    PG-LeftRecursive[
+     #ModuleName,
+     #PFKs,
+     #SortName,
+     #Prec,
+     #Last?,
+     Append[#LeftRecursivePFKs, (PG-stripLeftRecursion[#PFK1]; )],
+     #OtherPFKs]
+   ;
+  LeftRecursive2-2 :
+    {#DM}
+    PG-LeftRecursive2[#ModuleName, B_FALSE, #PFK1, #PFKs, #SortName, #Prec, #Last?, #LeftRecursivePFKs, #OtherPFKs]
+    →
+    {#DM}
+    PG-LeftRecursive[#ModuleName, #PFKs, #SortName, #Prec, #Last?, #LeftRecursivePFKs, Append[#OtherPFKs, (#PFK1; )]]
+   ;
+  PG-Lexical[$List[HxDeclaration], $String] :: Text ;
+  Lexical-1 :
+    PG-Lexical[#Declarations, #ModuleName]
+    →
+    PG-Lexical2[#Declarations, #ModuleName, B_FALSE, hasskip . PG-Lexical2Tail[hasskip]]
+   ;
+  PG-Lexical2[$List[HxDeclaration], $String, Boolean, ha : Boolean . Text] :: Text ;
+  Lexical-alternatives :
+    PG-Lexical2[(HX_M_anonymous[#SortAlternatives#]; #Declarations#), #ModuleName, #hasSkip, hasskip_79 . #[hasskip_79]]
+    →
+    PG-Lexical2[#Declarations#, #ModuleName, #hasSkip, hasskip_9 . #[hasskip_9]]
+   ;
+  Lexical-attribute :
+    PG-Lexical2[
+     (HX_M_attribute[#AttributeKind#, #AttributeName#, #AttributeForm#, #AttributeOptions#]; #Declarations#),
+     #ModuleName,
+     #hasSkip,
+     hasskip_36 . #[hasskip_36]]
+    →
+    PG-Lexical2[#Declarations#, #ModuleName, #hasSkip, hasskip_72 . #[hasskip_72]]
+   ;
+  Lexical-done : PG-Lexical2[(), #ModuleName, #hasSkip, hasskip_83 . #[hasskip_83]] → #[#hasSkip] ;
+  Lexical-fragment :
+    PG-Lexical2[(HX_M_fragment[#FragmentName#, #RegExp#]; #Declarations#), #ModuleName, #hasSkip, hasskip_70 . #[hasskip_70]]
+    →
+    $TextCons[
+     $TextChars["token fragment "],
+     $TextCons[
+      $TextEmbed[AsText[PG-TokenNameText[#FragmentName#]]],
+      $TextCons[
+       $TextChars[" ::= "],
+       $TextCons[
+        $TextIndent[$TextCons[$TextEmbed[AsText[PG-InlineRegExp[#RegExp#, #ModuleName, #FragmentName#]]], $TextNil]],
+        $TextCons[
+         $TextChars[" . "],
+         $TextCons[
+          $TextBreak["\n"],
+          $TextCons[
+           $TextEmbed[AsText[PG-DeclareRegExp[#RegExp#, #ModuleName, #FragmentName#]]],
+           $TextCons[
+            $TextEmbed[AsText[PG-Lexical2[#Declarations#, #ModuleName, #hasSkip, hasskip_82 . #[hasskip_82]]]],
+            $TextNil]]]]]]]]
+   ;
+  Lexical-module :
+    PG-Lexical2[
+     (HX_M_embedded__module[HX_M_module[#ModuleName2#, #Declarations2#]]; #Declarations#),
+     #ModuleName,
+     #hasSkip,
+     hasskip_53 . #[hasskip_53]]
+    →
+    PG-Lexical2[
+     #Declarations2#,
+     #ModuleName2#,
+     #hasSkip,
+     hasskip_56 . PG-Lexical2[#Declarations#, #ModuleName, hasskip_56, hasskip2 . #[hasskip2]]]
+   ;
+  Lexical-nest :
+    PG-Lexical2[(HX_M_nestedDeclarations[#Declarations2#]; #Declarations#), #ModuleName, #hasSkip, hasskip_26 . #[hasskip_26]]
+    →
+    PG-Lexical2[
+     #Declarations2#,
+     #ModuleName,
+     #hasSkip,
+     hasskip_29 . PG-Lexical2[#Declarations#, #ModuleName, hasskip_29, hasskip2_22 . #[hasskip2_22]]]
+   ;
+  Lexical-rule :
+    PG-Lexical2[(HX_M_rule[#Rule#]; #Declarations#), #ModuleName, #hasSkip, hasskip_71 . #[hasskip_71]]
+    →
+    PG-Lexical2[#Declarations#, #ModuleName, #hasSkip, hasskip_12 . #[hasskip_12]]
+   ;
+  Lexical-sort :
+    PG-Lexical2[
+     (HX_M_sort[HX_M_no__start, #SortName#, #Repeat#, #SortAbstraction#]; #Declarations#),
+     #ModuleName,
+     #hasSkip,
+     hasskip_49 . #[hasskip_49]]
+    →
+    PG-Lexical2[#Declarations#, #ModuleName, #hasSkip, hasskip_8 . #[hasskip_8]]
+   ;
+  Lexical-space :
+    PG-Lexical2[(HX_M_space[#RegExp#]; #Declarations#), #ModuleName, #hasSkip, hasskip_34 . #[hasskip_34]]
+    →
+    $TextCons[
+     $TextChars["skip ::= \' \' | "],
+     $TextCons[
+      $TextIndent[$TextCons[$TextEmbed[AsText[PG-InlineRegExp[#RegExp#, #ModuleName, "space$"]]], $TextNil]],
+      $TextCons[
+       $TextChars[" ."],
+       $TextCons[
+        $TextBreak["\n"],
+        $TextCons[
+         $TextEmbed[AsText[PG-DeclareRegExp[#RegExp#, #ModuleName, "space$"]]],
+         $TextCons[$TextEmbed[AsText[PG-Lexical2[#Declarations#, #ModuleName, B_TRUE, hasskip_14 . #[hasskip_14]]]], $TextNil]]]]]]
+   ;
+  Lexical-token :
+    PG-Lexical2[(HX_M_token[#SortName#, #RegExp#]; #Declarations#), #ModuleName, #hasSkip, hasskip_129 . #[hasskip_129]]
+    →
+    $TextCons[
+     $TextChars["token "],
+     $TextCons[
+      $TextEmbed[AsText[PG-TokenNameText[#SortName#]]],
+      $TextCons[
+       $TextChars[" ::= "],
+       $TextCons[
+        $TextIndent[$TextCons[$TextEmbed[AsText[PG-InlineRegExp[#RegExp#, #ModuleName, #SortName#]]], $TextNil]],
+        $TextCons[
+         $TextChars[" ."],
+         $TextCons[
+          $TextBreak["\n"],
+          $TextCons[
+           $TextEmbed[AsText[PG-DeclareRegExp[#RegExp#, #ModuleName, #SortName#]]],
+           $TextCons[
+            $TextEmbed[AsText[PG-Lexical2[#Declarations#, #ModuleName, #hasSkip, hasskip_99 . #[hasskip_99]]]],
+            $TextNil]]]]]]]]
+   ;
+  PG-Lexical2Tail[Boolean] :: Text ;
+  Lexical2Tail-1 : PG-Lexical2Tail[B_TRUE] → $TextNil ;
+  Lexical2Tail-2 :
+    PG-Lexical2Tail[B_FALSE]
+    →
+    $TextCons[$TextChars["skip ::= \" \" ."], $TextCons[$TextBreak["\n"], $TextNil]]
+   ;
+  PG-LinkDefine[$String, $Numeric] :: Define ;
+  LinkDefine-1[Data[#Name, #Prec]] :
+    PG-LinkDefine[#Name, #Prec]
+    →
+    D_FORM[
+     HX_M_FormParsedSorted[
+      #Name,
+      HX_M_ParsedFormTerm[
+       HX_M_ScopeSortPrecRepeat[HX_M_ScopeSort[HX_M_Sort[HX_M_SortName[#Name, ()], ()], HX_M_RepeatSingle, ()], #Prec, HX_M_RepeatSingle],
+       HX_M_ParsedFormDone],
+      $[Minus, #Prec, 1],
+      ()],
+     FK_ALIAS]
+   ;
+  PG-MapDeclarations[$List[HxDeclaration], $String] :: DeclarationMap ;
+  MapDeclarations-1 :
+    PG-MapDeclarations[#Declarations, #ModuleName]
+    →
+    PG-MapDeclarations1[#Declarations, #ModuleName, "", NoNames, ¹ok_193 s_20 ss_53 . PG-Finish[ss_53]]
+   ;
+  {$String : DeclarationMapEntry}PG-MapDeclarations1[$List[HxDeclaration], $String, $String, NameSet, ¹ok_32 : Ok s_5 : $String ss_14 : NameSet . DeclarationMap]
+    ::
+    DeclarationMap
+   ;
+  Declarations-alternatives :
+    {#DM}
+    PG-MapDeclarations1[
+     (HX_M_anonymous[#SortAlternatives#]; #Declarations#),
+     #ModuleName,
+     #LastSortName,
+     #Names,
+     ¹ok_280 s_90 ss_58 . #[¹ok_280, s_90, ss_58]]
+    →
+    {#DM}
+    PG-SortAlternatives[
+     #SortAlternatives#,
+     #ModuleName,
+     #LastSortName,
+     #Names,
+     ¹ok_92 s_68 ss_47 .
+      PG-then-Declarations1[¹ok_92, #Declarations#, #ModuleName, s_68, ss_47, ¹ok2_33 s2_62 ss2_74 . #[¹ok2_33, s2_62, ss2_74]]]
+   ;
+  Declarations-attribute[Data[#AttributeName#, #AttributeForm#]] :
+    {#DM}
+    PG-MapDeclarations1[
+     (HX_M_attribute[#AttributeKind#, #AttributeName#, #AttributeForm#, #AttributeOptions#]; #Declarations#),
+     #ModuleName,
+     #LastSortName,
+     #Names,
+     ¹ok_191 s_8 ss_6 . #[¹ok_191, s_8, ss_6]]
+    →
+    {#DM}
+    PG-MapDeclarationsInsertAttribute[
+     PG-QualifyName[#ModuleName, #AttributeName#],
+     #AttributeKind#,
+     #AttributeForm#,
+     #AttributeOptions#,
+     #Declarations#,
+     #ModuleName,
+     #LastSortName,
+     #Names,
+     ¹ok_12 s_66 ss_42 . #[¹ok_12, s_66, ss_42]]
+   ;
+  Declarations-fragment :
+    {#DM}
+    PG-MapDeclarations1[
+     (HX_M_fragment[#FragmentName#, #RegExp#]; #Declarations#),
+     #ModuleName,
+     #LastSortName,
+     #Names,
+     ¹ok_74 s_31 ss_92 . #[¹ok_74, s_31, ss_92]]
+    →
+    {#DM}
+    PG-MapDeclarations1[#Declarations#, #ModuleName, "", #Names, ¹ok_18 s_26 ss_72 . #[¹ok_18, s_26, ss_72]]
+   ;
+  Declarations-local :
+    {#DM}
+    PG-MapDeclarations1[
+     (HX_M_nestedDeclarations[#Declarations2#]; #Declarations#),
+     #ModuleName,
+     #LastSortName,
+     #Names,
+     ¹ok_45 s_29 ss_2 . #[¹ok_45, s_29, ss_2]]
+    →
+    {#DM}
+    PG-MapDeclarations1[
+     #Declarations2#,
+     #ModuleName,
+     #LastSortName,
+     #Names,
+     ¹ok_148 s_7 ss_60 .
+      PG-then-Declarations1[¹ok_148, #Declarations#, #ModuleName, #LastSortName, ss_60, ¹ok2_79 s2_72 ss2_20 . #[¹ok2_79, s2_72, ss2_20]]]
+   ;
+  Declarations-none :
+    {#DM}
+    PG-MapDeclarations1[(), #ModuleName, #LastSortName, #Names, ¹ok_124 s_67 ss_79 . #[¹ok_124, s_67, ss_79]]
+    →
+    {#DM}
+    #[OK, #LastSortName, #Names]
+   ;
+  Declarations-rule :
+    {#DM}
+    PG-MapDeclarations1[
+     (HX_M_rule[#Rule#]; #Declarations#),
+     #ModuleName,
+     #LastSortName,
+     #Names,
+     ¹ok_107 s_35 ss_279 . #[¹ok_107, s_35, ss_279]]
+    →
+    {#DM}
+    PG-InsertDefine[
+     D_RULE[#Rule#, RuleTopSort[#Rule#, #ModuleName, #LastSortName], B_FALSE],
+     B_BALSE,
+     #ModuleName,
+     RuleTopSort[#Rule#, #ModuleName, #LastSortName],
+     #Names,
+     ¹ok_68 s_59 ss_4 .
+      PG-then-Declarations1[¹ok_68, #Declarations#, #ModuleName, s_59, ss_4, ¹ok2_71 s2_11 ss2_71 . #[¹ok2_71, s2_11, ss2_71]]]
+   ;
+  Declarations-sort :
+    {#DM}
+    PG-MapDeclarations1[
+     (HX_M_sort[HX_M_no__start, #SortName#, #Repeat#, #SortAbstraction#]; #Declarations#),
+     #ModuleName,
+     #LastSortName,
+     #Names,
+     ¹ok_64 s_37 ss_19 . #[¹ok_64, s_37, ss_19]]
+    →
+    {#DM}
+    PG-MapDeclarationsInsertSort[
+     PG-QualifyName[#ModuleName, #SortName#],
+     #Repeat#,
+     #SortAbstraction#,
+     #Declarations#,
+     B_TRUE,
+     #ModuleName,
+     #LastSortName,
+     #Names,
+     ¹ok_28 s_124 ss_107 . #[¹ok_28, s_124, ss_107]]
+   ;
+  Declarations-space :
+    {#DM}
+    PG-MapDeclarations1[
+     (HX_M_space[#RegExp#]; #Declarations#),
+     #ModuleName,
+     #LastSortName,
+     #Names,
+     ¹ok_56 s_94 ss_66 . #[¹ok_56, s_94, ss_66]]
+    →
+    {#DM}
+    PG-MapDeclarations1[#Declarations#, #ModuleName, "", #Names, ¹ok_76 s_38 ss_25 . #[¹ok_76, s_38, ss_25]]
+   ;
+  Declarations-start-sort :
+    {#DM}
+    PG-MapDeclarations1[
+     (HX_M_sort[HX_M_start, #SortName#, #Repeat#, #SortAbstraction#]; #Declarations#),
+     #ModuleName,
+     #LastSortName,
+     #Names,
+     ¹ok_163 s_98 ss_11 . #[¹ok_163, s_98, ss_11]]
+    →
+    {#DM}
+    PG-MapDeclarationsInsertSort[
+     PG-QualifyName[#ModuleName, #SortName#],
+     #Repeat#,
+     #SortAbstraction#,
+     #Declarations#,
+     B_FALSE,
+     #ModuleName,
+     #LastSortName,
+     #Names,
+     ¹ok_94 s_51 ss_1 . #[¹ok_94, s_51, ss_1]]
+   ;
+  Declarations-token[Data[#SortName]] :
+    {#DM}
+    PG-MapDeclarations1[
+     (HX_M_token[#SortName#, #RegExp#]; #Declarations#),
+     #ModuleName,
+     #LastSortName,
+     #Names,
+     ¹ok_16 s_167 ss_74 . #[¹ok_16, s_167, ss_74]]
+    →
+    {#DM}
+    PG-MapDeclarationsInsertToken[
+     PG-QualifyName[#ModuleName, #SortName#],
+     #Declarations#,
+     #ModuleName,
+     #LastSortName,
+     #Names,
+     ¹ok_90 s_92 ss_21 . #[¹ok_90, s_92, ss_21]]
+   ;
+  MapDeclarations1-1 :
+    {#DM}
+    PG-MapDeclarations1[
+     (HX_M_embedded__module[HX_M_module[#ModuleName2#, #Declarations2#]]; #Declarations#),
+     #ModuleName,
+     #LastSortName,
+     #Names,
+     ¹ok_99 s_33 ss_35 . #[¹ok_99, s_33, ss_35]]
+    →
+    {#DM}
+    PG-MapDeclarations1[
+     #Declarations2#,
+     #ModuleName2#,
+     "",
+     #Names,
+     ¹ok_50 s_81 ss_7 .
+      PG-then-Declarations1[¹ok_50, #Declarations#, #ModuleName, #LastSortName, ss_7, ¹ok2_95 s2_3 ss2_11 . #[¹ok2_95, s2_3, ss2_11]]]
+   ;
+  MapDeclarationsInsertAttribute-1[Data[#QualifiedName]] :
+    {#DM}
+    PG-MapDeclarationsInsertAttribute[
+     #QualifiedName,
+     #AttributeKind,
+     #AttributeForm,
+     #AttributeOptions,
+     #Declarations,
+     #ModuleName,
+     #LastSortName,
+     #Names,
+     ¹ok_3 s_41 ss_148 . #[¹ok_3, s_41, ss_148]]
+    →
+    {#DM; #QualifiedName : DME_ATTRIBUTE[#AttributeKind, #QualifiedName, #AttributeForm, #AttributeOptions]}
+    PG-MapDeclarations1[#Declarations, #ModuleName, "", AddName[#Names, #QualifiedName], ¹ok_34 s_11 ss_46 . #[¹ok_34, s_11, ss_46]]
+   ;
+  MapDeclarationsInsertSort-1[Data[#QualifiedName]] :
+    {#DM}
+    PG-MapDeclarationsInsertSort[
+     #QualifiedName,
+     #Repeat,
+     #SortAbstraction,
+     #Declarations,
+     #IsStart,
+     #ModuleName,
+     #LastSortName,
+     #Names,
+     ¹ok_284 s_52 ss_94 . #[¹ok_284, s_52, ss_94]]
+    →
+    {#DM}
+    PG-SortAbstraction[
+     #SortAbstraction,
+     #IsStart,
+     #ModuleName,
+     PG-SortNameWithRepeat1[#QualifiedName, #Repeat],
+     #Names,
+     ¹ok_168 s_13 ss_195 .
+      PG-then-Declarations1[¹ok_168, #Declarations, #ModuleName, s_13, ss_195, ¹ok2_43 s2_9 ss2_18 . #[¹ok2_43, s2_9, ss2_18]]]
+   ;
+  MapDeclarationsInsertToken-1[Data[#QualifiedName]] :
+    {#DM}
+    PG-MapDeclarationsInsertToken[#QualifiedName, #Declarations, #ModuleName, #LastSortName, #Names, ¹ok_55 s_78 ss_33 . #[¹ok_55, s_78, ss_33]]
+    →
+    {#DM; #QualifiedName : DME_TOKEN[#QualifiedName]}
+    PG-MapDeclarations1[#Declarations, #ModuleName, "", AddName[#Names, #QualifiedName], ¹ok_15 s_86 ss_242 . #[¹ok_15, s_86, ss_242]]
+   ;
+  {$String : DeclarationMapEntry}PG-MetaHead[Boolean, $String, $String, $String, Boolean, $Numeric] :: Text ;
+  MetaHead-1 : PG-MetaHead[B_FALSE, #ModuleName, #SortName, #Name, #isLeftRecursive, #Prec] → $TextNil ;
+  MetaHead-2[Data[#SortName], Discard[#Prec]] :
+    {#DM}
+    PG-MetaHead[B_TRUE, #ModuleName, #SortName, #Name, B_FALSE, #Prec]
+    →
+    $TextCons[
+     $TextBreak["\n"],
+     $TextCons[
+      $TextChars["////META:    meta1_"],
+      $TextCons[
+       $TextEmbed[AsText[PG-TokenNameText[#Name]]],
+       $TextCons[
+        $TextChars[":unconcrete"],
+        $TextCons[
+         $TextBreak["\n"],
+         $TextCons[
+          $TextChars["////META: | meta2_"],
+          $TextCons[
+           $TextEmbed[AsText[PG-TokenNameText[#Name]]],
+           $TextCons[
+            $TextChars["$$:[[unmeta(#,"],
+            $TextCons[
+             $TextChars[$[FormatNumber, $[Length, #SortName]]],
+             $TextCons[
+              $TextChars[")]]:{ [[ hxornaked(\""],
+              $TextCons[
+               $TextChars[PG-ParsePrefix[#ModuleName]],
+               $TextCons[
+                $TextChars["HxPresorted_"],
+                $TextCons[
+                 $TextChars[#SortName],
+                 $TextCons[
+                  $TextChars["\") ]] }"],
+                  $TextCons[$TextBreak["\n"], $TextCons[$TextChars["////META: | "], $TextCons[$TextBreak["\n"], $TextNil]]]]]]]]]]]]]]]]]
+   ;
+  MetaHead-3[Data[#SortName]] :
+    {#DM}
+    PG-MetaHead[B_TRUE, #ModuleName, #SortName, #Name, B_TRUE, #Prec]
+    →
+    $TextCons[
+     $TextBreak["\n"],
+     $TextCons[
+      $TextChars["////META:    meta1_"],
+      $TextCons[
+       $TextEmbed[AsText[PG-TokenNameText[#Name]]],
+       $TextCons[
+        $TextChars["$:unconcrete:#1 <"],
+        $TextCons[
+         $TextEmbed[AsText[PG-ProductionNameWithPrecText[#SortName, #Prec]]],
+         $TextCons[
+          $TextChars["LR #1>"],
+          $TextCons[
+           $TextBreak["\n"],
+           $TextCons[
+            $TextChars["////META: | meta2_"],
+            $TextCons[
+             $TextEmbed[AsText[PG-TokenNameText[#Name]]],
+             $TextCons[
+              $TextChars["$$:[[unmeta(#,"],
+              $TextCons[
+               $TextChars[$[FormatNumber, $[Length, #SortName]]],
+               $TextCons[
+                $TextChars[")]]:{ [[ hxornaked(\""],
+                $TextCons[
+                 $TextChars[PG-ParsePrefix[#ModuleName]],
+                 $TextCons[
+                  $TextChars["HxPresorted_"],
+                  $TextCons[
+                   $TextChars[#SortName],
+                   $TextCons[
+                    $TextChars["\") ]] }:#1 <"],
+                    $TextCons[
+                     $TextEmbed[AsText[PG-ProductionNameWithPrecText[#SortName, #Prec]]],
+                     $TextCons[
+                      $TextChars["LR #1>"],
+                      $TextCons[$TextBreak["\n"], $TextCons[$TextChars["////META: | "], $TextCons[$TextBreak["\n"], $TextNil]]]]]]]]]]]]]]]]]]]]]
+   ;
+  PG-MetaTail[Boolean, $String, $String] :: Text ;
+  MetaTail-1 : PG-MetaTail[B_FALSE, #SortName, #Name] → $TextNil ;
+  MetaTail-2[Data[#SortName]] :
+    PG-MetaTail[B_TRUE, #SortName, #Name]
+    →
+    $TextCons[
+     $TextBreak["\n"],
+     $TextCons[
+      $TextChars["////META: %{"],
+      $TextCons[
+       $TextBreak["\n"],
+       $TextCons[
+        $TextChars["////META: /* Meta token for "],
+        $TextCons[
+         $TextChars[#SortName],
+         $TextCons[
+          $TextChars[". */ "],
+          $TextCons[
+           $TextBreak["\n"],
+           $TextCons[
+            $TextChars["////META: TOKEN : { < T_meta1_"],
+            $TextCons[
+             $TextEmbed[AsText[PG-TokenNameText[#Name]]],
+             $TextCons[
+              $TextChars[" : (\"\\u27e8\" (\" \")* "],
+              $TextCons[
+               $TextChars[Stringify[#SortName]],
+               $TextCons[
+                $TextChars[" (\" \")* \"\\u27e9\") > }"],
+                $TextCons[
+                 $TextBreak["\n"],
+                 $TextCons[
+                  $TextChars["////META: MORE : { < \"\\u27e8\" (\" \")* "],
+                  $TextCons[
+                   $TextChars[Stringify[#SortName]],
+                   $TextCons[
+                    $TextChars[" (\" \")* ~[\"\\u27e8\",\"\\u27e9\"] > { nesting = 0; nestedState = curLexState; } : IN_META_"],
+                    $TextCons[
+                     $TextEmbed[AsText[PG-TokenNameText[#Name]]],
+                     $TextCons[
+                      $TextChars[" }"],
+                      $TextCons[
+                       $TextBreak["\n"],
+                       $TextCons[
+                        $TextChars["////META: <IN_META_"],
+                        $TextCons[
+                         $TextEmbed[AsText[PG-TokenNameText[#Name]]],
+                         $TextCons[
+                          $TextChars["> MORE : { \"\\u27e8\" { nesting = 1; } : IN_NESTED_META_"],
+                          $TextCons[
+                           $TextEmbed[AsText[PG-TokenNameText[#Name]]],
+                           $TextCons[
+                            $TextChars[" }"],
+                            $TextCons[
+                             $TextBreak["\n"],
+                             $TextCons[
+                              $TextChars["////META: <IN_NESTED_META_"],
+                              $TextCons[
+                               $TextEmbed[AsText[PG-TokenNameText[#Name]]],
+                               $TextCons[
+                                $TextChars["> MORE : { \"\\u27e8\" { nesting++; } }"],
+                                $TextCons[
+                                 $TextBreak["\n"],
+                                 $TextCons[
+                                  $TextChars["////META: <IN_NESTED_META_"],
+                                  $TextCons[
+                                   $TextEmbed[AsText[PG-TokenNameText[#Name]]],
+                                   $TextCons[
+                                    $TextChars["> MORE : { \"\\u27e9\" { if (--nesting <= 0) SwitchTo(IN_META_"],
+                                    $TextCons[
+                                     $TextEmbed[AsText[PG-TokenNameText[#Name]]],
+                                     $TextCons[
+                                      $TextChars["); } }"],
+                                      $TextCons[
+                                       $TextBreak["\n"],
+                                       $TextCons[
+                                        $TextChars["////META: <IN_META_"],
+                                        $TextCons[
+                                         $TextEmbed[AsText[PG-TokenNameText[#Name]]],
+                                         $TextCons[
+                                          $TextChars["> TOKEN : { < T_meta2_"],
+                                          $TextCons[
+                                           $TextEmbed[AsText[PG-TokenNameText[#Name]]],
+                                           $TextCons[
+                                            $TextChars[" : \"\\u27e9\" > { SwitchTo(nestedState); } }"],
+                                            $TextCons[
+                                             $TextBreak["\n"],
+                                             $TextCons[
+                                              $TextChars["////META: <IN_META_"],
+                                              $TextCons[
+                                               $TextEmbed[AsText[PG-TokenNameText[#Name]]],
+                                               $TextCons[
+                                                $TextChars[",IN_NESTED_META_"],
+                                                $TextCons[
+                                                 $TextEmbed[AsText[PG-TokenNameText[#Name]]],
+                                                 $TextCons[
+                                                  $TextChars["> MORE : { < ~[] > }"],
+                                                  $TextCons[
+                                                   $TextBreak["\n"],
+                                                   $TextCons[
+                                                    $TextChars["////META: %}"],
+                                                    $TextCons[$TextBreak["\n\n"], $TextNil]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+   ;
+  PG-ModulePrefix[$String] :: $String ;
+  ModulePrefix-1 : PG-ModulePrefix[#Name] → PG-ModulePrefix2[PG-LastName[#Name]] ;
+  ModulePrefix2-1[Data[#Name]] : PG-ModulePrefix2[#Name] → $[:, #Name, "$"] ;
+  PG-ParsePrefix[$String] :: $String ;
+  ParsePrefix-1[Data[#Name]] :
+    PG-ParsePrefix[#Name]
+    →
+    $[If, $[Contains, #Name, "."], PG-ParsePrefix[$[AfterFirst, #Name, "."]], $[DownCase, $[Replace, #Name, "\"", ""]]]
+   ;
+  PG-ParsedFormLess[HxParsedForm, HxParsedForm] :: Boolean ;
+  ParsedFormLess-1 : PG-ParsedFormLess[HX_M_ParsedFormDone, #PF2] → B_FALSE ;
+  ParsedFormLess-2 : PG-ParsedFormLess[#PF1, HX_M_ParsedFormDone] → B_TRUE ;
+  ParsedFormLess-3 : PG-ParsedFormLess[HX_M_ParsedFormWord[#W1, #PF1], HX_M_ParsedFormTerm[#SSPR2, #PF2]] → B_TRUE ;
+  ParsedFormLess-4 : PG-ParsedFormLess[HX_M_ParsedFormTerm[#SSPR1, #PF1], HX_M_ParsedFormWord[#W2, #PF2]] → B_FALSE ;
+  ParsedFormLess-5[Data[#W1, #W2]] :
+    PG-ParsedFormLess[HX_M_ParsedFormWord[#W1, #PF1], HX_M_ParsedFormWord[#W2, #PF2]]
+    →
+    $[If, $[Equal, #W1, #W2], PG-ParsedFormLess[#PF1, #PF2], $[If, $[StringLessThan, #W1, #W2], B_TRUE, B_FALSE]]
+   ;
+  ParsedFormLess-6 :
+    PG-ParsedFormLess[HX_M_ParsedFormTerm[#SSPR1, #PF1], HX_M_ParsedFormTerm[#SSPR2, #PF2]]
+    →
+    PG-ParsedFormLess[#PF1, #PF2]
+   ;
+  ParsedFormLess-7 : PG-ParsedFormLess[HX_M_ParsedFormSpace[#S1, #PF1], #PF2] → PG-ParsedFormLess[#PF1, #PF2] ;
+  ParsedFormLess-8[Data[#PF1]] :
+    PG-ParsedFormLess[$[NotMatch, HX_M_ParsedFormSpace[#S1, #_], #PF1], HX_M_ParsedFormSpace[#W2, #PF2]]
+    →
+    PG-ParsedFormLess[#PF1, #PF2]
+   ;
+  {$String : DeclarationMapEntry}PG-Produce[$String, $Numeric, Boolean, $List[PFK_SORT], CONSUMPTION_SORT] :: Text ;
+  Produce-1 :
+    {#DM}
+    PG-Produce[#ModuleName, #SortName, #Prec, #Last?, #PFKs, C_LEFTRECURSIVE[#SortName9, #Prec9]]
+    →
+    {#DM}
+    PG-ProduceBody[
+     #ModuleName,
+     #PFKs,
+     1,
+     (),
+     (),
+     C_LEFTRECURSIVE[#SortName9, #Prec9],
+     in_74 after_68 .
+      $TextCons[
+       $TextBreak["\n"],
+       $TextCons[
+        $TextChars["<"],
+        $TextCons[
+         $TextEmbed[AsText[PG-ProductionNameWithPrecText[#SortName, #Prec]]],
+         $TextCons[
+          $TextChars["> ::= "],
+          $TextCons[
+           $TextIndent[
+            $TextCons[
+             $TextEmbed[AsText[{#DM}PG-MetaHead[#Last?, #ModuleName, #SortName, #SortName, B_TRUE, #Prec]]],
+             $TextCons[$TextEmbed[AsText[in_74]], $TextNil]]],
+           $TextCons[
+            $TextChars[" ."],
+            $TextCons[
+             $TextBreak["\n"],
+             $TextCons[
+              $TextEmbed[AsText[{#DM}PG-MetaTail[#Last?, #SortName, #SortName]]],
+              $TextCons[$TextEmbed[AsText[TextFoldMap[after_68, $TextCons[$TextBreak["\n"], $TextNil]]]], $TextNil]]]]]]]]]]
+   ;
+  Produce-2[Data[#consumer]] :
+    {#DM}
+    PG-Produce[#ModuleName, #SortName, #Prec, #Last?, #PFKs, $[NotMatch, C_LEFTRECURSIVE[#_SortName, #_Prec], #consumer]]
+    →
+    {#DM}
+    PG-ProduceBody[
+     #ModuleName,
+     #PFKs,
+     1,
+     (),
+     (),
+     #consumer,
+     in_18 after_16 .
+      $TextCons[
+       $TextBreak["\n"],
+       $TextCons[
+        $TextChars["<"],
+        $TextCons[
+         $TextEmbed[AsText[PG-ProductionNameWithPrecText[#SortName, #Prec]]],
+         $TextCons[
+          $TextChars["> ::= "],
+          $TextCons[
+           $TextIndent[
+            $TextCons[
+             $TextEmbed[AsText[{#DM}PG-MetaHead[#Last?, #ModuleName, #SortName, #SortName, B_FALSE, #Prec]]],
+             $TextCons[$TextEmbed[AsText[in_18]], $TextCons[$TextChars[" ."], $TextNil]]]],
+           $TextCons[
+            $TextChars[" "],
+            $TextCons[
+             $TextBreak["\n"],
+             $TextCons[
+              $TextEmbed[AsText[{#DM}PG-MetaTail[#Last?, #SortName, #SortName]]],
+              $TextCons[$TextEmbed[AsText[TextFoldMap[after_16, $TextCons[$TextBreak["\n"], $TextNil]]]], $TextNil]]]]]]]]]]
+   ;
+  {$String : DeclarationMapEntry}PG-ProduceBody[
+     $String,
+     $List[PFK_SORT],
+     $Numeric,
+     $List[Text],
+     $List[Text],
+     CONSUMPTION_SORT,
+     in_24 : Text after_51 : TextMapSort . Text]
+    ::
+    Text
+   ;
+  ProduceBody-1[Data[#PFKs]] :
+    {#DM}
+    PG-ProduceBody[#ModuleName, #PFKs, #n, #terms, #words, #consumer, in_49 after_48 . #[in_49, after_48]]
+    →
+    {#DM}
+    PG-ProduceBody1[#ModuleName, #PFKs, #n, #terms, #words, #consumer, in_99 after_0 . #[in_99, after_0]]
+   ;
+  {$String : DeclarationMapEntry}PG-ProduceBody1[
+     $String,
+     $List[PFK_SORT],
+     $Numeric,
+     $List[Text],
+     $List[Text],
+     CONSUMPTION_SORT,
+     in_264 : Text after_34 : TextMapSort . Text]
+    ::
+    Text
+   ;
+  ProduceBody1-1 :
+    {#DM}
+    PG-ProduceBody1[#ModuleName, (), #n, #terms, #words, #consumer, in_4 after_31 . #[in_4, after_31]]
+    →
+    #[$TextNil, EmptyTextMap]
+   ;
+  ProduceBody1-2 :
+    {#DM}
+    PG-ProduceBody1[
+     #ModuleName,
+     (PFK[HX_M_ParsedFormWord[#word, #ParsedForm], #Kind]; #Rest),
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_77 after_32 . #[in_77, after_32]]
+    →
+    {#DM}
+    PG-ProduceBodyWord1[
+     #ModuleName,
+     #Rest,
+     (),
+     #word,
+     (PFK[#ParsedForm, #Kind]; ),
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_61 after_61 . #[in_61, after_61]]
+   ;
+  ProduceBody1-3 :
+    {#DM}
+    PG-ProduceBody1[
+     #ModuleName,
+     (PFK[HX_M_ParsedFormTerm[HX_M_ScopeSortPrecRepeat[#ScopeSort, #Prec, #Repeat], #ParsedForm], #Kind]; #Rest),
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_1 after_197 . #[in_1, after_197]]
+    →
+    {#DM}
+    PG-ProduceBodyTerm1[
+     #ModuleName,
+     #Rest,
+     (),
+     #ScopeSort,
+     #Prec,
+     #Repeat,
+     #Kind,
+     (PFK[#ParsedForm, #Kind]; ),
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_25 after_46 . #[in_25, after_46]]
+   ;
+  ProduceBody1-4 :
+    {#DM}
+    PG-ProduceBody1[
+     #ModuleName,
+     (PFK[HX_M_ParsedFormSpace[#space, #ParsedForm], #Kind]; #Rest),
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_105 after_2 . #[in_105, after_2]]
+    →
+    {#DM}
+    PG-ProduceBody1[
+     #ModuleName,
+     (PFK[#ParsedForm, #Kind]; #Rest),
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_48 after_37 . #[in_48, after_37]]
+   ;
+  ProduceBody1-5 :
+    {#DM}
+    PG-ProduceBody1[
+     #ModuleName,
+     (PFK[HX_M_ParsedFormDone, #Kind]; #Rest),
+     #n,
+     #terms,
+     #words,
+     C_BUFFER[#SortName, #Prec],
+     in_68 after_12 . #[in_68, after_12]]
+    →
+    {#DM}
+    PG-ProduceBody2[
+     #ModuleName,
+     #Rest,
+     #n,
+     #terms,
+     #words,
+     C_BUFFER[#SortName, #Prec],
+     in_70 after_99 . #[in_70, after_99],
+     PG-AttributeCollection[
+      #ModuleName,
+      #Kind,
+      #SortName,
+      #Prec,
+      PG-ProductionConstructionText[#ModuleName, #SortName, #Prec, #Kind, #words, #terms],
+      B_FALSE],
+     PG-AttributeProduction[#ModuleName, #Kind, #SortName, #Prec, B_FALSE]]
+   ;
+  ProduceBody1-6 :
+    {#DM}
+    PG-ProduceBody1[
+     #ModuleName,
+     (PFK[HX_M_ParsedFormDone, #Kind]; #Rest),
+     #n,
+     #terms,
+     #words,
+     C_LEFTRECURSIVE[#SortName, #Prec],
+     in_63 after_49 . #[in_63, after_49]]
+    →
+    {#DM}
+    PG-ProduceBody2[
+     #ModuleName,
+     #Rest,
+     #n,
+     #terms,
+     #words,
+     C_LEFTRECURSIVE[#SortName, #Prec],
+     in_54 after_26 . #[in_54, after_26],
+     PG-AttributeCollection[
+      #ModuleName,
+      #Kind,
+      #SortName,
+      #Prec,
+      PG-ProductionConstructionText[#ModuleName, #SortName, #Prec, #Kind, #words, #terms],
+      B_TRUE],
+     PG-AttributeProduction[#ModuleName, #Kind, #SortName, #Prec, B_TRUE]]
+   ;
+  {$String : DeclarationMapEntry}PG-ProduceBody2[
+     $String,
+     $List[PFK_SORT],
+     $Numeric,
+     $List[Text],
+     $List[Text],
+     CONSUMPTION_SORT,
+     in_46 : Text after_8 : TextMapSort . Text,
+     Text,
+     TextMapSort]
+    ::
+    Text
+   ;
+  ProduceBody2-1[Data[#in2, #after2]] :
+    {#DM}
+    PG-ProduceBody2[#ModuleName, #Rest, #n, #terms, #words, #consumer, in_59 after_93 . #[in_59, after_93], #in2, #after2]
+    →
+    {#DM}
+    PG-ProduceBody1[
+     #ModuleName,
+     #Rest,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_53 after_77 .
+      #[$TextCons[$TextEmbed[AsText[#in2]], $TextCons[$TextEmbed[AsText[in_53]], $TextNil]], JoinTextMaps[#after2, after_77]]]
+   ;
+  {$String : DeclarationMapEntry}PG-ProduceBodyTerm1[
+     $String,
+     $List[PFK_SORT],
+     $List[PFK_SORT],
+     HxScopeSort,
+     $Numeric,
+     HxRepeat,
+     FormKind,
+     $List[PFK_SORT],
+     $Numeric,
+     $List[Text],
+     $List[Text],
+     CONSUMPTION_SORT,
+     in_131 : Text after_129 : TextMapSort . Text]
+    ::
+    Text
+   ;
+  ProduceBodyTerm1-1 :
+    {#DM}
+    PG-ProduceBodyTerm1[
+     #ModuleName,
+     (PFK[HX_M_ParsedFormWord[#word1, #ParsedForm1], #Kind1]; #Rest),
+     #Failed,
+     #ScopeSort,
+     #Prec,
+     #Repeat,
+     #Kind,
+     #nonterminalPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_8 after_15 . #[in_8, after_15]]
+    →
+    {#DM}
+    PG-ProduceBodyTerm1[
+     #ModuleName,
+     #Rest,
+     Append[#Failed, (PFK[HX_M_ParsedFormWord[#word1, #ParsedForm1], #Kind1]; )],
+     #ScopeSort,
+     #Prec,
+     #Repeat,
+     #Kind,
+     #nonterminalPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_29 after_9 . #[in_29, after_9]]
+   ;
+  ProduceBodyTerm1-2 :
+    {#DM}
+    PG-ProduceBodyTerm1[
+     #ModuleName,
+     (PFK[HX_M_ParsedFormTerm[HX_M_ScopeSortPrecRepeat[#ScopeSort1, #Prec1, #Repeat1], #ParsedForm1], #Kind1]; #Rest),
+     #Failed,
+     #ScopeSort,
+     #Prec,
+     #Repeat,
+     #Kind,
+     #nonterminalPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_21 after_38 . #[in_21, after_38]]
+    →
+    {#DM}
+    PG-ProduceBodyTerm1x[
+     #ModuleName,
+     PG-SameScopeSort[#ScopeSort1, #Prec1, #Repeat1, #ScopeSort, #Prec, #Repeat],
+     #ScopeSort1,
+     #Prec1,
+     #Repeat1,
+     #ParsedForm1,
+     #Kind1,
+     #Rest,
+     #Failed,
+     #ScopeSort,
+     #Prec,
+     #Repeat,
+     #Kind,
+     #nonterminalPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_82 after_14 . #[in_82, after_14]]
+   ;
+  ProduceBodyTerm1-3 :
+    {#DM}
+    PG-ProduceBodyTerm1[
+     #ModuleName,
+     (PFK[HX_M_ParsedFormSpace[#space1, #ParsedForm1], #Kind1]; #Rest),
+     #Failed,
+     #ScopeSort,
+     #Prec,
+     #Repeat,
+     #Kind,
+     #nonterminalPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_87 after_33 . #[in_87, after_33]]
+    →
+    {#DM}
+    PG-ProduceBodyTerm1[
+     #ModuleName,
+     (PFK[#ParsedForm1, #Kind1]; #Rest),
+     #Failed,
+     #ScopeSort,
+     #Prec,
+     #Repeat,
+     #Kind,
+     #nonterminalPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_26 after_57 . #[in_26, after_57]]
+   ;
+  ProduceBodyTerm1-4 :
+    {#DM}
+    PG-ProduceBodyTerm1[
+     #ModuleName,
+     (PFK[HX_M_ParsedFormDone, #Kind1]; #Rest),
+     #Failed,
+     #ScopeSort,
+     #Prec,
+     #Repeat,
+     #Kind,
+     #nonterminalPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_40 after_75 . #[in_40, after_75]]
+    →
+    {#DM}
+    PG-ProduceBodyTerm1[
+     #ModuleName,
+     #Rest,
+     Append[#Failed, (PFK[HX_M_ParsedFormDone, #Kind1]; )],
+     #ScopeSort,
+     #Prec,
+     #Repeat,
+     #Kind,
+     #nonterminalPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_79 after_62 . #[in_79, after_62]]
+   ;
+  ProduceBodyTerm1-5 :
+    {#DM}
+    PG-ProduceBodyTerm1[
+     #ModuleName,
+     (),
+     #Failed,
+     #ScopeSort,
+     #Prec,
+     #Repeat,
+     #Kind,
+     #nonterminalPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_41 after_28 . #[in_41, after_28]]
+    →
+    {#DM}
+    PG-ProduceBodyTerm2[
+     #ModuleName,
+     #Failed,
+     #ScopeSort,
+     #Prec,
+     #Repeat,
+     #Kind,
+     #nonterminalPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_58 after_53 . #[in_58, after_53]]
+   ;
+  {$String : DeclarationMapEntry}PG-ProduceBodyTerm1x[
+     $String,
+     Boolean,
+     HxScopeSort,
+     $Numeric,
+     HxRepeat,
+     HxParsedForm,
+     FormKind,
+     $List[PFK_SORT],
+     $List[PFK_SORT],
+     HxScopeSort,
+     $Numeric,
+     HxRepeat,
+     FormKind,
+     $List[PFK_SORT],
+     $Numeric,
+     $List[Text],
+     $List[Text],
+     CONSUMPTION_SORT,
+     in_12 : Text after_91 : TextMapSort . Text]
+    ::
+    Text
+   ;
+  ProduceBodyTerm1x-1 :
+    {#DM}
+    PG-ProduceBodyTerm1x[
+     #ModuleName,
+     B_FALSE,
+     #ScopeSort1,
+     #Prec1,
+     #Repeat1,
+     #ParsedForm1,
+     #Kind1,
+     #Rest,
+     #Failed,
+     #ScopeSort,
+     #Prec,
+     #Repeat,
+     #Kind,
+     #nonterminalPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_106 after_92 . #[in_106, after_92]]
+    →
+    {#DM}
+    PG-ProduceBodyTerm1[
+     #ModuleName,
+     #Rest,
+     Append[
+      #Failed,
+      (PFK[HX_M_ParsedFormTerm[HX_M_ScopeSortPrecRepeat[#ScopeSort1, #Prec1, #Repeat1], #ParsedForm1], #Kind1]; )],
+     #ScopeSort,
+     #Prec,
+     #Repeat,
+     #Kind,
+     #nonterminalPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_281 after_134 . #[in_281, after_134]]
+   ;
+  ProduceBodyTerm1x-2 :
+    {#DM}
+    PG-ProduceBodyTerm1x[
+     #ModuleName,
+     B_TRUE,
+     #ScopeSort1,
+     #Prec1,
+     #Repeat1,
+     #ParsedForm1,
+     #Kind1,
+     #Rest,
+     #Failed,
+     #ScopeSort,
+     #Prec,
+     #Repeat,
+     #Kind,
+     #nonterminalPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_6 after_82 . #[in_6, after_82]]
+    →
+    {#DM}
+    PG-ProduceBodyTerm1[
+     #ModuleName,
+     #Rest,
+     #Failed,
+     #ScopeSort,
+     #Prec,
+     #Repeat,
+     #Kind,
+     Append[#nonterminalPFKs, (PFK[#ParsedForm1, #Kind1]; )],
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_75 after_10 . #[in_75, after_10]]
+   ;
+  {$String : DeclarationMapEntry}PG-ProduceBodyTerm2[
+     $String,
+     $List[PFK_SORT],
+     HxScopeSort,
+     $Numeric,
+     HxRepeat,
+     FormKind,
+     $List[PFK_SORT],
+     $Numeric,
+     $List[Text],
+     $List[Text],
+     CONSUMPTION_SORT,
+     in_28 : Text after_7 : TextMapSort . Text]
+    ::
+    Text
+   ;
+  ProduceBodyTerm2-1 :
+    {#DM}
+    PG-ProduceBodyTerm2[
+     #ModuleName,
+     (),
+     #ScopeSort,
+     #Prec,
+     #Repeat,
+     #Kind,
+     #nonterminalPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_44 after_54 . #[in_44, after_54]]
+    →
+    {#DM}
+    PG-ProduceBodyTerm3[
+     #ModuleName,
+     #ScopeSort,
+     #Prec,
+     #Repeat,
+     #Kind,
+     #nonterminalPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_183 after_63 . #[in_183, after_63]]
+   ;
+  ProduceBodyTerm2-2 :
+    {#DM}
+    PG-ProduceBodyTerm2[
+     #ModuleName,
+     (#PFK1; #PFKs),
+     #ScopeSort,
+     #Prec,
+     #Repeat,
+     #Kind,
+     #nonterminalPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_73 after_107 . #[in_73, after_107]]
+    →
+    {#DM}
+    PG-ProduceBodyTerm3[
+     #ModuleName,
+     #ScopeSort,
+     #Prec,
+     #Repeat,
+     #Kind,
+     #nonterminalPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in1 after1 .
+      {#DM}
+      PG-ProduceBody[
+       #ModuleName,
+       (#PFK1; #PFKs),
+       #n,
+       #terms,
+       #words,
+       #consumer,
+       in2 after2 .
+        #[$TextCons[
+          $TextChars["("],
+          $TextCons[
+           $TextEmbed[AsText[in1]],
+           $TextCons[
+            $TextBreak["\n"],
+            $TextCons[$TextChars["| "], $TextCons[$TextEmbed[AsText[in2]], $TextCons[$TextChars[")"], $TextNil]]]]]],
+JoinTextMaps[after1, after2]]]]
+   ;
+  {$String : DeclarationMapEntry}PG-ProduceBodyTerm3[
+     $String,
+     HxScopeSort,
+     $Numeric,
+     HxRepeat,
+     FormKind,
+     $List[PFK_SORT],
+     $Numeric,
+     $List[Text],
+     $List[Text],
+     CONSUMPTION_SORT,
+     in_140 : Text after_202 : TextMapSort . Text]
+    ::
+    Text
+   ;
+  ProduceBodyTerm3-1[Free[(v :: Text) ]] :
+    {#DM}
+    PG-ProduceBodyTerm3[
+     #ModuleName,
+     HX_M_ScopeSortBinder[v, #Sort#],
+     #Prec,
+     #Repeat,
+     #Kind,
+     #nonterminalPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_64 after_47 . #[in_64, after_47]]
+    →
+    IfSingletonRepeat[
+     #Repeat,
+     {#DM}
+     PG-ProduceBody[
+      #ModuleName,
+      #nonterminalPFKs,
+      #n,
+      #terms,
+      Append[#words, ($TextCons[$TextChars[SortVar[#Sort#]], $TextNil]; )],
+      #consumer,
+      in_47 after_86 .
+       #[$TextCons[
+         $TextIndent[
+          $TextCons[
+           $TextChars[" <"],
+           $TextCons[
+            $TextEmbed[AsText[PG-ProductionNameWithPrecText[PG-SortName[#Sort#], #Prec]]],
+            $TextCons[
+             $TextChars[">^"],
+             $TextCons[
+              $TextEmbed[AsText[v]],
+              $TextCons[
+               $TextChars[" "],
+               $TextCons[$TextIndent[$TextCons[$TextEmbed[AsText[in_47]], $TextNil]], $TextCons[$TextChars[" "], $TextNil]]]]]]]],
+         $TextNil],
+after_86]],
+     CookError["Cannot use repeat specification on binder"]]
+   ;
+  ProduceBodyTerm3-2 :
+    {#DM}
+    PG-ProduceBodyTerm3[
+     #ModuleName,
+     HX_M_ScopeSort[#Sort#, #Repeat#, #SubstituteSorts#],
+     #Prec,
+     #Repeat,
+     #Kind,
+     #nonterminalPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_71 after_173 . #[in_71, after_173]]
+    →
+    {#DM}
+    PG-ProduceBodyTerm4[
+     #ModuleName,
+     #Sort#,
+     #SubstituteSorts#,
+     PG-ProductionNameWithPrecRepeatText[PG-SortName[#Sort#], #Prec, NestedRepeat[#Repeat#, #Repeat]],
+     #Prec,
+     #Repeat,
+     #Kind,
+     #nonterminalPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_56 after_21 . #[in_56, after_21]]
+   ;
+  {$String : DeclarationMapEntry}PG-ProduceBodyTerm4[
+     $String,
+     HxSort,
+     $List[HxSubstituteSort],
+     Text,
+     $Numeric,
+     HxRepeat,
+     FormKind,
+     $List[PFK_SORT],
+     $Numeric,
+     $List[Text],
+     $List[Text],
+     CONSUMPTION_SORT,
+     in_55 : Text after_69 : TextMapSort . Text]
+    ::
+    Text
+   ;
+  ProduceBodyTerm4-1[Data[#consumer]] :
+    {#DM}
+    PG-ProduceBodyTerm4[
+     #ModuleName,
+     #Sort#,
+     #SubstituteSorts#,
+     #ProductionName,
+     #Prec,
+     #Repeat,
+     #Kind,
+     #nonterminalPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_86 after_23 . #[in_86, after_23]]
+    →
+    {#DM}
+    PG-ProduceBody[
+     #ModuleName,
+     #nonterminalPFKs,
+     $[Plus, #n, 1],
+     Append[#terms, ($TextCons[$TextChars[SortMetaVar[#Sort#, #n]], $TextNil]; )],
+     Append[#words, ($TextCons[$TextChars[PG-SortName[#Sort#]], $TextNil]; )],
+     #consumer,
+     in_94 after_36 .
+      #[$TextCons[
+        $TextIndent[
+         $TextCons[
+          $TextChars[" <"],
+          $TextCons[
+           $TextEmbed[AsText[#ProductionName]],
+           $TextCons[
+            $TextChars[">"],
+            $TextCons[
+             $TextEmbed[
+              AsText[
+               WrappedTextFold[
+                Map[s_43 . ExtractSubstitutedSort[s_43], #SubstituteSorts#],
+                $TextCons[$TextChars["["], $TextNil],
+                $TextCons[$TextChars[","], $TextNil],
+                $TextCons[$TextChars["]"], $TextNil]]]],
+             $TextCons[
+              $TextEmbed[
+               AsText[
+                VariableMarker[#Kind, $TextCons[$TextChars[":"], $TextCons[$TextChars[SortMetaVar[#Sort#, #n]], $TextNil]]]]],
+              $TextCons[
+               $TextChars[" "],
+               $TextCons[$TextIndent[$TextCons[$TextEmbed[AsText[in_94]], $TextNil]], $TextCons[$TextChars[" "], $TextNil]]]]]]]]],
+        $TextNil],
+after_36]]
+   ;
+  {$String : DeclarationMapEntry}PG-ProduceBodyWord1[
+     $String,
+     $List[PFK_SORT],
+     $List[PFK_SORT],
+     $String,
+     $List[PFK_SORT],
+     $Numeric,
+     $List[Text],
+     $List[Text],
+     CONSUMPTION_SORT,
+     in_104 : Text after_98 : TextMapSort . Text]
+    ::
+    Text
+   ;
+  ProduceBodyWord1-1[Data[#word1, #word], Share[#ParsedForm1, #Kind1, #Rest, #wordPFKs, #n, #terms, #words, #consumer]] :
+    {#DM}
+    PG-ProduceBodyWord1[
+     #ModuleName,
+     (PFK[HX_M_ParsedFormWord[#word1, #ParsedForm1], #Kind1]; #Rest),
+     #Failed,
+     #word,
+     #wordPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_11 after_130 . #[in_11, after_130]]
+    →
+    $[
+     If,
+     $[Equal, #word, #word1],
+     {#DM}
+     PG-ProduceBodyWord1[
+      #ModuleName,
+      #Rest,
+      #Failed,
+      #word,
+      Append[#wordPFKs, (PFK[#ParsedForm1, #Kind1]; )],
+      #n,
+      #terms,
+      #words,
+      #consumer,
+      in_42 after_59 . #[in_42, after_59]],
+     {#DM}
+     PG-ProduceBodyWord1[
+      #ModuleName,
+      #Rest,
+      Append[#Failed, (PFK[HX_M_ParsedFormWord[#word1, #ParsedForm1], #Kind1]; )],
+      #word,
+      #wordPFKs,
+      #n,
+      #terms,
+      #words,
+      #consumer,
+      in_155 after_97 . #[in_155, after_97]]]
+   ;
+  ProduceBodyWord1-2 :
+    {#DM}
+    PG-ProduceBodyWord1[
+     #ModuleName,
+     (PFK[HX_M_ParsedFormTerm[#ScopeSortPrecRepeat1, #ParsedForm1], #Kind]; #Rest),
+     #Failed,
+     #word,
+     #wordPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_22 after_1 . #[in_22, after_1]]
+    →
+    {#DM}
+    PG-ProduceBodyWord1[
+     #ModuleName,
+     #Rest,
+     Append[#Failed, (PFK[HX_M_ParsedFormTerm[#ScopeSortPrecRepeat1, #ParsedForm1], #Kind]; )],
+     #word,
+     #wordPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_83 after_84 . #[in_83, after_84]]
+   ;
+  ProduceBodyWord1-3 :
+    {#DM}
+    PG-ProduceBodyWord1[
+     #ModuleName,
+     (PFK[HX_M_ParsedFormSpace[#space1, #ParsedForm1], #Kind1]; #Rest),
+     #Failed,
+     #word,
+     #wordPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_92 after_196 . #[in_92, after_196]]
+    →
+    {#DM}
+    PG-ProduceBodyWord1[
+     #ModuleName,
+     (PFK[#ParsedForm1, #Kind1]; #Rest),
+     #Failed,
+     #word,
+     #wordPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_32 after_71 . #[in_32, after_71]]
+   ;
+  ProduceBodyWord1-4 :
+    {#DM}
+    PG-ProduceBodyWord1[
+     #ModuleName,
+     (PFK[HX_M_ParsedFormDone, #Kind]; #Rest),
+     #Failed,
+     #word,
+     #wordPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_27 after_132 . #[in_27, after_132]]
+    →
+    {#DM}
+    PG-ProduceBodyWord1[
+     #ModuleName,
+     #Rest,
+     Append[#Failed, (PFK[HX_M_ParsedFormDone, #Kind]; )],
+     #word,
+     #wordPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_85 after_78 . #[in_85, after_78]]
+   ;
+  ProduceBodyWord1-5 :
+    {#DM}
+    PG-ProduceBodyWord1[#ModuleName, (), #Failed, #word, #wordPFKs, #n, #terms, #words, #consumer, in_160 after_89 . #[in_160, after_89]]
+    →
+    {#DM}
+    PG-ProduceBodyWord2[#ModuleName, #Failed, #word, #wordPFKs, #n, #terms, #words, #consumer, in_172 after_85 . #[in_172, after_85]]
+   ;
+  {$String : DeclarationMapEntry}PG-ProduceBodyWord2[
+     $String,
+     $List[PFK_SORT],
+     $String,
+     $List[PFK_SORT],
+     $Numeric,
+     $List[Text],
+     $List[Text],
+     CONSUMPTION_SORT,
+     in_50 : Text after_13 : TextMapSort . Text]
+    ::
+    Text
+   ;
+  ProduceBodyWord2-1 :
+    {#DM}
+    PG-ProduceBodyWord2[#ModuleName, (), #word, #wordPFKs, #n, #terms, #words, #consumer, in_14 after_180 . #[in_14, after_180]]
+    →
+    {#DM}
+    PG-ProduceBody[
+     #ModuleName,
+     #wordPFKs,
+     #n,
+     #terms,
+     Append[#words, ($TextCons[$TextChars[$[Mangle, #word]], $TextNil]; )],
+     #consumer,
+     in1_6 after1_11 .
+      #[$TextCons[
+        $TextEmbed[AsText[ProductionWord[#word]]],
+        $TextCons[$TextIndent[$TextCons[$TextEmbed[AsText[in1_6]], $TextNil]], $TextNil]],
+after1_11]]
+   ;
+  ProduceBodyWord2-2 :
+    {#DM}
+    PG-ProduceBodyWord2[
+     #ModuleName,
+     (#PFK1; #PFKs),
+     #word,
+     #wordPFKs,
+     #n,
+     #terms,
+     #words,
+     #consumer,
+     in_257 after_81 . #[in_257, after_81]]
+    →
+    {#DM}
+    PG-ProduceBody[
+     #ModuleName,
+     #wordPFKs,
+     #n,
+     #terms,
+     Append[#words, ($TextCons[$TextChars[$[Mangle, #word]], $TextNil]; )],
+     #consumer,
+     in1_74 after1_31 .
+      {#DM}
+      PG-ProduceBody[
+       #ModuleName,
+       (#PFK1; #PFKs),
+       #n,
+       #terms,
+       #words,
+       #consumer,
+       in2_86 after2_45 .
+        #[$TextCons[
+          $TextChars["("],
+          $TextCons[
+           $TextEmbed[AsText[ProductionWord[#word]]],
+           $TextCons[
+            $TextEmbed[AsText[in1_74]],
+            $TextCons[
+             $TextBreak["\n"],
+             $TextCons[$TextChars["| "], $TextCons[$TextEmbed[AsText[in2_86]], $TextCons[$TextChars[")"], $TextNil]]]]]]],
+JoinTextMaps[after1_31, after2_45]]]]
+   ;
+  {$String : DeclarationMapEntry}PG-Production[$String, $String] :: Text ;
+  Production-1[Data[#Name]] :
+    {#DM}
+    PG-Production[#ModuleName, #Name]
+    →
+    {#DM}
+    PG-Production1[#ModuleName, $[{#DM}Get, #Name, DME_NONE]]
+   ;
+  PG-Production-Attribute[$String, HxAttributeKind, $String, HxAttributeForm, $List[HxAttributeOption]] :: Text ;
+  Production-Attribute-1 :
+    PG-Production-Attribute[#ModuleName, #Kind, #Name, #AttributeForm, #AttributeOptions]
+    →
+    $TextCons[
+     $TextBreak["\n"],
+     $TextCons[
+      $TextChars["    ////META: <HxAttribute"],
+      $TextCons[
+       $TextEmbed[AsText[AttributeKindCategory[#Kind]]],
+       $TextCons[
+        $TextChars["_"],
+        $TextCons[
+         $TextChars[#Name],
+         $TextCons[
+          $TextChars["> (HX) ::= {HX_M_Attribute} "],
+          $TextCons[
+           $TextEmbed[AsText[AttributeKindIndicator[#Kind]]],
+           $TextCons[
+            $TextChars[" (HX_TOKEN_"],
+            $TextCons[
+             $TextChars[#Name],
+             $TextCons[
+              $TextChars["$) "],
+              $TextCons[
+               $TextEmbed[AsText[AttributeFormSyntax[#ModuleName, #AttributeForm, #AttributeOptions]]],
+               $TextCons[
+                $TextChars[" ."],
+                $TextCons[
+                 $TextBreak["\n"],
+                 $TextCons[
+                  $TextChars["    ////META: token HX_TOKEN_"],
+                  $TextCons[
+                   $TextChars[#Name],
+                   $TextCons[
+                    $TextChars[" (HX) ::= \""],
+                    $TextCons[
+                     $TextChars[#Name],
+                     $TextCons[$TextChars["\" . "], $TextCons[$TextBreak["\n"], $TextCons[$TextChars["    "], $TextNil]]]]]]]]]]]]]]]]]]]]
+   ;
+  {$String : DeclarationMapEntry}PG-Production-Defines[$List[Define], $String, $Numeric, $List[PFK_SORT]] :: Text ;
+  Production-Defines-1 : {#DM}PG-Production-Defines[#ModuleName, (), #SortName, #Prec, ()] → $TextNil ;
+  Production-Defines-2 :
+    {#DM}
+    PG-Production-Defines[#ModuleName, (), #SortName, #Prec, (#PFK1; #PFKs)]
+    →
+    $TextCons[
+     $TextBreak["\n"],
+     $TextCons[
+      $TextChars["/* Productions for "],
+      $TextCons[
+       $TextChars[#SortName],
+       $TextCons[
+        $TextChars[" sort with (highest) precedence "],
+        $TextCons[
+         $TextChars[$[FormatNumber, #Prec]],
+         $TextCons[
+          $TextChars[". */"],
+          $TextCons[
+           $TextBreak["\n"],
+           $TextCons[$TextEmbed[AsText[{#DM}PG-Expand[#ModuleName, (#PFK1; #PFKs), #SortName, #Prec, B_TRUE]]], $TextNil]]]]]]]]
+   ;
+  Production-Defines-3 :
+    {#DM}
+    PG-Production-Defines[#ModuleName, ((D_ABSTRACTION a_1 . #Define1[a_1]); #Defines), #SortName, #Prec, #PrecPFKs]
+    →
+    {#DM}
+    PG-Production-Defines[#ModuleName, (#Define1[dummy]; #Defines), #SortName, #Prec, #PrecPFKs]
+   ;
+  Production-Defines-4 :
+    {#DM}
+    PG-Production-Defines[#ModuleName, (D_RULE[#Rule, #RuleSort, #IsData]; #Defines), #SortName, #Prec, #PrecPFKs]
+    →
+    {#DM}
+    PG-Production-Defines[#ModuleName, #Defines, #SortName, #Prec, #PrecPFKs]
+   ;
+  Production-Defines-5 :
+    {#DM}
+    PG-Production-Defines[#ModuleName, (D_FORM[#Form1, #Kind1]; #Defines), #SortName, #Prec, #PrecPFKs]
+    →
+    {#DM}
+    PG-Production-Defines2[#ModuleName, #Form1, #Kind1, #Defines, #SortName, #Prec, #PrecPFKs]
+   ;
+  Production-Defines-6 :
+    {#DM}
+    PG-Production-Defines[#ModuleName, (D_SYNTHESIZES[#AttributeName1]; #Defines), #SortName, #Prec, #PrecPFKs]
+    →
+    {#DM}
+    PG-Production-Defines[#ModuleName, #Defines, #SortName, #Prec, #PrecPFKs]
+   ;
+  {$String : DeclarationMapEntry}PG-Production-Defines2[HxForm, FormKind, $List[Define], $String, $Numeric, $List[PFK_SORT]]
+    ::
+    Text
+   ;
+  Production-Defines2-1 :
+    {#DM}
+    PG-Production-Defines2[
+     #ModuleName,
+     HX_M_FormParsedSorted[#Sort1, #ParsedForm1, #Prec1, #InheritedRefs],
+     #Kind1,
+     #Defines,
+     #SortName,
+     #Prec,
+     #PrecPFKs]
+    →
+    {#DM}
+    PG-Production-Defines3[#ModuleName, #ParsedForm1, #Prec1, #Kind1, #Defines, #SortName, #Prec, #PrecPFKs]
+   ;
+  Production-Defines2-2 :
+    {#DM}
+    PG-Production-Defines2[
+     #ModuleName,
+     HX_M_FormParsed[#ParsedForm1, #Prec1, #InheritedRefs],
+     #Kind1,
+     #Defines,
+     #SortName,
+     #Prec,
+     #PrecPFKs]
+    →
+    {#DM}
+    PG-Production-Defines3[#ModuleName, #ParsedForm1, #Prec1, #Kind1, #Defines, #SortName, #Prec, #PrecPFKs]
+   ;
+  Production-Defines2-3 :
+    {#DM}
+    PG-Production-Defines2[
+     #ModuleName,
+     HX_M_FormConstruction[#Constructor, #ScopeSortList, #InheritedRefs],
+     #Kind1,
+     #Defines,
+     #SortName,
+     #Prec,
+     #PrecPFKs]
+    →
+    {#DM}
+    PG-Production-Defines[#ModuleName, #Defines, #SortName, #Prec, #PrecPFKs]
+   ;
+  {$String : DeclarationMapEntry}PG-Production-Defines3[HxParsedForm, $Numeric, FormKind, $List[Define], $String, $Numeric, $List[PFK_SORT]]
+    ::
+    Text
+   ;
+  Production-Defines3-1[Data[#Prec1, #Prec], Share[#ParsedForm1, #Kind1, #Defines]] :
+    {#DM}
+    PG-Production-Defines3[#ModuleName, #ParsedForm1, #Prec1, #Kind1, #Defines, #SortName, #Prec, ()]
+    →
+    $[
+     If,
+     $[NumericEqual, #Prec1, #Prec],
+     {#DM}
+     PG-Production-Defines[#ModuleName, #Defines, #SortName, #Prec, (PFK[#ParsedForm1, #Kind1]; )],
+     $TextCons[
+      $TextBreak["\n"],
+      $TextCons[
+       $TextChars["<"],
+       $TextCons[
+        $TextEmbed[AsText[PG-ProductionNameWithPrecText[#SortName, #Prec]]],
+        $TextCons[
+         $TextChars["> ::= <"],
+         $TextCons[
+          $TextEmbed[AsText[PG-ProductionNameWithPrecText[#SortName, #Prec1]]],
+          $TextCons[
+           $TextChars["> ."],
+           $TextCons[
+            $TextBreak["\n"],
+            $TextCons[
+             $TextEmbed[
+              AsText[{#DM}PG-Production-Defines[#ModuleName, #Defines, #SortName, #Prec1, (PFK[#ParsedForm1, #Kind1]; )]]],
+             $TextNil]]]]]]]]]
+   ;
+  Production-Defines3-2[Data[#Prec1, #Prec], Share[#ParsedForm1, #Kind1, #Defines, #PFK, #PFKs]] :
+    {#DM}
+    PG-Production-Defines3[#ModuleName, #ParsedForm1, #Prec1, #Kind1, #Defines, #SortName, #Prec, (#PFK; #PFKs)]
+    →
+    $[
+     If,
+     $[NumericEqual, #Prec1, #Prec],
+     {#DM}
+     PG-Production-Defines[#ModuleName, #Defines, #SortName, #Prec, Append[(#PFK; #PFKs), (PFK[#ParsedForm1, #Kind1]; )]],
+     $TextCons[
+      $TextChars["/* Productions for "],
+      $TextCons[
+       $TextChars[#SortName],
+       $TextCons[
+        $TextChars[" sort with precedence "],
+        $TextCons[
+         $TextChars[$[FormatNumber, #Prec]],
+         $TextCons[
+          $TextChars[". */"],
+          $TextCons[
+           $TextBreak["\n"],
+           $TextCons[
+            $TextEmbed[AsText[{#DM}PG-Expand[#ModuleName, (#PFK; #PFKs), #SortName, #Prec, B_FALSE]]],
+            $TextCons[
+             $TextBreak["\n"],
+             $TextCons[
+              $TextEmbed[
+               AsText[{#DM}PG-Production-Defines[#ModuleName, #Defines, #SortName, #Prec1, (PFK[#ParsedForm1, #Kind1]; )]]],
+              $TextCons[$TextBreak["\n"], $TextNil]]]]]]]]]]]
+   ;
+  {$String : DeclarationMapEntry}PG-Production-HxDefines[$String, $List[Define], $String] :: Text ;
+  Production-HxDefines-1 :
+    {#DM}
+    PG-Production-HxDefines[#ModuleName, #Defines, #SortName]
+    →
+    $TextCons[
+     $TextBreak["\n"],
+     $TextCons[
+      $TextChars["////META: /* Hx terms of "],
+      $TextCons[
+       $TextChars[#SortName],
+       $TextCons[
+        $TextChars[" production sort. */"],
+        $TextCons[
+         $TextBreak["\n"],
+         $TextCons[
+          $TextChars["////META: <Hx_"],
+          $TextCons[
+           $TextChars[#SortName],
+           $TextCons[
+            $TextChars["> (HX) ::= (HX_TOKEN_"],
+            $TextCons[
+             $TextChars[#SortName],
+             $TextCons[
+              $TextChars[")?  <HxPresorted_"],
+              $TextCons[
+               $TextChars[#SortName],
+               $TextCons[
+                $TextChars["> ."],
+                $TextCons[
+                 $TextBreak["\n"],
+                 $TextCons[
+                  $TextChars["////META: <HxSorted_"],
+                  $TextCons[
+                   $TextChars[#SortName],
+                   $TextCons[
+                    $TextChars["> (HX) ::= HX_TOKEN_"],
+                    $TextCons[
+                     $TextChars[#SortName],
+                     $TextCons[
+                      $TextChars[" <HxPresorted_"],
+                      $TextCons[
+                       $TextChars[#SortName],
+                       $TextCons[
+                        $TextChars["> ."],
+                        $TextCons[
+                         $TextBreak["\n"],
+                         $TextCons[
+                          $TextChars["////META: <HxPresorted_"],
+                          $TextCons[
+                           $TextChars[#SortName],
+                           $TextCons[
+                            $TextChars["> (HX) ::="],
+                            $TextCons[
+                             $TextBreak["\n"],
+                             $TextCons[
+                              $TextChars["////META:   {HX_M_VariableUseSorted} ({"],
+                              $TextCons[
+                               $TextChars[#SortName],
+                               $TextCons[
+                                $TextChars["}) ({HX_M_RepeatSingle}) (HX_VARIABLE!!!) <HxAttributes>"],
+                                $TextCons[
+                                 $TextBreak["\n"],
+                                 $TextCons[
+                                  $TextChars["////META: | {HX_M_MetaApplicationSorted} ({"],
+                                  $TextCons[
+                                   $TextChars[#SortName],
+                                   $TextCons[
+                                    $TextChars[
+                                     "}) ({HX_M_RepeatSingle}) (HX_META_VARIABLE$) ( HX_LBRACKET <HxTerms> HX_RBRACKET | {$Nil} ) <HxAttributes>"],
+                                    $TextCons[
+                                     $TextBreak["\n"],
+                                     $TextCons[
+                                      $TextChars["////META: | {HX_M_ConstructionSorted} ({"],
+                                      $TextCons[
+                                       $TextChars[#SortName],
+                                       $TextCons[
+                                        $TextChars[
+                                         "}) ({HX_M_RepeatSingle}) (HX_CONSTRUCTOR$) ( HX_LBRACKET <HxScopes> HX_RBRACKET | HX_LPAREN <HxTerms> HX_RPAREN | {$Nil} ) <HxAttributes>"],
+                                        $TextCons[
+                                         $TextBreak["\n"],
+                                         $TextCons[
+                                          $TextChars["////META: | {HX_M_UnparsedSorted} ({"],
+                                          $TextCons[
+                                           $TextChars[#SortName],
+                                           $TextCons[
+                                            $TextChars["}) ({HX_M_RepeatSingle}) (HX_CONCRETE$:unconcrete) <HxAttributes>"],
+                                            $TextCons[
+                                             $TextBreak["\n"],
+                                             $TextCons[
+                                              $TextChars["////META: "],
+                                              $TextCons[
+                                               $TextEmbed[
+                                                AsText[{#DM}PG-Production-HxDefines1[#ModuleName, #Defines, #SortName]]],
+                                               $TextCons[
+                                                $TextBreak["\n"],
+                                                $TextCons[
+                                                 $TextChars["////META: ."],
+                                                 $TextCons[
+                                                  $TextBreak["\n"],
+                                                  $TextCons[
+                                                   $TextChars["////META: token HX_TOKEN_"],
+                                                   $TextCons[
+                                                    $TextChars[#SortName],
+                                                    $TextCons[
+                                                     $TextChars[" (HX) ::= \""],
+                                                     $TextCons[
+                                                      $TextChars[#SortName],
+                                                      $TextCons[
+                                                       $TextChars["\" ."],
+                                                       $TextCons[
+                                                        $TextBreak["\n"],
+                                                        $TextCons[
+                                                         $TextChars["////META: "],
+                                                         $TextCons[
+                                                          $TextEmbed[
+                                                           AsText[
+                                                            {#DM}
+                                                            PG-Production-HxDefinesTokens[#ModuleName, #Defines, #SortName]]],
+                                                          $TextCons[$TextBreak["\n\n"], $TextNil]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+   ;
+  {$String : DeclarationMapEntry}PG-Production-HxDefines1[$String, $List[Define], $String] :: Text ;
+  Production-HxDefines1-1 :
+    {#DM}
+    PG-Production-HxDefines1[#ModuleName, ((D_ABSTRACTION a_74 . #Define1[a_74]); #Defines), #SortName]
+    →
+    {#DM}
+    PG-Production-HxDefines1[#ModuleName, (#Define1[dummy]; #Defines), #SortName]
+   ;
+  Production-HxDefines1-2 :
+    {#DM}
+    PG-Production-HxDefines1[#ModuleName, (D_RULE[#Rule, #RuleSort, #IsData]; #Defines), #SortName]
+    →
+    {#DM}
+    PG-Production-HxDefines1[#ModuleName, #Defines, #SortName]
+   ;
+  Production-HxDefines1-3 :
+    {#DM}
+    PG-Production-HxDefines1[#ModuleName, (D_FORM[#Form1, #Kind1]; #Defines), #SortName]
+    →
+    $TextCons[
+     $TextEmbed[AsText[{#DM}PG-Production-HxForm[#ModuleName, #Form1, #Kind1, #SortName]]],
+     $TextCons[$TextEmbed[AsText[{#DM}PG-Production-HxDefines1[#ModuleName, #Defines, #SortName]]], $TextNil]]
+   ;
+  Production-HxDefines1-4 :
+    {#DM}
+    PG-Production-HxDefines1[#ModuleName, (D_SYNTHESIZES[#AttributeName1]; #Defines), #SortName]
+    →
+    {#DM}
+    PG-Production-HxDefines1[#ModuleName, #Defines, #SortName]
+   ;
+  Production-HxDefines1-5 : {#DM}PG-Production-HxDefines1[#ModuleName, (), #SortName] → $TextNil ;
+  {$String : DeclarationMapEntry}PG-Production-HxDefinesTokens[#ModuleName, $List[Define], $String] :: Text ;
+  Production-HxDefinesTokens-1 :
+    {#DM}
+    PG-Production-HxDefinesTokens[#ModuleName, ((D_ABSTRACTION a_59 . #Define1[a_59]); #Defines), #SortName]
+    →
+    {#DM}
+    PG-Production-HxDefinesTokens[#ModuleName, (#Define1[dummy]; #Defines), #SortName]
+   ;
+  Production-HxDefinesTokens-2 :
+    {#DM}
+    PG-Production-HxDefinesTokens[#ModuleName, (D_RULE[#Rule, #RuleSort, #IsData]; #Defines), #SortName]
+    →
+    {#DM}
+    PG-Production-HxDefinesTokens[#ModuleName, #Defines, #SortName]
+   ;
+  Production-HxDefinesTokens-3 :
+    {#DM}
+    PG-Production-HxDefinesTokens[#ModuleName, (D_FORM[#Form1, #Kind1]; #Defines), #SortName]
+    →
+    $TextCons[
+     $TextEmbed[AsText[{#DM}PG-Production-HxFormToken[#ModuleName, #Form1, #Kind1, #SortName]]],
+     $TextCons[$TextEmbed[AsText[{#DM}PG-Production-HxDefinesTokens[#ModuleName, #Defines, #SortName]]], $TextNil]]
+   ;
+  Production-HxDefinesTokens-4 :
+    {#DM}
+    PG-Production-HxDefinesTokens[#ModuleName, (D_SYNTHESIZES[#AttributeName1]; #Defines), #SortName]
+    →
+    {#DM}
+    PG-Production-HxDefinesTokens[#ModuleName, #Defines, #SortName]
+   ;
+  Production-HxDefinesTokens-5 : {#DM}PG-Production-HxDefinesTokens[#ModuleName, (), #SortName] → $TextNil ;
+  {$String : DeclarationMapEntry}PG-Production-HxForm[HxForm, FormKind, $String] :: Text ;
+  Production-HxForm-1 :
+    {#DM}
+    PG-Production-HxForm[#ModuleName, HX_M_FormParsedSorted[#Sort1, #ParsedForm1, #Prec1, #InheritedRefs], #Kind1, #SortName]
+    →
+    $TextNil
+   ;
+  Production-HxForm-2 :
+    {#DM}
+    PG-Production-HxForm[#ModuleName, HX_M_FormParsed[#ParsedForm1, #Prec1, #InheritedRefs], #Kind1, #SortName]
+    →
+    $TextNil
+   ;
+  Production-HxForm-3 :
+    {#DM}
+    PG-Production-HxForm[#ModuleName, HX_M_FormConstruction[#Constructor, #ScopeSortList, #InheritedRefs], #Kind1, #SortName]
+    →
+    $TextCons[
+     $TextChars["| HX_TOKEN_"],
+     $TextCons[
+      $TextChars[#Constructor],
+      $TextCons[
+       $TextChars["$ "],
+       $TextCons[
+        $TextEmbed[
+         AsText[
+          IfEmpty[
+           #ScopeSortList,
+           $TextCons[$TextChars["( HX_LPAREN HX_RPAREN )? "], $TextNil],
+           $TextCons[
+            $TextChars[" HX_LPAREN "],
+            $TextCons[
+             $TextEmbed[AsText[{#DM}PG-Production-HxScopeSortList[#ModuleName, #ScopeSortList, #SortName, B_TRUE]]],
+             $TextCons[$TextChars[" HX_RPAREN "], $TextNil]]]]]],
+        $TextCons[$TextBreak["\n"], $TextNil]]]]]
+   ;
+  {$String : DeclarationMapEntry}PG-Production-HxFormToken[HxForm, FormKind, $String] :: Text ;
+  Production-HxFormToken-1 :
+    {#DM}
+    PG-Production-HxFormToken[#ModuleName, HX_M_FormParsedSorted[#Sort1, #ParsedForm1, #Prec1, #InheritedRefs], #Kind1, #SortName]
+    →
+    $TextNil
+   ;
+  Production-HxFormToken-2 :
+    {#DM}
+    PG-Production-HxFormToken[#ModuleName, HX_M_FormParsed[#ParsedForm1, #Prec1, #InheritedRefs], #Kind1, #SortName]
+    →
+    $TextNil
+   ;
+  Production-HxFormToken-3 :
+    {#DM}
+    PG-Production-HxFormToken[#ModuleName, HX_M_FormConstruction[#Constructor, #ScopeSortList, #InheritedRefs], #Kind1, #SortName]
+    →
+    $TextCons[
+     $TextChars["token HX_TOKEN_"],
+     $TextCons[
+      $TextChars[#Constructor],
+      $TextCons[
+       $TextChars[" (HX) ::= \""],
+       $TextCons[$TextChars[#Constructor], $TextCons[$TextChars["\" ."], $TextCons[$TextBreak["\n"], $TextNil]]]]]]
+   ;
+  {$String : DeclarationMapEntry}PG-Production-HxScope[$List[HxSubstituteSort], Text, Text, Text, Text] :: Text ;
+  Production-HxScope-1 :
+    {#DM}
+    PG-Production-HxScope[#ModuleName, (#SubstituteSort; #SubstituteSorts), #SortRef, #ScopedVars, #sep, #argsep]
+    →
+    $TextCons[
+     $TextChars[" "],
+     $TextCons[
+      $TextEmbed[AsText[#sep]],
+      $TextCons[
+       $TextChars[" HX_VARIABLE^"],
+       $TextCons[
+        $TextEmbed[AsText[x_33]],
+        $TextCons[
+         $TextChars[" "],
+         $TextCons[
+          $TextEmbed[
+           AsText[
+            {#DM}
+            PG-Production-HxScope[
+             #ModuleName,
+             #SubstituteSorts,
+             #SortRef,
+             $TextCons[
+              $TextEmbed[AsText[#ScopedVars]],
+              $TextCons[$TextEmbed[AsText[#argsep]], $TextCons[$TextEmbed[AsText[x_33]], $TextNil]]],
+             $TextCons[$TextChars["HX_COMMA"], $TextNil],
+             $TextCons[$TextChars["\270"], $TextNil]]]],
+          $TextNil]]]]]]
+   ;
+  Production-HxScope-2 :
+    {#DM}
+    PG-Production-HxScope[#ModuleName, (), #SortRef, #ScopedVars, #sep, #argsep]
+    →
+    $TextCons[
+     $TextChars[" HX_RBRACKET "],
+     $TextCons[$TextEmbed[AsText[#SortRef]], $TextCons[$TextEmbed[AsText[#ScopedVars]], $TextCons[$TextChars["]"], $TextNil]]]]
+   ;
+  {$String : DeclarationMapEntry}PG-Production-HxScopeSort[HxSort, $List[HxSubstituteSort], $String] :: Text ;
+  Production-HxScopeSort-1 :
+    {#DM}
+    PG-Production-HxScopeSort[#ModuleName, #Sort#, #SubstituteSorts#, #SortName]
+    →
+    IfEmpty[
+     #SubstituteSorts#,
+     $TextCons[$TextChars["<Hx_"], $TextCons[$TextChars[PG-SortName[#Sort#]], $TextCons[$TextChars[">"], $TextNil]]],
+     $TextCons[
+      $TextEmbed[
+       AsText[
+        {#DM}
+        PG-Production-HxScope[
+         #ModuleName,
+         #SubstituteSorts#,
+         $TextCons[$TextChars["<Hx_"], $TextCons[$TextChars[PG-SortName[#Sort#]], $TextCons[$TextChars[">"], $TextNil]]],
+         $TextNil,
+         $TextCons[$TextChars["HX_LBRACKET"], $TextNil],
+         $TextCons[$TextChars["["], $TextNil]]]],
+      $TextNil]]
+   ;
+  {$String : DeclarationMapEntry}PG-Production-HxScopeSortList[$List[HxScopeSort], $String, Boolean] :: Text ;
+  Production-HxScopeSortList-1 :
+    {#DM}
+    PG-Production-HxScopeSortList[#ModuleName, (HX_M_ScopeSort[#Sort#, #Repeat#, #SubstituteSorts#]; #ScopeSortList), #SortName, #first]
+    →
+    $TextCons[
+     $TextEmbed[AsText[If[#first, $TextNil, $TextCons[$TextChars[" HX_COMMA "], $TextNil]]]],
+     $TextCons[
+      $TextEmbed[AsText[{#DM}PG-Production-HxScopeSort[#ModuleName, #Sort#, #SubstituteSorts#, #SortName]]],
+      $TextCons[
+       $TextEmbed[AsText[{#DM}PG-Production-HxScopeSortList[#ModuleName, #ScopeSortList, #SortName, B_FALSE]]],
+       $TextNil]]]
+   ;
+  Production-HxScopeSortList-2[Free[(v :: Text) ]] :
+    {#DM}
+    PG-Production-HxScopeSortList[#ModuleName, (HX_M_BinderScopeSort[v, #Sort#, #BindersScopeSort#]; #ScopeSortList), #SortName, #first]
+    →
+    {#DM}
+    PG-Production-HxScopeSortList[#ModuleName, (#BindersScopeSort#; #ScopeSortList), #SortName, #first]
+   ;
+  Production-HxScopeSortList-3[Free[(v :: Text) ]] :
+    {#DM}
+    PG-Production-HxScopeSortList[#ModuleName, (HX_M_ScopeSortBinder[v, #Sort#]; #ScopeSortList), #SortName, #first]
+    →
+    $[Error, "There should not be binder subterm sorts."]
+   ;
+  Production-HxScopeSortList-4 : {#DM}PG-Production-HxScopeSortList[#ModuleName, (), #SortName, #first] → $TextNil ;
+  {$String : DeclarationMapEntry}PG-Production1[$String, DeclarationMapEntry] :: Text ;
+  Production1-1 : {#DM}PG-Production1[#ModuleName, DME_NONE] → $TextNil ;
+  Production1-2 :
+    {#DM}
+    PG-Production1[#ModuleName, DME_TOKEN[#SortName]]
+    →
+    $TextCons[
+     $TextBreak["\n"],
+     $TextCons[
+      $TextChars["/* Productions for "],
+      $TextCons[
+       $TextChars[#SortName],
+       $TextCons[
+        $TextChars[" token. */"],
+        $TextCons[
+         $TextBreak["\n"],
+         $TextCons[
+          $TextChars["<"],
+          $TextCons[
+           $TextEmbed[AsText[PG-ProductionNameText[#SortName]]],
+           $TextCons[
+            $TextChars["> ::= "],
+            $TextCons[
+             $TextEmbed[AsText[{#DM}PG-MetaHead[B_TRUE, #ModuleName, #SortName, #SortName, B_FALSE, 0]]],
+             $TextCons[
+              $TextChars["TOKEN["],
+              $TextCons[
+               $TextEmbed[AsText[PG-TokenNameText[#SortName]]],
+               $TextCons[
+                $TextChars["$] ."],
+                $TextCons[
+                 $TextBreak["\n"],
+                 $TextCons[
+                  $TextEmbed[AsText[{#DM}PG-MetaTail[B_TRUE, #SortName, #SortName]]],
+                  $TextCons[
+                   $TextBreak["\n\n"],
+                   $TextCons[
+                    $TextChars["////META: /* Hx terms of "],
+                    $TextCons[
+                     $TextChars[#SortName],
+                     $TextCons[
+                      $TextChars[" token sort. */"],
+                      $TextCons[
+                       $TextBreak["\n"],
+                       $TextCons[
+                        $TextChars["////META: <Hx_"],
+                        $TextCons[
+                         $TextChars[#SortName],
+                         $TextCons[
+                          $TextChars["> (HX) ::= (HX_TOKEN_"],
+                          $TextCons[
+                           $TextChars[#SortName],
+                           $TextCons[
+                            $TextChars[")?  <HxPresorted_"],
+                            $TextCons[
+                             $TextChars[#SortName],
+                             $TextCons[
+                              $TextChars["> ."],
+                              $TextCons[
+                               $TextBreak["\n"],
+                               $TextCons[
+                                $TextChars["////META: <HxSorted_"],
+                                $TextCons[
+                                 $TextChars[#SortName],
+                                 $TextCons[
+                                  $TextChars["> (HX) ::= HX_TOKEN_"],
+                                  $TextCons[
+                                   $TextChars[#SortName],
+                                   $TextCons[
+                                    $TextChars[" <HxPresorted_"],
+                                    $TextCons[
+                                     $TextChars[#SortName],
+                                     $TextCons[
+                                      $TextChars["> ."],
+                                      $TextCons[
+                                       $TextBreak["\n"],
+                                       $TextCons[
+                                        $TextChars["////META: <HxPresorted_"],
+                                        $TextCons[
+                                         $TextChars[#SortName],
+                                         $TextCons[
+                                          $TextChars["> (HX) ::="],
+                                          $TextCons[
+                                           $TextBreak["\n"],
+                                           $TextCons[
+                                            $TextChars["////META:   {HX_M_VariableUseSorted} ({"],
+                                            $TextCons[
+                                             $TextChars[#SortName],
+                                             $TextCons[
+                                              $TextChars["}) ({HX_M_RepeatSingle}) (HX_VARIABLE!!!) <HxAttributes>"],
+                                              $TextCons[
+                                               $TextBreak["\n"],
+                                               $TextCons[
+                                                $TextChars["////META: | {HX_M_MetaApplicationSorted} ({"],
+                                                $TextCons[
+                                                 $TextChars[#SortName],
+                                                 $TextCons[
+                                                  $TextChars[
+                                                   "}) ({HX_M_RepeatSingle}) (HX_META_VARIABLE$) ( HX_LBRACKET <HxTerms>  HX_RBRACKET | {$Nil} ) <HxAttributes>"],
+                                                  $TextCons[
+                                                   $TextBreak["\n"],
+                                                   $TextCons[
+                                                    $TextChars["////META: | {HX_M_UnparsedSorted} ({"],
+                                                    $TextCons[
+                                                     $TextChars[#SortName],
+                                                     $TextCons[
+                                                      $TextChars[
+                                                       "}) ({HX_M_RepeatSingle}) (HX_CONCRETE$:unconcrete) <HxAttributes>"],
+                                                      $TextCons[
+                                                       $TextBreak["\n"],
+                                                       $TextCons[
+                                                        $TextChars["////META: ."],
+                                                        $TextCons[
+                                                         $TextBreak["\n"],
+                                                         $TextCons[
+                                                          $TextChars["////META: token HX_TOKEN_"],
+                                                          $TextCons[
+                                                           $TextChars[#SortName],
+                                                           $TextCons[
+                                                            $TextChars[" (HX) ::= \""],
+                                                            $TextCons[
+                                                             $TextChars[#SortName],
+                                                             $TextCons[
+                                                              $TextChars["\" ."],
+                                                              $TextCons[$TextBreak["\n"], $TextNil]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+   ;
+  Production1-3 :
+    {#DM}
+    PG-Production1[#ModuleName, DME_ATTRIBUTE[#Kind, #Name, #AttributeForm, #AttributeOptions]]
+    →
+    PG-Production-Attribute[#ModuleName, #Kind, #Name, #AttributeForm, #AttributeOptions]
+   ;
+  Production1-4 :
+    {#DM}
+    PG-Production1[#ModuleName, DME_SORT[#Defines, #SortName, #Precs, #Wrapper, #IsStart]]
+    →
+    $TextCons[
+     $TextEmbed[AsText[{#DM}PG-Production-Defines[#ModuleName, #Defines, #SortName, 0, ()]]],
+     $TextCons[$TextEmbed[AsText[{#DM}PG-Production-HxDefines[#ModuleName, #Defines, #SortName]]], $TextNil]]
+   ;
+  PG-ProductionConstructionText[$String, $String, $Numeric, FormKind, $List[Text], $List[Text]] :: Text ;
+  ProductionConstructionText-1[Data[#SortName, #Prec, #words]] :
+    PG-ProductionConstructionText[#ModuleName, #SortName, #Prec, FK_SCHEME[#Inh], #words, #terms]
+    →
+    $TextCons[
+     $TextIndent[
+      $TextCons[
+       $TextChars[" {{ NODE["],
+       $TextCons[
+        $TextEmbed[AsText[PG-ProductionNameWithPrecText[#SortName, #Prec]]],
+        $TextCons[
+         $TextEmbed[
+          AsText[
+           IfEmpty[#words, $TextCons[$TextChars["EMPTY"], $TextNil], TextFold1[#words, $TextCons[$TextChars["_"], $TextNil]]]]],
+         $TextCons[
+          $TextEmbed[
+           AsText[
+            WrappedTextFold[
+             #terms,
+             $TextCons[$TextChars[", ("], $TextNil],
+             $TextCons[$TextChars["; "], $TextNil],
+             $TextCons[$TextChars[";)"], $TextNil]]]],
+          $TextCons[$TextChars["]}}"], $TextNil]]]]]],
+     $TextNil]
+   ;
+  ProductionConstructionText-2[Data[#SortName, #Prec, #Kind, #words]] :
+    PG-ProductionConstructionText[#ModuleName, #SortName, #Prec, $[NotMatch, FK_SCHEME[#Inh], #Kind], #words, #terms]
+    →
+    IfAliasKind[
+     #Kind,
+     WrappedTextFold[
+      #terms,
+      $TextCons[$TextChars[" {{"], $TextNil],
+      $TextCons[$TextChars[" "], $TextNil],
+      $TextCons[$TextChars["}}"], $TextNil]],
+     $TextCons[
+      $TextIndent[
+       $TextCons[
+        $TextChars[" {{ NODE["],
+        $TextCons[
+         $TextEmbed[AsText[PG-ProductionNameWithPrecText[#SortName, #Prec]]],
+         $TextCons[
+          $TextEmbed[
+           AsText[
+            IfEmpty[
+             #words,
+             $TextCons[$TextChars["EMPTY"], $TextNil],
+             TextFold1[#words, $TextCons[$TextChars["_"], $TextNil]]]]],
+          $TextCons[
+           $TextEmbed[
+            AsText[
+             WrappedTextFold[
+              #terms,
+              $TextCons[$TextChars[", ("], $TextNil],
+              $TextCons[$TextChars["; "], $TextNil],
+              $TextCons[$TextChars[";)"], $TextNil]]]],
+           $TextCons[$TextChars["]}}"], $TextNil]]]]]],
+      $TextNil]]
+   ;
+  PG-ProductionNameText[$String] :: Text ;
+  ProductionNameText-1[Data[#Name]] : PG-ProductionNameText[#Name] → $TextCons[$TextChars[#Name], $TextNil] ;
+  PG-ProductionNameWithPrecRepeatText[$String, $Numeric, HxRepeat] :: Text ;
+  ProductionNameWithPrecRepeatText-1 :
+    PG-ProductionNameWithPrecRepeatText[#Name, #Prec, HX_M_RepeatSingle]
+    →
+    PG-ProductionNameWithPrecText[#Name, #Prec]
+   ;
+  ProductionNameWithPrecRepeatText-2 :
+    PG-ProductionNameWithPrecRepeatText[#Name, #Prec, HX_M_RepeatMaybe]
+    →
+    $TextCons[$TextEmbed[AsText[PG-ProductionNameWithPrecText[#Name, #Prec]]], $TextCons[$TextChars["_Maybe"], $TextNil]]
+   ;
+  ProductionNameWithPrecRepeatText-3 :
+    PG-ProductionNameWithPrecRepeatText[#Name, #Prec, HX_M_RepeatMaybeSome]
+    →
+    $TextCons[$TextEmbed[AsText[PG-ProductionNameWithPrecText[#Name, #Prec]]], $TextCons[$TextChars["_MaybeSome"], $TextNil]]
+   ;
+  ProductionNameWithPrecRepeatText-4[Data[#RegExpSimple#]] :
+    PG-ProductionNameWithPrecRepeatText[#Name, #Prec, HX_M_RepeatSome]
+    →
+    $TextCons[$TextEmbed[AsText[PG-ProductionNameWithPrecText[#Name, #Prec]]], $TextCons[$TextChars["_Some"], $TextNil]]
+   ;
+  ProductionNameWithPrecRepeatText-5[Data[#RegExpLeaf#]] :
+    PG-ProductionNameWithPrecRepeatText[#Name, #Prec, HX_M_RepeatSomeSep[#RegExpLeaf#]]
+    →
+    $TextCons[
+     $TextEmbed[AsText[PG-ProductionNameWithPrecText[#Name, #Prec]]],
+     $TextCons[$TextEmbed[AsText[PG-RegExpLeafNameText["", #RegExpLeaf#]]], $TextNil]]
+   ;
+  PG-ProductionNameWithPrecText[$String, $Numeric] :: Text ;
+  ProductionNameWithPrecText-1[Data[#Name, #Prec], Copy[#Name, #Prec]] :
+    PG-ProductionNameWithPrecText[#Name, #Prec]
+    →
+    PG-ProductionNameText[$[If, $[NumericEqual, #Prec, 0], #Name, $[:, #Name, $[FormatNumber, #Prec]]]]
+   ;
+  {$String : DeclarationMapEntry}PG-Productions[$String] :: Text ;
+  Productions-1 :
+    {#DM; $AllNames : DME_NAMES[#Names]}
+    PG-Productions[#ModuleName]
+    →
+    {#DM}
+    PG-Productions0[#ModuleName, #Names]
+   ;
+  {$String : DeclarationMapEntry}PG-Productions0[$String, NameSet] :: Text ;
+  Productions0-1 :
+    {#DM}
+    PG-Productions0[#ModuleName, #Names]
+    →
+    {#DM}
+    PG-Productions1[HasNames[#Names], #ModuleName, #Names]
+   ;
+  {$String : DeclarationMapEntry}PG-Productions1[Boolean, $String, NameSet] :: Text ;
+  Productions1-1 :
+    {#DM}
+    PG-Productions1[B_TRUE, #ModuleName, #Names]
+    →
+    $TextCons[
+     $TextEmbed[AsText[{#DM}PG-Production[#ModuleName, FirstName[#Names]]]],
+     $TextCons[$TextEmbed[AsText[{#DM}PG-Productions0[#ModuleName, RemoveFirstName[#Names]]]], $TextNil]]
+   ;
+  Productions1-2 : {#DM}PG-Productions1[B_FALSE, #ModuleName, #Names] → $TextNil ;
+  PG-QualifiedName[$String] :: $String ;
+  QualifiedName-1[Data[#Name]] : PG-QualifiedName[#Name] → $[Replace, $[Replace, #Name, "/", "."], "\"", ""] ;
+  PG-QualifyName[$String, $String] :: $String ;
+  QualifyName-1 : PG-QualifyName[#ModuleName, #BaseName] → PG-QualifyName2[PG-LastName[#ModuleName], #BaseName] ;
+  QualifyName2-1[Data[#ModuleBase, #BaseName]] :
+    PG-QualifyName2[#ModuleBase, #BaseName]
+    →
+    $[If, $[StartsWith, #BaseName, $], #BaseName, $[:, #ModuleBase, $, #BaseName]]
+   ;
+  PG-RegExpLeafNameText[$String, HxRegExpSimple] :: Text ;
+  RegExpLeafNameText-1[Data[#Name, #String#]] :
+    PG-RegExpLeafNameText[#Name, HX_M_RegExpString[#String#]]
+    →
+    $TextCons[$TextChars[#Name], $TextCons[$TextChars["_SomeS"], $TextCons[$TextChars[$[Mangle, #String#]], $TextNil]]]
+   ;
+  RegExpLeafNameText-2[Data[#Name, #Word#]] :
+    PG-RegExpLeafNameText[#Name, HX_M_RegExpWord[#Word#]]
+    →
+    $TextCons[$TextChars[#Name], $TextCons[$TextChars["_SomeW"], $TextCons[$TextChars[$[Mangle, #Word#]], $TextNil]]]
+   ;
+  PG-ResolveImports[$List[HxDeclaration], $String] :: $List[HxDeclaration] ;
+  Resolve-Attribute :
+    PG-ResolveImports[
+     (HX_M_attribute[#AttributeKind#, #AttributeName#, #AttributeForm#, #AttributeOptions#]; #Declarations#),
+     #ModuleName]
+    →
+    (
+     HX_M_attribute[#AttributeKind#, #AttributeName#, #AttributeForm#, #AttributeOptions#];
+     PG-ResolveImports[#Declarations#, #ModuleName])
+   ;
+  Resolve-Fragment :
+    PG-ResolveImports[(HX_M_fragment[#FragmentName#, #RegExp#]; #Declarations#), #ModuleName]
+    →
+    (HX_M_fragment[#FragmentName#, #RegExp#]; PG-ResolveImports[#Declarations#, #ModuleName])
+   ;
+  Resolve-Import :
+    PG-ResolveImports[(HX_M_import[#ModuleName#, #SortNames#]; #Declarations#), #ModuleName]
+    →
+    PG-ResolveImports[
+     (HX_M_embedded__module[$[ParseURL, "hxEmbeddedModule", $[Replace, #ModuleName#, "\"", ""]]]; #Declarations#),
+     #ModuleName]
+   ;
+  Resolve-Module :
+    PG-ResolveImports[(HX_M_embedded__module[HX_M_module[#ModuleName2#, #Declarations2#]]; #Declarations#), #ModuleName]
+    →
+    (
+     HX_M_embedded__module[HX_M_module[#ModuleName2#, PG-ResolveImports[#Declarations2#, #ModuleName2#]]];
+     PG-ResolveImports[#Declarations#, #ModuleName])
+   ;
+  Resolve-NakedAlternative :
+    PG-ResolveImports[(HX_M_anonymous[#SortAlternatives#]; #Declarations#), #ModuleName]
+    →
+    (HX_M_anonymous[#SortAlternatives#]; PG-ResolveImports[#Declarations#, #ModuleName])
+   ;
+  Resolve-Sort :
+    PG-ResolveImports[(HX_M_sort[HX_M_no__start, #SortName#, #Repeat#, #SortAbstraction#]; #Declarations#), #ModuleName]
+    →
+    (
+     HX_M_sort[HX_M_no__start, #SortName#, #Repeat#, #SortAbstraction#];
+     PG-ResolveImports[#Declarations#, #ModuleName])
+   ;
+  Resolve-Space :
+    PG-ResolveImports[(HX_M_space[#RegExp#]; #Declarations#), #ModuleName]
+    →
+    (HX_M_space[#RegExp#]; PG-ResolveImports[#Declarations#, #ModuleName])
+   ;
+  Resolve-Token :
+    PG-ResolveImports[(HX_M_token[#SortName#, #RegExp#]; #Declarations#), #ModuleName]
+    →
+    (HX_M_token[#SortName#, #RegExp#]; PG-ResolveImports[#Declarations#, #ModuleName])
+   ;
+  ResolveDone : PG-ResolveImports[(), #ModuleName] → () ;
+  ResolveNesting :
+    PG-ResolveImports[(HX_M_nestedDeclarations[#Declarations1#]; #Declarations2#), #ModuleName]
+    →
+    (
+     HX_M_nestedDeclarations[PG-ResolveImports[#Declarations1#, #ModuleName]];
+     PG-ResolveImports[#Declarations2#, #ModuleName])
+   ;
+  ResolveRule :
+    PG-ResolveImports[(HX_M_rule[#Rule#]; #Declarations#), #ModuleName]
+    →
+    (HX_M_rule[#Rule#]; PG-ResolveImports[#Declarations#, #ModuleName])
+   ;
+  PG-SamePrec[$Numeric, $Numeric] :: Boolean ;
+  SamePrec-1[Data[#Prec1, #Prec2]] :
+    PG-SamePrec[#Prec1, #Prec2]
+    →
+    $[If, $[NumericEqual, #Prec1, #Prec2], B_TRUE, B_FALSE]
+   ;
+  PG-SameScopeSort[HxScopeSort, $Numeric, HxRepeat, HxScopeSort, $Numeric, HxRepeat] :: Boolean ;
+  SameScopeSort-1 :
+    PG-SameScopeSort[#Sort1, #Prec1, #Repeat1, #Sort2, #Prec2, #Repeat2]
+    →
+    PG-SameScopeSort2[#Sort1, #Sort2, #Prec1, #Repeat1, #Prec2, #Repeat2]
+   ;
+  PG-SameScopeSort2[HxScopeSort, HxScopeSort, $Numeric, HxRepeat, $Numeric, HxRepeat] :: Boolean ;
+  SameScopeSort2-1 :
+    PG-SameScopeSort2[
+     HX_M_ScopeSort[#Sort1#, HX_M_RepeatSingle, #SubstituteSorts1#],
+     HX_M_ScopeSort[#Sort2#, HX_M_RepeatSingle, #SubstituteSorts2#],
+     #Prec1,
+     #Repeat1,
+     #Prec2,
+     #Repeat2]
+    →
+    And[PG-SameSort[#Sort1#, #Sort2#], And[PG-SamePrec[#Prec1, #Prec2], PG-SubRepeat[#Repeat1, #Repeat2]]]
+   ;
+  SameScopeSort2-2[Free[(v1 :: Text) ]] :
+    PG-SameScopeSort2[
+     HX_M_ScopeSortBinder[v1, #Sort1#],
+     HX_M_ScopeSort[#Sort2#, HX_M_RepeatSingle, #SubstituteSorts2#],
+     #P1,
+     #R1,
+     #P2,
+     #R2]
+    →
+    B_FALSE
+   ;
+  SameScopeSort2-3[Free[(v2 :: Text) ]] :
+    PG-SameScopeSort2[
+     HX_M_ScopeSort[#Sort1#, HX_M_RepeatSingle, #SubstituteSorts1#],
+     HX_M_ScopeSortBinder[v2, #Sort2#],
+     #P1,
+     #R1,
+     #P2,
+     #R2]
+    →
+    B_FALSE
+   ;
+  SameScopeSort2-4[Free[(v1 :: Text) , (v2 :: Text) ]] :
+    PG-SameScopeSort2[HX_M_ScopeSortBinder[v1, #Sort1#], HX_M_ScopeSortBinder[v2, #Sort2#], #P1, #R1, #P2, #R2]
+    →
+    PG-SameSort[#Sort1#, #Sort2#]
+   ;
+  PG-SameSort[HxSort, HxSort] :: Boolean ;
+  SameSort-1[Data[#1, #2]] : PG-SameSort[#1, #2] → PG-SameSort2[#1, #2] ;
+  PG-SameSort2[HxSort, HxSort] :: Boolean ;
+  SameSort2-1[Data[#SortName1#, #SortName2#]] :
+    PG-SameSort2[
+     HX_M_Sort[HX_M_SortName[#SortName1#, #MetaVariables1#], #SimpleSorts1#],
+     HX_M_Sort[HX_M_SortName[#SortName2#, #MetaVariables2#], #SimpleSorts2#]]
+    →
+    $[If, $[Equal, #SortName1#, #SortName2#], B_TRUE, B_FALSE]
+   ;
+  SameSort2-2 :
+    PG-SameSort2[$[NotMatch, HX_M_Sort[HX_M_SortName[#SortName1#, #MetaVariables1#], #SimpleSorts1#], #1], #2]
+    →
+    B_FALSE
+   ;
+  SameSort2-3 :
+    PG-SameSort2[#1, $[NotMatch, HX_M_Sort[HX_M_SortName[#SortName2#, #MetaVariables2#], #SimpleSorts2#], #2]]
+    →
+    B_FALSE
+   ;
+  {$String : DeclarationMapEntry}PG-SortAbstraction[
+     HxSortAbstraction,
+     Boolean,
+     $String,
+     $String,
+     NameSet,
+     ¹ok_104 : Ok s_249 : $String ss_175 : NameSet . DeclarationMap]
+    ::
+    DeclarationMap
+   ;
+  SortAbstraction-1 :
+    {#DM}
+    PG-SortAbstraction[#SortAbstraction, #IsStart, #ModuleName, #Name, #Names, ¹ok_5 s_197 ss_29 . #[¹ok_5, s_197, ss_29]]
+    →
+    {#DM}
+    PG-InsertDefines[
+     PG-SortAbstractionDefines[#SortAbstraction],
+     #IsStart,
+     #ModuleName,
+     #Name,
+     #Names,
+     ¹ok_72 s_48 ss_65 . #[¹ok_72, s_48, ss_65]]
+   ;
+  PG-SortAbstractionDefines[HxSortAbstraction] :: $List[Define] ;
+  SortAbstractionDefines-1 :
+    PG-SortAbstractionDefines[HX_M_SortAbstractionBody[#SortAlternatives#]]
+    →
+    PG-SortAlternativesDefines[#SortAlternatives#]
+   ;
+  SortAbstractionDefines-2 :
+    PG-SortAbstractionDefines[(HX_M_SortAbstractionParam a_174 . #SortAbstraction#[a_174])]
+    →
+    (PG-SortAbstractionDefines2 a_98 . PG-SortAbstractionDefines[#SortAbstraction#[a_98]])
+   ;
+  (PG-SortAbstractionDefines2 a_44 : HxSortParam . $List[Define]) :: $List[Define] ;
+  SortAbstractionDefines2-1 : (PG-SortAbstractionDefines2 a_40 . ) → () ;
+  SortAbstractionDefines2-2 :
+    (PG-SortAbstractionDefines2 a_37 . #Define[a_37]; #Defines[a_37])
+    →
+    ((D_ABSTRACTION a_14 . #Define[a_14]); (PG-SortAbstractionDefines2 a_4 . #Defines[a_4]))
+   ;
+  PG-SortAlternativeDefine[HxSortAlternative] :: Define ;
+  SortAlternativeDefine-1 :
+    PG-SortAlternativeDefine[{#LOC}HX_M_scheme[#Form#]]
+    →
+    {#LOC}
+    D_FORM[#Form#, FK_SCHEME[PG-FormInheritedAttributes[#Form#]]]
+   ;
+  SortAlternativeDefine-2 :
+    PG-SortAlternativeDefine[{#LOC}HX_M_data[#Form#, #Tagging#]]
+    →
+    {#LOC}
+    D_FORM[#Form#, FK_DATA[#Tagging#]]
+   ;
+  SortAlternativeDefine-3 :
+    PG-SortAlternativeDefine[{#LOC}HX_M_symbol[#Form#]]
+    →
+    {#LOC}
+    D_FORM[#Form#, FK_SYMBOL[$False]]
+   ;
+  SortAlternativeDefine-4 :
+    PG-SortAlternativeDefine[{#LOC}HX_M_static[#Form#]]
+    →
+    {#LOC}
+    D_FORM[#Form#, FK_SYMBOL[$True]]
+   ;
+  SortAlternativeDefine-5 :
+    PG-SortAlternativeDefine[{#LOC}HX_M_sugar[#Form#, #Term#]]
+    →
+    {#LOC}
+    D_FORM[#Form#, FK_SUGAR[#Term#]]
+   ;
+  SortAlternativeDefine-6 :
+    PG-SortAlternativeDefine[{#LOC}HX_M_SynthesizedRef[#AttributeName#]]
+    →
+    {#LOC}
+    D_SYNTHESIZES[#AttributeName#]
+   ;
+  {$String : DeclarationMapEntry}PG-SortAlternatives[
+     $List[HxSortAlternative],
+     $String,
+     $String,
+     NameSet,
+     ¹ok_152 : Ok s_91 : $String ss_61 : NameSet . DeclarationMap]
+    ::
+    DeclarationMap
+   ;
+  SortAlternatives-1 :
+    {#DM}
+    PG-SortAlternatives[(), #ModuleName, #Name, #Names, ¹ok_73 s_107 ss_34 . #[¹ok_73, s_107, ss_34]]
+    →
+    {#DM}
+    #[OK, #Name, #Names]
+   ;
+  SortAlternatives-2[Data[#Name]] :
+    {#DM}
+    PG-SortAlternatives[(#sa; #sas), #ModuleName, #Name, #Names, ¹ok_66 s_0 ss_24 . #[¹ok_66, s_0, ss_24]]
+    →
+    $[
+     IfEmpty,
+     #Name,
+     PG-SortAlternatives-Error,
+     {#DM}
+     PG-InsertDefines[
+      PG-SortAlternativesDefines[(#sa; #sas)],
+      B_FALSE,
+      #ModuleName,
+      #Name,
+      #Names,
+      ¹ok_8 s_46 ss_68 . #[¹ok_8, s_46, ss_68]]]
+   ;
+  PG-SortAlternatives-Error :: DeclarationMap ;
+  SortAlternatives-Error-1 :
+    PG-SortAlternatives-Error
+    →
+    $[Error, "Error: cannot process stand-alone SortAlternatives with no current sort."]
+   ;
+  PG-SortAlternativesDefines[$List[HxSortAlternative]] :: $List[Define] ;
+  SortAlternativesDefines-1 : PG-SortAlternativesDefines[()] → () ;
+  SortAlternativesDefines-2 :
+    PG-SortAlternativesDefines[(#SortAlternative#; #SortAlternatives#)]
+    →
+    (PG-SortAlternativeDefine[#SortAlternative#]; PG-SortAlternativesDefines[#SortAlternatives#])
+   ;
+  PG-SortName[HxSort] :: $String ;
+  SortName-1[Data[#Sort]] : PG-SortName[#Sort] → PG-SortName2[#Sort] ;
+  PG-SortName2[HxSort] :: $String ;
+  SortName2-1 : PG-SortName2[HX_M_Sort[HX_M_SortName[#SortName#, #MetaVariables#], #SimpleSorts#]] → #SortName# ;
+  SortName2-2 :
+    PG-SortName2[$[NotMatch, HX_M_Sort[HX_M_SortName[#SortName#, #MetaVariables#], #SimpleSorts#], #]]
+    →
+    $[Show, #]
+   ;
+  PG-SortNameWithRepeat[HxSort, HxRepeat] :: $String ;
+  SortNameWithRepeat-1 : PG-SortNameWithRepeat[#Sort, #Repeat] → PG-SortNameWithRepeat1[PG-SortName[#Sort], #Repeat] ;
+  PG-SortNameWithRepeat1[$String, HxRepeat] :: $String ;
+  SortNameWithRepeat1-1[Data[#FullSortName]] :
+    PG-SortNameWithRepeat1[#FullSortName, #Repeat]
+    →
+    If[SameString["", #FullSortName], "", PG-SortNameWithRepeat2[#FullSortName, #Repeat]]
+   ;
+  PG-SortNameWithRepeat2[$String, HxRepeat] :: $String ;
+  SortNameWithRepeat2-1 : PG-SortNameWithRepeat2[#FullSortName, HX_M_RepeatSingle] → #FullSortName ;
+  SortNameWithRepeat2-2 : PG-SortNameWithRepeat2[#FullSortName, HX_M_RepeatMaybe] → $[:, #FullSortName, "_Maybe"] ;
+  SortNameWithRepeat2-3 :
+    PG-SortNameWithRepeat2[#FullSortName, HX_M_RepeatMaybeSome]
+    →
+    $[:, #FullSortName, "_MaybeSome"]
+   ;
+  SortNameWithRepeat2-4 : PG-SortNameWithRepeat2[#FullSortName, HX_M_RepeatSome] → $[:, #FullSortName, "_Some"] ;
+  SortNameWithRepeat2-5 :
+    PG-SortNameWithRepeat2[#FullSortName, HX_M_RepeatSomeSep[#RegExpLeaf#]]
+    →
+    RegExpLeafSuffix[#RegExpLeaf#, $[:, #FullSortName, "_Some_"]]
+   ;
+  PG-SubRepeat[HxRepeat, HxRepeat] :: Boolean ;
+  SubRepeat-many-many : PG-SubRepeat[HX_M_RepeatMaybeSome, HX_M_RepeatMaybeSome] → B_TRUE ;
+  SubRepeat-many-other[Data[#_]] :
+    PG-SubRepeat[HX_M_RepeatMaybeSome, $[NotMatch, HX_M_RepeatMaybeSome, #_]]
+    →
+    B_FALSE
+   ;
+  SubRepeat-maybe-many : PG-SubRepeat[HX_M_RepeatMaybe, HX_M_RepeatMaybeSome] → B_TRUE ;
+  SubRepeat-maybe-maybe : PG-SubRepeat[HX_M_RepeatMaybe, HX_M_RepeatMaybe] → B_TRUE ;
+  SubRepeat-maybe-single : PG-SubRepeat[HX_M_RepeatMaybe, HX_M_RepeatSingle] → B_FALSE ;
+  SubRepeat-maybe-some : PG-SubRepeat[HX_M_RepeatMaybe, HX_M_RepeatSome] → B_FALSE ;
+  SubRepeat-maybe-somesep : PG-SubRepeat[HX_M_RepeatMaybe, HX_M_RepeatSomeSep[#RegExpLeaf2#]] → B_FALSE ;
+  SubRepeat-single : PG-SubRepeat[HX_M_RepeatSingle, #Repeat2] → B_TRUE ;
+  SubRepeat-some-many : PG-SubRepeat[HX_M_RepeatSome, HX_M_RepeatMaybeSome] → B_TRUE ;
+  SubRepeat-some-maybe : PG-SubRepeat[HX_M_RepeatSome, HX_M_RepeatMaybe] → B_FALSE ;
+  SubRepeat-some-single : PG-SubRepeat[HX_M_RepeatSome, HX_M_RepeatSingle] → B_FALSE ;
+  SubRepeat-some-some : PG-SubRepeat[HX_M_RepeatSome, HX_M_RepeatSome] → B_TRUE ;
+  SubRepeat-some-somesep : PG-SubRepeat[HX_M_RepeatSome, HX_M_RepeatSomeSep[#RegExpLeaf2#]] → B_FALSE ;
+  SubRepeat-somesep-many : PG-SubRepeat[HX_M_RepeatSomeSep[#RegExpLeaf1#], HX_M_RepeatMaybeSome] → B_FALSE ;
+  SubRepeat-somesep-maybe : PG-SubRepeat[HX_M_RepeatSomeSep[#RegExpLeaf1#], HX_M_RepeatMaybe] → B_FALSE ;
+  SubRepeat-somesep-single : PG-SubRepeat[HX_M_RepeatSomeSep[#RegExpLeaf1#], HX_M_RepeatSingle] → B_FALSE ;
+  SubRepeat-somesep-some : PG-SubRepeat[HX_M_RepeatSomeSep[#RegExpLeaf1#], HX_M_RepeatSome] → B_FALSE ;
+  SubRepeat-somesep-string-string :
+    PG-SubRepeat[HX_M_RepeatSomeSep[HX_M_RegExpString[#String1#]], HX_M_RepeatSomeSep[HX_M_RegExpString[#String2#]]]
+    →
+    SameString[UnString[#String1#], UnString[#String2#]]
+   ;
+  SubRepeat-somesep-string-word :
+    PG-SubRepeat[HX_M_RepeatSomeSep[HX_M_RegExpString[#String1#]], HX_M_RepeatSomeSep[HX_M_RegExpWord[#Word2#]]]
+    →
+    SameString[UnString[#String1#], #Word2#]
+   ;
+  SubRepeat-somesep-word-string :
+    PG-SubRepeat[HX_M_RepeatSomeSep[HX_M_RegExpWord[#Word1#]], HX_M_RepeatSomeSep[HX_M_RegExpString[#String2#]]]
+    →
+    SameString[#Word1#, UnString[#String2#]]
+   ;
+  SubRepeat-somesep-word-word :
+    PG-SubRepeat[HX_M_RepeatSomeSep[HX_M_RegExpWord[#Word1#]], HX_M_RepeatSomeSep[HX_M_RegExpWord[#Word2#]]]
+    →
+    SameString[#Word1#, #Word2#]
+   ;
+  PG-TokenNameText[$String] :: Text ;
+  TokenNameText-1[Data[#Name]] :
+    PG-TokenNameText[#Name]
+    →
+    $TextCons[$TextChars["T"], $TextCons[$TextChars[$[Mangle, $[Trim, #Name]]], $TextNil]]
+   ;
+  PG-isLeftRecursive[$String, $Numeric, PFK_SORT] :: Boolean ;
+  isLeftRecursive-1 :
+    PG-isLeftRecursive[#SortName, #Prec, PFK[HX_M_ParsedFormSpace[#Space, #ParsedForm1], #Kind]]
+    →
+    PG-isLeftRecursive[#SortName, #Prec, PFK[#ParsedForm1, #Kind]]
+   ;
+  isLeftRecursive-2 :
+    PG-isLeftRecursive[#SortName, #Prec, PFK[HX_M_ParsedFormWord[#Word, #ParsedForm1], #Kind]]
+    →
+    B_FALSE
+   ;
+  isLeftRecursive-3[Data[#Sort]] :
+    PG-isLeftRecursive[
+     #SortName,
+     #Prec,
+     PFK[HX_M_ParsedFormTerm[HX_M_ScopeSortPrecRepeat[#Sort1, #Prec1, #Repeat1], #ParsedForm1], #Kind]]
+    →
+    $[If, $[NumericEqual, #Prec, #Prec1], PG-isLeftRecursive1[#SortName, #Sort1], B_FALSE]
+   ;
+  isLeftRecursive-4 : PG-isLeftRecursive[#SortName, #Prec, PFK[HX_M_ParsedFormDone, #Kind]] → B_FALSE ;
+  PG-isLeftRecursive1[$String, HxScopeSort] :: Boolean ;
+  isLeftRecursive1-1 :
+    PG-isLeftRecursive1[#SortName, HX_M_ScopeSort[HX_M_Sort[HX_M_PG-SortName[#SortName1, #_1], ()], HX_M_RepeatSingle, ()]]
+    →
+    SameString[#SortName, #SortName1]
+   ;
+  isLeftRecursive1-2[Data[#Kind]] :
+    PG-isLeftRecursive1[
+     #SortName,
+     $[NotMatch, HX_M_ScopeSort[HX_M_Sort[HX_M_PG-SortName[#SortName1, #_1], ()], HX_M_RepeatSingle, ()], #_]]
+    →
+    B_FALSE
+   ;
+  PG-stripLeftRecursion[PFK_SORT] :: PFK_SORT ;
+  stripLeftRecursion-1 :
+    PG-stripLeftRecursion[PFK[HX_M_ParsedFormSpace[#Space, #ParsedForm1], #Kind]]
+    →
+    PG-stripLeftRecursion[PFK[#ParsedForm1, #Kind]]
+   ;
+  stripLeftRecursion-2 :
+    PG-stripLeftRecursion[
+     PFK[
+      HX_M_ParsedFormTerm[
+       HX_M_ScopeSortPrecRepeat[HX_M_ScopeSort[HX_M_Sort[HX_M_PG-SortName[#SortName, #_], ()], HX_M_RepeatSingle, ()], #Prec, #Repeat],
+       #ParsedForm],
+      #Kind]]
+    →
+    PFK[#ParsedForm, #Kind]
+   ;
+  {$String : DeclarationMapEntry}PG-then-Declarations1[
+     Ok,
+     $List[HxDeclaration],
+     $String,
+     $String,
+     NameSet,
+     ¹ok_136 : Ok s_136 : $String ss_16 : NameSet . DeclarationMap]
+    ::
+    DeclarationMap
+   ;
+  then-Declarations1-1 :
+    {#DM}
+    PG-then-Declarations1[OK, #Declaration*, #ModuleName, #LastSortName, #Names, ¹ok_294 s_34 ss_73 . #[¹ok_294, s_34, ss_73]]
+    →
+    {#DM}
+    PG-MapDeclarations1[#Declaration*, #ModuleName, #LastSortName, #Names, ¹ok_189 s_12 ss_45 . #[¹ok_189, s_12, ss_45]]
+   ;
+  {$String : DeclarationMapEntry}PG-then-Finish7[Ok, $Numeric, $String, NameSet, NameSet] :: DeclarationMap ;
+  then-Finish7-1 :
+    {#DM}
+    PG-then-Finish7[OK, #Prec, #Name, #RestNames, #Names]
+    →
+    {#DM}
+    PG-Finish7[#Prec, #Name, #RestNames, #Names]
+   ;
+  {$String : DeclarationMapEntry}PG-then-InsertDefines[
+     Ok,
+     Boolean,
+     $String,
+     $List[Define],
+     $String,
+     NameSet,
+     ¹ok_7 : Ok s_85 : $String ss_64 : NameSet . DeclarationMap]
+    ::
+    DeclarationMap
+   ;
+  then-InsertDefines-1 :
+    {#DM}
+    PG-then-InsertDefines[OK, #Defines, #IsStart, #ModuleName, #Name, #Names, ¹ok_59 s_6 ss_95 . #[¹ok_59, s_6, ss_95]]
+    →
+    {#DM}
+    PG-InsertDefines[#Defines, #IsStart, #ModuleName, #Name, #Names, ¹ok_29 s_287 ss_41 . #[¹ok_29, s_287, ss_41]]
+   ;
+  PG1[$String, $List[HxDeclaration]] :: Text ;
+  PG1-1 :
+    PG1[#ModuleName, #Declarations]
+    →
+    PG2[PG-MapDeclarations[#Declarations, #ModuleName], #Declarations, #ModuleName]
+   ;
+  PG2[DeclarationMap, $List[HxDeclaration], $String] :: Text ;
+  PG2-1[Data[#Declarations]] :
+    PG2[{#DM}DM, #Declarations, #ModuleName]
+    →
+    $TextCons[
+     $TextChars["/* PG Grammar for HACS module "],
+     $TextCons[
+      $TextChars[PG-QualifiedName[#ModuleName]],
+      $TextCons[
+       $TextChars[". */"],
+       $TextCons[
+        $TextBreak["\n\n"],
+        $TextCons[
+         $TextChars["/* INTERFACE. */"],
+         $TextCons[
+          $TextBreak["\n\n"],
+          $TextCons[
+           $TextChars["class "],
+           $TextCons[
+            $TextChars[PG-QualifiedName[#ModuleName]],
+            $TextCons[
+             $TextChars["Parser : <Term>,"],
+             $TextCons[
+              $TextBreak["\n"],
+              $TextCons[
+               $TextChars["  <Construction>"],
+               $TextCons[
+                $TextBreak["\n\n"],
+                $TextCons[
+                 $TextChars["prefix "],
+                 $TextCons[
+                  $TextChars[PG-ParsePrefix[#ModuleName]],
+                  $TextCons[
+                   $TextBreak["\n\n"],
+                   $TextCons[
+                    $TextChars["////META: declarations"],
+                    $TextCons[
+                     $TextBreak["\n"],
+                     $TextCons[
+                      $TextChars["////META: %{"],
+                      $TextCons[
+                       $TextBreak["\n"],
+                       $TextCons[
+                        $TextChars["////META: String unconcrete(String s) {return s.substring(1, s.length()-1).trim();}"],
+                        $TextCons[
+                         $TextBreak["\n"],
+                         $TextCons[
+                          $TextChars[
+                           "////META: String unmeta(String s, int skip) {return s.substring(1+skip, s.length()-1).trim();}"],
+                          $TextCons[
+                           $TextBreak["\n"],
+                           $TextCons[
+                            $TextChars["////META: %}"],
+                            $TextCons[
+                             $TextBreak["\n\n\n"],
+                             $TextCons[
+                              $TextChars["/* GRAMMAR. */"],
+                              $TextCons[
+                               $TextBreak["\n\n"],
+                               $TextCons[
+                                $TextEmbed[AsText[{#DM}PG-Productions[#ModuleName]]],
+                                $TextCons[
+                                 $TextBreak["\n\n"],
+                                 $TextCons[
+                                  $TextChars["/* TOKENS. */"],
+                                  $TextCons[
+                                   $TextBreak["\n\n"],
+                                   $TextCons[
+                                    $TextChars["%{"],
+                                    $TextCons[
+                                     $TextBreak["\n"],
+                                     $TextCons[
+                                      $TextChars[
+                                       "TOKEN_MGR_DECLS : { int nesting; int nestedState;} /* Used by all nesting constructs. */"],
+                                      $TextCons[
+                                       $TextBreak["\n"],
+                                       $TextCons[
+                                        $TextChars["%}"],
+                                        $TextCons[
+                                         $TextBreak["\n\n"],
+                                         $TextCons[
+                                          $TextEmbed[AsText[PG-Lexical[#Declarations, #ModuleName]]],
+                                          $TextCons[$TextBreak["\n"], $TextNil]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+   ;
+  ProductionWord[$String] :: Text ;
+  ProductionWord-1 : ProductionWord[#word] → $TextCons[$TextChars[Stringify[#word]], $TextNil] ;
+  RegExpLeafSuffix[HxRegExpSimple, $String] :: $String ;
+  RegExpLeafSuffix-1[Data[#String#]] :
+    RegExpLeafSuffix[HX_M_RegExpString[#String#], #prefix]
+    →
+    $[:, #prefix, #String#]
+   ;
+  RegExpLeafSuffix-2[Data[#Word#]] : RegExpLeafSuffix[HX_M_RegExpWord[#Word#], #prefix] → $[:, #prefix, #Word#] ;
+  RegExpLeafWord[HxRegExpSimple] :: $String ;
+  RegExpLeafWord-1[Data[#String#]] : RegExpLeafWord[HX_M_RegExpString[#String#]] → $[Rescape, #String#] ;
+  RegExpLeafWord-2[Data[#Word#]] : RegExpLeafWord[HX_M_RegExpWord[#Word#]] → #Word# ;
+  RemoveFirstName[NameSet] :: NameSet ;
+  Prelude-RemoveFirstName-1[Data[#Names]] :
+    RemoveFirstName[NAME_SET[#Names]]
+    →
+    NAME_SET[$[FromFirst, $[AfterFirst, #Names, ";"], ";"]]
+   ;
+  RemoveName[NameSet, $String] :: NameSet ;
+  Prelude-RemoveName-1[Data[#Names, #Name]] :
+    RemoveName[NAME_SET[#Names], #Name]
+    →
+    RemoveName1[#Names, $[:, ";", #Name, ";"]]
+   ;
+  RemoveName1[$String, $String] :: NameSet ;
+  Prelude-RemoveName1-1[Copy[#Names, #NamePattern]] :
+    RemoveName1[#Names, #NamePattern]
+    →
+    NAME_SET[$[If, $[Contains, #Names, #NamePattern], $[Replace, #Names, #NamePattern, ";"], #Names]]
+   ;
+  RuleTopSort[HxRule, $String, $String] :: $String ;
+  RuleTopSort-1 :
+    RuleTopSort[HX_M_Rule[#Priority#, #Construction1#, #Construction2#, #Term#], #ModuleName, #FallBack]
+    →
+    TermTopSort[#Construction2#, #ModuleName, #FallBack]
+   ;
+  SameString[$String, $String] :: Boolean ;
+  Prelude-SameString-1[Data[#1, #2]] : SameString[#1, #2] → $[If, $[Equal, #1, #2], B_TRUE, B_FALSE] ;
+  SingletonTextMap[$String, Text] :: TextMapSort ;
+  Prelude-SingletonTextMap-1[Data[#Key]] : SingletonTextMap[#Key, #Value] → {#Key : #Value}TEXT_MAP[(#Key; )] ;
+  SortMetaVar[HxSort, $Numeric] :: $String ;
+  SortMetaVar-1[Data[#Sort]] : SortMetaVar[#Sort, #n] → SortMetaVar2[#Sort, #n] ;
+  SortMetaVar2[HxSort, $Numeric] :: $String ;
+  SortMetaVar2-1 :
+    SortMetaVar2[HX_M_Sort[HX_M_SortName[#SortName#, (#MetaVariable#; )], #SimpleSorts#], #n]
+    →
+    #MetaVariable#
+   ;
+  SortMetaVar2-2 :
+    SortMetaVar2[HX_M_Sort[HX_M_SortName[#SortName#, ()], #SimpleSorts#], #n]
+    →
+    $[:, "#_", #SortName#, "_", $[FormatNumber, #n]]
+   ;
+  SortMetaVar2-3 :
+    SortMetaVar2[$[NotMatch, HX_M_Sort[HX_M_SortName[#SortName#, #MetaVariables#], #SimpleSorts#], #], #n]
+    →
+    "#bad"
+   ;
+  SortRepeatString[$String, HxRepeat] :: $String ;
+  SortRepeatString-1[Data[#SortName]] :
+    SortRepeatString[#SortName, #Repeat]
+    →
+    $[IfEmpty, #SortName, "", SortRepeatString2[#SortName, #Repeat]]
+   ;
+  SortRepeatString2[$String, HxRepeat] :: $String ;
+  SortRepeatString2-1 : SortRepeatString2[#SortName, HX_M_RepeatSingle] → #SortName ;
+  SortRepeatString2-2 : SortRepeatString2[#SortName, HX_M_RepeatMaybe] → $[:, #SortName, "?"] ;
+  SortRepeatString2-3 : SortRepeatString2[#SortName, HX_M_RepeatMaybeSome] → $[:, #SortName, "*"] ;
+  SortRepeatString2-4 : SortRepeatString2[#SortName, HX_M_RepeatSome] → $[:, #SortName, "+"] ;
+  SortRepeatString2-5 :
+    SortRepeatString2[#SortName, HX_M_RepeatSomeSep[#RegExpLeaf#]]
+    →
+    RegExpLeafSuffix[#RegExpLeaf#, $[:, #SortName, "+_"]]
+   ;
+  SortVar[HxSort] :: $String ;
+  SortVar-1[Data[#Sort]] : SortVar[#Sort] → SortVar2[#Sort] ;
+  SortVar2[HxSort] :: $String ;
+  SortVar2-1[Data[#SortName]] :
+    SortVar2[HX_M_Sort[HX_M_SortName[#SortName#, #MetaVariables#], #SimpleSorts#]]
+    →
+    SortVar3[#SortName#, #MetaVariables#]
+   ;
+  SortVar2-2 : SortVar2[$[NotMatch, HX_M_Sort[HX_M_SortName[#SortName#, #MetaVariables#], #SimpleSorts#], #]] → "bad"
+   ;
+  SortVar3[$String, $List[$String]] :: $String ;
+  SortVar3-1 : SortVar3[#SortName, ()] → $[:, "v", #SortName] ;
+  SortVar3-2 : SortVar3[#SortName, (#MetaVar; )] → $[:, "v", #SortName, $[Replace, #MetaVar, "#", ""]] ;
+  (∀ a_2 . {$String : $StringEntry}Special_error[Text] :: a_2 );
+  Prelude-Special_error-1[Data[#text]] :
+    {#L}
+    Special_error[#text]
+    →
+    Special_error-2[$[{#L}Get[$String], "$$Location", "?"], TextToString[#text]]
+   ;
+  (∀ a_52 . Special_error-2[$String, $String] :: a_52 );
+  Prelude-Special_error-2-1[Data[#loc, #mess]] :
+    {#L}
+    Special_error-2[#loc, #mess]
+    →
+    $[Error, $[:, "Error@", #loc, ": ", #mess]]
+   ;
+  (∀ a_34 . {$String : $StringEntry}Special_message[Text] :: a_34 );
+  Prelude-Special_message-1[Data[#text]] : {#L}Special_message[#text] → Special_message-2[TextToString[#text]] ;
+  (∀ a_31 . Special_message-2[$String] :: a_31 );
+  Prelude-Special_message-2-1[Data[#mess]] : {#L}Special_message-2[#mess] → $[Echo, #mess] ;
+  StringToText[$String] :: Text ;
+  Prelude-StringToText-1 : StringToText[#] → $TextCons[$TextChars[#], $TextNil] ;
+  Stringify[$String] :: $String ;
+  Prelude-Stringify-1[Data[#]] : Stringify[#] → $[Escape, #] ;
+  {$String : DeclarationMapEntry}SynthesizedMapNames :: NameSet ;
+  SynthesizedMapNames-1 :
+    {#DM}
+    SynthesizedMapNames
+    →
+    FoldWhen[ok_253 k_36 ns_85 . {#DM}KeepSynthesizedMapEntry[ok_253, k_36, ns_85], $[{#DM}Keys], NoNames]
+   ;
+  {$String : DeclarationMapEntry}SynthesizedNames :: NameSet ;
+  SynthesizedNames-1 :
+    {#DM}
+    SynthesizedNames
+    →
+    FoldWhen[ok_119 k_0 ns_4 . {#DM}KeepSynthesizedEntry[ok_119, k_0, ns_4], $[{#DM}Keys[$String]], NoNames]
+   ;
+  TermTopSort[HxTerm, $String, $String] :: $String ;
+  TermTopSort-1[Free[(v :: Text) ]] :
+    TermTopSort[HX_M_VariableUse[v, #Attributes#], #ModuleName, #FallbackSortName]
+    →
+    CheckString[#FallbackSortName]
+   ;
+  TermTopSort-10 :
+    TermTopSort[HX_M_Special[#v, #Concrete], #ModuleName, #FallbackSortName]
+    →
+    CheckString[#FallbackSortName]
+   ;
+  TermTopSort-2[Free[(v :: Text) ]] :
+    TermTopSort[HX_M_VariableUseSorted[#Constructor1#, #Repeat1#, v, #Attributes#], #ModuleName, #FallbackSortName]
+    →
+    PG-QualifyName[#ModuleName, SortRepeatString[#Constructor1#, #Repeat1#]]
+   ;
+  TermTopSort-3 :
+    TermTopSort[HX_M_Unparsed[#Unparsed, #Attributes], #ModuleName, #FallbackSortName]
+    →
+    CheckString[#FallbackSortName]
+   ;
+  TermTopSort-4 :
+    TermTopSort[HX_M_UnparsedSorted[#SortName, #Repeat, #Unparsed, #Attributes#], #ModuleName, #FallbackSortName]
+    →
+    PG-QualifyName[#ModuleName, #SortName]
+   ;
+  TermTopSort-5 :
+    TermTopSort[HX_M_Construction[#Constructor#, #Scopes#, #Attributes#], #ModuleName, #FallbackSortName]
+    →
+    CheckString[#FallbackSortName]
+   ;
+  TermTopSort-6 :
+    TermTopSort[
+     HX_M_ConstructionSorted[#Constructor1#, #Repeat1#, #Constructor2#, #Scopes#, #Attributes#],
+     #ModuleName,
+     #FallbackSortName]
+    →
+    PG-QualifyName[#ModuleName, SortRepeatString[#Constructor1#, #Repeat1#]]
+   ;
+  TermTopSort-7 :
+    TermTopSort[HX_M_MetaApplication[#MetaVariable#, #Terms#, #Attributes#], #ModuleName, #FallbackSortName]
+    →
+    CheckString[#FallbackSortName]
+   ;
+  TermTopSort-8 :
+    TermTopSort[
+     HX_M_MetaApplicationSorted[#Constructor1#, #Repeat1#, #MetaVariable#, #Terms#, #Attributes#],
+     #ModuleName,
+     #FallbackSortName]
+    →
+    PG-QualifyName[#ModuleName, SortRepeatString[#Constructor1#, #Repeat1#]]
+   ;
+  TermTopSort-9 :
+    TermTopSort[HX_M_Literal[#Literal#, #Attributes#], #ModuleName, #FallbackSortName]
+    →
+    CheckString[#FallbackSortName]
+   ;
+  TextFold[$List[Text], Text] :: Text ;
+  Prelude-TextFold-1[Discard[#sep]] : TextFold[(), #sep] → $TextNil ;
+  Prelude-TextFold-2 :
+    TextFold[(#1; #s), #sep]
+    →
+    $TextCons[$TextEmbed[AsText[#1]], $TextCons[$TextEmbed[AsText[TextFold1[#s, #sep]]], $TextNil]]
+   ;
+  TextFold1[$List[Text], Text] :: Text ;
+  Prelude-TextFold1-1[Discard[#sep]] : TextFold1[(), #sep] → $TextNil ;
+  Prelude-TextFold1-2[Copy[#sep]] :
+    TextFold1[(#1; #s), #sep]
+    →
+    $TextCons[
+     $TextEmbed[AsText[#sep]],
+     $TextCons[$TextEmbed[AsText[#1]], $TextCons[$TextEmbed[AsText[TextFold1[#s, #sep]]], $TextNil]]]
+   ;
+  TextFoldMap[TextMapSort, Text] :: Text ;
+  Prelude-TextFoldMap-1[Data[#Keys]] :
+    TextFoldMap[{#map}TEXT_MAP[#Keys], #sep]
+    →
+    TextFold[MapWhen[ok_35 k_64 . {#map}TextLookup[ok_35, k_64], #Keys], #sep]
+   ;
+  {$String : Text}TextLookup[Ok, $String] :: Text ;
+  Prelude-TextLookup-1[Data[#Key]] : {#map}TextLookup[OK, #Key] → $[{#map}Get[Text], #Key, $TextNil] ;
+  TextPartToString[Text-Part] :: $String ;
+  Prelude-TextPartToString-1 : TextPartToString[$TextChars[#String]] → #String ;
+  Prelude-TextPartToString-2 : TextPartToString[$TextBreak[#String]] → #String ;
+  Prelude-TextPartToString-3 : TextPartToString[$TextSeparator] → "" ;
+  Prelude-TextPartToString-4 : TextPartToString[$TextGroup[#Text]] → TextToString[#Text] ;
+  Prelude-TextPartToString-5 : TextPartToString[$TextIndent[#Text]] → TextToString[#Text] ;
+  Prelude-TextPartToString-6 : TextPartToString[$TextEmbed[#Text]] → TextToString[#Text] ;
+  TextToString[Text] :: $String ;
+  Prelude-TextToString-1 :
+    TextToString[$TextCons[#Part, #Text]]
+    →
+    TextToString2[TextPartToString[#Part], TextToString[#Text]]
+   ;
+  Prelude-TextToString-2 : TextToString[$TextNil] → "" ;
+  Prelude-TextToString-3 : TextToString[v] → $[Show, v] ;
+  TextToString2[$String, $String] :: $String ;
+  Prelude-TextToString2-1[Data[#1, #2]] : TextToString2[#1, #2] → $[:, #1, #2] ;
+  (∀ a_50 . ThenAsText[Ok, a_50] :: Text );
+  Prelude-ThenAsText-1[Data[#text]] : ThenAsText[OK, #text] → #text ;
+  (∀ a_117 . ThenAsTextLiteral[Ok, a_117] :: Text );
+  Prelude-ThenAsTextLiteral-1[Data[#text]] : ThenAsTextLiteral[OK, #text] → $TextCons[$TextChars[#text], $TextNil] ;
+  ThenRemoveName[Ok, NameSet, $String] :: NameSet ;
+  Prelude-ThenRemoveName-1 : ThenRemoveName[OK, #NameSet, #Name] → RemoveName[#NameSet, #Name] ;
+  (∀ a_26 . Tl[$List[a_26]] :: $List[a_26] );
+  Prelude-Tl-1 : Tl[(#; ##)] → ## ;
+  Prelude-Tl-2 : Tl[()] → $[Error, "Tl of empty list"] ;
+  Trim[$String] :: $String ;
+  Prelude-Trim-1[Data[#]] : Trim[#] → $[Trim, #] ;
+  (∀ a_39 . UnLift[Lifted[a_39]] :: a_39 );
+  Prelude-UnLift-1 : UnLift[LIFTED[#]] → # ;
+  UnString[$String] :: $String ;
+  Prelude-UnString-1[Data[#]] : UnString[#] → $[Rescape, #] ;
+  UnionNames[NameSet, NameSet] :: NameSet ;
+  Prelude-UnionNames-1[Data[#Names1, #Names2]] :
+    UnionNames[#Names1, #Names2]
+    →
+    UnionNames1[#Names1, FoldNamesWhen[ok_9 a_196 bs . ThenRemoveName[ok_9, bs, a_196], #Names1, #Names2]]
+   ;
+  UnionNames1[NameSet, NameSet] :: NameSet ;
+  Prelude-UnionNames1-1 : UnionNames1[NAME_SET[#1], NAME_SET[#2]] → NAME_SET[$[:, #1, $[AfterFirst, #2, ";"]]] ;
+  VariableMarker[FormKind, Text] :: Text ;
+  VariableMarker-1[Data[#Kind]] : VariableMarker[#Kind, #Other] → VariableMarker2[#Kind, #Other] ;
+  VariableMarker2[FormKind, Text] :: Text ;
+  VariableMarker2-1 :
+    VariableMarker2[FK_SYMBOL[$False], #Other]
+    →
+    $TextCons[$TextChars["!!!"], $TextCons[$TextEmbed[AsText[#Other]], $TextNil]]
+   ;
+  VariableMarker2-2 :
+    VariableMarker2[FK_SYMBOL[$True], #Other]
+    →
+    $TextCons[$TextChars["!!"], $TextCons[$TextEmbed[AsText[#Other]], $TextNil]]
+   ;
+  VariableMarker2-3 : VariableMarker2[$[NotMatch, FK_SYMBOL[#IsStatic], #Kind], #Other] → #Other ;
+  (∀ a_3 . {$String : $StringEntry}When[Ok, a_3] :: a_3 );
+  Prelude-When-1 : {#E}When[OK, #] → {#E}# ;
+  (∀ b_70 a_78 . WrappedTextFold[$List[Text], a_78, Text, b_70] :: Text );
+  Prelude-WrappedTextFold-1[Discard[#open, #sep, #close]] : WrappedTextFold[(), #open, #sep, #close] → $TextNil ;
+  Prelude-WrappedTextFold-2 :
+    WrappedTextFold[(#1; #s), #open, #sep, #close]
+    →
+    $TextCons[
+     $TextEmbed[AsText[#open]],
+     $TextCons[
+      $TextEmbed[AsText[#1]],
+      $TextCons[$TextEmbed[AsText[TextFold1[#s, #sep]]], $TextCons[$TextEmbed[AsText[#close]], $TextNil]]]]
+   ;
+  )]

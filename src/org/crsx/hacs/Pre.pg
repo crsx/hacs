@@ -1,0 +1,548 @@
+/** Raw.pg: GRAMMAR FOR "RAW" HACS. */
+
+class org.crsx.hacs.Raw : <Module>, <ModuleName>, <EmbeddedModule>,
+<Declaration>, <Declarations>, <SortAbstraction>, <Rule>, <Sort>, <SortParam>, <SortName>, <SortNames>, <SimpleSort>, <SimpleSorts>, <SubstituteSorts>, <SubstituteSort>, <Tagging>,
+<SortAlternative>, <SortAlternatives>, <Form>, <FormPrec>, <InheritedRefs>, <InheritedRef>, <AttributeKind>, <AttributeForm>, <AttributeOptions>, <AttributeOption>,
+<BindersScopeSorts>, <BindersScopeSort>, <ScopeSortPrecRepeat>, <ScopeSort>, <Repeat>, <Priority>,
+<FragmentName>, <FragmentRef>, <RegExp>, <RegExpChoice>, <RegExpUnits>, <RegExpUnit>, <RegExpSimple>, <RegExpLeaf>, <Word>,
+<Term>, <NotVariableTerm>, <Attributes>, <Attribute>, <AttributeValue>, <Scopes>, <Scope>, <Terms>,
+<Literal>, <Constructor>, <MetaVariable>, <MetaVariables>, <Variable>, <Variables>, <AttributeName>,
+<RegExpClass>, <CC>, <CC_RangesTop>, <CC_Ranges>, <CC_FirstRangeStartChar>, <CC_NonDashRangeStartChar>, <CC_RangeChar>,
+<ParsedForm>, <PP>
+
+prefix raw
+
+declarations
+%{
+static String raw(String s) {return "RAW-"+s;} // prefix for constructors
+static String unwrap(String s) {return s.substring(1, s.length()-1);}
+static String unpp(String s) {return "\001"+s.substring(1, s.length()-1)+"\001";}
+static String checkModuleString(String s) throws ParseException {if (java.util.regex.Pattern.matches("[\"]([a-z0-9]+[.])*[A-Z][A-Za-z0-9]*[\"]", s)) return s; else throw new ParseException("Illegal module name "+s);}
+
+private String storedSort = "";
+%}
+
+
+//// HACS-INTERNAL META SYNTAX.
+
+// Guillemets ("French quotes") used for embedded  CRSX terms (for sort hacks in Raw.crs).
+<Embedded> (*) ::= Embedded$$:unwrap .
+token Embedded (*) ::= '«' (~['«','»'])* '»' .
+
+// Meta-variables #SortN# can be used in raw syntax. 
+meta[<SortParam>]  ::=  '#<PRODUCTION_NAME>' ( (DIGIT)* | '_' (DIGIT | UPPER | LOWER)* ) '#' , '⦃', '⦄', '∥' .
+inject[<Embedded>]  ::=  '%<PRODUCTION_NAME>', '', '' .
+
+
+//// STRUCTURE.
+
+<Module> ::= {top-module}:raw <EmbeddedModule> .
+
+<EmbeddedModule> ::= MODULE:raw <ModuleName> LBRACE <Storing_Declarations> RBRACE .
+
+<Declarations> ::= ( {$Cons} <Declaration> <Declarations> | {$Nil} ).
+
+<Declaration> ::=
+  {embedded-module}:raw <EmbeddedModule> SEMI
+| IMPORT:raw <ModuleName> ( LPAREN (<SortNames> | {$Nil}) RPAREN | {$Nil} ) SEMI
+
+| SPACE:raw <RegExp> SEMI
+| TOKEN ( {'token'}:raw <Store_SortName> BAR <RegExp> SEMI | FRAGMENT:raw <FragmentName> BAR <RegExp> SEMI )
+| FRAGMENT:raw <FragmentName> BAR <RegExp> SEMI
+
+| ATTRIBUTE:raw <AttributeKind> <AttributeName> <AttributeForm> <AttributeOptions> SEMI
+
+| SORT:raw <Store_SortName> <Repeat> <SortAbstraction> SEMI
+| {anonymous}:raw <SortAlternatives> SEMI
+| (RULE)? {rule}:raw <Rule> SEMI
+| {nestedDeclarations}:raw LBRACE <Declarations> RBRACE
+| TEXT:raw <Store_Text> <SortAlternatives> SEMI
+.
+
+
+//// TOKEN DECLARATIONS.
+
+<RegExp> (RE) ::= {$Cons} <RegExpChoice> ( BAR <RegExp> | {$Nil} ) .
+
+<RegExpChoice> (RE) ::=
+  NESTED:raw <RegExpSimple> <RegExpSimple>
+| {RegExpConcat}:raw <RegExpUnits>
+.
+
+<RegExpUnits> (RE) ::= {$Cons} <RegExpUnit> <RegExpUnits> | {$Nil} .
+
+<RegExpUnit> (RE) ::= {RegExpUnit}:raw <RegExpSimple> <Repeat> .
+
+<Repeat> (DEFAULT,RE) ::=
+  PLUS ( {RepeatSomeSep}:raw SUB (<RegExpLeaf> | {RegExpWord}:raw <Separator>) | {RepeatSome}:raw )
+| {RepeatMaybeSome}:raw STAR
+| {RepeatMaybe}:raw QUEST
+| {RepeatSingle}:raw
+.
+
+<RegExpLeaf> (DEFAULT,RE) ::=
+  {RegExpString}:raw <String>
+| {RegExpWord}:raw <Word>
+.
+
+<RegExpSimple> (RE) ::=
+  <RegExpLeaf>
+| {RegExpRef}:raw <FragmentRef>
+| {RegExpClass}:raw <RegExpClass>
+| {RegExpAny}:raw DOT
+| {RegExpClass}:raw {RegExpClassChar}:raw (ESCAPEDCHAR$) {RegExpClassDone}:raw
+| {RegExpNest}:raw LPAREN <RegExp> RPAREN
+.
+
+
+//// ATTRIBUTE DECLARATIONS
+
+<AttributeForm> ::=
+  {AttributeFormSimple}:raw LPAREN <Sort> RPAREN
+| LBRACE <Sort>:# ( {AttributeFormMap}:raw {{#}} COLON <Sort> RBRACE
+                  | {AttributeFormSet}:raw {{#}} RBRACE )
+.
+
+<AttributeOptions> ::= {$Cons} <AttributeOption> <AttributeOptions> | {$Nil} .
+<AttributeOption> ::= {AttributeOption}:raw <Variable> <Constructor> .
+
+
+//// SORT PRODUCTION DECLARATIONS 
+
+<SortNames> ::= {$Cons} <SortName> (COMMA <SortNames> | {$Nil}) . 
+
+<SortAbstraction> ::=
+  {SortAbstractionParam}:raw <Variable>^a <SortAbstraction>[a]
+| {SortAbstractionBody}:raw <SortAlternatives>
+.
+
+<SortAlternatives> ::= {$Cons} <SortAlternative> <SortAlternatives> | {$Nil} .
+
+<SortAlternative> ::= BAR (
+  SCHEME:raw <Form>
+| {SynthesizedRef}:raw UP <AttributeName> 
+| SUGAR:raw <Form> ARROW <Term>
+| SYMBOL:raw <Form>
+| STATIC:raw (SYMBOL)? <Form>
+| {data}:raw (DATA)? <Form> <Tagging>
+).
+
+<Form> ::=
+  <Constructor>:#C
+    ( {FormParsedSorted}:raw {{#C}} <ParsedForm> <FormPrec> <InheritedRefs>
+    | {FormConstruction}:raw {{#C}} ( LPAREN (<BindersScopeSorts> | {$Nil}) RPAREN | {$Nil} ) <InheritedRefs>
+    )
+| {FormParsed}:raw <ParsedForm> <FormPrec> <InheritedRefs>
+.
+
+<BindersScopeSorts> ::= {$Cons} <BindersScopeSort> (COMMA <BindersScopeSorts> | {$Nil}) . 
+<BindersScopeSort> ::=
+  {ScopeSort}:raw <Sort> <Repeat> (LBRACKET <SubstituteSorts> RBRACKET | {$Nil})
+| {BinderScopeSort}:raw LBRACKET <Variable>!!! COLON <Sort> <BindersScopeSortTail>
+.
+
+<BindersScopeSortTail> ::=
+  RBRACKET <BindersScopeSort>
+| {BinderScopeSort}:raw COMMA <Variable>!!! COLON <Sort> <BindersScopeSortTail>
+.
+
+<SubstituteSorts> ::= {$Cons} <SubstituteSort> ( COMMA <SubstituteSorts> | {$Nil} ) | {$Nil}  . 
+<SubstituteSort> ::= <Variable>!!!:#v ( {SubstituteSort}:raw {{#v}} COLON <Sort> |  {SubstituteNoSort}:raw {{#v}} ) .
+
+<Sort> ::= {Sort}:raw <SimpleSort> <SimpleSorts> .
+
+<SimpleSorts> ::= {$Cons} <SimpleSort> <SimpleSorts> | {$Nil} .
+
+<SimpleSort> ::=
+  {SortName}:raw <SortName> <MetaVariables>
+| {SortParam}:raw <SortParam>
+| LPAREN <Sort> RPAREN
+.
+<MetaVariables> ::= {$Cons} <MetaVariable> {$Nil} | {$Nil} .
+<SortParam> ::= <Variable>! .
+
+<ScopeSortPrecRepeat> ::= {ScopeSortPrecRepeat}:raw <ScopeSort> <FormPrec> <Repeat> .
+<ScopeSort> ::=
+  {ScopeSort}:raw <Sort> <Repeat> (LBRACKET <SubstituteSorts> RBRACKET | {$Nil})
+| {ScopeSortBinder}:raw LBRACKET <Variable>!!! COLON <Sort> RBRACKET
+.
+
+<FormPrec> ::= ( AT <Natural> | {"0"} ) .
+
+<Tagging> ::= ( {$Cons} TAG <Constructor> ({$Nil}) | {$Nil} ).
+
+<InheritedRefs> ::=( {$Cons} <InheritedRef> <InheritedRefs> | {$Nil} ).
+<InheritedRef> ::= {InheritedRef}:raw DOWN <AttributeName> . 
+
+//// RULES.
+
+<Rule> ::=
+ {Rule}:raw <Priority>
+ <Construction>:#first
+ ( COLON {{#first}} <Construction> | {{RAW-OMITTED}} {{#first}} )
+ ( ARROW <Term> | {{RAW-OMITTED}} )
+.
+<Priority> ::=( DEFAULT:raw | PRIORITY:raw | {Normal}:raw ).
+
+//// TERMS.
+
+<Term> ::=
+  <Variable>!!!:#v ( {Special}:raw {{#v}} CONCRETE$$:unwrap:{n} | {VariableUse}:raw {{#v}} <Attributes>)
+| <NotVariableTerm>
+.
+
+<NotVariableTerm> ::=
+  <Constructor>:#C
+  <Repeat>:#R
+  ( {UnparsedSorted}:raw {{#C}} {{#R}} (CONCRETE$:unwrap) <Attributes>
+  | {MetaApplicationSorted}:raw {{#C}} {{#R}} <MetaVariable> ( LBRACKET (<Terms> | {$Nil}) RBRACKET | {$Nil} ) <Attributes>
+  | {ConstructionSorted}:raw {{#C}} {{#R}} <Constructor> ( LPAREN (<Scopes> | {$Nil}) RPAREN
+                                                         | LBRACKET (<Scopes> | {$Nil}) RBRACKET
+                                                         | {$Nil}                                ) <Attributes>
+  | {VariableUseSorted}:raw {{#C}} {{#R}} <Variable>!!! <Attributes>
+  | {LiteralSorted}:raw {{#C}} {{#R}} <Literal> <Attributes>
+  | {Construction}:raw {{#C}} ( LPAREN (<Scopes> | {$Nil}) RPAREN
+                              | LBRACKET (<Scopes> | {$Nil}) RBRACKET
+                              | {$Nil}                                ) <Attributes>
+  )
+| {Literal}:raw <Literal> <Attributes>
+| {Unparsed}:raw (CONCRETE$:unwrap) <Attributes>
+| {MetaApplication}:raw <MetaVariable> ( LBRACKET (<Terms> | {$Nil}) RBRACKET | {$Nil} ) <Attributes>
+.
+
+// Note: these are subsets of the above, generating identical terms.
+<Construction> ::=
+  <Constructor>:#C
+  <Repeat>:#R
+  ( {UnparsedSorted}:raw {{#C}} {{#R}} (CONCRETE$:unwrap) <Attributes>
+  | {ConstructionSorted}:raw {{#C}} {{#R}} <Constructor> ( LPAREN (<Scopes> | {$Nil}) RPAREN
+                                                         | LBRACKET (<Scopes> | {$Nil}) RBRACKET
+                                                         | {$Nil}                                ) <Attributes>
+  | {LiteralSorted}:raw {{#C}} {{#R}} <Literal> <Attributes>
+  | {Construction}:raw {{#C}} ( LPAREN (<Scopes> | {$Nil}) RPAREN
+                              | LBRACKET (<Scopes> | {$Nil}) RBRACKET
+                              | {$Nil}                                ) <Attributes>
+  )
+| {Literal}:raw <Literal> <Attributes>
+| {Unparsed}:raw (CONCRETE$:unwrap) <Attributes>
+.
+
+<Scopes> ::= {$Cons} <Scope> (COMMA <Scopes> | {$Nil}) .
+<Scope> ::=
+  {Scope}:raw ({$Nil}) <NotVariableTerm>
+| <Variable>!!!:#v ({Scope}:raw ({$Cons} {{#v}} <Variables>) DOT <Term> | {Scope}:raw ({$Nil}) ({VariableUse}:raw {{#v}}))
+| {Scope}:raw LBRACKET (<VariableList> | {$Nil}) RBRACKET <Term>
+.
+
+<Variables> ::= {$Cons} <Variable>!!! <Variables> | {$Nil} .
+<VariableList> ::= {$Cons} <Variable>!!! ( COMMA <VariableList> | {$Nil} ) .
+
+<Terms> ::= {$Cons} <Term> (COMMA <Terms> | {$Nil}) .
+
+<Attributes> ::= ( {$Cons} <Attribute> <Attributes> | {$Nil} ).
+<Attribute> ::=
+  {Attribute}:raw <AttributeKind> <AttributeName> <AttributeValue>
+.
+
+<AttributeKind> ::= ( {AttributeKindUp}:raw UP | {AttributeKindDown}:raw DOWN ).
+
+<AttributeValue> ::= 
+  {AttributeValue}:raw LPAREN <Term> RPAREN
+| LBRACE ( <Term>:# ( {AttributeKeyValue}:raw {{#}} COLON <Term> RBRACE
+                    | {AttributeKey}:raw {{#}} RBRACE )
+         | {AttributeNotKey}:raw NOT <Term> RBRACE )
+.
+
+//// TOKENS.
+
+%{
+// Nesting.
+TOKEN_MGR_DECLS : { int nesting ; int nestedState; }
+%}
+
+// Special syntactic token for concrete syntax.
+
+%{
+// Nested concrete token ⟦...⟧. 
+<DEFAULT,RE> MORE : { "\u27e6" { nesting = 0; nestedState = curLexState; } : IN_CONCRETE }
+<IN_CONCRETE> MORE : { "\u27e6" { nesting = 1; } : IN_NESTED_CONCRETE }
+<IN_NESTED_CONCRETE> MORE : { "\u27e6" { nesting++; } }
+<IN_NESTED_CONCRETE> MORE : { "\u27e7" { if (--nesting <= 0) SwitchTo(IN_CONCRETE); } }
+<IN_CONCRETE> TOKEN : { <T_CONCRETE : "\u27e7"> { SwitchTo(nestedState); } }
+<IN_CONCRETE,IN_NESTED_CONCRETE> MORE : { < ~[] > }
+%}
+
+// Tokens for default (raw) terms.
+
+skip (DEFAULT,RE) ::= ' ' | \r | \t | \n | '//' ~[\n\r]* | \u1 .
+%{
+// Nested comments JavaCC hack...
+<DEFAULT,RE> SKIP : { "/*" { nesting = 1; nestedState = curLexState; } : NESTED_COMMENT }
+<NESTED_COMMENT> SKIP : { "/*" { nesting += 1; } }
+<NESTED_COMMENT> SKIP : { "*/" { nesting -= 1; if (nesting<=0) SwitchTo(nestedState); } }
+<NESTED_COMMENT> SKIP : { < ~[] > }
+%}
+
+// Combinations.
+<ModuleName> ::= <String>:checkModuleString | <Constructor> . //TODO: allow dots inline.
+<SortName> (DEFAULT,RE) ::= <Constructor> .
+<FragmentName> (RE) ::= <Constructor> .
+<FragmentRef> (DEFAULT,RE) ::= FRAGMENT_REF$:unwrap .
+<AttributeName> ::= <Literal> | <Variable> | <Constructor> .
+<Constructor> ::= ( UPPER$ | DASH$ | CON$ ).
+<Variable> ::= ( LOWER$ | VAR$ | MODULE$ | SORT$ | TEXT$ | DATA$ | STATIC$ | SYMBOL$ | SCHEME$ | AUTOMATIC$ | ATTRIBUTE$ | COMPOSE$ | SUGAR$ | RULE$ | PRIORITY$ | DEFAULT$ | SPACE$ | IMPORT$ | TOKEN$ | FRAGMENT$ | NESTED$ | TAG$ ).
+<MetaVariable> ::= ( META$ | HASH$ ).
+<Separator> ::= ( BAR$ | SEMI$ | COMMA$ | COLON$ | STAR$ | DOT$ ).
+
+// Single character tokens.
+
+// Common to regular expressions.
+token SEMI (DEFAULT,RE : DEFAULT) ::= ";" .
+token BAR (DEFAULT,RE) ::= "|" .
+token LPAREN (DEFAULT,RE) ::= "(" .
+token RPAREN (DEFAULT,RE) ::= ")" .
+token STAR (DEFAULT,RE) ::= "*" .
+token PLUS (DEFAULT,RE) ::= "+" .
+token QUEST (DEFAULT,RE) ::= "?" .
+token SUB (DEFAULT,RE) ::= "_" .
+token DOT (DEFAULT,RE) ::= "." .
+token COLON (DEFAULT,RE) ::= ":" .
+
+// Exclusive to default mode.
+token LBRACE ::= "{" .
+token RBRACE ::= "}" .
+token HASH ::= "#" .
+token LBRACKET ::= "[" .
+token RBRACKET ::= "]" .
+token COMMA ::= "," .
+token FORALL ::= \u2200 . // ∀
+token ARROW ::= \u2192 . // →
+token UP ::= \u2191 . // ↑
+token DOWN ::= \u2193 . // ↓
+token NOT ::= \u00ac . // ¬
+token AT ::= "@" .
+token DASH ::= "-" .
+
+// Categories are separate tokens so remember to include where needed!
+token DIGIT ::= [0-9] .
+token LOWER ::= [a-z] .
+token UPPER (DEFAULT,RE) ::= [A-Z] .
+
+// Normal keywords (all special cases of VAR).
+
+token MODULE ::= "module" .
+token SORT ::= "sort" .
+token TEXT ::= "text" .
+token DATA ::= "data" .
+token SCHEME ::= "scheme" .
+token AUTOMATIC ::= "automatic" .
+token SYMBOL ::= "symbol" .
+token STATIC ::= "static" .
+token ATTRIBUTE ::= "attribute" .
+token COMPOSE ::= "compose" .
+token SUGAR ::= "sugar" .
+token RULE ::= "rule" .
+token PRIORITY ::= "priority" .
+token DEFAULT ::= "default" .
+token IMPORT ::= "import" .
+token TAG ::= "tag" .
+
+// Regular Expression introduction keywords.
+token SPACE (DEFAULT : RE) ::= "space" .
+token TOKEN (DEFAULT : RE) ::= "token" .
+token FRAGMENT (DEFAULT,RE : RE) ::= "fragment" .
+token NESTED (RE) ::= "nested" .
+
+// The basic identifier forms.
+token META ::= HASH (NAME | STRING)? (HASH NAME)* SUFFIX* .
+token VAR ::= LOWER NAME? SUFFIX* | "v" STRING SUFFIX* .
+token CON (DEFAULT,RE) ::= (UPPER | [$]) NAME? SUFFIX* | "C" STRING SUFFIX* .
+token fragment SUFFIX ::= "_" NAME? | "_"? NATURAL NAME? .
+token fragment NAME ::= (LOWER | UPPER | [$])+ .
+
+token FRAGMENT_REF (RE) ::= \u27e8 (UPPER | DASH | CON) \u27e9 . //Note: fits with <FragmentName>
+
+// Constant values.
+<Literal> ::= <String> | <Number> .
+
+// Numbers.
+<Number> ::= <Natural> | UNNATURAL$ .
+<Natural> ::= DIGIT$ | NATURAL$ .
+token NATURAL ::= DIGIT+ .
+token fragment INTEGER ::= [-+]* NATURAL .
+token UNNATURAL ::= (INTEGER? "." NATURAL) ( [Ee] INTEGER )? | INTEGER [Ee] INTEGER .
+
+// COMMON TOKENS.
+
+// Strings (in raw uninterpreted form).
+<String> (DEFAULT,RE) ::= STRING$ .
+token STRING (DEFAULT,RE) ::= "'" STRING1CHAR* "'" | '"' STRING2CHAR* '"' .
+token fragment STRING1CHAR ::= ~[\\'\n] | ESCAPEDCHAR .
+token fragment STRING2CHAR ::= ~[\\"\n] | ESCAPEDCHAR .
+
+// Escaped characters...TODO: many more to add!
+token ESCAPEDCHAR (DEFAULT,RE) ::=
+  [\\] ~[0-9uUx]
+| [\\] [0-3]? [0-7]? [0-7]
+| [\\] [u] HEX? HEX? HEX? HEX
+| [\\] [U] HEX? HEX? HEX? HEX? HEX? HEX? HEX? HEX
+| [\\] [x] (HEX HEX | '{' HEX+ '}')
+.
+token fragment HEX ::= [0-9A-Fa-f] .
+
+// Catch-all...
+token OTHERCHAR ::= ~[] .
+
+<Word> (DEFAULT,RE) ::= (UPPER$ | DASH$ | CON$ | WORD$) .
+token WORD (RE) ::= ~['⟨','⟩','⟦','⟧','(',')','[',']','.','*','+','?',';','"',"'",',',':','«','»',' ',\t,\\,\n]+ .
+
+
+//// CC SUBPARSER FOR REGULAR EXPRESSION CHARACTER CLASSES.
+
+// Tokenizer for *entire* character class expression.
+<RegExpClass> (RE) ::= CHAR_CLASS$$:unwrap:{rawCC} .
+token CHAR_CLASS (RE) ::= '[' ('^')? (']')? (~[']',\\,\n] | ESCAPEDCHAR)* ']' .
+
+// (Re)Parser to parse the actual regular expression.
+<CC> (CC) ::= <CC_RangesTop> .
+
+// All tokens are in CC mode.
+token CC_NOT (CC) ::= "^" .
+token CC_RBRACKET (CC) ::= "]" .
+token CC_DASH (CC) ::= "-" .
+token CC_OTHER (CC) ::= ~['^',']','-',\\,\n,\u1] | ESCAPEDCHAR .
+token CC_SKIP (CC) ::= \u1 .
+
+<CC_RangesTop> (CC) ::=
+  {RegExpClassNot}:raw CC_NOT <CC_FirstRangeStartChar>:#lo <CC_RangeTail #lo>
+| <CC_FirstRangeStartChar>:#lo <CC_RangeTail #lo>
+| CC_SKIP <CC_RangesTop>
+.
+
+<CC_Ranges> (CC) ::=
+  <CC_RangeChar>:#lo <CC_RangeTail #lo>
+| CC_SKIP <CC_Ranges>
+| {RegExpClassDone}:raw
+.
+
+<CC_RangeTail #lo> (CC) ::=
+  CC_DASH ( {RegExpClassRange}:raw {{#lo}} <CC_RangeChar> <CC_Ranges> | {RegExpClassChar}:raw {{#lo}} {RegExpClassDone}:raw )
+| {RegExpClassChar}:raw {{#lo}} <CC_NonDashRangeStartChar>:#lo2 <CC_RangeTail #lo2>
+| CC_SKIP  <CC_RangeTail #lo>
+| {RegExpClassChar}:raw {{#lo}} {RegExpClassDone}:raw
+.
+
+<CC_FirstRangeStartChar> (CC) ::= (CC_RBRACKET$ | CC_DASH$ | CC_OTHER$) .
+<CC_NonDashRangeStartChar> (CC) ::= (CC_NOT$ | CC_OTHER$) .
+<CC_RangeChar> (CC) ::= (CC_NOT$ | CC_DASH$ | CC_OTHER$) .
+
+
+//// PP SUBPARSER FOR "PARSED FORMS" IN PRODUCTIONS.
+
+// Special syntactic tokens *inside* concrete syntax.
+
+<ParsedForm> ::= CONCRETE$$:unpp:{rawPP} .
+
+<PP> (PP) ::=
+  {ParsedFormSpace}:raw (PP_CONCRETESPACE$) <PP>
+| {ParsedFormWord}:raw (PP_CONCRETEWORD$) <PP>
+| {ParsedFormTerm}:raw PP_UNCONCRETE$$:unpp:{rawScopeSortPrecRepeat}  <PP>
+| PP_SKIP <PP>
+| {ParsedFormDone}:raw
+.
+
+token PP_CONCRETESPACE (PP) ::= [' ',\t\r\n,\ub6]+ . // no comments but include special spacing marks
+token PP_CONCRETEWORD (PP) ::= ~[' ',\t\r\n\ub6\u27e6\u27e7\u27e8\u27e9\u1]+ .
+token PP_SKIP (PP) ::= \u1 .
+
+%{
+// Nested unconcrete token ⟨...⟩ inside PP.
+<PP> MORE : { "\u27e8" { nesting = 0; nestedState = curLexState; } : IN_PP_UNCONCRETE }
+<IN_PP_UNCONCRETE> MORE : { "\u27e8" { nesting = 1; } : IN_NESTED_PP_UNCONCRETE }
+<IN_NESTED_PP_UNCONCRETE> MORE : { "\u27e8" { nesting++; } }
+<IN_NESTED_PP_UNCONCRETE> MORE : { "\u27e9" { if (--nesting <= 0) SwitchTo(IN_PP_UNCONCRETE); } }
+<IN_PP_UNCONCRETE> TOKEN : { <T_PP_UNCONCRETE : "\u27e9"> { SwitchTo(nestedState); } }
+<IN_PP_UNCONCRETE,IN_NESTED_PP_UNCONCRETE> MORE : { < ~[] > }
+%}
+
+
+/// //// TEXT SUBPARSER (TT)
+/// 
+/// <ConcreteText> ::= CONCRETE$$:unpp:{rawTT} .
+/// 
+/// <TT> (TT) ::= {$TextCons} <TT_Part> <TT> | TT_SKIP <TT> | {$TextNil} .
+/// 
+/// <TT_Part> (TT) ::= {$TextChars} TT_CHARS$
+///          	     | {$TextBreak} TT_BREAK$
+///                  | TT_PAR_LPAREN {$TextIndent} <TT> TT_PAR_RPAREN
+///                  | TT_PAR_LBRACK {$TextBreak} <TT> TT_PAR_RBRACK
+///                  | TT_PAR
+///                    ( {$TextChars} TT_UNCONCRETE$$:unembed:{rawTerm}
+///                    | {{ $TextBreak["\n"] }}
+///                    )
+/// 		 		 | {$TextEmbed} {AsText} TT_UNCONCRETE$$:unembed:{rawTerm}
+///                  .
+/// 
+/// TT_PAR_LPAREN (TT) ::= '¶(' .
+/// TT_PAR_RPAREN (TT) ::= '¶)' .
+/// TT_PAR_LBRACK (TT) ::= '¶[' .
+/// TT_PAR_RBRACK (TT) ::= '¶]' .
+/// TT_PAR (TT) ::= '¶' .
+/// token TT_SKIP (TT) ::= \u1 .
+/// TT_CHARS (TT) ::= ~[\n\r\f,'¶','⟦','⟧','⟨','⟩']+ .
+/// TT_BREAK (TT) ::= [\n\r\f]+ .
+/// 
+/// %{
+/// // Nested unconcrete token ⟨...⟩ inside TT.
+/// <TT> MORE : { "\u27e8" { nesting = 0; nestedState = curLexState; } : IN_TT_UNCONCRETE }
+/// <IN_TT_UNCONCRETE> MORE : { "\u27e8" { nesting = 1; } : IN_NESTED_TT_UNCONCRETE }
+/// <IN_NESTED_TT_UNCONCRETE> MORE : { "\u27e8" { nesting++; } }
+/// <IN_NESTED_TT_UNCONCRETE> MORE : { "\u27e9" { if (--nesting <= 0) SwitchTo(IN_TT_UNCONCRETE); } }
+/// <IN_TT_UNCONCRETE> TOKEN : { <T_TT_UNCONCRETE : "\u27e9"> { SwitchTo(nestedState); } }
+/// <IN_TT_UNCONCRETE,IN_NESTED_TT_UNCONCRETE> MORE : { < ~[] > }
+/// %}
+
+
+//// SPECIAL SORT NAME CACHE HACK
+
+%{
+net.sf.crsx.Sink N_Store_SortName(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) :
+{
+	net.sf.crsx.util.Buffer b = new net.sf.crsx.util.Buffer(sink);
+}
+{
+	N_SortName(b.sink(), env)
+	{
+		net.sf.crsx.Term term = b.term(false);
+		storedSort = net.sf.crsx.util.Util.symbol(term);
+		return term.copy(sink, true, net.sf.crsx.util.LinkedExtensibleMap.EMPTY_RENAMING);
+	}
+}
+
+net.sf.crsx.Sink N_Store_Text(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) :
+{}
+{
+	{
+		storedSort = "Text";
+		return sink;
+	}
+}
+
+net.sf.crsx.Sink N_Stored_SortName(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) :
+{}
+{
+	{return sink.start(sink.makeLiteral(storedSort, net.sf.crsx.CRS.STRING_SORT)).end();}
+}
+
+net.sf.crsx.Sink N_Storing_Declarations(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) :
+{
+	String savedStoredSort = storedSort;
+}
+{
+	sink=N_Declarations(sink, env)
+	{
+		storedSort = savedStoredSort;
+		return sink;
+	}
+}
+%}

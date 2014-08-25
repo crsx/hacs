@@ -1,0 +1,350 @@
+// Prelude.crs: CRSX3 SUPPORT LIBRARY FOR HACS OPERATIONS.
+//
+// 1. Blocking
+// 2. Boolean
+// 3. Lifted
+// 4. List
+// 5. String
+// 6. Set of Names
+// 7. Text
+// 8. Specials
+//
+Prelude[(
+
+// Syntax and sorts of text.
+$CheckGrammar["net.sf.crsx.text.Text"];
+$Use["net/sf/crsx/text/Text.crs"];
+
+$Lax;
+
+
+/////////////////////////////////////////////////////////////////////
+// 1. BLOCKING
+//
+// Used for delaying evaluation that would not be blocked by unsubstituted variable.
+
+Ok ::=( OK; );
+
+∀ a . {$String : $StringEntry}When[Ok, a] :: a ;
+{#E}When[OK, #] → {#E}# ;
+
+
+/////////////////////////////////////////////////////////////////////
+// 2. BOOLEAN
+
+Boolean ::=( B_TRUE; B_FALSE; );
+
+∀ a . If[Boolean, a, a] :: a ;
+If[B_TRUE,  #1, #2] → #1 ;
+If[B_FALSE, #1, #2] → #2 ;
+
+And[Boolean, Boolean] :: Boolean ;
+And[B_TRUE, #] → # ;
+And[B_FALSE, #] → B_FALSE ;
+
+Or[Boolean, Boolean] :: Boolean ;
+Or[B_TRUE, #] → B_TRUE ;
+Or[B_FALSE, #] → # ;
+
+
+/////////////////////////////////////////////////////////////////////
+// 3. LIFTED
+//
+// Extend any sort with a 'bottom' value indicating the value is missing.
+
+∀ a . Lifted[a] ::=( BOTTOM; LIFTED[a]; );
+
+∀ a b . Drop[Lifted[a], x::a.$sort[b], b] :: b ;
+Drop[LIFTED[#], a.#1[a], #2] → #1[#] ;
+Drop[BOTTOM,    a.#1[a], #2] → #2 ;
+
+∀ a b . IfLifted[Lifted[a], b, b] :: b;
+IfLifted[LIFTED[#], #1, #2] → #1;
+IfLifted[BOTTOM, #1, #2] → #2;
+
+∀ a . UnLift[Lifted[a]] :: a;
+UnLift[LIFTED[#]] → # ;
+
+
+/////////////////////////////////////////////////////////////////////
+// 4. LIST
+
+// ∀ a . $List[a] ::= ( $Cons[a, $List[a]]; $Nil; );
+// $SortAlias[List, $List] ;
+//
+// Uses CRSX built-in lists directly. Note: CRSX has $Cons[a,b] == (a;b) and $Nil == ().
+
+∀ a b . IfEmpty[$List[a], b, b] :: b ;
+IfEmpty[()    , #1, #2] → #1 ;
+IfEmpty[(#;##), #1, #2] → #2 ;
+
+∀ a b . IfSingleton[$List[a], b, b] :: b ;
+IfSingleton[()    , #1, #2] → #2 ;
+IfSingleton[(#;##), #1, #2] → IfEmpty[##, #1, #2] ;
+
+∀ a . Hd[$List[a]] :: a ;
+Hd[(#;##)] → # ;
+Hd[()] → $[Error,"Hd of empty list"] ;
+
+∀ a . Tl[$List[a]] :: $List[a] ;
+Tl[(#;##)] → ## ;
+Tl[()] → $[Error,"Tl of empty list"] ;
+
+∀ a . Append[$List[a], $List[a]] :: $List[a] ;
+Append[(), #tail] → #tail ;
+Append[(#1;#s), #tail] → (#1 ; Append[#s, #tail]) ;
+
+∀ a . Concat[$List[$List[a]]] :: $List[a] ;
+Concat[()] → () ;
+Concat[(();#ss)] → Concat[#ss] ;
+Concat[((#1;#s);#ss)] → (#1 ; Concat[(#s;#ss)]) ;
+
+∀ a b . Map[x::a . $sort[b], $List[a]] :: $List[b] ;
+Map[x.#[x], ()] → () ;
+Map[x.#[x], (#1;#s)] → (#[#1]; Map[x.#[x], #s]) ;
+
+∀ a b . MapWhen[ok::Ok x::a . $sort[b], $List[a]] :: $List[b] ;
+MapWhen[ok x.#[ok,x], ()] → () ;
+MapWhen[ok x.#[ok,x], (#1;#s)] → (#[OK,#1]; MapWhen[ok x.#[ok,x], #s]) ;
+
+∀ a b . Fold[x::a z::b.$sort[b], $List[a], b] :: b ;
+Fold[x z.#[x,z], (), #z] → #z ;
+Fold[x z.#[x,z], (#x;#xs), #z] → #[#x, Fold[x z.#[x,z], #xs, #z]] ;
+
+∀ a b . FoldWhen[ok::Ok x::a z::b.$sort[b], $List[a], b] :: b ;
+FoldWhen[ok x z.#[ok,x,z], (), #z] → #z ;
+FoldWhen[ok x z.#[ok,x,z], (#x;#xs), #z] → #[OK, #x, FoldWhen[ok x z.#[ok,x,z], #xs, #z]] ;
+
+//∀ a b . FoldWhenTrace[ok::Ok x::$sort[a] z::$sort[b].$sort[b], $List[a], $sort[b]] :: $sort[b] ;
+//FoldWhenTrace[ok x z.#[ok,x,z], (), #z] → #z ;
+//FoldWhenTrace[ok x z.#[ok,x,z], (#x;#xs), #z] → $[Trace,#[OK, #x, FoldWhen[ok x z.#[ok,x,z], #xs, #z]]] ;
+
+∀ a b c . Fold2[x::a y::b z::c.$sort[c], $List[a], $List[b], c] ::  c ;
+Fold2[x y z.#[x,y,z], (), #_, #z] → #z ;
+Fold2[x y z.#[x,y,z], #_, (), #z] → #z ;
+Fold2[x y z.#[x,y,z], (#x;#xs), (#y;#ys), #z] → #[#x, #y, Fold2[x y z.#[x,y,z], #xs, #ys, #z]] ;
+
+
+/////////////////////////////////////////////////////////////////////
+// 5. STRING
+
+// Note: Uses the internal $String - use Text for all user textual data.
+
+Stringify[$String] :: $String ;
+-[Data[#]]: Stringify[#] → $[Escape,#] ;
+
+UnString[$String] :: $String ;
+-[Data[#]]: UnString[#] → $[Rescape, #] ;
+
+SameString[$String, $String] :: Boolean ;
+-[Data[#1,#2]]: SameString[#1,#2] → $[If, $[Equal,#1,#2], B_TRUE, B_FALSE] ;
+
+Trim[$String] :: $String ;
+-[Data[#]]: Trim[#] → $[Trim, #] ;
+
+StringJoin[$List[$String], $String] :: $String;
+-               : StringJoin[(), #sep] → "" ;
+-[Data[#1,#sep]]: StringJoin[(#1;#s), #sep] → StringJoin2[#s, #sep, #1] ;
+
+StringJoin2[$List[$String], $String, $String] :: $String;
+-          : StringJoin2[(), #sep, #result] → #result ;
+-[Data[#1]]: StringJoin2[(#1;#s), #sep, #result] → $[:,#result,#sep,#1] ;
+
+
+/////////////////////////////////////////////////////////////////////
+// 6. SET OF NAMES
+
+NameSet ::=( NAME_SET[$String]; );
+
+NoNames :: NameSet ;
+NoNames → NAME_SET[";"];
+
+HasNames[NameSet] :: Boolean ;
+-[Data[#Names]]:
+HasNames[NAME_SET[#Names]]
+→
+$[IfEmpty, #Names, B_FALSE, $[If, $[Equal,#Names,";"], B_FALSE, B_TRUE]]
+;
+
+ContainsName[NameSet, $String] :: Boolean ;
+-[Data[#Names,#Name]]:
+ContainsName[NAME_SET[#Names], #Name]
+→
+$[If, $[Contains,#Names,$[:,";",#Name,";"]], B_TRUE, B_FALSE]
+;
+
+AddName[NameSet<!--old-->, $String<!--new Name-->] :: NameSet<!--combined-->;
+-[Data[#Names, #Name],Copy[#Names,#Name]]:
+AddName[NAME_SET[#Names], #Name]
+→
+NAME_SET[
+  $[IfEmpty, #Name, #Names,
+  $[IfEmpty, #Names, $[:,";",#Name,";"],
+  $[If, $[Contains,#Names,$[:,";",#Name,";"]], #Names, $[:,#Names,#Name,";"]]]]]
+;
+
+AddNameNumber[NameSet, $Numeric] :: NameSet;
+-[Data[#Number]]:
+AddNameNumber[#Names, #Number]
+→
+AddName[#Names, $[FormatNumber, #Number]]
+;
+
+FirstName[NameSet<!--old-->] :: $String<!--first Name-->;
+-[Data[#Names]]:
+FirstName[NAME_SET[#Names]]
+→
+$[BeforeFirst, $[AfterFirst, #Names, ";"], ";"]
+;
+
+RemoveFirstName[NameSet<!--old-->] :: NameSet<!--all but first Name-->;
+-[Data[#Names]]:
+RemoveFirstName[NAME_SET[#Names]]
+→
+NAME_SET[$[FromFirst, $[AfterFirst, #Names, ";"], ";"]]
+;
+
+RemoveName[NameSet<!--old-->, $String<!--bad Name-->] :: NameSet<!--clean-->;
+//
+-[Data[#Names, #Name]]:
+RemoveName[NAME_SET[#Names], #Name]
+→
+RemoveName1[#Names, $[:,";",#Name,";"]]
+;
+RemoveName1[$String, $String] :: NameSet;
+-[Copy[#Names,#NamePattern]]:
+RemoveName1[#Names, #NamePattern]
+→
+NAME_SET[$[If, $[Contains,#Names,#NamePattern], $[Replace,#Names,#NamePattern,";"], #Names]]
+;
+ThenRemoveName[Ok, NameSet<!--old-->, $String<!--bad Name-->] :: NameSet<!--clean-->;
+ThenRemoveName[OK, #NameSet, #Name] → RemoveName[#NameSet, #Name] ;
+
+UnionNames[NameSet, NameSet] :: NameSet ;
+-[Data[#Names1,#Names2]]: UnionNames[#Names1, #Names2] → UnionNames1[#Names1, FoldNamesWhen[ok a bs.ThenRemoveName[ok,bs,a], #Names1, #Names2]] ;
+UnionNames1[NameSet, NameSet] :: NameSet ;
+UnionNames1[NAME_SET[#1], NAME_SET[#2]] → NAME_SET[$[:,#1,$[AfterFirst,#2,";"]]] ; 
+
+∀ b . FoldNamesWhen[ok::Ok x::$String y::b . $sort[b], NameSet, b] :: b ;
+FoldNamesWhen[ok x y.#[ok,x,y], #List, #Base] → FoldWhen[ok x y.#[ok,x,y], NameSetList[#List], #Base] ;
+
+NameSetList[NameSet] :: $List[$String] ;
+-[Data[#Names]]: NameSetList[#Names] → If[HasNames[#Names], NameSetList1[#Names], ()] ;
+
+NameSetList1[NameSet] :: $List[$String] ;
+NameSetList1[NAME_SET[#Names]] → $[Split, $[Substring,#Names,1,$[Minus,$[Length,#Names],1]], ";"] ;
+
+∀ a . MapNameSet[x::$String.$Sort[a], NameSet] :: $List[a];
+-[Data[#Names]]: MapNameSet[x.#[x], NAME_SET[#Names]] → MapNameSet1[$[AfterFirst,';',#Names], x.#[x]] ;
+
+∀ a . MapNameSet[x::$String.$Sort[a], $String] :: $List[a];
+MapNameSet1[#Names, x.#[x]] → $[IfEmpty, #Names, (), (#[$[BeforeFirst,';',#Names]] ; MapNameSet1[$[AfterFirst,';',#Names], x.#[x]])] ;
+
+
+/////////////////////////////////////////////////////////////////////
+// 7. TEXT
+
+TextJoin[$List[Text], Text] :: Text;
+-[Discard[#sep]]: TextJoin[()     , #sep] → %n⟪⟫ ;
+-               : TextJoin[(#1;#s), #sep] → %n⟪« #1 »« TextJoin1[#s, #sep] »⟫ ;
+
+TextJoin1[$List[Text], Text] :: Text;
+-[Discard[#sep]]: TextJoin1[()     , #sep] → %n⟪⟫ ;
+-[Copy[#sep]]   : TextJoin1[(#1;#s), #sep] → %n⟪« #sep »« #1 »« TextJoin1[#s, #sep] »⟫ ;
+
+ ∀ a b . WrappedTextJoin[$List[Text], a, Text, b] :: Text;
+-[Discard[#open,#sep,#close]]: WrappedTextJoin[()     , #open, #sep, #close] → %n⟪⟫ ;
+-                            : WrappedTextJoin[(#1;#s), #open, #sep, #close] → %n⟪« #open »« #1 »« TextJoin1[#s, #sep] »« #close »⟫ ;
+
+{$String : Text}TextMapSort ::=( TEXT_MAP[$List[$String]]; );
+
+EmptyTextMap :: TextMapSort;
+EmptyTextMap → {}TEXT_MAP[()] ;
+SingletonTextMap[$String, Text] :: TextMapSort;
+-[Data[#Key]]: SingletonTextMap[#Key, #Value] → {#Key : #Value}TEXT_MAP[(#Key;)] ;
+
+JoinTextMaps[TextMapSort, TextMapSort] :: TextMapSort;
+JoinTextMaps[{#map1}TEXT_MAP[#Keys1], #TextMap2] →   {#map1}JoinTextMaps2[#Keys1, #TextMap2] ;
+{$String : Text}JoinTextMaps2[$List[$String], TextMapSort] :: TextMapSort;
+{#map1}JoinTextMaps2[(), #TextMap2] → #TextMap2 ;
+{#map1}JoinTextMaps2[(#Key1;#Keys1), {#map2}TEXT_MAP[#Keys2]]
+→
+$[{#map2}IfDef, #Key1,
+ {#map1}JoinTextMaps2[#Keys1, {#map2}TEXT_MAP[#Keys2]],
+ {#map1}JoinTextMaps2[#Keys1, {#map2; #Key1 : $[{#map1}Get[Text], #Key1]}TEXT_MAP[(#Key1;#Keys2)]]]
+;
+
+TextJoinMap[TextMapSort, Text] :: Text;
+-[Data[#Keys]]:
+TextJoinMap[{#map}TEXT_MAP[#Keys], #sep] → TextJoin[MapWhen[ok k.{#map}TextLookup[ok,k], #Keys], #sep] ;
+
+{$String : Text}TextLookup[Ok, $String] :: Text;
+-[Data[#Key]]: {#map}TextLookup[OK, #Key] → $[{#map}Get[Text], #Key, %n⟪⟫] ;
+
+TextToStringWhen[OK, Text] :: $String;
+TextToStringWhen[OK, #text] → TextToString[#text] ;
+
+TextToString[Text] :: $String;
+TextToString[$TextCons[#Part, #Text]] → TextToString2[TextPartToString[#Part], TextToString[#Text]] ;
+TextToString[$TextNil] → "" ;
+TextToString[v] → $[Show,v] ;
+TextToString2[$String,$String] :: $String;
+-[Data[#1,#2]]: TextToString2[#1, #2] → $[:,#1,#2] ;
+
+TextPartToString[Text-Part] :: $String;
+TextPartToString[$TextChars[#String]] → #String ;
+TextPartToString[$TextBreak[#String]] → #String ;
+TextPartToString[$TextSeparator] →  "" ;
+TextPartToString[$TextGroup[#Text]] → TextToString[#Text] ;
+TextPartToString[$TextIndent[#Text]] → TextToString[#Text] ;
+TextPartToString[$TextEmbed[#Text]] → TextToString[#Text] ;
+
+StringToText[$String] :: Text ;
+StringToText[#] → %n⟪†«#»⟫ ;
+
+∀ a . JoinMappedTextMaps[x :: a . TextMapSort, $List[a]] :: TextMapSort;
+-[Data[#List]]: JoinMappedTextMaps[x.#[x], #List] → JoinMappedTextMaps2[x.#[x], #List, EmptyTextMap] ;
+
+∀ a . JoinMappedTextMaps2[x :: a . TextMapSort, $List[a], TextMapSort] :: TextMapSort;
+-[Data[#Map]]: JoinMappedTextMaps2[x.#[x], (), #Map] → #Map ;
+-[Data[#Map]]: JoinMappedTextMaps2[x.#[x], (#t;#ts), #Map] → JoinTextMaps[#[#t], JoinMappedTextMaps2[x.#[x], #ts, #Map]] ;
+
+NewLine :: Text;
+NewLine[]→ %n⟪↲⟫ ;
+
+NumberToText[$Numeric] :: Text;
+-[Data[#n]]: NumberToText[#n] → %n⟪†«$[FormatNumber,#n]»⟫;
+
+∀ a . ThenAsText[Ok, a] :: Text;
+-[Data[#text]]: ThenAsText[OK, #text] → #text ;
+
+∀ a . ThenAsTextLiteral[Ok, a] :: Text;
+-[Data[#text]]: ThenAsTextLiteral[OK, #text] → %n⟪†« #text »⟫ ;
+
+TextConcat[Text, Text] :: Text;
+TextConcat[#text1, #text2] → %n⟪« #text1 »« #text2 »⟫ ;
+
+∀ a . MapTextConcat[x::a.Text, $List[a]] :: Text;
+MapTextConcat[x.#[x], ()] → %n⟪⟫ ;
+MapTextConcat[x.#[x], (#1;##)] → %n⟪« #[#1] »« MapTextConcat[x.#[x], ##] »⟫ ;
+
+
+/////////////////////////////////////////////////////////////////////
+// 8. SPECIALS
+//
+// All from text to something.
+
+∀ a . {$String : $StringEntry}Special_error[Text] :: a;
+-[Data[#text]]: {#L}Special_error[#text] → Special_error-2[$[{#L}Get[$String],"$$Location","?"], TextToString[#text]] ; 
+∀ a . Special_error-2[$String,$String] :: a;
+-[Data[#loc,#mess]]: {#L}Special_error-2[#loc, #mess] → $[Error,$[:,"Error@",#loc,": ",#mess]] ; 
+
+∀ a . {$String : $StringEntry}Special_message[Text] :: a;
+-[Data[#text]]: {#L}Special_message[#text] → Special_message-2[ TextToString[#text]] ; 
+∀ a . Special_message-2[$String] :: a;
+-[Data[#mess]]: {#L}Special_message-2[#mess] → $[Echo,#mess] ; 
+
+
+/////////////////////////////////////////////////////////////////////
+
+)] //Prelude

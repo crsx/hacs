@@ -1,0 +1,547 @@
+\documentclass[pdftex,aspectratio=169,14pt]{beamer}
+\input{lecture-setup}
+
+%% MACROS.
+
+%%\def\nt#1{\text{\rm\normalfont\emph{#1}}}
+\def\SubScript{\textit{SubScript}\xspace}
+
+%\usepackage{colortbl}
+%\usepackage{amssymb}
+%\usepackage{wrapfig}
+%\usepackage{stmaryrd} 
+%\usepackage{colortbl}
+%\usepackage{soul}
+%\usepackage{graphicx}
+
+\newcommand{\arrz}{\rightarrow}
+%\newcommand{\abs}[2]{\lambda #1.#2}
+\newcommand{\abs}[2]{#1.#2}
+\newcommand{\meta}[2]{#1(#2)}
+
+\newcommand{\avar}{x}
+\newcommand{\bvar}{y}
+\newcommand{\cvar}{z}
+\newcommand{\dvar}{a}
+\newcommand{\afun}{\symb{f}}
+\newcommand{\bfun}{\symb{g}}
+\newcommand{\cfun}{h}
+\newcommand{\aterm}{s}
+\newcommand{\bterm}{t}
+\renewcommand{\ell}{l}
+
+\newcommand{\symb}[1]{\mathtt{#1}}
+\newcommand{\append}{\symb{append}}
+\newcommand{\nil}{\symb{nil}}
+\newcommand{\cons}{\symb{cons}}
+\newcommand{\map}{\symb{map}}
+\newcommand{\lijst}{\symb{list}}
+\newcommand{\Int}{\symb{int}}
+\newcommand{\suc}{\symb{s}}
+\newcommand{\nul}{\symb{0}}
+\newcommand{\plus}{\symb{plus}}
+
+\definecolor{darkgreen}{RGB}{0,155,0}
+\newcommand{\DARKBLUE}[1]{{\color{blue}#1}}   % FEMKE
+\newcommand{\BLUE}[1]{{\usebeamercolor{structure}\color{fg}#1}}
+\newcommand{\GREEN}[1]{{\color{darkgreen}#1}}
+\newcommand{\RED}[1]{{\color{red}#1}}
+\newcommand{\BROWN}[1]{{\color{brown}#1}}
+
+\newcommand{\opx}[1]{\operatorname{\textcolor{blue}{#1}}}
+
+%% STYLE.
+\usepackage[T1]{fontenc}
+\usepackage{charter}
+\renewcommand{\ttdefault}{txtt}
+\usefonttheme{serif}
+\SelectTips{lu}{10 scaled 2074}
+\def\q#1{~\text{`\texttt{#1}'}~}
+\def\t#1{\texttt{#1}}
+\def\tup#1{\ensuremath{\left\langle{#1}\right\rangle}}
+\useinnertheme{rounded}
+\SelectTips{lu}{10 scaled 2074}
+
+%% Topmatter
+\title{Experience with Higher Order Rewriting\\from the\\Compiler Teaching Trenches}
+\author[Kris Rose]{Kristoffer H. Rose\\Two Sigma \emph{Labs} \& NYU}
+\date{Saturday, July 12, 2014\\HOR 2014}
+
+%%
+\begin{document}
+\frame{\titlepage}
+
+%%\begin{frame}{Outline}
+%%  \tableofcontents
+%%\end{frame}
+
+%%%===========================================
+
+\section{Compilers}
+\begin{frame}{Outline}
+  \tableofcontents[current]
+\end{frame}
+
+\begin{frame}{Compilers and Teaching}
+  \begin{itemize}
+
+  \item Programming \structure{Culture} \pause bordering on \alert{Art}.\pause
+
+  \item Masterwork is ``Dragon Book.''\pause
+
+  \item We teach \structure{semantic techniques} \\\pause%
+    ---but abandon them to \alert{hand-written algorithmic code}.\pause
+
+  \item Little compiler programmer support after parser generation \\\pause%
+    ---but tools are emerging (the \structure{meta-programming} trend).
+    
+  \item HACS aims to change this, and provide \structure{high level
+      support for full compiler programming experience}.\pause
+
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile,shrink]{Compiler Structure}
+  \vspace*{-1em}
+  \begin{displaymath}
+    \xygraph{!{;(.66,0):}
+      []*+\txt{source program}
+      :@(l,l)  [d]*+[r][F:green]\txt{Lexical Analysis}="L"
+      :@(l,l) _{\txt{Tokens}} [d]*+[r][F:green]\txt{Syntax Analysis}="P"
+      :@(l,l) _{\txt{Tree}}  [d]*+[r][F:red]\txt{Semantic Analysis}="A"
+      :@(l,l) _{\txt{Tree}} [d]*+[r][F:red]\txt{Intermediate Representation Generator}="IR"
+                              ( "P"[r(7)]*+[F:red]\txt{Symbol\\Table}
+                                ( -@. "L"!{+R} , -@. "P"!{+R} , -@. "A"!{+R} , -@. "IR"!{!C} ) )
+      :@(l,l) _{\txt{IR}} [d]*+[r][F:red]\txt{Optimizer}
+      :@(l,l) _{\txt{IR}} [d]*+[r][F:red]\txt{Code Generator}
+      :@(l,l) _{\txt{ASM}} [d]*+[r][F:red]\txt{Machine-Dependent Code Optimizer}
+      :@(l,l)  [d]*+\txt{target machine code}
+    }
+  \end{displaymath}
+\end{frame}
+
+\begin{frame}{What Formalizations are we Teaching?}
+  \begin{description}
+  \item[Lexical Analysis.] \textcolor{green}{Regular Expressions.}\pause
+  \item[Syntax Analysis.] \textcolor{green}{LL/LALR Parser Generators.}\pause
+  \item[Semantic Analysis.] \alert{Attribute Grammars.}\pause
+  \item[IR Generator.] \alert{Translation Schemes.}\pause
+  \item[Optimizer.] \alert{Attribute Grammars, Translation Schemes, Custom Algorithms, \dots}\pause
+  \item[Code Generator.] \alert{Translation Schemes.}\pause
+  \item[Peep-hole optimizer.] \alert{All bets are off\dots}\pause\\[1em]
+
+  \item[Symbol Table.] \alert{Side effects and explicit scope structures.}
+  \end{description}
+\end{frame}
+
+\begin{frame}{HACS---\emph{Formally Founded} Compiler Generator}
+  \begin{enumerate}
+  \item Designed to directly support \structure{existing formal notations}.
+  \item Formally defined in terms of a ``core'' language, which is in fact CRSX.
+  \item Integrated with special purpose \structure{compiler support algorithms}.
+  \item Uses \structure{rewriting} for recursive translation schemes.
+  \end{enumerate}
+  \pause
+  \vspace*{1em}
+  \alert{--- with attribute dependency controls}
+\end{frame}
+
+%%%===========================================
+
+\section{Attribute Grammars}
+\frame{\tableofcontents[current]}
+
+\begin{frame}{On Attribute Grammars}
+  \begin{itemize}
+  \item Based on Knuth's seminal 1968 ``Semantics of Context-Free Languages''
+  \item Dominate teaching in compiler construction
+  \item Can be adapted to imperative programming (\texttt{\$} in \texttt{yacc})
+  \item Compatible with rewriting, can be implemented with rewriting (ASF+SDF)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[shrink]{``Syntax-Directed Definition''}
+  \begin{displaymath}
+    \begin{array}{r@{\,}l|lr}
+      \hline
+      \hline
+      \multicolumn{2}{c|}{\textsc{Production}}  & \textsc{Semantic Rules} &\vphantom{\bigm|}\\
+      \hline\vphantom{\Bigm|}
+      S &→ \textbf{name} := E_1; S_2
+      & E_1.e = S.e; S_2.e = \op{extend}(S.e, \textbf{name}.sym, E_1.t); &(S1) \\[-1pt]
+      && \quad S.ok = \op{IsType}(E_1.t) ∧ S_2.ok
+      \\[\jot]
+      &~\mid \{~S_1~\}~S_2 & S_1.e = S.e; S_2.e = S.e; S.ok = S_1.ok ∧ S_2.ok &(S2)
+      \\
+      &~\mid \op{printInt}~E_1; S_2 & E_1.e = S.e; S.ok=\op{Check}(E_1.t=\op{Int}) ∧ S_2.ok &(S3)
+      \\
+      &~\mid \op{printFloat}~E_1; S_2 & E_1.e = S.e; S.ok=\op{Check}(E_1.t=\op{Float}) ∧ S_2.ok &(S4)
+      \\
+      &~\mid ε & S.ok = \op{True} &(S5)
+      \\[1ex]
+      E &→ E_1 + E_2 & E_1.e=E.e; E_2.e=E.e; E.t = \op{Unif}(E_1.t, E_2.t) &(E1)\\
+      &~\mid E_1 \ast E_2 & E_1.e=E.e; E_2.e=E.e; E.t = \op{Unif}(E_1.t, E_2.t) &(E2)\\
+      &~\mid \textbf{int} & E.t = \op{Int}&(E3)\\
+      &~\mid \textbf{float} & E.t = \op{Float}&(E4)\\
+      &~\mid \textbf{name} & E.t = \text{if}~\op{defined}(E.e,\textbf{name}.sym)\\[-1pt]
+      && \qquad\quad\text{then}~\op{lookup}(E.e,\textbf{name}.sym)&(E5)\\[-1pt]
+      && \qquad\quad\text{else} \op{TypeErr}\\
+      \hline
+    \end{array}
+  \end{displaymath}
+\end{frame}
+
+\begin{frame}[fragile]{``\texttt{x:=1+2; printInt x}''}
+  \vspace*{-2em}
+  \begin{displaymath}
+    \xygraph{!{(1.2,0):(0,.9)::}
+      []{S_1\colon{:=}}
+      ( -[dlll]{x}
+      , -[dl]{E_1\colon{+}}
+        ( -[ddl]{E_2\colon1}
+        , -[ddr]{E_3\colon2}
+        )
+      , -[drrr]{S_2\colon\op{printInt}}
+        ( -[ddl]{E_4\colon x}
+        , -[ddr]{S_3\colon ε}
+        )
+      )
+    }
+  \end{displaymath}
+\end{frame}
+
+\begin{frame}[fragile]{``\texttt{x:=1+2; printInt x}'' with Attributes}
+  \vspace*{-2em}
+  \begin{displaymath}
+    \xygraph{!{(1.2,0):(0,.9)::}
+      []{S_1\colon{:=}}
+      (-@.[ur(.6)]*+{\scriptstyle S_1.e=\{\};~S_1.ok=\op{IsType}(E_1.t)∧S_2.ok=\uncover<6->{\opx{True}}}="S1")
+      ( -[dlll]{x}
+      , -[dl]{E_1\colon{+}}
+        (-@.[dr(.7)]*+[r]{\scriptstyle E_1.t=\op{Unif}(E_2.t,E_3.t)\uncover<2->{=\opx{Int}}}="E1")
+        ( -[ddl]{E_2\colon1}   (-@.[d(.8)]*+{\scriptstyle E_2.t=\op{Int}}="E2")
+        , -[ddr]{E_3\colon2}   (-@.[d(.8)]*+{\scriptstyle E_3.t=\op{Int}}="E3")
+        )
+      , -[drrr]{S_2\colon\op{printInt}}
+        (-@.[ur(.9)]*+\txt{$\scriptstyle S_2.e=\op{extend}(S_1.e,x,E_1.t)=\uncover<3->{\{x↦\opx{Int}\}}$\\
+                           $\scriptstyle S_2.ok=\op{Check}(E_4.t=\op{Int})∧S_3.ok=\uncover<5->{\opx{True}}$}="S2")
+          ( -[ddl]{E_4\colon x}
+            (-@.[d(.8)]*+\txt{$\scriptstyle E_4.e=S_2.e=\uncover<4->{\{x↦\opx{Int}\}}$\\
+                              $\scriptstyle E_4.t=\op{lookup}(E_4.e,x)=\uncover<4->{\opx{Int}}$}="E4")
+        , -[ddr]{S_3\colon ε}  (-@.[d(.8)]*+{\scriptstyle {S_3.ok=\op{True}}}="S3")
+        )
+      )
+    }
+  \end{displaymath}
+\end{frame}
+
+\begin{frame}[fragile]{``\texttt{x:=1+2; printInt x}'' with Attributes}
+  \vspace*{-2em}
+  \begin{displaymath}
+    \xygraph{!{(1.2,0):(0,.9)::}
+      []{S_1\colon{:=}}
+      (-@.[ur(.6)]*+{\scriptstyle S_1.e=\{\};~S_1.ok=\op{IsType}(E_1.t)∧S_2.ok={\opx{True}}}!{!C}="S1")
+      ( -[dlll]{x}
+      , -[dl]{E_1\colon{+}}
+        (-@.[dr(.7)]*+[r]{\scriptstyle E_1.t=\op{Unif}(E_2.t,E_3.t){=\opx{Int}}}!{!C}="E1")
+        ( -[ddl]{E_2\colon1}   (-@.[d(.8)]*+{\scriptstyle E_2.t=\op{Int}}!{!C}="E2")
+        , -[ddr]{E_3\colon2}   (-@.[d(.8)]*+{\scriptstyle E_3.t=\op{Int}}!{!C}="E3")
+        )
+      , -[drrr]{S_2\colon\op{printInt}}
+        (-@.[ur(.9)]*+\txt{$\scriptstyle S_2.e=\op{extend}(S_1.e,x,E_1.t)={\{x↦\opx{Int}\}}$\\
+                           $\scriptstyle S_2.ok=\op{Check}(E_4.t=\op{Int})∧S_3.ok={\opx{True}}$}="S2")
+          ( -[ddl]{E_4\colon x}  (-@.[d(.8)]*+{\scriptstyle {E_4.t=\op{lookup}(S_2.e,x)}={\opx{Int}}}!{!C}="E4")
+        , -[ddr]{S_3\colon ε}  (-@.[d(.8)]*+{\scriptstyle {S_3.ok=\op{True}}}!{!C}="S3")
+        )
+      )
+      "E2"!{!UR} :@.@(ur,l)@[red] "E1"!{!L}
+      "E3"!{!UR} :@.@(ur,dr)@[red] "E1"!{!L}
+      "E1" :@.@(u,l)@[red] "S2"!{!L!/u1ex/}
+      "S2"!{!R!/u1ex/} -@.@(r,ur)@[red] [d(.8)]!{+/r1ex/}*{} :@.@(dl,u)@[red] "E4"
+      "E4" :@.@(ul,l)@[red] "S2"!{!L!/d1ex/}
+      "S3" :@.@(ul,l)@[red] "S2"!{!L!/d1ex/}
+      "S2"!{!R!/d1ex/} -@.@(r,r)@[red] [ul(.8)]!{+/r1ex/}*{} :@.@(l,r)@[red] "S1"!{!R}
+    }
+  \end{displaymath}
+\end{frame}
+
+\begin{frame}{Attribute Propagation Patterns}
+  \begin{itemize}
+
+  \item Synthesized attributes \alert{mostly} depend only on synthesis.\\
+    (An AG is ``\structure{S-attributed}'' if this is exclusively the case.)
+
+  \item Cross-synthesized-inherited attributes depend \alert{left to right}.\\
+    (It is ``\structure{L-attributed},'' like inference systems.)
+
+  \end{itemize}
+\end{frame}
+
+%%%===========================================
+
+\section{HACS by Example}
+\frame{\tableofcontents[current]}
+
+\begin{frame}{HACS Features}
+  \begin{itemize}
+  \item Parser generation notation.\\
+    \structure{Supports Higher-Order Abstract Syntax.}
+  \item Rules for \structure{synthesis}.
+  \item Rules for \structure{recursive compilation schemes}.
+  \item Polymorphic \structure{sort system}.
+  \item All rules and sorts use \structure{native user syntax}.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Words, words, words…}
+  \begin{center}
+    \alert{Let's code.}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Dependency Games}
+  \begin{itemize}
+  \item Synthesized attributes \structure{tied to AST node sorts}\\\pause%
+    ---give rules for \alert{propagation per node form}.\pause
+  \item Inherited attributes \structure{tied to recursive schemes}\\\pause%
+    --- give rules for \alert{distribution per scheme}.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Synthesis Propagation of $t$}
+  \begin{displaymath}
+    \begin{array}{r@{\,}l|lr}
+      \hline\strut
+      E &→ E_1 + E_2 & E_1.e=E.e; E_2.e=E.e; E.t = \op{Unif}(E_1.t, E_2.t) \qquad&\thetag{E1}\\[\jot]
+      \hline
+    \end{array}
+  \end{displaymath}
+  \pause
+\begin{hacs}
+attribute ↑t(Type);
+sort Exp | ⟦ ⟨Exp⟩ + ⟨Exp⟩ ⟧ | ↑t ;
+⟦ ⟨Exp#1 ↑t(#t1)⟩ + ⟨Exp#2 ↑t(#t2)⟩ ⟧ ↑t(Unif(#t1,#t2)) ;
+sort Type | scheme Unif(Type,Type);
+…
+\end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{Inherited Distribution of $e$}
+  \begin{displaymath}
+    \begin{array}{r@{\,}l|lr}
+      \hline\strut
+      E &→ E_1 + E_2 & E_1.e=E.e; E_2.e=E.e; E.t = \op{Unif}(E_1.t, E_2.t) \qquad&\thetag{E1}\\[\jot]
+      \hline
+    \end{array}
+  \end{displaymath}
+  \pause
+\begin{hacs}
+attribute ↓e{Name:Type};
+sort Exp | scheme ⟦ TA ⟨Exp⟩⟧ ↓e ;
+⟦ TA (⟨Exp#1⟩ + ⟨Exp#2⟩) ⟧
+  → ⟦ (TA ⟨Exp#1⟩) + (TA ⟨Exp#2⟩) ⟧;
+\end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{Left-to-Right Dependency $t$ to $e$}
+  \vspace*{-1em}
+  \begin{displaymath}
+    \begin{array}{r@{\,}l|l}
+      \hline\strut
+      S &→ \textbf{name} := E_1; S_2
+      & E_1.e = S.e; \\
+      && S_2.e = \op{extend}(S.e, \textbf{name}.sym, E_1.t); \\
+      && S.ok = \op{IsType}(E_1.t) ∧ S_2.ok\\
+      \hline
+    \end{array}
+  \end{displaymath}
+  \pause\footnotesize
+\begin{hacs}
+attribute ↓e{Name:Type};
+sort Stat | ⟦ ⟨[x:Name]⟩ := ⟨Exp⟩ ; ⟨Stat[x:Exp]⟩ ⟧ | scheme ⟦ TA { ⟨Stat⟩ } ⟧ ↓e ;
+
+⟦ TA { id := ⟨Exp#1⟩; ⟨Stat#2[⟦id⟧]⟩ } ⟧ → ⟦ TA2 { id := TA ⟨Exp#1⟩; ⟨Stat#2[⟦id⟧]⟩ } ⟧;
+{
+  | scheme ⟦ TA2 { ⟨Stat⟩ } ⟧ ↓e;
+  ⟦ TA2 { id := ⟨Exp#1 ↑t(#t1)⟩; ⟨Stat#2[⟦id⟧]⟩ } ⟧
+    → ⟦ id := ⟨Exp#1⟩; ⟨Stat ⟦TA {⟨Stat#2[⟦id⟧]⟩}⟧ ↓e{⟦id⟧:#t1}⟩ ⟧;
+}
+\end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{HACS Program (I)}\footnotesize
+\begin{hacs}[texcl]
+module "edu.nyu.cims.cc.Check" {
+
+// PARSER.
+
+space [ \t\n] ;
+token INT      | [0-9]+ ;
+token FLOAT    | [0-9]+ [.] [0-9]* ([Ee] [-+]? [0-9]+)? ;
+token ID       | [a-z] [a-zA-Z0-9_]* ;
+sort Name | symbol ⟦⟨ID⟩⟧ ;
+
+sort S  | ⟦ ⟨[x:Name]⟩ := ⟨E⟩; ⟨S[x:Name]⟩ ⟧ | ⟦ { ⟨S⟩ } ⟨S⟩ ⟧
+        | ⟦ printInt ⟨E⟩; ⟨S⟩ ⟧ | ⟦ printFloat ⟨E⟩; ⟨S⟩ ⟧
+        | ⟦⟧ ;
+
+sort E  | ⟦ ⟨E⟩ + ⟨E@1⟩ ⟧ | ⟦ ⟨E@1⟩ * ⟨E@2⟩ ⟧@1
+        | ⟦ ⟨INT⟩ ⟧@2 | ⟦ ⟨FLOAT⟩ ⟧@2 | ⟦ ⟨Name⟩ ⟧@2
+        | sugar ⟦ ( ⟨E#1⟩ ) ⟧@2 → E#1 ;
+\end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{HACS Program (II)}\footnotesize
+\begin{hacs}[texcl]
+// SEMANTIC SORTS \& HELPERS.
+
+sort Bool | ⟦T⟧ | ⟦F⟧;
+| scheme ⟦⟨Bool⟩∧⟨Bool⟩⟧;  ⟦T∧T⟧ → ⟦T⟧;  default ⟦⟨Bool#1⟩∧⟨Bool#2⟩⟧ → ⟦F⟧;
+
+sort Type | Int | Float | TypeErr;
+| scheme Unif(Type,Type);
+Unif(Int, Int) → Int;      Unif(Int, Float) → Float;
+Unif(Float, Int) → Float;  Unif(Float, Float) → Float;
+default Unif(#1, #2) → TypeErr ;
+
+sort Bool;
+| scheme IsType(Type);  IsType(Int) → ⟦T⟧;  IsType(Float) → ⟦T⟧;  IsType(TypeErr) → ⟦F⟧;
+| scheme CheckInt(Type);  CheckInt(Int) → ⟦T⟧;  default CheckInt(#) → ⟦F⟧;
+| scheme CheckFloat(Type);  CheckFloat(Float) → ⟦T⟧;  default CheckFloat(#) → ⟦F⟧;
+\end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{HACS Program (III)}\footnotesize
+\begin{hacs}[texcl]
+// TYPE CHECKING.
+
+sort CheckResult | ⟦Yes⟧;
+| scheme Check(S) ;
+Check(#s↑ok(⟦T⟧)) → ⟦Yes⟧ ;
+Check(#s↑ok(⟦F⟧)) → error⟦Type Error.⟧ ;
+
+// Attributes.
+attribute ↑ok(Bool);
+attribute ↑t(Type);
+attribute ↓e{Name:Type};
+
+// Rules for $S$ sort:
+// -- Synthesizes attribute $ok$.
+// -- Inherited attribute $S.e$ is distributed by Te scheme (and helper Te2).
+sort S | ↑ok | scheme ⟦Te ⟨S⟩⟧ ↓e | scheme ⟦Te2 ⟨S⟩⟧ ↓e ;
+\end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{HACS Program (IV)}\footnotesize
+\begin{hacs}[texcl]
+// $(S1)\quad S→\textbf{name}:=E_1;S_2$ has three stages:
+// 1. $E_1.e = S.e$ and recurse over $E_1$ (to get automatic propagation).
+⟦ Te x := ⟨E#1⟩; ⟨S#2[x]⟩ ⟧  →  ⟦ Te2 x := Te⟨E#1⟩; ⟨S#2[x]⟩ ⟧ ;
+// 2. When $E_1.t$ is available then $S_2.e = \op{extend}(S.e, \textbf{name}.sym, E_1.t)$ and recurse over $S_2$.
+⟦ Te2 x := ⟨E#1↑t(#t1)⟩; ⟨S#2[x]⟩ ⟧  →  ⟦ x := ⟨E#1⟩; Te⟨S#2[x]↓e{x:#t1}⟩ ⟧ ;
+// 3. When $S_2.ok$ is (also) available then we can synthesize $S.ok = \op{IsType}(E_1.t) ∧ S_2.ok$.
+⟦ x := ⟨E#1↑t(#t1)⟩; ⟨S#2[x]↑ok(#ok2)⟩ ⟧ ↑ok(⟦⟨Bool IsType(#t1)⟩∧⟨Bool#ok2⟩⟧) ;
+
+// $(S2)\quad S→\{S_1\}\,S_2$:
+// 1. $S_1.e=S.e$ and $S_2.e=S.e$ are propagated and recursed over.
+⟦ Te { ⟨S#1⟩ } ⟨S#2⟩ ⟧  →  ⟦ { Te⟨S#1⟩ } Te⟨S#2⟩ ⟧ ;
+// 2. When $S_1.ok$ and $S_2.ok$ are available then synthesize $S.ok=S_1.ok∧S_2.ok$.
+⟦ { ⟨S#1↑ok(#ok1)⟩ } ⟨S#2↑ok(#ok2)⟩ ⟧ ↑ok(⟦⟨Bool#ok1⟩ ∧ ⟨Bool#ok2⟩⟧) ;
+\end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{HACS Program (V)}\footnotesize
+\begin{hacs}[texcl]
+// $(S3)\quad S→\op{printInt}\,E_1; S_2$:
+// 1. $E_1.e=S.e$ and $S_2.e=S.e$ are propagated and recursed over.
+⟦ Te printInt ⟨E#1⟩; ⟨S#2⟩ ⟧  →  ⟦ printInt Te⟨E#1⟩; Te⟨S#2⟩ ⟧ ;
+// 2. When $S_1.t$ and $S_2.ok$ are available then synthesize $S.ok=\op{Check}(\op{Int}=E_1.t) ∧ S_2.ok$.
+⟦ printInt ⟨E#1↑t(#t1)⟩; ⟨S#2↑ok(#ok2)⟩ ⟧ ↑ok(⟦ ⟨Bool CheckInt(#t1)⟩ ∧ ⟨Bool#ok2⟩ ⟧) ;
+
+// $(S4)\quad S→\op{printFloat}\,E_1; S_2$:
+// 1. $E_1.e=S.e$ and $S_2.e=S.e$ are propagated and recursed over.
+⟦ Te printFloat ⟨E#1⟩; ⟨S#2⟩ ⟧  →  ⟦ printFloat Te⟨E#1⟩; Te⟨S#2⟩ ⟧ ;
+// 2. When $S_1.t$ and $S_2.ok$ are available then synthesize $S.ok=\op{Check}(\op{Float}=E_1.t) ∧ S_2.ok$.
+⟦ printFloat ⟨E#1↑t(#t1)⟩; ⟨S#2↑ok(#ok2)⟩ ⟧ ↑ok(⟦ ⟨Bool CheckFloat(#t1)⟩ ∧ ⟨Bool#ok2⟩ ⟧) ;
+
+// $(S5)\quad S→ε$: No distribution necessary; synthesize $S.ok=\op{True}$.
+⟦ Te ⟧  →  ⟦⟧ ;
+⟦ ⟧ ↑ok(⟦T⟧) ;
+\end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{HACS Program (VI)}\footnotesize
+\begin{hacs}[texcl]
+// Rules for $E$ sort:
+// -- Synthesizes attribute $E.t$.
+// -- Inherited attribute $E.e$ is distributed by Te scheme (with helper Te2).
+sort E | ↑t | scheme ⟦Te ⟨E⟩⟧ ↓e ;
+
+// $(E1)\quad E→E_1+E_2$:
+// 1. $E_1.e=E.e$ and $E_2.e=E.e$ recursively propagated (note use of parenthesis sugar).
+⟦ Te ( ⟨E#1⟩ + ⟨E#2⟩ ) ⟧  →  ⟦ (Te⟨E#1⟩) + (Te⟨E#2⟩) ⟧ ;
+// 2. When $E_1.t$ and $E_2.t$ available then synthesize $E.t=\op{Unif}(E_1.t,E_2.t)$.
+⟦ ⟨E#1↑t(#t1)⟩ + ⟨E#2↑t(#t2)⟩ ⟧ ↑t(Unif(#t1,#t2)) ;
+
+// $(E2)\quad E→E_1*E_2$:
+// 1. $E_1.e=E.e$ and $E_2.e=E.e$ recursively propagated (note use of parenthesis sugar).
+⟦ Te ( ⟨E#1⟩ * ⟨E#2⟩ ) ⟧  →  ⟦ (Te⟨E#1⟩) * (Te⟨E#2⟩) ⟧ ;
+// 2. When $E_1.t$ and $E_2.t$ available then synthesize $E.t=\op{Unif}(E_1.t,E_2.t)$.
+⟦ ⟨E#1↑t(#t1)⟩ + ⟨E#2↑t(#t2)⟩ ⟧ ↑t(Unif(#t1,#t2)) ;
+\end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{HACS Program (VII)}\footnotesize
+\begin{hacs}[texcl]
+// $(E3)\quad E→\textbf{int}$:
+// 1. Propagation leaf: set $E.t=\op{Int}$ directly.
+⟦ Te ⟨INT#1⟩ ⟧  →  ⟦ ⟨INT#1⟩ ⟧ ↑t(Int) ;
+// 2. Synthesize $E.t=\op{Int}$.
+⟦ ⟨INT#1⟩ ⟧ ↑t(Int) ;
+
+// $(E4)\quad E→\textbf{float}$:
+// 1. Propagation leaf: set $E.t=\op{Float}$ directly.
+⟦ Te ⟨FLOAT#1⟩ ⟧  →  ⟦ ⟨FLOAT#1⟩ ⟧ ↑t(Float) ;
+// 2. Synthesize $E.t=\op{Float}$.
+⟦ ⟨FLOAT#1⟩ ⟧ ↑t(Float) ;
+
+//$(E5)\quad S→\textbf{name}$: There are two disjoint propagation cases:
+// a. $\op{defined}(E.e,\textbf{name}.sym)$ so $E.t=\op{lookup}(E.e,\textbf{name}.sym)$.
+⟦ Te x ⟧ ↓e{x : #t} → ⟦ x ⟧ ↑t(#t) ;
+// b. $¬\op{defined}(E.e,\textbf{name}.sym)$ so $E.t=\op{TypeErr}$.
+⟦ Te x ⟧ ↓e{¬x} → ⟦ x ⟧ ↑t(TypeErr) ;
+}
+\end{hacs}
+\end{frame}
+
+\section{Conclusions}
+
+%%%===========================================
+
+\begin{frame}{Conclusions}
+
+\begin{itemize}
+\item HACS is in use to teach compilers at NYU.
+\item HACS supports ``Dragon Book Notions'' well.
+\item Higher Order concepts work in teaching.
+\item Attribute dependencies are difficult.
+\end{itemize}
+
+\pause
+\vspace*{2em}
+\begin{center}
+\alert{Questions?}
+\end{center}
+
+\end{frame}
+
+%%%===========================================
+
+\end{document}
+
+%%---------------------------------------------------------------------
+% Tell Emacs that this is a LaTeX document and how it is formatted:
+% Local Variables:
+% mode:latex
+% fill-column:100
+% End:

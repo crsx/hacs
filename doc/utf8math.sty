@@ -1,0 +1,135 @@
+%% Support for some Unicode mathematics.
+%%
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{utf8math}
+
+\RequirePackage{amssymb,stmaryrd,latexsym}
+%\RequirePackage[force,almostfull]{textcomp}
+
+\DeclareUnicodeCharacter{00AC}{\ensuremath{\neg     }} % ¬ "-,"
+\DeclareUnicodeCharacter{00B0}{\ensuremath{^\circ   }} % ° "oo"
+\DeclareUnicodeCharacter{00B6}{\ensuremath{\P       }} % ¶ "PP"
+\DeclareUnicodeCharacter{00B7}{\ensuremath{\cdot    }} % · ".-"
+\DeclareUnicodeCharacter{00D7}{\ensuremath{\times   }} % × "xx"
+\DeclareUnicodeCharacter{00F7}{\ensuremath{\div     }} % ÷ ":-"
+
+\DeclareUnicodeCharacter{0393}{\ensuremath{\Gamma   }} % Γ "GA"
+\DeclareUnicodeCharacter{0394}{\ensuremath{\Delta   }} % Δ "DE"
+\DeclareUnicodeCharacter{0398}{\ensuremath{\Theta   }} % Θ "TH"
+\DeclareUnicodeCharacter{039B}{\ensuremath{\Lambda  }} % Λ "LA"
+\DeclareUnicodeCharacter{039E}{\ensuremath{\Xi      }} % Ξ "XI"
+\DeclareUnicodeCharacter{03A0}{\ensuremath{\Pi      }} % Π "PI"
+\DeclareUnicodeCharacter{03A3}{\ensuremath{\Sigma   }} % Σ "SI"
+\DeclareUnicodeCharacter{03A5}{\ensuremath{\Upsilon }} % Υ "UP"
+\DeclareUnicodeCharacter{03A6}{\ensuremath{\Phi     }} % Φ "PH"
+\DeclareUnicodeCharacter{03A8}{\ensuremath{\Psi     }} % Ψ "PS"
+\DeclareUnicodeCharacter{03A9}{\ensuremath{\Omega   }} % Ω "OM"
+
+\DeclareUnicodeCharacter{03B1}{\ensuremath{\alpha   }} % α "al"
+\DeclareUnicodeCharacter{03B2}{\ensuremath{\beta    }} % β "be"
+\DeclareUnicodeCharacter{03B3}{\ensuremath{\gamma   }} % γ "ga"
+\DeclareUnicodeCharacter{03B4}{\ensuremath{\delta   }} % δ "de"
+\DeclareUnicodeCharacter{03B5}{\ensuremath{\epsilon }} % ε "ep"
+\DeclareUnicodeCharacter{03B6}{\ensuremath{\zeta    }} % ζ "ze"
+\DeclareUnicodeCharacter{03B7}{\ensuremath{\eta     }} % η "et"
+\DeclareUnicodeCharacter{03B8}{\ensuremath{\theta   }} % θ "th"
+\DeclareUnicodeCharacter{03B9}{\ensuremath{\iota    }} % ι "io"
+\DeclareUnicodeCharacter{03BA}{\ensuremath{\kappa   }} % κ "ka"
+\DeclareUnicodeCharacter{03BB}{\ensuremath{\lambda  }} % λ "la"
+\DeclareUnicodeCharacter{03BC}{\ensuremath{\mu      }} % μ "mu"
+\DeclareUnicodeCharacter{03BD}{\ensuremath{\nu      }} % ν "nu"
+\DeclareUnicodeCharacter{03BE}{\ensuremath{\xi      }} % ξ "xi"
+\DeclareUnicodeCharacter{03C0}{\ensuremath{\pi      }} % π "pi"
+\DeclareUnicodeCharacter{03C1}{\ensuremath{\rho     }} % ρ "rh"
+\DeclareUnicodeCharacter{03C2}{\ensuremath{\varsigma}} % ς "fs"
+\DeclareUnicodeCharacter{03C3}{\ensuremath{\sigma   }} % σ "si"
+\DeclareUnicodeCharacter{03C4}{\ensuremath{\tau     }} % τ "ta"
+\DeclareUnicodeCharacter{03C5}{\ensuremath{\upsilon }} % υ "up"
+\DeclareUnicodeCharacter{03C6}{\ensuremath{\phi     }} % φ "ph"
+\DeclareUnicodeCharacter{03C7}{\ensuremath{\chi     }} % χ "ch"
+\DeclareUnicodeCharacter{03C8}{\ensuremath{\psi     }} % ψ "ps"
+\DeclareUnicodeCharacter{03C9}{\ensuremath{\omega   }} % ω "om"
+
+\DeclareUnicodeCharacter{2020}{\ensuremath{\dagger }} % † "+|"
+\DeclareUnicodeCharacter{2021}{\ensuremath{\ddagger}} % ‡ "++"
+\DeclareUnicodeCharacter{2026}{\ensuremath{\dots   }} % … ".."
+
+\DeclareUnicodeCharacter{2190}{\ensuremath{\leftarrow }} % ← "<-"
+\DeclareUnicodeCharacter{2191}{\ensuremath{\uparrow   }} % ↑ "u>"
+\DeclareUnicodeCharacter{2192}{\ensuremath{\rightarrow}} % → "->"
+\DeclareUnicodeCharacter{2193}{\ensuremath{\downarrow }} % ↓ "d>"
+\DeclareUnicodeCharacter{21A6}{\ensuremath{\mapsto    }} % ↦ "|>"
+\DeclareUnicodeCharacter{21AF}{\ensuremath{\lightning }} % ↯ "dd"
+\DeclareUnicodeCharacter{21BA}{\ensuremath{\circlearrowleft}} % ↺ "du"
+
+\DeclareUnicodeCharacter{21D0}{\ensuremath{\Leftarrow }} % ⇐ "<="
+\DeclareUnicodeCharacter{21D1}{\ensuremath{\Uparrow   }} % ⇑ "U>"
+\DeclareUnicodeCharacter{21D2}{\ensuremath{\Rightarrow}} % ⇒ "=>"
+\DeclareUnicodeCharacter{21D3}{\ensuremath{\Downarrow }} % ⇓ "D>"
+
+\DeclareUnicodeCharacter{2200}{\ensuremath{\forall    }} % ∀ "?A"
+\DeclareUnicodeCharacter{2202}{\ensuremath{\partial   }} % ∂ "?d"
+\DeclareUnicodeCharacter{2203}{\ensuremath{\exists    }} % ∃ "?E"
+\DeclareUnicodeCharacter{2205}{\ensuremath{\emptyset  }} % ∅
+\DeclareUnicodeCharacter{2208}{\ensuremath{\in        }} % ∈ "in"
+\DeclareUnicodeCharacter{2209}{\ensuremath{\notin     }} % ∉ "ni"
+
+\DeclareUnicodeCharacter{2212}{\ensuremath{-          }} % −
+\DeclareUnicodeCharacter{2227}{\ensuremath{\land      }} % ∧ "/\"
+\DeclareUnicodeCharacter{2228}{\ensuremath{\lor       }} % ∨ "\/"
+\DeclareUnicodeCharacter{2229}{\ensuremath{\cap       }} % ∩ "ca"
+\DeclareUnicodeCharacter{222A}{\ensuremath{\cup       }} % ∪ "cu"
+\DeclareUnicodeCharacter{2260}{\ensuremath{\neq       }} % ≠ "/="
+\DeclareUnicodeCharacter{2261}{\ensuremath{\equiv     }} % ≡ "=-"
+\DeclareUnicodeCharacter{2262}{\ensuremath{\not\equiv }} % ≢ "=+"
+\DeclareUnicodeCharacter{2264}{\ensuremath{\leq       }} % ≤ "=<"
+\DeclareUnicodeCharacter{2265}{\ensuremath{\geq       }} % ≥ ">="
+\DeclareUnicodeCharacter{2270}{\ensuremath{\nleq      }} % ≰ "<+"
+\DeclareUnicodeCharacter{2271}{\ensuremath{\ngeq      }} % ≱ ">+"
+
+\DeclareUnicodeCharacter{2282}{\ensuremath{\subset    }} % ⊂ "(-"
+\DeclareUnicodeCharacter{2283}{\ensuremath{\supset    }} % ⊃ ")-"
+\DeclareUnicodeCharacter{2286}{\ensuremath{\subseteq  }} % ⊆ "(="
+\DeclareUnicodeCharacter{2287}{\ensuremath{\supseteq  }} % ⊇ ")="
+\DeclareUnicodeCharacter{2284}{\ensuremath{\nsubset    }} % ⊄ "/(-"
+\DeclareUnicodeCharacter{2285}{\ensuremath{\nsupset    }} % ⊅ "/)-"
+\DeclareUnicodeCharacter{2288}{\ensuremath{\nsubseteq  }} % ⊈ "/(="
+\DeclareUnicodeCharacter{2289}{\ensuremath{\nsupseteq  }} % ⊉ "/)="
+\DeclareUnicodeCharacter{228F}{\ensuremath{\sqsubset  }} % ⊏ "[-"
+\DeclareUnicodeCharacter{2290}{\ensuremath{\sqsupset  }} % ⊐ "]-"
+\DeclareUnicodeCharacter{2291}{\ensuremath{\sqsubseteq}} % ⊑ "[="
+\DeclareUnicodeCharacter{2292}{\ensuremath{\sqsupseteq}} % ⊒ "]="
+\DeclareUnicodeCharacter{2293}{\ensuremath{\sqcap     }} % ⊓ "[u"
+\DeclareUnicodeCharacter{2294}{\ensuremath{\sqcup     }} % ⊔ "[d"
+
+\DeclareUnicodeCharacter{22A2}{\ensuremath{\vdash     }} % ⊢ "|-"
+\DeclareUnicodeCharacter{22A3}{\ensuremath{\dashv     }} % ⊣ "-|"
+\DeclareUnicodeCharacter{22A4}{\ensuremath{\top       }} % ⊤ "to"
+\DeclareUnicodeCharacter{22A5}{\ensuremath{\bot       }} % ⊥ "bo"
+\DeclareUnicodeCharacter{22A8}{\ensuremath{\vDash     }} % ⊨ "|="
+
+\DeclareUnicodeCharacter{22B2}{\ensuremath{\triangleleft   }} % ⊲
+\DeclareUnicodeCharacter{22B4}{\ensuremath{\triangleright  }} % ⊳
+\DeclareUnicodeCharacter{22B4}{\ensuremath{\trianglelefteq }} % ⊴
+\DeclareUnicodeCharacter{22B4}{\ensuremath{\trianglerighteq}} % ⊵
+
+\DeclareUnicodeCharacter{2308}{\ensuremath{\lceil          }} % ⌈ "[^"
+\DeclareUnicodeCharacter{2309}{\ensuremath{\rceil          }} % ⌉ "]^"
+\DeclareUnicodeCharacter{230A}{\ensuremath{\lfloor         }} % ⌊ "[_"
+\DeclareUnicodeCharacter{230B}{\ensuremath{\rfloor         }} % ⌋ "]_"
+
+\DeclareUnicodeCharacter{2768}{\ensuremath{\llparenthesis  }} % ❨ "(("
+\DeclareUnicodeCharacter{2769}{\ensuremath{\rrparenthesis  }} % ❩ "))"
+\DeclareUnicodeCharacter{27C5}{\ensuremath{\lbag           }} % ⟅ "(~"
+\DeclareUnicodeCharacter{27C6}{\ensuremath{\rbag           }} % ⟆ ")~"
+\DeclareUnicodeCharacter{27E6}{\ensuremath{\llbracket      }} % ⟦ "[["
+\DeclareUnicodeCharacter{27E7}{\ensuremath{\rrbracket      }} % ⟧ "]]"
+\DeclareUnicodeCharacter{27E8}{\ensuremath{\langle         }} % ⟨ "<."
+\DeclareUnicodeCharacter{27E9}{\ensuremath{\rangle         }} % ⟩ ">."
+\DeclareUnicodeCharacter{27EA}{\ensuremath{\langle\!\langle}} % ⟪ "<:"
+\DeclareUnicodeCharacter{27EB}{\ensuremath{\rangle\!\rangle}} % ⟫ ">:"
+
+\DeclareUnicodeCharacter{2983}{\ensuremath{\{\!\{}} % ⦃ "{{"
+\DeclareUnicodeCharacter{2984}{\ensuremath{\}\!\}}} % ⦄ "}}"
+
+\endinput

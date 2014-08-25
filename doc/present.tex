@@ -1,0 +1,324 @@
+\documentclass[pdftex,aspectratio=169,14pt]{beamer}
+\input{lecture-setup}
+
+%% Macros.
+%%\def\nt#1{\text{\rm\normalfont\emph{#1}}}
+\def\SubScript{\textit{SubScript}\xspace}
+
+%% Style.
+\usepackage[T1]{fontenc}
+\usepackage{charter}
+\renewcommand{\ttdefault}{txtt}
+\usefonttheme{serif}
+\SelectTips{lu}{10 scaled 2074}
+\def\q#1{~\text{`\texttt{#1}'}~}
+\def\t#1{\texttt{#1}}
+\def\tup#1{\ensuremath{\left\langle{#1}\right\rangle}}
+
+%% Topmatter
+\title{HACS---A Formalism for Compiler Development}
+\author[Kris Rose]{Kristoffer H. Rose}
+
+%%
+\begin{document}
+\frame{\titlepage}
+
+\begin{frame}{Outline}
+  \tableofcontents
+\end{frame}
+
+%%%===========================================
+
+\begin{frame}{Compilers and translators}
+  \begin{itemize}
+
+  \item Programming \structure{Culture} \pause bordering on \alert{Art}.\pause
+
+  \item We teach \structure{semantic techniques} \pause but then abandon them
+    to \alert{hand-written algorithmic code}.\pause
+
+  \item Little compiler programmer support after parser generation.\pause
+
+  \item HACS aims to change this, and provide \structure{high level
+      support for full compiler programming experience}.
+
+  \end{itemize}
+\end{frame}
+
+%%%===========================================
+
+\section{Compilers}
+\begin{frame}{Outline}
+  \tableofcontents[current]
+\end{frame}
+
+\begin{frame}[fragile]{}
+  \vspace*{-3ex}
+  \begin{displaymath}
+    \xygraph{!{;(.66,0):}
+      []*+\txt{source program}
+      :@(l,l)  [d]*+[r][F:green]\txt{Lexical Analysis}="L"
+      :@(l,l) _{\txt{Tokens}} [d]*+[r][F:green]\txt{Syntax Analysis}="P"
+      :@(l,l) _{\txt{Tree}}  [d]*+[r][F:red]\txt{Semantic Analysis}="A"
+      :@(l,l) _{\txt{Tree}} [d]*+[r][F:red]\txt{Intermediate Representation Generator}="IR"
+                              ( "P"[r(7)]*+[F:red]\txt{Symbol\\Table}
+                                ( -@. "L"!{+R} , -@. "P"!{+R} , -@. "A"!{+R} , -@. "IR"!{!C} ) )
+      :@(l,l) _{\txt{IR}} [d]*+[r][F:red]\txt{Optimizer}
+      :@(l,l) _{\txt{IR}} [d]*+[r][F:red]\txt{Code Generator}
+      :@(l,l) _{\txt{ASM}} [d]*+[r][F:red]\txt{Machine-Dependent Code Optimizer}
+      :@(l,l)  [d]*+\txt{target machine code}
+    }
+  \end{displaymath}
+\end{frame}
+
+\begin{frame}{What formalizations are we using?}
+  \begin{description}
+  \item[Lexical Analysis.] \textcolor{green}{Regular Expressions.}\pause
+  \item[Syntax Analysis.] \textcolor{green}{LL/LALR Parser Generators.}\pause
+  \item[Semantic Analysis.] \alert{Attribute Grammars.}\pause
+  \item[IR Generator.] \alert{Translation Schemes.}\pause
+  \item[Optimizer.] \alert{Attribute Grammars, Translation Schemes, Custom Algorithms, \dots}\pause
+  \item[Code Generator.] \alert{Translation Schemes.}\pause
+  \item[Peep-hole optimizer.] \alert{All bets are off\dots}\pause\\[1em]
+
+  \item[Symbol Table.] \alert{Side effects and explicit scope structures.}
+  \end{description}
+\end{frame}
+
+\begin{frame}{Words, words, words…}
+  \begin{center}
+    \structure{Let's code.}
+  \end{center}
+\end{frame}
+
+%%%===========================================
+
+\section{HACS by Example}
+\begin{frame}{Outline}
+  \tableofcontents[current]
+\end{frame}
+
+\begin{frame}[fragile]{Main}
+\begin{hacs}
+sort IAssign   | scheme Compile(Eqs) ;
+Compile(#eqs) →  ⟦ G TA ⟨Eqs#eqs⟩ ⟧ ;
+\end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{Lexical Analysis}
+\begin{hacs}
+space [ \t\n] ;
+
+token Num  | ⟨Digit⟩+ ("." ⟨Digit⟩+)? ("e" ⟨Digit⟩+)? ;
+token Id   | [a-z] ⟨AlNum⟩+ ;
+
+token fragment Digit  | [0-9] ;
+token fragment AlNum  | [A-Za-z0-9_] ;
+\end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{Syntax Analysis}
+\begin{hacs}
+sort Eqs   | ⟦ ⟨[x:Name]⟩ = ⟨Exp⟩ ; ⟨Eqs[x:Exp]⟩ ⟧
+           | ⟦ ⟧
+           ;
+
+sort Name  | symbol ⟦⟨Id⟩⟧ ;
+\end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{Syntax Analysis}
+\begin{hacs}
+sort Exp   | ⟦ val ⟨[x:Name]⟩ ↦ ⟨Exp[x:Exp]⟩ ⟧
+           | ⟦ seq ⟨[x:Name]⟩ ↦ ⟨Exp[x:Exp]⟩ ⟧
+           | ⟦ ⟨Exp@1⟩ + ⟨Exp@2⟩ ⟧@1  |  ⟦ ⟨Exp@1⟩ - ⟨Exp@2⟩ ⟧@1
+           | ⟦ ⟨Exp@2⟩ * ⟨Exp@3⟩ ⟧@2  |  ⟦ ⟨Exp@2⟩ / ⟨Exp@3⟩ ⟧@2
+           | ⟦ ⟨Name⟩ ( ⟨Args⟩ ) ⟧@3
+           | ⟦ ⟨Name⟩ ⟧@3
+           | ⟦ ⟨Num⟩ ⟧@3
+           | sugar ⟦ ( ⟨Exp#⟩ ) ⟧@3 →  Exp#
+           ;
+
+sort Args      | ⟦ ⟨Exp⟩ ⟨ArgsTail⟩ ⟧ | ⟦⟧ ;
+sort ArgsTail  | ⟦ , ⟨Exp⟩ ⟨ArgsTail⟩ ⟧ | ⟦⟧ ;
+\end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{Type Analysis}
+\begin{hacs}
+sort Type  | Unit | Sequence | Fun(Type,Type) ;
+
+| scheme Unif(Type,Type) ;
+Unif(Unit, Unit) →  Unit;
+Unif(Sequence, #) →  Sequence;
+Unif(#, Sequence) →  Sequence;
+Unif(Fun(#t11,#t12), Fun(#t21, #t22))
+ →  Fun(Unif(#t11,#t21), Unif(#t12,#t22)) ;
+default Unif(#1, #2) →  error⟦Bad type⟧ ;
+
+| scheme TailType(Type) ;
+TailType(Fun(#t1, #t2)) →  TailType(#t2) ;
+default TailType(#t) →  #t ;
+\end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{Type Analysis -- easy synthesis}
+\begin{hacs}
+attribute ↑t(Type);
+
+sort Exp | ↑t;
+
+⟦ val x ↦ ⟨Exp#e[x] ↑t(#t)⟩ ⟧ ↑t(Fun(Unit,#t)) ;
+⟦ seq x ↦ ⟨Exp#e[x] ↑t(#t)⟩ ⟧ ↑t(Fun(Sequence,#t)) ;
+
+⟦ (⟨Exp#1 ↑t(#t1)⟩ + ⟨Exp#2 ↑t(#t2)⟩) ⟧ ↑t(Unif(#t1,#t2));
+⟦ (⟨Exp#1 ↑t(#t1)⟩ - ⟨Exp#2 ↑t(#t2)⟩) ⟧ ↑t(Unif(#t1,#t2));
+⟦ (⟨Exp#1 ↑t(#t1)⟩ * ⟨Exp#2 ↑t(#t2)⟩) ⟧ ↑t(Unif(#t1,#t2));
+⟦ (⟨Exp#1 ↑t(#t1)⟩ / ⟨Exp#2 ↑t(#t2)⟩) ⟧ ↑t(Unif(#t1,#t2));
+
+⟦ ⟨Num#⟩ ⟧ ↑t(Unit);
+\end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{Type Analysis -- identifier cases}
+\begin{hacs}
+attribute ↓e{Name:Type};
+
+sort Exp | scheme ⟦ TA ⟨Exp⟩ ⟧ ↓e ;
+
+⟦ TA x ⟧ ↓e{⟦x⟧ : #t} →  ⟦ x ⟧ ↑t(#t);
+⟦ TA x ⟧ ↓e{¬⟦x⟧} →  error⟦Undefined identifier ⟨x⟩⟧ ;
+
+⟦ TA f ( ⟨Args#as⟩ ) ⟧ ↓e{⟦f⟧:#t}
+  →  ⟦ f ( ⟨Args TA_Args(#as, #t)⟩ ) ⟧ ↑t(TailType(#t)) ;
+⟦ TA f ( ⟨Args#as⟩ ) ⟧ ↓e{¬⟦f⟧} →  error⟦Undefined function ⟨f⟩⟧ ;
+\end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{Type Analaysis -- propagation}
+\begin{hacs}
+⟦ TA val x ↦ ⟨Exp#e[x]⟩ ⟧ →  ⟦ val x ↦ ⟨Exp ⟦TA ⟨Exp #e[x]⟩ ⟧ ↓e{⟦x⟧:Unit}⟩ ⟧ ;
+⟦ TA seq x ↦ ⟨Exp#e[x]⟩ ⟧ →  ⟦ seq x ↦ ⟨Exp ⟦TA ⟨Exp #e[x]⟩ ⟧ ↓e{⟦x⟧:Sequence}⟩ ⟧ ;
+⟦ TA ⟨Exp#1⟩ + ⟨Exp#2⟩ ⟧ →  ⟦ (TA ⟨Exp#1⟩) + (TA ⟨Exp#2⟩) ⟧ ;
+⟦ TA ⟨Exp#1⟩ - ⟨Exp#2⟩ ⟧ →  ⟦ (TA ⟨Exp#1⟩) - (TA ⟨Exp#2⟩) ⟧ ;
+⟦ TA ⟨Exp#1⟩ * ⟨Exp#2⟩ ⟧ →  ⟦ (TA ⟨Exp#1⟩) * (TA ⟨Exp#2⟩) ⟧ ;
+⟦ TA ⟨Exp#1⟩ / ⟨Exp#2⟩ ⟧ →  ⟦ (TA ⟨Exp#1⟩) / (TA ⟨Exp#2⟩) ⟧ ;
+⟦ TA ⟨Num#n⟩ ⟧ →  ⟦ ⟨Num#n⟩ ⟧ ;
+\end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{Type Analysis -- argument helpers}
+\begin{hacs}
+sort Args | scheme TA_Args(Args,Type) ↓e ;
+
+TA_Args(⟦ ⟨Exp#e ↑#t1⟩ ⟨ArgsTail#as⟩ ⟧, Fun(#t1, #t2))
+  →  ⟦ ⟨Exp#e ↑#t1⟩ ⟨ArgsTail TA_ArgsTail(#as, #t2)⟩ ⟧ ;
+default TA_Args(#as, #t) →  error⟦Bad argument type⟧ ;
+
+sort ArgsTail | scheme TA_ArgsTail(ArgsTail,Type) ↓e ;
+
+TA_ArgsTail(⟦ , ⟨Exp#e ↑#t1⟩ ⟨ArgsTail#as⟩ ⟧, Fun(#t1, #t2))
+  →  ⟦ , ⟨Exp#e ↑#t1⟩ ⟨ArgsTail TA_ArgsTail(#as, #t2)⟩ ⟧ ;
+TA_ArgsTail(⟦ ⟧, #t1) →  ⟦ ⟧ ;
+default TA_ArgsTail(#as, #t) →  error⟦Bad argument type⟧ ;
+\end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{Type Analysis -- equations}
+\begin{hacs}
+sort Eqs | scheme ⟦ TA ⟨Eqs⟩ ⟧ ↓e ;
+⟦ TA x = ⟨Exp#e ↑t(#t)⟩; ⟨Eqs#eqs[x]⟩ ⟧ →  ⟦ x = ⟨Exp#e⟩; ⟨Eqs ⟦TA ⟨Eqs#eqs[x]⟩⟧ ↓e{⟦x⟧:#t}⟩ ⟧ ;
+⟦ TA ⟧ →  ⟦ ⟧ ;
+\end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{Type Analysis -- Lambda Lifting}
+\begin{hacs}
+sort Eqs  | scheme ⟦ Lift ⟨Eqs⟩ ⟧ | scheme ⟦ PostLift ⟨Eqs⟩ ⟧ ;
+
+⟦ Lift ⟧ →  ⟦ ⟧ ;
+⟦ Lift x = ⟨Exp#ex[x]⟩; ⟨Eqs#eqs[x]⟩ ⟧ →  ⟦ PostLift x = Lift () ⟨Exp#ex[x]⟩ Outer; ⟨Eqs#eqs[x]⟩ ⟧ ;
+
+⟦ PostLift x = ⟨Exp#ex[x]⟩ WHERE { }; ⟨Eqs#eqs2[x]⟩ ⟧
+  →  ⟦ x = ⟨Exp#ex[x]⟩; ⟨Eqs#eqs2[x]⟩ ⟧ ;
+⟦ PostLift x = ⟨Exp#ex[x]⟩ WHERE { y = ⟨Exp#ey[x,y]⟩; ⟨Eqs#eqs1[x,y]⟩ }; ⟨Eqs#eqs2[x]⟩ ⟧
+  →  ⟦ x = ⟨Exp#ex[x]⟩; y = ⟨Exp#ey[x,y]⟩ WHERE { ⟨Eqs#eqs1[x,y]⟩ }; ⟨Eqs#eqs2[x]⟩ ⟧ ;
+
+sort Exp  | scheme ⟦ Lift (⟨Args⟩) ⟨Exp⟩ ⟨InnerOuter⟩ ⟧ | scheme ⟦ Lift2 (⟨Args⟩) ⟨Exp⟩ ⟧
+          | ⟦ ⟨Exp⟩ WHERE { ⟨Eqs⟩ } ⟧ ;
+
+{ sort InnerOuter  | ⟦Inner⟧ | ⟦Outer⟧ ; }
+\end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{}
+\begin{hacs}
+⟦ Lift (⟨Args#as⟩) val x ↦ ⟨Exp#e[x]⟩ Outer ⟧
+  →  ⟦ val x ↦ Lift (⟨Args ArgsAppendVal(#as,x)⟩ ⟨Exp#e[x]⟩ Outer ⟧ ;
+⟦ Lift (⟨Args#as⟩) seq x ↦ ⟨Exp#e[x]⟩ Outer ⟧
+  →  ⟦ seq x ↦ Lift (⟨Args ArgsAppendSeq(#as,x)⟩ ⟨Exp#e[x]⟩ Outer ⟧ ;
+
+⟦ Lift (⟨Args#as⟩) val x ↦ ⟨Exp#e[x]⟩ Inner ⟧
+  →  ⟦ n (⟨Args#as⟩) WHERE { n = val x ↦ ⟨Exp#e[x]⟩ } ⟧
+⟦ Lift (⟨Args#as⟩) seq x ↦ ⟨Exp#e[x]⟩ Inner ⟧
+  →  ⟦ n (⟨Args#as⟩) WHERE { n = seq x ↦ ⟨Exp#e[x]⟩ } ⟧
+
+⟦ Lift (⟨Args#as⟩) ⟨Exp#1⟩ + ⟨Exp#2⟩ ⟨InnerOuter#io⟩ ⟧
+  →  ⟦ 
+
+⟦ Lift (⟨Args#as⟩) f ( ⟨Args#as↑l(#eqs)⟩ ) ⟧
+
+⟦ Lift (⟨Args#as⟩) x ⟧
+
+⟦ Lift (⟨Args#as⟩) ⟨Num#n⟩ ⟧
+\end{hacs}
+\end{frame}
+
+\begin{frame}[fragile,shrink]{}
+\begin{hacs}
+sort IBlock     | ⟦ { ⟨IAssign*⟩ } ¶⟧ ;
+
+sort IAssign    | ⟦ ⟨IType⟩ ⟨Id⟩ = ⟨Id⟩ ⟨Id*⟩; ¶⟧
+                | ⟦ ⟨IType⟩ ⟨Id⟩ = ⟨IUnOp⟩ ⟨Id⟩; ¶⟧
+                | ⟦ ⟨IType⟩ ⟨Id⟩ = ⟨Id⟩ ⟨IBinOp⟩ ⟨Id⟩; ¶⟧
+                | ⟦ ⟨IType⟩ ⟨Id⟩ ( ⟨IArgs⟩ ) = { ⟨IAssign*⟩ return ⟨Id⟩; } ¶⟧
+                | ⟦ ⟨IBlock⟩ ⟧
+                ;
+
+sort IArgs      | ⟦ ⟨IType⟩ ⟨Id⟩ , ⟨IArgs⟩ ⟧ | ⟦ ⟨IType⟩ ⟨Id⟩ ⟧ ;
+
+sort IUnOp      | ⟦LIFT⟧ | ⟦+⟧ | ⟦-⟧ ;
+sort IBinOp     | ⟦ON⟧ | ⟦+⟧ | ⟦-⟧ | ⟦*⟧ | ⟦/⟧ ;
+
+sort IType      | ⟦ SEQ ⟧ | ⟦ VAL ⟧ ;
+\end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{}
+\begin{hacs}
+sort IBlock  | scheme ⟦ G ⟨Eqs⟩ ⟧ ;
+⟦ G x = ⟨Exp#e⟩ ; ⟨Eqs#eqs[x]⟩ ⟧ →  ⟦ { G_Exp x = ⟨Exp#e⟩ G ⟨Eqs#eqs[x]⟩ } ⟧ ;
+⟦ G ⟧ →  ⟦⟧ ;
+
+| scheme ⟦ G_Exp ⟨Name⟩ = ⟨Exp⟩ ⟧ ;
+
+⟦ G_Exp x = val y ↦ ⟨Exp#e[y]⟩ ⟧ →  G_Exp_Fun(VAL, ⟦ val y ↦ 
+⟦ G_Exp x = seq y ↦ ⟨Exp#e[y]⟩ ⟧ ↑n(#n) ↓vs(#vs) →  ⟦ SEQ x = ⟨Id#n⟩ ⟨Id* #vs⟩; ⟧ ;
+
+⟦ G_Exp ⟨Exp#1⟩ + ⟨Exp#2⟩ ⟧ ↓t(#t)
+  →  ⟦ {G_Exp n1 = ⟨Exp#1⟩} {G_Exp n2 = ⟨Exp#2⟩} ⟨IType T(#t)⟩ n = n1+n2; ⟧ ;
+⟦ G_Exp ⟨Exp#1⟩ - ⟨Exp#2⟩ ⟧ ↓t(#t)
+  →  ⟦ {G_Exp n1 = ⟨Exp#1⟩} {G_Exp n2 = ⟨Exp#2⟩} ⟨IType T(#t)⟩ n = n1-n2; ⟧ ;
+⟦ G_Exp ⟨Exp#1⟩ * ⟨Exp#2⟩ ⟧ ↓t(#t)
+  →  ⟦ {G_Exp n1 = ⟨Exp#1⟩} {G_Exp n2 = ⟨Exp#2⟩} ⟨IType T(#t)⟩ n = n1*n2; ⟧ ;
+⟦ G_Exp ⟨Exp#1⟩ / ⟨Exp#2⟩ ⟧ ↓t(#t)
+  →  ⟦ {G_Exp n1 = ⟨Exp#1⟩} {G_Exp n2 = ⟨Exp#2⟩} ⟨IType T(#t)⟩ n = n1/n2; ⟧ ;
+
+⟦ G_Exp ⟨Name⟩ ( ⟨Args⟩ ) ⟧
+⟦ G_Exp ⟨Name⟩ ⟧
+⟦ G_Exp ⟨Num⟩ ⟧
+\end{hacs}
+\end{frame}
+
+
+\end{document}

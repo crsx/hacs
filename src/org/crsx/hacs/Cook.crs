@@ -1,0 +1,17 @@
+// CRSX3 IMPLEMENTATION OF HACS.
+//
+Prep[(
+
+// Syntax and sorts of raw terms (%raw...⟪...⟫).
+$AddGrammar["org.crsx.hacs.Raw"];
+$Use["org/crsx/hacs/Raw.crs"];
+
+// Syntax and sorts of text (%n⟪...⟫).
+$AddGrammar["net.sf.crsx.text.Text"];
+$Use["net/sf/crsx/text/Text.crs"];
+
+// PG and CRS generation modules.
+$Use["org/crsx/hacs/CookPG.crs"];
+$Use["org/crsx/hacs/CookCRS.crs"];
+
+)] //Cook
