@@ -1,21 +1,15 @@
 # Main -*-Makefile-*- for Building HACS distribution.
 
-include Env.mk
-
-
-# DIRECTORIES.
-#
-SRC = $(abspath src)
-
-
-# STANDARD TARGETS.
-#
-.PHONY: all clean realclean install
+.PHONY: all clean realclean install gitclean
 all::
-clean::; rm -f *.tmp *~ ./#* *.log *~
-realclean:: clean
 install::
+clean::
+	rm -f *.tmp *~ ./#* *.log *~
+realclean:: clean
+	rm -fr build rulecompiler
+gitclean:: realclean
 
-# Propagate to src.
-all clean realclean::
+# All targets propagate to subdirectories.
+all clean realclean install gitclean::
 	$(MAKE) -C src $@
+	$(MAKE) -C doc $@

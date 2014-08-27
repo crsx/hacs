@@ -1,2 +1,5 @@
 gentle/
 *.hxr
+*.pg
+*.crs
+*.pgbase

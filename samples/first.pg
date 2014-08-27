@@ -24,9 +24,9 @@ TOKEN_MGR_DECLS : { int nesting; int nestedState;} /* Used by all nesting constr
   ////METASORTS: Node_M_First_sInt[TagSort_M_First_sInt, $List[Sort_M_First_sScope]];
   ////METASORTS: Node_M_First_sFloat[TagSort_M_First_sFloat, $List[Sort_M_First_sScope]];
   ////METASORTS: Node_M_First_sId[TagSort_M_First_sId, $List[Sort_M_First_sScope]];
-  ////METASORTS: Node_M_First_sStat[TagSort_M_First_sStat, $List[Sort_M_First_sScope]];
   ////METASORTS: Node_M_First_sExp[TagSort_M_First_sExp, $List[Sort_M_First_sScope]];
   ////METASORTS: Node_M_First_sName[TagSort_M_First_sName, $List[Sort_M_First_sScope]];
+  ////METASORTS: Node_M_First_sStat[TagSort_M_First_sStat, $List[Sort_M_First_sScope]];
   ////METASORTS: Node_M_First_sType[TagSort_M_First_sType, $List[Sort_M_First_sScope]];
   ////METASORTS: Node_M_First_st[TagSort_M_First_st, $List[Sort_M_First_sScope]];
   ////METASORTS: Node_M_First_se[TagSort_M_First_se, $List[Sort_M_First_sScope]];
@@ -53,9 +53,9 @@ TOKEN_MGR_DECLS : { int nesting; int nestedState;} /* Used by all nesting constr
 /* Productions for Int token. */
 
 <Int> ::= 
-////METAPG: meta1_Int:unconcrete |
-////METAPG: meta2_Int$$:[[unmeta(#,3)]]:{ [[ hxornaked("firstHxPresorted_Int") ]] } |
-{TOKEN_M_First_sInt} Int$ .
+  ////METAPG: meta1_Int:unconcrete |
+  ////METAPG: meta2_Int$$:[[unmeta(#,3)]]:{ [[ hxornaked("firstHxPresorted_Int") ]] } |
+  {TOKEN_M_First_sInt} Int$ .
 ////SORT: Sort_M_First_sInt ::= ( TOKEN_M_First_sInt[$String]; );
 
 ////METAPG: %{
@@ -83,9 +83,9 @@ TOKEN_MGR_DECLS : { int nesting; int nestedState;} /* Used by all nesting constr
 /* Productions for Float token. */
 
 <Float> ::= 
-////METAPG: meta1_Float:unconcrete |
-////METAPG: meta2_Float$$:[[unmeta(#,5)]]:{ [[ hxornaked("firstHxPresorted_Float") ]] } |
-{TOKEN_M_First_sFloat} Float$ .
+  ////METAPG: meta1_Float:unconcrete |
+  ////METAPG: meta2_Float$$:[[unmeta(#,5)]]:{ [[ hxornaked("firstHxPresorted_Float") ]] } |
+  {TOKEN_M_First_sFloat} Float$ .
 ////SORT: Sort_M_First_sFloat ::= ( TOKEN_M_First_sFloat[$String]; );
 
 ////METAPG: %{
@@ -113,9 +113,9 @@ TOKEN_MGR_DECLS : { int nesting; int nestedState;} /* Used by all nesting constr
 /* Productions for Id token. */
 
 <Id> ::= 
-////METAPG: meta1_Id:unconcrete |
-////METAPG: meta2_Id$$:[[unmeta(#,2)]]:{ [[ hxornaked("firstHxPresorted_Id") ]] } |
-{TOKEN_M_First_sId} Id$ .
+  ////METAPG: meta1_Id:unconcrete |
+  ////METAPG: meta2_Id$$:[[unmeta(#,2)]]:{ [[ hxornaked("firstHxPresorted_Id") ]] } |
+  {TOKEN_M_First_sId} Id$ .
 ////SORT: Sort_M_First_sId ::= ( TOKEN_M_First_sId[$String]; );
 
 ////METAPG: %{
@@ -138,86 +138,38 @@ TOKEN_MGR_DECLS : { int nesting; int nestedState;} /* Used by all nesting constr
 ////METAPG: | {HX_M_UnparsedSorted} ({Id}) ({HX_M_RepeatSingle}) (HX_CONCRETE$:unconcrete) <HxAttributes>
 ////METAPG: .
 ////METAPG: token HX_TOKEN_Id (HX) ::= "Id" .
-
-
-/* Productions for Stat sort with (highest) precedence 0. */
-
-<Stat> ::= 
-  ////METAPG: meta1_Stat:unconcrete |
-  ////METAPG: meta2_Stat$$:[[unmeta(#,4)]]:{ [[ hxornaked("firstHxPresorted_Stat") ]] } |
-  ("TA" <Stat>:#_Stat_1  {{ Node_M_First_sStat[Stat__M_TA_Stat, (#_Stat_1;)]}} 
-  | ("TA2" <Stat>:#_Stat_1  {{ Node_M_First_sStat[Stat__M_TA2_Stat, (#_Stat_1;)]}} 
-  | ("{" <Stat_MaybeSome>:#_Stat_1 "}" {{ Node_M_First_sStat[Stat__M__7b_Stat__M__7d, (#_Stat_1;)]}} 
-  |  <Name>:#_Name_1 ":=" <Exp>:#_Exp_2 ";" {{ Node_M_First_sStat[Stat_Name__M__3a_3d_Exp__M__3b, (#_Name_1; #_Exp_2;)]}}  ))) . 
-
-
-////SORT: TagSort_M_First_sStat ::= ( Tag_M_First_sStat; Tag_M_First_sStat; Tag_M_First_sStat; Tag_M_First_sStat;  );
-
-////METAELIM: Node_M_First_sStat[Tag_M_First_sStat_xM_xTA_xStat, (#_Stat_1;)];
-
-////METAELIM: Node_M_First_sStat[Tag_M_First_sStat_xM_xTA2_xStat, (#_Stat_1;)];
-
-////METAELIM: Node_M_First_sStat[Tag_M_First_sStat_xM_x_x7b_xStat, (#_Stat_1;)];
-
-////METAELIM: Node_M_First_sStat[Tag_M_First_sStatName_x_xM_x_x3a_x3d, (#_Name_1; #_Exp_2;)];
-
-
-////METAPG: %{
-////METAPG: /* Meta token for Stat. */ 
-////METAPG: TOKEN : { < T_meta1_Stat : ("\u27e8" (" ")* "Stat" (" ")* "\u27e9") > }
-////METAPG: MORE : { < "\u27e8" (" ")* "Stat" (" ")* ~["\u27e8","\u27e9"] > { nesting = 0; nestedState = curLexState; } : IN_META_Stat }
-////METAPG: <IN_META_Stat> MORE : { "\u27e8" { nesting = 1; } : IN_NESTED_META_Stat }
-////METAPG: <IN_NESTED_META_Stat> MORE : { "\u27e8" { nesting++; } }
-////METAPG: <IN_NESTED_META_Stat> MORE : { "\u27e9" { if (--nesting <= 0) SwitchTo(IN_META_Stat); } }
-////METAPG: <IN_META_Stat> TOKEN : { < T_meta2_Stat : "\u27e9" > { SwitchTo(nestedState); } }
-////METAPG: <IN_META_Stat,IN_NESTED_META_Stat> MORE : { < ~[] > }
-////METAPG: %}
-
-////METAPG: /* Hx terms of Stat production sort. */
-////METAPG: <Hx_Stat> (HX) ::= (HX_TOKEN_Stat)?  <HxPresorted_Stat> .
-////METAPG: <HxSorted_Stat> (HX) ::= HX_TOKEN_Stat <HxPresorted_Stat> .
-////METAPG: <HxPresorted_Stat> (HX) ::=
-////METAPG:   {HX_M_VariableUseSorted} ({Stat}) ({HX_M_RepeatSingle}) (HX_VARIABLE!!!) <HxAttributes>
-////METAPG: | {HX_M_MetaApplicationSorted} ({Stat}) ({HX_M_RepeatSingle}) (HX_META_VARIABLE$) ( HX_LBRACKET <HxTerms> HX_RBRACKET | {$Nil} ) <HxAttributes>
-////METAPG: | {HX_M_ConstructionSorted} ({Stat}) ({HX_M_RepeatSingle}) (HX_CONSTRUCTOR$) ( HX_LBRACKET <HxScopes> HX_RBRACKET | HX_LPAREN <HxTerms> HX_RPAREN | {$Nil} ) <HxAttributes>
-////METAPG: | {HX_M_UnparsedSorted} ({Stat}) ({HX_M_RepeatSingle}) (HX_CONCRETE$:unconcrete) <HxAttributes>
-////METAPG: 
-////METAPG: .
-////METAPG: token HX_TOKEN_Stat (HX) ::= "Stat" .
-////METAPG: 
-
 /* Productions for Exp sort with precedence 0. */
 
-<Exp> ::= ("TA" <Exp>:#_Exp_1  {{ Node_M_First_sExp[Exp__M_TA_Exp, (#_Exp_1;)]}} 
+<Exp> ::= ("TA" <Exp>:#_Exp_1  {{ Node_M_First_sExp[Tag_M_First_sExp_x_xM_xTA, (#_Exp_1;)]}} 
   |  <Exp1>:#_Exp_1  {{#_Exp_1}} ) . 
 
 
-////SORT: TagSort_M_First_sExp ::= ( Tag_M_First_sExp; Tag_M_First_sExp;  );
+////SORT: TagSort_M_First_sExp ::= ( Tag_M_First_sExp_x_xM_xTA; Tag_M_First_sExp_xExp;  );
 
-////METAELIM: Node_M_First_sExp[Tag_M_First_sExp_xM_xTA_xExp, (#_Exp_1;)];
- ////METAELIM: Node_M_First_sExp[Tag_M_First_sExpExp, (#_Exp_1;)]; 
+////METAELIM: Node_M_First_sExp[Tag_M_First_sExp_x_xM_xTA, (#_Exp_1;)];
+ ////METAELIM: Node_M_First_sExp[Tag_M_First_sExp_xExp, (#_Exp_1;)]; 
 
 /* Productions for Exp sort with precedence 1. */
 
-<Exp1> ::= ( <Exp1>:#_Exp_1 "+" <Exp2>:#_Exp_2  {{ Node_M_First_sExp[Exp1_Exp__M__2b_Exp, (#_Exp_1; #_Exp_2;)]}}  
+<Exp1> ::= ( <Exp1>:#_Exp_1 "+" <Exp2>:#_Exp_2  {{ Node_M_First_sExp[Tag_M_First_sExp1_xExp, (#_Exp_1; #_Exp_2;)]}}  
   |  <Exp2>:#_Exp_1  {{#_Exp_1}} ) . 
 
 
-////SORT: TagSort_M_First_sExp ::= ( Tag_M_First_sExp_7b_sLineLocation_20_3a_20STRING_5b25_5d_3b_20_sFileLocation_20_3a_20STRING_5b_22_2e_2e_2fsamples_2ffirst_2ehx_22_5d_3b_20_sColumnLocation_20_3a_20STRING_5b36_5d_7d_221_22; Tag_M_First_sExp_7b_sLineLocation_20_3a_20STRING_5b25_5d_3b_20_sFileLocation_20_3a_20STRING_5b_22_2e_2e_2fsamples_2ffirst_2ehx_22_5d_3b_20_sColumnLocation_20_3a_20STRING_5b36_5d_7d_221_22;  );
+////SORT: TagSort_M_First_sExp ::= ( Tag_M_First_sExp1_xExp; Tag_M_First_sExp1_xExp;  );
 
-////METAELIM: Node_M_First_sExp[Tag_M_First_sExpExp_x_xM_x_x2b, (#_Exp_1; #_Exp_2;)];
- ////METAELIM: Node_M_First_sExp[Tag_M_First_sExpExp, (#_Exp_1;)]; 
+////METAELIM: Node_M_First_sExp[Tag_M_First_sExp1_xExp, (#_Exp_1; #_Exp_2;)];
+ ////METAELIM: Node_M_First_sExp[Tag_M_First_sExp1_xExp, (#_Exp_1;)]; 
 
 /* Productions for Exp sort with precedence 2. */
 
-<Exp2> ::= ( <Exp2>:#_Exp_1 "*" <Exp3>:#_Exp_2  {{ Node_M_First_sExp[Exp2_Exp__M__2a_Exp, (#_Exp_1; #_Exp_2;)]}}  
+<Exp2> ::= ( <Exp2>:#_Exp_1 "*" <Exp3>:#_Exp_2  {{ Node_M_First_sExp[Tag_M_First_sExp2_xExp, (#_Exp_1; #_Exp_2;)]}}  
   |  <Exp3>:#_Exp_1  {{#_Exp_1}} ) . 
 
 
-////SORT: TagSort_M_First_sExp ::= ( Tag_M_First_sExp_7b_sLineLocation_20_3a_20STRING_5b26_5d_3b_20_sFileLocation_20_3a_20STRING_5b_22_2e_2e_2fsamples_2ffirst_2ehx_22_5d_3b_20_sColumnLocation_20_3a_20STRING_5b36_5d_7d_222_22; Tag_M_First_sExp_7b_sLineLocation_20_3a_20STRING_5b26_5d_3b_20_sFileLocation_20_3a_20STRING_5b_22_2e_2e_2fsamples_2ffirst_2ehx_22_5d_3b_20_sColumnLocation_20_3a_20STRING_5b36_5d_7d_222_22;  );
+////SORT: TagSort_M_First_sExp ::= ( Tag_M_First_sExp2_xExp; Tag_M_First_sExp2_xExp;  );
 
-////METAELIM: Node_M_First_sExp[Tag_M_First_sExpExp_x_xM_x_x2a, (#_Exp_1; #_Exp_2;)];
- ////METAELIM: Node_M_First_sExp[Tag_M_First_sExpExp, (#_Exp_1;)]; 
+////METAELIM: Node_M_First_sExp[Tag_M_First_sExp2_xExp, (#_Exp_1; #_Exp_2;)];
+ ////METAELIM: Node_M_First_sExp[Tag_M_First_sExp2_xExp, (#_Exp_1;)]; 
 
 
 
@@ -226,16 +178,18 @@ TOKEN_MGR_DECLS : { int nesting; int nestedState;} /* Used by all nesting constr
 <Exp3> ::= 
   ////METAPG: meta1_Exp:unconcrete |
   ////METAPG: meta2_Exp$$:[[unmeta(#,3)]]:{ [[ hxornaked("firstHxPresorted_Exp") ]] } |
-  ("(" <Exp>:# ")" {{ Node_M_First_sExp[Exp3__M__28_Exp__M__29, (#;)]}} 
-  | ( <Int>:#_Int_1  {{ Node_M_First_sExp[Exp3_Int, (#_Int_1;)]}} 
-  | ( <Float>:#_Float_1  {{ Node_M_First_sExp[Exp3_Float, (#_Float_1;)]}} 
-  |  <Name>:#_Name_1  {{ Node_M_First_sExp[Exp3_Name, (#_Name_1;)]}} ))) . 
+  ("(" <Exp>:# ")" {{ Node_M_First_sExp[Tag_M_First_sExp3_x_xM_x_x28, (#;)]}} 
+  | ( <Int>:#_Int_1  {{ Node_M_First_sExp[Tag_M_First_sExp3_xInt, (#_Int_1;)]}} 
+  | ( <Float>:#_Float_1  {{ Node_M_First_sExp[Tag_M_First_sExp3_xFloat, (#_Float_1;)]}} 
+  |  <Name>:#_Name_1  {{ Node_M_First_sExp[Tag_M_First_sExp3_xName, (#_Name_1;)]}} ))) . 
 
 
-////SORT: TagSort_M_First_sExp ::= ( Tag_M_First_sExp_7b_sLineLocation_20_3a_20STRING_5b30_5d_3b_20_sFileLocation_20_3a_20STRING_5b_22_2e_2e_2fsamples_2ffirst_2ehx_22_5d_3b_20_sColumnLocation_20_3a_20STRING_5b33_5d_7d_223_22; Tag_M_First_sExp_7b_sLineLocation_20_3a_20STRING_5b30_5d_3b_20_sFileLocation_20_3a_20STRING_5b_22_2e_2e_2fsamples_2ffirst_2ehx_22_5d_3b_20_sColumnLocation_20_3a_20STRING_5b33_5d_7d_223_22; Tag_M_First_sExp_7b_sLineLocation_20_3a_20STRING_5b30_5d_3b_20_sFileLocation_20_3a_20STRING_5b_22_2e_2e_2fsamples_2ffirst_2ehx_22_5d_3b_20_sColumnLocation_20_3a_20STRING_5b33_5d_7d_223_22; Tag_M_First_sExp_7b_sLineLocation_20_3a_20STRING_5b30_5d_3b_20_sFileLocation_20_3a_20STRING_5b_22_2e_2e_2fsamples_2ffirst_2ehx_22_5d_3b_20_sColumnLocation_20_3a_20STRING_5b33_5d_7d_223_22;  );
+////SORT: TagSort_M_First_sExp ::= ( Tag_M_First_sExp3_x_xM_x_x28; Tag_M_First_sExp3_xInt; Tag_M_First_sExp3_xFloat; Tag_M_First_sExp3_xName;  );
+ ////METAELIM: Node_M_First_sExp[Tag_M_First_sExp3_x_xM_x_x28, (#;)];  ////METAELIM: Node_M_First_sExp[Tag_M_First_sExp3_xInt, (#_Int_1;)]; 
+////METAELIM: Node_M_First_sExp[Tag_M_First_sExp3_xFloat, (#_Float_1;)];
 
-////METAELIM: Node_M_First_sExp[Tag_M_First_sExp_xM_x_x28_xExp, (#;)];
- ////METAELIM: Node_M_First_sExp[Tag_M_First_sExpInt, (#_Int_1;)];  ////METAELIM: Node_M_First_sExp[Tag_M_First_sExpFloat, (#_Float_1;)];  ////METAELIM: Node_M_First_sExp[Tag_M_First_sExpName, (#_Name_1;)]; 
+////METAELIM: Node_M_First_sExp[Tag_M_First_sExp3_xName, (#_Name_1;)];
+
 
 ////METAPG: %{
 ////METAPG: /* Meta token for Exp. */ 
@@ -274,8 +228,8 @@ TOKEN_MGR_DECLS : { int nesting; int nestedState;} /* Used by all nesting constr
    <Id>!!!:#_Id_1  {{#_Id_1}}  . 
 
 
-////SORT: TagSort_M_First_sName ::= ( Tag_M_First_sName;  );
-////METAELIM: Node_M_First_sName[Tag_M_First_sNameId, (#_Id_1;)]; 
+////SORT: TagSort_M_First_sName ::= ( Tag_M_First_sName_xId;  );
+////METAELIM: Node_M_First_sName[Tag_M_First_sName_xId, (#_Id_1;)]; 
 
 ////METAPG: %{
 ////METAPG: /* Meta token for Name. */ 
@@ -299,6 +253,54 @@ TOKEN_MGR_DECLS : { int nesting; int nestedState;} /* Used by all nesting constr
 ////METAPG: 
 ////METAPG: .
 ////METAPG: token HX_TOKEN_Name (HX) ::= "Name" .
+////METAPG: 
+
+
+
+/* Productions for Stat sort with (highest) precedence 0. */
+
+<Stat> ::= 
+  ////METAPG: meta1_Stat:unconcrete |
+  ////METAPG: meta2_Stat$$:[[unmeta(#,4)]]:{ [[ hxornaked("firstHxPresorted_Stat") ]] } |
+  ("TA" <Stat>:#_Stat_1  {{ Node_M_First_sStat[Tag_M_First_sStat_x_xM_xTA, (#_Stat_1;)]}} 
+  | ("TA2" <Stat>:#_Stat_1  {{ Node_M_First_sStat[Tag_M_First_sStat_x_xM_xTA2, (#_Stat_1;)]}} 
+  | ("{" <Stat_MaybeSome>:#_Stat_1 "}" {{ Node_M_First_sStat[Tag_M_First_sStat_x_xM_x_x7b, (#_Stat_1;)]}} 
+  |  <Name>:#_Name_1 ":=" <Exp>:#_Exp_2 ";" {{ Node_M_First_sStat[Tag_M_First_sStat_xName, (#_Name_1; #_Exp_2;)]}}  ))) . 
+
+
+////SORT: TagSort_M_First_sStat ::= ( Tag_M_First_sStat_x_xM_xTA; Tag_M_First_sStat_x_xM_xTA2; Tag_M_First_sStat_x_xM_x_x7b; Tag_M_First_sStat_xName;  );
+
+////METAELIM: Node_M_First_sStat[Tag_M_First_sStat_x_xM_xTA, (#_Stat_1;)];
+
+////METAELIM: Node_M_First_sStat[Tag_M_First_sStat_x_xM_xTA2, (#_Stat_1;)];
+
+////METAELIM: Node_M_First_sStat[Tag_M_First_sStat_x_xM_x_x7b, (#_Stat_1;)];
+
+////METAELIM: Node_M_First_sStat[Tag_M_First_sStat_xName, (#_Name_1; #_Exp_2;)];
+
+
+////METAPG: %{
+////METAPG: /* Meta token for Stat. */ 
+////METAPG: TOKEN : { < T_meta1_Stat : ("\u27e8" (" ")* "Stat" (" ")* "\u27e9") > }
+////METAPG: MORE : { < "\u27e8" (" ")* "Stat" (" ")* ~["\u27e8","\u27e9"] > { nesting = 0; nestedState = curLexState; } : IN_META_Stat }
+////METAPG: <IN_META_Stat> MORE : { "\u27e8" { nesting = 1; } : IN_NESTED_META_Stat }
+////METAPG: <IN_NESTED_META_Stat> MORE : { "\u27e8" { nesting++; } }
+////METAPG: <IN_NESTED_META_Stat> MORE : { "\u27e9" { if (--nesting <= 0) SwitchTo(IN_META_Stat); } }
+////METAPG: <IN_META_Stat> TOKEN : { < T_meta2_Stat : "\u27e9" > { SwitchTo(nestedState); } }
+////METAPG: <IN_META_Stat,IN_NESTED_META_Stat> MORE : { < ~[] > }
+////METAPG: %}
+
+////METAPG: /* Hx terms of Stat production sort. */
+////METAPG: <Hx_Stat> (HX) ::= (HX_TOKEN_Stat)?  <HxPresorted_Stat> .
+////METAPG: <HxSorted_Stat> (HX) ::= HX_TOKEN_Stat <HxPresorted_Stat> .
+////METAPG: <HxPresorted_Stat> (HX) ::=
+////METAPG:   {HX_M_VariableUseSorted} ({Stat}) ({HX_M_RepeatSingle}) (HX_VARIABLE!!!) <HxAttributes>
+////METAPG: | {HX_M_MetaApplicationSorted} ({Stat}) ({HX_M_RepeatSingle}) (HX_META_VARIABLE$) ( HX_LBRACKET <HxTerms> HX_RBRACKET | {$Nil} ) <HxAttributes>
+////METAPG: | {HX_M_ConstructionSorted} ({Stat}) ({HX_M_RepeatSingle}) (HX_CONSTRUCTOR$) ( HX_LBRACKET <HxScopes> HX_RBRACKET | HX_LPAREN <HxTerms> HX_RPAREN | {$Nil} ) <HxAttributes>
+////METAPG: | {HX_M_UnparsedSorted} ({Stat}) ({HX_M_RepeatSingle}) (HX_CONCRETE$:unconcrete) <HxAttributes>
+////METAPG: 
+////METAPG: .
+////METAPG: token HX_TOKEN_Stat (HX) ::= "Stat" .
 ////METAPG: 
 
 
@@ -326,9 +328,9 @@ TOKEN_MGR_DECLS : { int nesting; int nestedState;} /* Used by all nesting constr
 /* Productions for T token. */
 
 <T> ::= 
-////METAPG: meta1_T:unconcrete |
-////METAPG: meta2_T$$:[[unmeta(#,1)]]:{ [[ hxornaked("firstHxPresorted_T") ]] } |
-{TOKEN_M_First_sT} T$ .
+  ////METAPG: meta1_T:unconcrete |
+  ////METAPG: meta2_T$$:[[unmeta(#,1)]]:{ [[ hxornaked("firstHxPresorted_T") ]] } |
+  {TOKEN_M_First_sT} T$ .
 ////SORT: Sort_M_First_sT ::= ( TOKEN_M_First_sT[$String]; );
 
 ////METAPG: %{
@@ -358,23 +360,136 @@ TOKEN_MGR_DECLS : { int nesting; int nestedState;} /* Used by all nesting constr
 <I_Progr> ::= 
   ////METAPG: meta1_I_Progr:unconcrete |
   ////METAPG: meta2_I_Progr$$:[[unmeta(#,7)]]:{ [[ hxornaked("firstHxPresorted_I_Progr") ]] } |
-  ("ICG" <Stat>:#_Stat_1  {{ Node_M_First_sI_xProgr[I_Progr__M_ICG_Stat, (#_Stat_1;)]}} 
-  | ("ICGExp" <Tmp>:#_Tmp_1  <Exp>:#_Exp_2  {{ Node_M_First_sI_xProgr[I_Progr__M_ICGExp_Tmp_Exp, (#_Tmp_1; #_Exp_2;)]}}  
-  | ("{" <I_Progr>:#_I_Progr_1 "}" <I_Progr>:#_I_Progr_2  {{ Node_M_First_sI_xProgr[I_Progr__M__7b_I_Progr__M__7d_I_Progr, (#_I_Progr_1; #_I_Progr_2;)]}}  
-  | ( <I_Instr>:#_I_Instr_1  <I_Progr>:#_I_Progr_2  {{ Node_M_First_sI_xProgr[I_Progr_I_Instr_I_Progr, (#_I_Instr_1; #_I_Progr_2;)]}}  
-  |  {{ Node_M_First_sI_xProgr[I_ProgrEMPTY]}})))) . 
+  ("ICG" <Stat>:#_Stat_1  {{ Node_M_First_sI_xProgr[Tag_M_First_sI_xProgr_x_xM_xICG, (#_Stat_1;)]}} 
+  | ("ICGExp" <Tmp>:#_Tmp_1  <Exp>:#_Exp_2  {{ Node_M_First_sI_xProgr[Tag_M_First_sI_xProgr_x_xM_xICGExp, (#_Tmp_1; #_Exp_2;)]}}  
+  | ("{" <I_Progr>:#_I_Progr_1 "}" <I_Progr>:#_I_Progr_2  {{ Node_M_First_sI_xProgr[Tag_M_First_sI_xProgr_x_xM_x_x7b, (#_I_Progr_1; #_I_Progr_2;)]}}  
+  | ( <I_Instr>:#_I_Instr_1  <I_Progr>:#_I_Progr_2  {{ Node_M_First_sI_xProgr[Tag_M_First_sI_xProgr_xI_xInstr, (#_I_Instr_1; #_I_Progr_2;)]}}  
+  |  {{ Node_M_First_sI_xProgr[Tag†« $TextChars[
+     $[
+      Mangle,
+      $[
+       Trim,
+       $[
+        If,
+        $[
+         StartsWith,
+         StringJoin2[
+          "EMPTY",
+          "_",
+          {
+            $LineLocation : STRING[91];
+            $FileLocation : STRING["../samples/first.hx"];
+            $ColumnLocation : STRING[6]}
+           "I_Progr"],
+         $],
+        StringJoin2[
+         "EMPTY",
+         "_",
+         {
+           $LineLocation : STRING[91];
+           $FileLocation : STRING["../samples/first.hx"];
+           $ColumnLocation : STRING[6]}
+          "I_Progr"],
+        $[
+         :,
+         "First",
+         $,
+         StringJoin2[
+          "EMPTY",
+          "_",
+          {
+            $LineLocation : STRING[91];
+            $FileLocation : STRING["../samples/first.hx"];
+            $ColumnLocation : STRING[6]}
+           "I_Progr"]]]]]] »]}})))) . 
 
 
-////SORT: TagSort_M_First_sI_xProgr ::= ( Tag_M_First_sI_xProgr; Tag_M_First_sI_xProgr; Tag_M_First_sI_xProgr; Tag_M_First_sI_xProgr; Tag_M_First_sI_xProgr;  );
+////SORT: TagSort_M_First_sI_xProgr ::= ( Tag_M_First_sI_xProgr_x_xM_xICG; Tag_M_First_sI_xProgr_x_xM_xICGExp; Tag_M_First_sI_xProgr_x_xM_x_x7b; Tag_M_First_sI_xProgr_xI_xInstr; Tag†« $TextChars[
+ $[
+  Mangle,
+  $[
+   Trim,
+   $[
+    If,
+    $[
+     StartsWith,
+     StringJoin2[
+      "EMPTY",
+      "_",
+      {
+        $LineLocation : STRING[91];
+        $FileLocation : STRING["../samples/first.hx"];
+        $ColumnLocation : STRING[6]}
+       "I_Progr"],
+     $],
+    StringJoin2[
+     "EMPTY",
+     "_",
+     {
+       $LineLocation : STRING[91];
+       $FileLocation : STRING["../samples/first.hx"];
+       $ColumnLocation : STRING[6]}
+      "I_Progr"],
+    $[
+     :,
+     "First",
+     $,
+     StringJoin2[
+      "EMPTY",
+      "_",
+      {
+        $LineLocation : STRING[91];
+        $FileLocation : STRING["../samples/first.hx"];
+        $ColumnLocation : STRING[6]}
+       "I_Progr"]]]]]] »;  );
 
-////METAELIM: Node_M_First_sI_xProgr[Tag_M_First_sI_xProgr_xM_xICG_xStat, (#_Stat_1;)];
+////METAELIM: Node_M_First_sI_xProgr[Tag_M_First_sI_xProgr_x_xM_xICG, (#_Stat_1;)];
 
-////METAELIM: Node_M_First_sI_xProgr[Tag_M_First_sI_xProgr_xM_xICGExp_xTmp, (#_Tmp_1; #_Exp_2;)];
+////METAELIM: Node_M_First_sI_xProgr[Tag_M_First_sI_xProgr_x_xM_xICGExp, (#_Tmp_1; #_Exp_2;)];
 
-////METAELIM: Node_M_First_sI_xProgr[Tag_M_First_sI_xProgr_xM_x_x7b_xI_xProgr, (#_I_Progr_1; #_I_Progr_2;)];
+////METAELIM: Node_M_First_sI_xProgr[Tag_M_First_sI_xProgr_x_xM_x_x7b, (#_I_Progr_1; #_I_Progr_2;)];
 
-////METAELIM: Node_M_First_sI_xProgr[Tag_M_First_sI_xProgrI_xInstr_xI_xProgr, (#_I_Instr_1; #_I_Progr_2;)];
- ////METAELIM: Node_M_First_sI_xProgr[Tag_M_First_sI_xProgrEMPTY]; 
+////METAELIM: Node_M_First_sI_xProgr[Tag_M_First_sI_xProgr_xI_xInstr, (#_I_Instr_1; #_I_Progr_2;)];
+
+////METAELIM: Node_M_First_sI_xProgr[Tag†« $TextChars[
+ $[
+  Mangle,
+  $[
+   Trim,
+   $[
+    If,
+    $[
+     StartsWith,
+     StringJoin2[
+      "EMPTY",
+      "_",
+      {
+        $LineLocation : STRING[91];
+        $FileLocation : STRING["../samples/first.hx"];
+        $ColumnLocation : STRING[6]}
+       "I_Progr"],
+     $],
+    StringJoin2[
+     "EMPTY",
+     "_",
+     {
+       $LineLocation : STRING[91];
+       $FileLocation : STRING["../samples/first.hx"];
+       $ColumnLocation : STRING[6]}
+      "I_Progr"],
+    $[
+     :,
+     "First",
+     $,
+     StringJoin2[
+      "EMPTY",
+      "_",
+      {
+        $LineLocation : STRING[91];
+        $FileLocation : STRING["../samples/first.hx"];
+        $ColumnLocation : STRING[6]}
+       "I_Progr"]]]]]] »];
+
 
 ////METAPG: %{
 ////METAPG: /* Meta token for I_Progr. */ 
@@ -407,21 +522,21 @@ TOKEN_MGR_DECLS : { int nesting; int nestedState;} /* Used by all nesting constr
 <I_Instr> ::= 
   ////METAPG: meta1_I_Instr:unconcrete |
   ////METAPG: meta2_I_Instr$$:[[unmeta(#,7)]]:{ [[ hxornaked("firstHxPresorted_I_Instr") ]] } |
-  ( <Tmp>:#_Tmp_1 "=" <I_Arg>:#_I_Arg_2 ("*" <I_Arg>:#_I_Arg_3 ";" {{ Node_M_First_sI_xInstr[I_Instr_Tmp__M__3d_I_Arg__M__2a_I_Arg__M__3b, (#_Tmp_1; #_I_Arg_2; #_I_Arg_3;)]}} 
-            | ("+" <I_Arg>:#_I_Arg_3 ";" {{ Node_M_First_sI_xInstr[I_Instr_Tmp__M__3d_I_Arg__M__2b_I_Arg__M__3b, (#_Tmp_1; #_I_Arg_2; #_I_Arg_3;)]}} 
-            | ";" {{ Node_M_First_sI_xInstr[I_Instr_Tmp__M__3d_I_Arg__M__3b, (#_Tmp_1; #_I_Arg_2;)]}}))  
-  |  <Name>:#_Name_1 "=" <Tmp>:#_Tmp_2 ";" {{ Node_M_First_sI_xInstr[I_Instr_Name__M__3d_Tmp__M__3b, (#_Name_1; #_Tmp_2;)]}}  ) . 
+  ( <Tmp>:#_Tmp_1 "=" <I_Arg>:#_I_Arg_2 ("*" <I_Arg>:#_I_Arg_3 ";" {{ Node_M_First_sI_xInstr[Tag_M_First_sI_xInstr_xTmp, (#_Tmp_1; #_I_Arg_2; #_I_Arg_3;)]}} 
+            | ("+" <I_Arg>:#_I_Arg_3 ";" {{ Node_M_First_sI_xInstr[Tag_M_First_sI_xInstr_xTmp, (#_Tmp_1; #_I_Arg_2; #_I_Arg_3;)]}} 
+            | ";" {{ Node_M_First_sI_xInstr[Tag_M_First_sI_xInstr_xTmp, (#_Tmp_1; #_I_Arg_2;)]}}))  
+  |  <Name>:#_Name_1 "=" <Tmp>:#_Tmp_2 ";" {{ Node_M_First_sI_xInstr[Tag_M_First_sI_xInstr_xName, (#_Name_1; #_Tmp_2;)]}}  ) . 
 
 
-////SORT: TagSort_M_First_sI_xInstr ::= ( Tag_M_First_sI_xInstr; Tag_M_First_sI_xInstr; Tag_M_First_sI_xInstr; Tag_M_First_sI_xInstr;  );
+////SORT: TagSort_M_First_sI_xInstr ::= ( Tag_M_First_sI_xInstr_xTmp; Tag_M_First_sI_xInstr_xTmp; Tag_M_First_sI_xInstr_xTmp; Tag_M_First_sI_xInstr_xName;  );
 
-////METAELIM: Node_M_First_sI_xInstr[Tag_M_First_sI_xInstrTmp_x_xM_x_x3d, (#_Tmp_1; #_I_Arg_2; #_I_Arg_3;)];
+////METAELIM: Node_M_First_sI_xInstr[Tag_M_First_sI_xInstr_xTmp, (#_Tmp_1; #_I_Arg_2; #_I_Arg_3;)];
 
-////METAELIM: Node_M_First_sI_xInstr[Tag_M_First_sI_xInstrTmp_x_xM_x_x3d, (#_Tmp_1; #_I_Arg_2; #_I_Arg_3;)];
+////METAELIM: Node_M_First_sI_xInstr[Tag_M_First_sI_xInstr_xTmp, (#_Tmp_1; #_I_Arg_2; #_I_Arg_3;)];
 
-////METAELIM: Node_M_First_sI_xInstr[Tag_M_First_sI_xInstrTmp_x_xM_x_x3d, (#_Tmp_1; #_I_Arg_2;)];
+////METAELIM: Node_M_First_sI_xInstr[Tag_M_First_sI_xInstr_xTmp, (#_Tmp_1; #_I_Arg_2;)];
 
-////METAELIM: Node_M_First_sI_xInstr[Tag_M_First_sI_xInstrName_x_xM_x_x3d, (#_Name_1; #_Tmp_2;)];
+////METAELIM: Node_M_First_sI_xInstr[Tag_M_First_sI_xInstr_xName, (#_Name_1; #_Tmp_2;)];
 
 
 ////METAPG: %{
@@ -455,21 +570,21 @@ TOKEN_MGR_DECLS : { int nesting; int nestedState;} /* Used by all nesting constr
 <I_Arg> ::= 
   ////METAPG: meta1_I_Arg:unconcrete |
   ////METAPG: meta2_I_Arg$$:[[unmeta(#,5)]]:{ [[ hxornaked("firstHxPresorted_I_Arg") ]] } |
-  ( <Name>:#_Name_1  {{ Node_M_First_sI_xArg[I_Arg_Name, (#_Name_1;)]}} 
-  | ( <Float>:#_Float_1  {{ Node_M_First_sI_xArg[I_Arg_Float, (#_Float_1;)]}} 
-  | ( <Int>:#_Int_1  {{ Node_M_First_sI_xArg[I_Arg_Int, (#_Int_1;)]}} 
-  |  <Tmp>:#_Tmp_1  {{ Node_M_First_sI_xArg[I_Arg_Tmp, (#_Tmp_1;)]}} ))) . 
+  ( <Name>:#_Name_1  {{ Node_M_First_sI_xArg[Tag_M_First_sI_xArg_xName, (#_Name_1;)]}} 
+  | ( <Float>:#_Float_1  {{ Node_M_First_sI_xArg[Tag_M_First_sI_xArg_xFloat, (#_Float_1;)]}} 
+  | ( <Int>:#_Int_1  {{ Node_M_First_sI_xArg[Tag_M_First_sI_xArg_xInt, (#_Int_1;)]}} 
+  |  <Tmp>:#_Tmp_1  {{ Node_M_First_sI_xArg[Tag_M_First_sI_xArg_xTmp, (#_Tmp_1;)]}} ))) . 
 
 
-////SORT: TagSort_M_First_sI_xArg ::= ( Tag_M_First_sI_xArg; Tag_M_First_sI_xArg; Tag_M_First_sI_xArg; Tag_M_First_sI_xArg;  );
+////SORT: TagSort_M_First_sI_xArg ::= ( Tag_M_First_sI_xArg_xName; Tag_M_First_sI_xArg_xFloat; Tag_M_First_sI_xArg_xInt; Tag_M_First_sI_xArg_xTmp;  );
 
-////METAELIM: Node_M_First_sI_xArg[Tag_M_First_sI_xArgName, (#_Name_1;)];
+////METAELIM: Node_M_First_sI_xArg[Tag_M_First_sI_xArg_xName, (#_Name_1;)];
 
-////METAELIM: Node_M_First_sI_xArg[Tag_M_First_sI_xArgFloat, (#_Float_1;)];
+////METAELIM: Node_M_First_sI_xArg[Tag_M_First_sI_xArg_xFloat, (#_Float_1;)];
 
-////METAELIM: Node_M_First_sI_xArg[Tag_M_First_sI_xArgInt, (#_Int_1;)];
+////METAELIM: Node_M_First_sI_xArg[Tag_M_First_sI_xArg_xInt, (#_Int_1;)];
 
-////METAELIM: Node_M_First_sI_xArg[Tag_M_First_sI_xArgTmp, (#_Tmp_1;)];
+////METAELIM: Node_M_First_sI_xArg[Tag_M_First_sI_xArg_xTmp, (#_Tmp_1;)];
 
 
 ////METAPG: %{
@@ -506,8 +621,8 @@ TOKEN_MGR_DECLS : { int nesting; int nestedState;} /* Used by all nesting constr
    <T>!!!:#_T_1  {{#_T_1}}  . 
 
 
-////SORT: TagSort_M_First_sTmp ::= ( Tag_M_First_sTmp;  );
-////METAELIM: Node_M_First_sTmp[Tag_M_First_sTmpT, (#_T_1;)]; 
+////SORT: TagSort_M_First_sTmp ::= ( Tag_M_First_sTmp_xT;  );
+////METAELIM: Node_M_First_sTmp[Tag_M_First_sTmp_xT, (#_T_1;)]; 
 
 ////METAPG: %{
 ////METAPG: /* Meta token for Tmp. */ 
@@ -543,20 +658,133 @@ TOKEN_MGR_DECLS : { int nesting; int nestedState;} /* Used by all nesting constr
 <A_Progr> ::= 
   ////METAPG: meta1_A_Progr:unconcrete |
   ////METAPG: meta2_A_Progr$$:[[unmeta(#,7)]]:{ [[ hxornaked("firstHxPresorted_A_Progr") ]] } |
-  ("CG" <I_Progr>:#_I_Progr_1  {{ Node_M_First_sA_xProgr[A_Progr__M_CG_I_Progr, (#_I_Progr_1;)]}} 
-  | ("Compile" <Stat>:#_Stat_1  {{ Node_M_First_sA_xProgr[A_Progr__M_Compile_Stat, (#_Stat_1;)]}} 
-  | ( <A_Instr>:#_A_Instr_1  <A_Progr>:#_A_Progr_2  {{ Node_M_First_sA_xProgr[A_Progr_A_Instr_A_Progr, (#_A_Instr_1; #_A_Progr_2;)]}}  
-  |  {{ Node_M_First_sA_xProgr[A_ProgrEMPTY]}}))) . 
+  ("CG" <I_Progr>:#_I_Progr_1  {{ Node_M_First_sA_xProgr[Tag_M_First_sA_xProgr_x_xM_xCG, (#_I_Progr_1;)]}} 
+  | ("Compile" <Stat>:#_Stat_1  {{ Node_M_First_sA_xProgr[Tag_M_First_sA_xProgr_x_xM_xCompile, (#_Stat_1;)]}} 
+  | ( <A_Instr>:#_A_Instr_1  <A_Progr>:#_A_Progr_2  {{ Node_M_First_sA_xProgr[Tag_M_First_sA_xProgr_xA_xInstr, (#_A_Instr_1; #_A_Progr_2;)]}}  
+  |  {{ Node_M_First_sA_xProgr[Tag†« $TextChars[
+     $[
+      Mangle,
+      $[
+       Trim,
+       $[
+        If,
+        $[
+         StartsWith,
+         StringJoin2[
+          "EMPTY",
+          "_",
+          {
+            $LineLocation : STRING[140];
+            $FileLocation : STRING["../samples/first.hx"];
+            $ColumnLocation : STRING[6]}
+           "A_Progr"],
+         $],
+        StringJoin2[
+         "EMPTY",
+         "_",
+         {
+           $LineLocation : STRING[140];
+           $FileLocation : STRING["../samples/first.hx"];
+           $ColumnLocation : STRING[6]}
+          "A_Progr"],
+        $[
+         :,
+         "First",
+         $,
+         StringJoin2[
+          "EMPTY",
+          "_",
+          {
+            $LineLocation : STRING[140];
+            $FileLocation : STRING["../samples/first.hx"];
+            $ColumnLocation : STRING[6]}
+           "A_Progr"]]]]]] »]}}))) . 
 
 
-////SORT: TagSort_M_First_sA_xProgr ::= ( Tag_M_First_sA_xProgr; Tag_M_First_sA_xProgr; Tag_M_First_sA_xProgr; Tag_M_First_sA_xProgr;  );
+////SORT: TagSort_M_First_sA_xProgr ::= ( Tag_M_First_sA_xProgr_x_xM_xCG; Tag_M_First_sA_xProgr_x_xM_xCompile; Tag_M_First_sA_xProgr_xA_xInstr; Tag†« $TextChars[
+ $[
+  Mangle,
+  $[
+   Trim,
+   $[
+    If,
+    $[
+     StartsWith,
+     StringJoin2[
+      "EMPTY",
+      "_",
+      {
+        $LineLocation : STRING[140];
+        $FileLocation : STRING["../samples/first.hx"];
+        $ColumnLocation : STRING[6]}
+       "A_Progr"],
+     $],
+    StringJoin2[
+     "EMPTY",
+     "_",
+     {
+       $LineLocation : STRING[140];
+       $FileLocation : STRING["../samples/first.hx"];
+       $ColumnLocation : STRING[6]}
+      "A_Progr"],
+    $[
+     :,
+     "First",
+     $,
+     StringJoin2[
+      "EMPTY",
+      "_",
+      {
+        $LineLocation : STRING[140];
+        $FileLocation : STRING["../samples/first.hx"];
+        $ColumnLocation : STRING[6]}
+       "A_Progr"]]]]]] »;  );
 
-////METAELIM: Node_M_First_sA_xProgr[Tag_M_First_sA_xProgr_xM_xCG_xI_xProgr, (#_I_Progr_1;)];
+////METAELIM: Node_M_First_sA_xProgr[Tag_M_First_sA_xProgr_x_xM_xCG, (#_I_Progr_1;)];
 
-////METAELIM: Node_M_First_sA_xProgr[Tag_M_First_sA_xProgr_xM_xCompile_xStat, (#_Stat_1;)];
+////METAELIM: Node_M_First_sA_xProgr[Tag_M_First_sA_xProgr_x_xM_xCompile, (#_Stat_1;)];
 
-////METAELIM: Node_M_First_sA_xProgr[Tag_M_First_sA_xProgrA_xInstr_xA_xProgr, (#_A_Instr_1; #_A_Progr_2;)];
- ////METAELIM: Node_M_First_sA_xProgr[Tag_M_First_sA_xProgrEMPTY]; 
+////METAELIM: Node_M_First_sA_xProgr[Tag_M_First_sA_xProgr_xA_xInstr, (#_A_Instr_1; #_A_Progr_2;)];
+
+////METAELIM: Node_M_First_sA_xProgr[Tag†« $TextChars[
+ $[
+  Mangle,
+  $[
+   Trim,
+   $[
+    If,
+    $[
+     StartsWith,
+     StringJoin2[
+      "EMPTY",
+      "_",
+      {
+        $LineLocation : STRING[140];
+        $FileLocation : STRING["../samples/first.hx"];
+        $ColumnLocation : STRING[6]}
+       "A_Progr"],
+     $],
+    StringJoin2[
+     "EMPTY",
+     "_",
+     {
+       $LineLocation : STRING[140];
+       $FileLocation : STRING["../samples/first.hx"];
+       $ColumnLocation : STRING[6]}
+      "A_Progr"],
+    $[
+     :,
+     "First",
+     $,
+     StringJoin2[
+      "EMPTY",
+      "_",
+      {
+        $LineLocation : STRING[140];
+        $FileLocation : STRING["../samples/first.hx"];
+        $ColumnLocation : STRING[6]}
+       "A_Progr"]]]]]] »];
+
 
 ////METAPG: %{
 ////METAPG: /* Meta token for A_Progr. */ 
@@ -589,21 +817,21 @@ TOKEN_MGR_DECLS : { int nesting; int nestedState;} /* Used by all nesting constr
 <A_Instr> ::= 
   ////METAPG: meta1_A_Instr:unconcrete |
   ////METAPG: meta2_A_Instr$$:[[unmeta(#,7)]]:{ [[ hxornaked("firstHxPresorted_A_Instr") ]] } |
-  ("ADDF" <A_Arg>:#_A_Arg_1 "," <A_Arg>:#_A_Arg_2 "," <A_Arg>:#_A_Arg_3  {{ Node_M_First_sA_xInstr[A_Instr__M_ADDF_A_Arg__M__2c_A_Arg__M__2c_A_Arg, (#_A_Arg_1; #_A_Arg_2; #_A_Arg_3;)]}}   
-  | ("LDF" <Tmp>:#_Tmp_1 "," <A_Arg>:#_A_Arg_2  {{ Node_M_First_sA_xInstr[A_Instr__M_LDF_Tmp__M__2c_A_Arg, (#_Tmp_1; #_A_Arg_2;)]}}  
-  | ("MULF" <A_Arg>:#_A_Arg_1 "," <A_Arg>:#_A_Arg_2 "," <A_Arg>:#_A_Arg_3  {{ Node_M_First_sA_xInstr[A_Instr__M_MULF_A_Arg__M__2c_A_Arg__M__2c_A_Arg, (#_A_Arg_1; #_A_Arg_2; #_A_Arg_3;)]}}   
-  | "STF" <Name>:#_Name_1 "," <Tmp>:#_Tmp_2  {{ Node_M_First_sA_xInstr[A_Instr__M_STF_Name__M__2c_Tmp, (#_Name_1; #_Tmp_2;)]}}  ))) . 
+  ("ADDF" <A_Arg>:#_A_Arg_1 "," <A_Arg>:#_A_Arg_2 "," <A_Arg>:#_A_Arg_3  {{ Node_M_First_sA_xInstr[Tag_M_First_sA_xInstr_x_xM_xADDF, (#_A_Arg_1; #_A_Arg_2; #_A_Arg_3;)]}}   
+  | ("LDF" <Tmp>:#_Tmp_1 "," <A_Arg>:#_A_Arg_2  {{ Node_M_First_sA_xInstr[Tag_M_First_sA_xInstr_x_xM_xLDF, (#_Tmp_1; #_A_Arg_2;)]}}  
+  | ("MULF" <A_Arg>:#_A_Arg_1 "," <A_Arg>:#_A_Arg_2 "," <A_Arg>:#_A_Arg_3  {{ Node_M_First_sA_xInstr[Tag_M_First_sA_xInstr_x_xM_xMULF, (#_A_Arg_1; #_A_Arg_2; #_A_Arg_3;)]}}   
+  | "STF" <Name>:#_Name_1 "," <Tmp>:#_Tmp_2  {{ Node_M_First_sA_xInstr[Tag_M_First_sA_xInstr_x_xM_xSTF, (#_Name_1; #_Tmp_2;)]}}  ))) . 
 
 
-////SORT: TagSort_M_First_sA_xInstr ::= ( Tag_M_First_sA_xInstr; Tag_M_First_sA_xInstr; Tag_M_First_sA_xInstr; Tag_M_First_sA_xInstr;  );
+////SORT: TagSort_M_First_sA_xInstr ::= ( Tag_M_First_sA_xInstr_x_xM_xADDF; Tag_M_First_sA_xInstr_x_xM_xLDF; Tag_M_First_sA_xInstr_x_xM_xMULF; Tag_M_First_sA_xInstr_x_xM_xSTF;  );
 
-////METAELIM: Node_M_First_sA_xInstr[Tag_M_First_sA_xInstr_xM_xADDF_xA_xArg, (#_A_Arg_1; #_A_Arg_2; #_A_Arg_3;)];
+////METAELIM: Node_M_First_sA_xInstr[Tag_M_First_sA_xInstr_x_xM_xADDF, (#_A_Arg_1; #_A_Arg_2; #_A_Arg_3;)];
 
-////METAELIM: Node_M_First_sA_xInstr[Tag_M_First_sA_xInstr_xM_xLDF_xTmp, (#_Tmp_1; #_A_Arg_2;)];
+////METAELIM: Node_M_First_sA_xInstr[Tag_M_First_sA_xInstr_x_xM_xLDF, (#_Tmp_1; #_A_Arg_2;)];
 
-////METAELIM: Node_M_First_sA_xInstr[Tag_M_First_sA_xInstr_xM_xMULF_xA_xArg, (#_A_Arg_1; #_A_Arg_2; #_A_Arg_3;)];
+////METAELIM: Node_M_First_sA_xInstr[Tag_M_First_sA_xInstr_x_xM_xMULF, (#_A_Arg_1; #_A_Arg_2; #_A_Arg_3;)];
 
-////METAELIM: Node_M_First_sA_xInstr[Tag_M_First_sA_xInstr_xM_xSTF_xName, (#_Name_1; #_Tmp_2;)];
+////METAELIM: Node_M_First_sA_xInstr[Tag_M_First_sA_xInstr_x_xM_xSTF, (#_Name_1; #_Tmp_2;)];
 
 
 ////METAPG: %{
@@ -637,24 +865,24 @@ TOKEN_MGR_DECLS : { int nesting; int nestedState;} /* Used by all nesting constr
 <A_Arg> ::= 
   ////METAPG: meta1_A_Arg:unconcrete |
   ////METAPG: meta2_A_Arg$$:[[unmeta(#,5)]]:{ [[ hxornaked("firstHxPresorted_A_Arg") ]] } |
-  ("#"( <Float>:#_Float_1  {{ Node_M_First_sA_xArg[A_Arg__M__h_Float, (#_Float_1;)]}} 
-  |  <Int>:#_Int_1  {{ Node_M_First_sA_xArg[A_Arg__M__h_Int, (#_Int_1;)]}} )
-  | ("[" <I_Arg>:#_I_Arg_1 "]" {{ Node_M_First_sA_xArg[A_Arg__M__5b_I_Arg__M__5d, (#_I_Arg_1;)]}} 
-  | ( <Name>:#_Name_1  {{ Node_M_First_sA_xArg[A_Arg_Name, (#_Name_1;)]}} 
-  |  <Tmp>:#_Tmp_1  {{ Node_M_First_sA_xArg[A_Arg_Tmp, (#_Tmp_1;)]}} ))) . 
+  ("#"( <Float>:#_Float_1  {{ Node_M_First_sA_xArg[Tag_M_First_sA_xArg_x_xM_x_xh, (#_Float_1;)]}} 
+  |  <Int>:#_Int_1  {{ Node_M_First_sA_xArg[Tag_M_First_sA_xArg_x_xM_x_xh, (#_Int_1;)]}} )
+  | ("[" <I_Arg>:#_I_Arg_1 "]" {{ Node_M_First_sA_xArg[Tag_M_First_sA_xArg_x_xM_x_x5b, (#_I_Arg_1;)]}} 
+  | ( <Name>:#_Name_1  {{ Node_M_First_sA_xArg[Tag_M_First_sA_xArg_xName, (#_Name_1;)]}} 
+  |  <Tmp>:#_Tmp_1  {{ Node_M_First_sA_xArg[Tag_M_First_sA_xArg_xTmp, (#_Tmp_1;)]}} ))) . 
 
 
-////SORT: TagSort_M_First_sA_xArg ::= ( Tag_M_First_sA_xArg; Tag_M_First_sA_xArg; Tag_M_First_sA_xArg; Tag_M_First_sA_xArg; Tag_M_First_sA_xArg;  );
+////SORT: TagSort_M_First_sA_xArg ::= ( Tag_M_First_sA_xArg_x_xM_x_xh; Tag_M_First_sA_xArg_x_xM_x_xh; Tag_M_First_sA_xArg_x_xM_x_x5b; Tag_M_First_sA_xArg_xName; Tag_M_First_sA_xArg_xTmp;  );
 
-////METAELIM: Node_M_First_sA_xArg[Tag_M_First_sA_xArg_xM_x_xh_xFloat, (#_Float_1;)];
+////METAELIM: Node_M_First_sA_xArg[Tag_M_First_sA_xArg_x_xM_x_xh, (#_Float_1;)];
 
-////METAELIM: Node_M_First_sA_xArg[Tag_M_First_sA_xArg_xM_x_xh_xInt, (#_Int_1;)];
+////METAELIM: Node_M_First_sA_xArg[Tag_M_First_sA_xArg_x_xM_x_xh, (#_Int_1;)];
 
-////METAELIM: Node_M_First_sA_xArg[Tag_M_First_sA_xArg_xM_x_x5b_xI_xArg, (#_I_Arg_1;)];
+////METAELIM: Node_M_First_sA_xArg[Tag_M_First_sA_xArg_x_xM_x_x5b, (#_I_Arg_1;)];
 
-////METAELIM: Node_M_First_sA_xArg[Tag_M_First_sA_xArgName, (#_Name_1;)];
+////METAELIM: Node_M_First_sA_xArg[Tag_M_First_sA_xArg_xName, (#_Name_1;)];
 
-////METAELIM: Node_M_First_sA_xArg[Tag_M_First_sA_xArgTmp, (#_Tmp_1;)];
+////METAELIM: Node_M_First_sA_xArg[Tag_M_First_sA_xArg_xTmp, (#_Tmp_1;)];
 
 
 ////METAPG: %{

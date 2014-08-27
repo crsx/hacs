@@ -1,65 +1,24 @@
 # Makefile for compiling hacs/src.
 
-SRC = $(abspath .)
+# SETUP.
 
-include ../Env.mk
-
-
-# RULES.
-#
-# PG grammar to JavaCC grammar.
-%.jj: %.pg
-	@/bin/echo -e '* Generating JavaCC grammar from $<.' && $(SH_EXTRA) \
-	&& $(NOEXEC) $(PG) $<
-#
-# JavaCC grammar to Java source.
-%.java: %.jj
-	@/bin/echo -e '* Generating Java source from $<.' && $(SH_EXTRA) \
-	&& cd `dirname $<` && $(NOEXEC) $(JAVACC) `basename $<`
-#
-# Java source to Java binary.
-%.class: %.java
-	@/bin/echo -e '* Compiling class for $<.' && $(SH_EXTRA) \
-	&& $(NOEXEC) $(JAVAC) -cp ":$(CRSXJAR):$(JAVACCJAR)" $<
-#
-# HACS source to HACS 'raw' source term.
-%.hxp : %.hx
-	/bin/echo -e '* Parsing HACS $< to term.' && $(SH_EXTRA) \
-	&& $(NOEXEC) $(CRSX) \
-		"grammar=('org.crsx.hacs.HxParser';'net.sf.crsx.text.Text';)" \
-		input='$<' category=hxModule \
-		output='$@.tmp' simple-terms max-indent=10 width=255 \
-	&& $(NOEXEC) mv '$@.tmp' '$@'
-#
-# HACS 'raw' source term to parser generator.
-%.pg : %.hxp
-	@set -x \
-	&& $(NOEXEC) $(CRSX) \
-		"grammar=('org.crsx.hacs.HxParser';'net.sf.crsx.text.Text';)" \
-		rules=org/crsx/hacs/CookPG.crs wrapper=PG \
-		input='$<' \
-		output='$@.tmp' sink=net.sf.crsx.text.TextSink \
-	&& $(NOEXEC) mv '$@.tmp' '$@'
-### 
-### %.pg : %.hx
-### 	@set -x \
-### 	&& $(NOEXEC) $(CRSX) \
-### 		"grammar=('org.crsx.hacs.HxParser';'net.sf.crsx.text.Text';)" \
-### 		rules=org/crsx/hacs/CookPG.crs wrapper=PG \
-### 		input='$<' category=hxModule \
-### 		output='$@.tmp' sink=net.sf.crsx.text.TextSink \
-### 	&& $(NOEXEC) mv '$@.tmp' '$@'
-
-%.crsp: %.crs
-	@set -x \
-	&& $(NOEXEC) parsers=$$(sed -n 's/^[^/]*CheckGrammar\[\(.*\)\]/\1/p' $<) \
-	&& $(NOEXEC) $(CRSX) grammar="($$parsers)" rules='$*.crs' dump-rules=$@.tmp \
-	&& $(NOEXEC) mv '$@.tmp' '$@'
+#TODO: Eliminate this hard-coding once crsx package exists...
+CRSXROOT = $(abspath ../../crsx)
+VERSION = $(shell cat ../VERSION)
+include ../Hacs.mk
 
 
+# STANDARD TARGETS.
 
-# HACS DEPENDENCIES.
-#
+.PHONY: all clean realclean install
+all::
+clean::; rm -f *.tmp *~ ./#* *.log *~
+realclean:: clean
+install::
+
+
+# HACS BUILD DEPENDENCIES.
+
 clean::
 	rm -f org/crsx/hacs/*~ org/crsx/hacs/#*
 	rm -f org/crsx/hacs/*.class org/crsx/hacs/*.java org/crsx/hacs/*.jj
@@ -70,6 +29,8 @@ org/crsx/hacs/HxParser.java: org/crsx/hacs/HxParser.jj
 org/crsx/hacs/HxParser.class: org/crsx/hacs/HxParser.java
 
 all:: org/crsx/hacs/HxParser.class
+
+
 
 
 
@@ -122,9 +83,9 @@ all:: org/crsx/hacs/HxParser.class
 ### realclean::; rm -fr $(BUILDROOT)
 ### 
 ### # Where the primary source files are.
-### SRC = src
-### SRCPACK = $(SRC)/org/crsx/hacs
-### clean::; rm -f $(SRCPACK)
+### HACSSRC = src
+### HACSSRCPACK = $(HACSSRC)/org/crsx/hacs
+### clean::; rm -f $(HACSSRCPACK)
 
 
 ### # ===========

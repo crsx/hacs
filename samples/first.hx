@@ -18,10 +18,6 @@ token fragment Lower  | [a-z] ;
 
 /* 2. SYNTAX ANALYSIS. */
 
-sort Stat  | ⟦ ⟨Name⟩ := ⟨Exp⟩ ; ⟧		// assignment statement (with newline)
-           | ⟦ { ⟨Stat*⟩ } ⟧                    // block statement
-           ;
-
 sort Exp   | ⟦ ⟨Exp@1⟩ + ⟨Exp@2⟩ ⟧@1            // addition
            | ⟦ ⟨Exp@2⟩ * ⟨Exp@3⟩ ⟧@2            // multiplication
            | ⟦ ⟨Int⟩ ⟧@3                        // integer
@@ -31,6 +27,10 @@ sort Exp   | ⟦ ⟨Exp@1⟩ + ⟨Exp@2⟩ ⟧@1            // addition
            ;
 
 sort Name  | symbol ⟦ ⟨Id⟩ ⟧ ;                  // assigned symbols
+
+main sort Stat  | ⟦ ⟨Name⟩ := ⟨Exp⟩ ; ⟧		// assignment statement (with newline)
+           | ⟦ { ⟨Stat*⟩ } ⟧                    // block statement
+           ;
 
 
 /* 3. SEMANTIC SORTS & SCHEMES. */

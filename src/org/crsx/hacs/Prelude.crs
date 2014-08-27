@@ -142,6 +142,21 @@ SameString[$String, $String] :: Boolean ;
 Trim[$String] :: $String ;
 -[Data[#]]: Trim[#] → $[Trim, #] ;
 
+StringConcat[$String, $String] :: $String;
+-[Data[#1,#2]]: StringConcat[#1, #2] → $[:,#1,#2] ;
+
+StringConcat3[$String, $String, $String] :: $String;
+-[Data[#1,#2,#3]]: StringConcat[#1, #2, #3] → $[:,#1,#2,#3] ;
+
+StringConcatWhen[Ok, $String, $String] :: $String;
+-[Data[#1,#2]]: StringConcatWhen[OK, #1, #2] → $[:,#1,#2] ;
+
+StringConcat3[$String, $String, $String] :: $String;
+-[Data[#1,#2,#3]]: StringConcat[#1, #2, #3] → $[:,#1,#2,#3] ;
+
+StringConcat3When[Ok, $String, $String, $String] :: $String;
+-[Data[#1,#2,#3]]: StringConcat[OK, #1, #2, #3] → $[:,#1,#2,#3] ;
+
 StringJoin[$List[$String], $String] :: $String;
 -               : StringJoin[(), #sep] → "" ;
 -[Data[#1,#sep]]: StringJoin[(#1;#s), #sep] → StringJoin2[#s, #sep, #1] ;
@@ -234,11 +249,11 @@ NameSetList[NameSet] :: $List[$String] ;
 NameSetList1[NameSet] :: $List[$String] ;
 NameSetList1[NAME_SET[#Names]] → $[Split, $[Substring,#Names,1,$[Minus,$[Length,#Names],1]], ";"] ;
 
-∀ a . MapNameSet[x::$String.$Sort[a], NameSet] :: $List[a];
--[Data[#Names]]: MapNameSet[x.#[x], NAME_SET[#Names]] → MapNameSet1[$[AfterFirst,';',#Names], x.#[x]] ;
+∀ a . MapNamesWhen[ok::Ok x::$String.$Sort[a], NameSet] :: $List[a];
+MapNamesWhen[ok x.#[ok,x], #NameSet] → MapWhen[ok x.#[ok,x], NameSetList[#NameSet]] ;
 
-∀ a . MapNameSet[x::$String.$Sort[a], $String] :: $List[a];
-MapNameSet1[#Names, x.#[x]] → $[IfEmpty, #Names, (), (#[$[BeforeFirst,';',#Names]] ; MapNameSet1[$[AfterFirst,';',#Names], x.#[x]])] ;
+FilterNamesWhen[ok::Ok n::$String.Boolean, NameSet] :: NameSet ;
+FilterNamesWhen[ok n.#[ok,n], #NameSet] → NAME_SET[FoldNamesWhen[ok n ns.If[#[ok,n], StringConcat3When[ok, ns, n, ';'], ns], NameSetList[#NameSet], ';']] ;
 
 
 /////////////////////////////////////////////////////////////////////
@@ -327,6 +342,15 @@ TextConcat[#text1, #text2] → %n⟪« #text1 »« #text2 »⟫ ;
 ∀ a . MapTextConcat[x::a.Text, $List[a]] :: Text;
 MapTextConcat[x.#[x], ()] → %n⟪⟫ ;
 MapTextConcat[x.#[x], (#1;##)] → %n⟪« #[#1] »« MapTextConcat[x.#[x], ##] »⟫ ;
+
+// Map every element of a list to a text and wrap the text pieces together (outputs nothing for an empty list).
+
+∀ a . MapTextWrap[x::a.Text, $List[a], Text, Text, Text] :: Text;
+MapTextWrap[x.#[x], (),      #Left, #Sep, #Right] → %n⟪⟫ ;
+MapTextWrap[x.#[x], (#1;#s), #Left, #Sep, #Right] → %n⟪« #Left »« #[#1] »« MapTextWrap2[x.#[x], #s, #Sep, #Right] »⟫ ;
+
+MapTextWrap2[x.#[x], (),      #Sep, #Right] → #Right ;
+MapTextWrap2[x.#[x], (#1;#s), #Sep, #Right] → %n⟪« #Sep »« #[#1] »« MapTextWrap2[x.#[x], #s, #Sep, #Right] »⟫ ;
 
 
 /////////////////////////////////////////////////////////////////////

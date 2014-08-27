@@ -1,4 +1,4 @@
-/** HxParser.pg: GRAMMAR FOR .hx HACS FILES. */
+/** HxParser.pg: GRAMMAR FOR .hx HACS FILES (HACS version %%%VERSION%%%). */
 
 class org.crsx.hacs.HxParser : <Module>, <ModuleName>, <EmbeddedModule>,
  <Declaration>, <Declarations>, <SortAbstraction>, <Rule>,
@@ -55,7 +55,7 @@ inject[<Embedded>]  ::=  '%<PRODUCTION_NAME>', '', '' .
 
 | ATTRIBUTE:hx <AttributeKind> <AttributeName> <AttributeForm> <AttributeOptions> SEMI
 
-| {sort}:hx (START:hx|{no-start}:hx) SORT <Store_SortName> <Repeat> <SortAbstraction> SEMI
+| {sort}:hx (MAIN:hx|{no-main}:hx) SORT <Store_SortName> <Repeat> <SortAbstraction> SEMI
 | {anonymous}:hx <SortAlternatives> SEMI
 | (RULE)? {rule}:hx <Rule> SEMI
 | {nestedDeclarations}:hx LBRACE <Declarations> RBRACE
@@ -300,7 +300,7 @@ skip (DEFAULT,RE) ::= ' ' | \r | \t | \n | '//' ~[\n\r]* | \u1 .
 <FragmentRef> (DEFAULT,RE) ::= FRAGMENT_REF$:unwrap .
 <AttributeName> ::= <Literal> | <Variable> | <Constructor> .
 <Constructor> ::= ( UPPER$ | DASH$ | CON$ ).
-<Variable> ::= ( LOWER$ | VAR$ | MODULE$ | SORT$ | START$ | DATA$ | STATIC$ | SYMBOL$ | SCHEME$ | AUTOMATIC$ | ATTRIBUTE$ | COMPOSE$ | SUGAR$ | RULE$ | PRIORITY$ | DEFAULT$ | SPACE$ | IMPORT$ | TOKEN$ | FRAGMENT$ | NESTED$ | TAG$ | BINDS$ | AS$ ).
+<Variable> ::= ( LOWER$ | VAR$ | MODULE$ | SORT$ | MAIN$ | DATA$ | STATIC$ | SYMBOL$ | SCHEME$ | AUTOMATIC$ | ATTRIBUTE$ | COMPOSE$ | SUGAR$ | RULE$ | PRIORITY$ | DEFAULT$ | SPACE$ | IMPORT$ | TOKEN$ | FRAGMENT$ | NESTED$ | TAG$ | BINDS$ | AS$ ).
 <MetaVariable> ::= ( META$ | HASH$ ).
 <Separator> ::= ( BAR$ | SEMI$ | COMMA$ | COLON$ | STAR$ | DOT$ ).
 
@@ -342,7 +342,7 @@ token UPPER (DEFAULT,RE) ::= [A-Z] .
 
 token MODULE ::= "module" .
 token SORT ::= "sort" .
-token START ::= "start" .
+token MAIN ::= "main" .
 token DATA ::= "data" .
 token SCHEME ::= "scheme" .
 token AUTOMATIC ::= "automatic" .

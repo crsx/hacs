@@ -1,7 +1,7 @@
 module "org.crsx.hacs.samples.Bool" {
 
 // Boolean sort.
-start sort B
+main sort B
 | ⟦ t ⟧@4 | ⟦ f ⟧@4                 // constants
 | sugar ⟦ ( ⟨B#⟩ ) ⟧@4 → ⟦⟨B#⟩⟧    // parenthesis
 ;
