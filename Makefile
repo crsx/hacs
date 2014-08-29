@@ -20,8 +20,10 @@ clean realclean gitclean ::
 	$(MAKE) -C doc BUILD=../build $@
 	$(MAKE) -C samples BUILD=../build $@
 
-samples/% src/% : .
+samples/% src/% : all
 	$(MAKE) -C src BUILD=../build ../$@
 
 doc/% : .
 	$(MAKE) -C doc BUILD=../build ../$@
+
+### TODO: packaging and installation...
