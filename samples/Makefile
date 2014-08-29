@@ -15,3 +15,5 @@ include ../Hacs.mk
 all::
 clean::; rm -f *.tmp *~ ./#* *.log *~ *.pgbase *.pg *.crs *.build *.hxp
 realclean:: clean
+
+$(BUILD)/org/crsx/hacs/samples/Lambda.jj: $(BUILD)/org/crsx/hacs/samples/Lambda.pg

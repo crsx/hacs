@@ -20,7 +20,7 @@ PG[(
 
 // Sorts for generated terms.
 $CheckGrammar["org.crsx.hacs.HxRaw"];
-$Use["org/crsx/hacs/Hx.crs"];
+$Use["org/crsx/hacs/HxRaw-sorts.crs"];
 
 // Syntax and sorts of text (%n⟪...⟫).
 $CheckGrammar["net.sf.crsx.text.Text"];

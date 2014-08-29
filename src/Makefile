@@ -25,13 +25,13 @@ all:: $(BUILD)/org/crsx/hacs/HxRaw.class
 
 # Generic cleanup.
 clean::
-	rm -f org/crsx/hacs/*~ org/crsx/hacs/#*
-	rm -f org/crsx/hacs/*.java org/crsx/hacs/*.jj org/crsx/hacs/*.crsp
-	rm -fr $(BUILD)
+	@set -x && rm -fr $(BUILD)
 
 # Raw parser for .hx files (as used by CookPG).
-org/crsx/hacs/HxRaw.pg: org/crsx/hacs/HxRaw.pgtemplate org/crsx/hacs/Hx.pgnames org/crsx/hacs/Hx.pgpre org/crsx/hacs/Hx.pgpost
-	sed \
+$(BUILD)/org/crsx/hacs/HxRaw.pg: org/crsx/hacs/HxRaw.pgtemplate org/crsx/hacs/Hx.pgnames org/crsx/hacs/Hx.pgpre org/crsx/hacs/Hx.pgpost
+	@set -x \
+	&& $(NOEXEC) mkdir -p $(dir $@) \
+	&& $(NOEXEC) sed \
 	 -e '/%%%HXNONTERMINALS%%%/ bnames' \
 	 -e '/%%%HXPREPRODUCTIONS%%%/ bpre' \
 	 -e '/%%%HXPOSTPRODUCTIONS%%%/ bpost' \
@@ -42,13 +42,11 @@ org/crsx/hacs/HxRaw.pg: org/crsx/hacs/HxRaw.pgtemplate org/crsx/hacs/Hx.pgnames 
 	 org/crsx/hacs/HxRaw.pgtemplate \
 	| sed -e 's/%%%PREFIX%%%/Hx/g' \
 	> '$@.tmp'
-	mv '$@.tmp' '$@'
+	@set -x && mv '$@.tmp' '$@'
 #
-org/crsx/hacs/HxRaw.jj: org/crsx/hacs/HxRaw.pg
-org/crsx/hacs/HxRaw.java: org/crsx/hacs/HxRaw.jj
-$(BUILD)/org/crsx/hacs/HxRaw.class: org/crsx/hacs/HxRaw.java
-#
-clean::; rm -f org/crsx/hacs/HxRaw.pg
+$(BUILD)/org/crsx/hacs/HxRaw.jj: $(BUILD)/org/crsx/hacs/HxRaw.pg
+$(BUILD)/org/crsx/hacs/HxRaw.java: $(BUILD)/org/crsx/hacs/HxRaw.jj
+$(BUILD)/org/crsx/hacs/HxRaw.class: $(BUILD)/org/crsx/hacs/HxRaw.java
 
 
 

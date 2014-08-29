@@ -1,6 +1,6 @@
-// Hx.crs: SORTS OF RAW HACS (.hx) FORMAT.
+// HxRaw-sorts.crs: SORTS OF RAW HACS (.hx) FORMAT.
 //
-Hx[(
+HxRawSorts[(
 
 // STRUCTURE.
 

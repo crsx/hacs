@@ -33,7 +33,7 @@ skip (DEFAULT,RE) ::= ' ' | \r | \t | \n | '//' ~[\n\r]* | \u1 .
 %}
 
 // Combinations.
-<ModuleName> ::= <String>:checkModuleString | <Constructor> . //TODO: allow dots inline.
+<ModuleName> ::= <String>:checkModuleString | <Constructor> | DOTTEDNAME$ .
 <SortName> (DEFAULT,RE) ::= <Constructor> .
 <FragmentName> (RE) ::= <Constructor> .
 <FragmentRef> (DEFAULT,RE) ::= FRAGMENT_REF$:unwrap .
@@ -72,7 +72,9 @@ token NOT ::= \u00ac . // ¬
 token AT ::= "@" .
 token DASH ::= "-" .
 
-// Categories are separate tokens so remember to include where needed!
+token DOTTEDNAME ::= ( (LOWER | DIGIT)+ DOT )+ UPPER (UPPER | LOWER | DIGIT)* .
+
+// Categories are separate tokens so remember to include where needed! TODO: eliminate.
 token DIGIT ::= [0-9] .
 token LOWER ::= [a-z] .
 token UPPER (DEFAULT,RE) ::= [A-Z] .

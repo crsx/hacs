@@ -1,4 +1,4 @@
-module "org.crsx.hacs.samples.Lambda" {
+module org.crsx.hacs.samples.Lambda {
 
 token NAME | [a-z] [a-z0-9_]* ;
 
