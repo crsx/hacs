@@ -1,0 +1,1475 @@
+%% hacs.tex
+%%
+\documentclass[11pt]{article} %style: font size.
+\input{setup}
+\def\version{\thanks{\textbf{UNFINISHED DRAFT---Feedback Appreciated}.}}
+
+%% Style.
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{charter}
+\SelectTips{eu}{}
+\bibliographystyle{plainurl}
+
+%% Topmatter.
+\title{\emph{Compiler Generation}\\Using \HAX\version}
+\author{Kristoffer H. Rose}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}\noindent
+  Higher-order Attribute Contraction Schemes---or \HAX---is a language for programming compilers.
+  With \HAX it is possible to create a fully functional compiler from a single source file.  This
+  document explains how to get \HAX up and running, and walk through the code of a simple example
+  with each of the main stages of a compiler in \HAX: lexical analysis, syntax analysis, semantic
+  analysis, intermediate code generation and optimization, and code generation.
+\end{abstract}
+
+\compacttableofcontents
+
+
+\section{Introduction}
+
+\HAX abbreviates \emph{Higher-order Attribute Contraction Schemes}, which is a formal system for
+symbolic rewriting extended with programming idioms commonly used in compiler rewriting.  This
+introduction briefly outlines how \HAX is structured and how to run the \HAX system.
+
+A compiler written in \HAX consists of a single program with a series of formal sections, each
+corresponding to a stage of the compiler.  Each section is written in a formal style suitable for
+that stage of the compiler. Specifically, \HAX supports the following notations:
+%%
+\begin{description}
+
+\item[Regular Expressions.] Used to describe how an input text is partitioned into tokens. The
+  regular expresion notation of \HAX follows common
+  conventions~\cite{Aho+:2006}. Section~\ref{sec:tokens} gives details of this notation.
+
+\item[Context Free Grammars.] \HAX uses a form of BNF~\cite{NaurEtal:cacm1960} with common
+  extensions to describe context free grammars. \HAX includes simple mechanisms for automatic
+  resolution of operator precedence and directly recursive productions such that the transformation
+  from token stream to abstract syntax can be formalized.  Detailed are in Section~\ref{sec:syntax}.
+
+\item[Attribute Grammars.] Analyses can be described with attribute grammars in the style of
+  \emph{Syntax-Directed Definitions}~\cite{Aho+:2006}, which describe how properties propagate
+  through the abstract syntax tree.  Section~\ref{sec:synthesized} details how the basic propagation
+  rules work for synthesized attributes, Section~\ref{sec:inherited} how inherited atributes are
+  described, and Section~\ref{sec:symbols} the special considerations needed when managing scoped
+  symbols and binders.
+
+\item[Recursive Translation Schemes.] Code generation and other translations from one abstract form
+  to another is formalized in \HAX using a variant of \emph{Syntax-Directed
+    Translation}~\cite{Aho+:2006}, where the syntax of the source language is used to guide the
+  generation of expressions in the target language. \HAX specifically uses higher order rewriting
+  idioms to describe such translations as described in Section~\ref{sec:translation}.
+
+\end{description}
+
+
+
+
+In this section we make sure you have a functional \HAX installation on your computer.
+
+\begin{requirements}
+  To run the \HAX examples here you need a *nix system (including a shell and the usual utilities)
+  with these common programs: a Java development environment (at
+  least Java~1.6~SE SDK, with "java" and "javac" commands); a C99 compiler with the \emph{icu}
+  libraries; the \emph{flex} lexical generator; the "wget" internet retrieval and "unzip" unpacking
+  utility; and the GNU "make" command.  In addition, the setup process needs internet access to retrieve
+  the JavaCC parser generator~\cite{javacc}.
+\end{requirements}
+
+\begin{commands}\label{com:all}
+  Retrieve the \emph{hacs.zip} archive, extract it to a new directory, and intialize the "Makefile",
+  for example with the following commands:\footnote{User input is \textcolor{blue}{blue}.}
+  %%
+\begin{code}[commandchars=\^\{\}]
+$ ^textcolor{blue}{^texttt{mkdir myfirst}}
+$ ^textcolor{blue}{^texttt{cd myfirst}}
+$ ^textcolor{blue}{^texttt{wget http://krisrose.net/hacs.zip}}
+$ ^textcolor{blue}{^texttt{unzip hacs.zip}}
+$ ^textcolor{blue}{^texttt{cp Makefile-hacs-template Makefile}}
+\end{code}
+  %%
+  Now check that all the commands defined in the "SETUP" section near the top of you freshly copied
+  "Makefile" are correct; if any need changing then uncomment the line and change it to reflect the
+  required commands on your system. Then check that it works with these command, which will need
+  Internet access the first time:\footnote{Note that the spacing of the output may vary---this is
+    not a stable capability yet.}
+  %% 
+\begin{code}[commandchars=\^\{\}]
+$ ^textcolor{blue}{^texttt{make first.run}}
+...
+$ ^textcolor{blue}{^texttt{./first.run --action=Compile \}}
+              ^textcolor{blue}{^texttt{--term="^{initial := 1; rate := 1.0; position := initial + rate * 60;^}"}}
+  LDF T, #1
+  STF name, T_51
+  LDF T_84, #1.0
+  STF name_40, T_56
+  LDF T_98, name_43
+  LDF T_70, name_3
+  LDF T_90, #60
+  MULF T_96, T_62, T_86
+  ADDF T_50, T_82, T_177
+  STF name_23, T_66                       
+\end{code}
+  %%
+  Congratulations---you just built your first compiler! (It may have taken a few minutes, as \HAX
+  also performed the initial setup, which is only needed on the first run.)
+\end{commands}
+
+\begin{example}[module wrapper]
+\end{example}
+
+\begin{manual}[grammar structure]\label{man:structure}
+  A \HAX compiler is specified as a single \emph{.hx} module file with the following structure:
+\begin{code}[commandchars=\\\{\}]
+module {\it\color{blue}modulename}
+\{
+  // {\it\color{blue}Lexical Analysis}
+  // {\it\color{blue}Syntax Analysis}
+  // {\it\color{blue}Semantic Analysis}
+  // {\it\color{blue}Code Generator}
+  // {\it\color{blue}Main}
+\}
+\end{code}
+  the \emph{modulename} should be a string with a Java style fully qualified class name, where the
+  last component is capitalized, like \verb|"net.sf.crsx.samples.gentle.First"| in the example
+  above. The individual sections specify the compiler, and the possible contents is documented in
+  the manual blocks throughout this document.
+\end{manual}
+
+\begin{plan}
+  In the remainder of this document we introduce the most important features of the \HAX language by
+  explaining the corresponding parts of the \emph{first.hx} specification used above, which is
+  adapted from \cite[Fig. 1.7]{Aho+:2006}, as well as several other minor examples.  We explain
+  lexical analysis in Sec.~\ref{sec:tokens}, syntax analysis in Sec.~\ref{sec:syntax}, basic
+  semantic sorts, schemes, and rules in Sec.~\ref{sec:schemes}, semantic analysis in
+  Sec.~\ref{sec:analysis} and Sec.~\ref{sec:analysis2}, Code Generation in Sec.~\ref{sec:cg}, and
+  the invokation conventions in Sec.~\ref{sec:main}.  Appendices include tables of Unicode
+  characters and current limitations (\ref{app:tables}), some bonus examples (\ref{app:bonus}) and
+  explanations for a few cryptic error messages (\ref{app:errors}).
+\end{plan}
+
+
+\section{Lexical Analysis}
+\label{sec:tokens}
+
+Lexical analysis is the process of splitting the input text into tokens. \HAX uses a usual variation
+of \emph{regular expressions} for this.  Unique tokens such as keywords can be declared along with
+the syntax productions where they are used.
+
+\begin{example}[tokens and white space]\label{ex:lexical}
+  %%
+  The first part of \emph{first.hx} is the lexical analyzer. It uses regular expression notation to
+  define the tokens used as ``terminal symbols'' by the compiler.  Here is the relevant fragment for
+  setting up the concrete syntax of integers, basic floating point numbers, identifiers, and white
+  space:
+  %%
+\begin{code}[xleftmargin=1.66em,numbers=left]
+/* 1. LEXICAL ANALYSIS. */
+
+space [ \t\n] ;
+
+token Int    | ⟨Digit⟩+ ;
+token Float  | ⟨Digit⟩* "." ⟨Digit⟩+ ;
+token Id     | ⟨Lower⟩+ ('_'? ⟨Int⟩)? ;
+
+token fragment Digit  | [0-9] ;
+token fragment Lower  | [a-z] ;
+\end{code}
+  %%
+  The example illustrates the following particulars of \HAX lexical expressions:
+  %%
+  \begin{itemize}
+
+  \item Declarations generally start with a keyword or two and are terminated by a ";" (semicolon).
+
+  \item "token" declarations in particular have the token name followed by a regular expression
+    between a "|" (vertical bar) and a ";" (semicolon).
+
+  \item A regular expressions is a sequence of units, corresponding to the concatenation of
+    sequences of characters that match the units.  Each unit can be a \emph{character class} such as
+    "[a-z]", which matches a single character in the indicated range, a string such as "'.'", or a
+    reference to a token or fragment such as "⟨Lower⟩".\footnote{The used Unicode characters are
+      summarized in Appendix~\ref{nota:unicode}.}
+
+  \item A "token fragment" declaration means that the defined token can only be used in other token
+    declarations, and not in syntax productions defined below.
+
+  \item Every regular expression component can be followed by a repetition marker "?", "+", or~"*".
+
+  \item The regular expression for white space is setup by "space" followed by the regular
+    expression of what to skip -- here spaces, tabs, and newlines, where \HAX uses backslash for
+    escaping in character classes with usual C-style language escapes.
+
+  \item \HAX supports C/Java-style comments.
+
+  \end{itemize}
+  %%
+\end{example}
+
+\begin{commands}[lexical analysis]
+  The generated command, \emph{first.run}, from above, can be used as a lexical analyzer with two
+  arguments: a \emph{token sort} and a \emph{token term}.\footnote{The command has more options that
+    we shall introduce as we need them.}  Execution then proceeds by parsing the string following
+  the syntax of the token. We can, for example, check the lexical analysis of a number:
+\begin{code}[commandchars=\\\{\}]
+$ \textcolor{blue}{./first.run --sort=Float --term=34.56}
+34.56
+\end{code}
+  If there is an error, the lexical analyzer will inform us of this:
+\begin{code}[commandchars=\%\{\}]
+$ %textcolor{blue}{./first.run --sort=Int --term=34.56}
+Exception in thread "main" java.lang.RuntimeException: net.sf.crsx.CRSException:
+net.sf.crsx.parser.ParseException:
+ Parse error in embedded firstInt term at line 1, column 27: ⟦ 34.56 ⟧ ...
+ Encountered " <T_T_M_FLOAT> "34.56 "" at line 1, column 29.
+Was expecting one of:
+    <T_meta1_T_M_INT> ...
+    "\u27e9" ...
+    <T_T_M_INT> ...
+\end{code}
+  (where the trail of Java exceptions has been truncated: the important information is in the first
+  few lines).
+\end{commands}
+
+\begin{manual}[lexical declarations]\label{man:token}
+  %%
+  A token is declared with the keyword "token" followed by the token (sort) name, a "|" (vertical
+  bar), and a \emph{regular expression}, which has one of the following forms (with increasing order
+  of precedence):
+  %%
+  \begin{enumerate}
+
+  \item Several alternative regular expressions can be combined with further "|" characters.
+
+  \item Concatenation denotes the regular expression recognizing concatenations of what matches the
+    subexpressions.
+
+  \item A regular expression (of the forms following this one) can be followed by a \emph{repetition
+      marker}: "?" for zero or one, "+" for one or more, and "*" for zero or more.
+
+  \item A simple word without special characters stands for itself.
+
+  \item A string in single or double quotes stands for the contents of the string except that "\"
+    introduces an \emph{escape code} that stands for the encoded character in the string.
+
+  \item A stand-alone "\" followed by an \emph{escape code} stands for that character: escape codes
+    include the usual C and Java escapes: "\n", "\r", "\a", "\f", "\t", octal escapes like "\177",
+    special character escapes like "\\", "\'", \verb|\"|, and Unicode hexadecimal escapes like
+    "\u27e9".
+
+  \item A \emph{character class} is given in "[]", with these rules:
+   \begin{enumerate}
+    \item if the first character is \verb"^" then the character class is negated;
+    \item if the first (after \verb"^") character is "]" then that character is (not) permitted;
+    \item if a "\" followed by an \emph{escape code} is encountered then it stands for the encoded
+      character;
+    \item if two characters are connected with a \verb"-" (dash) then all characters in the
+      indicated \emph{range} (inclusive) are permitted (or excluded).
+    \end{enumerate}
+    Note that a character class cannot be empty.
+
+  \item The "." (period) character stands for the character class "[^\n]".
+
+  \item A nested regular expression can be given in "()".
+
+  \item An entire other token "T" can be included (by literal substitution, so recursion is not
+    allowed) by writing "⟨T⟩" (the angle brackets are unicode characters U+27E8 and U+27E9). As a
+    special convenience, tokens declared with "token fragment" can \emph{only} be used this way.
+
+  \item The special declaration "space" defines what constitutes white space for the generated
+    grammar. (Note that this does not influence what is considered space in the specification
+    itself.) A spacing declaration permits the special alternative "nested" declaration for nested
+    comments, the following defines usual C/Java style spacing with comments, for example:
+\begin{code}[]
+space [ \t\f\r\n] | nested "/*" "*/" | "//" .* ;
+\end{code}
+
+  \end{enumerate}
+  %%
+  Notice that spacing is not significant in regular expressions, except (1) in character classes,
+  (2) in literal strings, (3) if escaped (as in "\ ").
+  %%
+\end{manual}
+
+
+\section{Syntax Analysis}
+\label{sec:syntax}
+
+Once we have tokens, we can use \HAX to program a complete syntax analysis with a grammar that
+specifies how the input text is decomposed according to a \emph{concrete syntax} and how the desired
+\emph{abstract syntax tree} (AST) is constructed from that. Notice that \HAX does not provide a
+``parse tree'' in the traditional sense, \ie, a tree that represents the full concrete syntax parse:
+only the AST is built.  Grammars are structured following the \emph{sorts} of AST nodes, with
+concrete syntax details managed through annotations and ``syntactic sugar'' declarations.
+
+\begin{example}\label{ex:syntax}
+  %%
+  The second part of our \emph{first.hx} example is the syntax analyzer. Our small example source
+  language merely has blocks, statements, and a few forms of expression, like so:
+  %%
+\begin{code}[xleftmargin=1.66em,numbers=left]
+/* 2. SYNTAX ANALYSIS. */
+
+sort Stat  | ⟦ ⟨Name⟩ := ⟨Exp⟩ ; ⟧ | ⟦ { ⟨Stat*⟩ } ⟧ ;
+
+sort Exp   | ⟦ ⟨Exp@1⟩ + ⟨Exp@2⟩ ⟧@1
+           | ⟦ ⟨Exp@2⟩ * ⟨Exp@3⟩ ⟧@2
+           | ⟦ ⟨Int⟩ ⟧@3
+           | ⟦ ⟨Float⟩ ⟧@3
+           | ⟦ ⟨Name⟩ ⟧@3
+           | sugar ⟦ (⟨Exp#⟩) ⟧@3 → # ;
+
+sort Name  | symbol ⟦ ⟨Id⟩ ⟧ ;
+\end{code}
+  %%
+  The grammar structures the input as three sorts: "Stat" for statements, "Exp" for expressions, and
+  "Name" for names (which we shall need later for symbol tables).  In addition a ``derived'' sort,
+  "Stat*", is used. \HAX grammars follow these conventions:\footnote{As before the details of the
+    Unicode characters are in the appendix.}
+  %%
+  \begin{itemize}
+
+  \item Each sort is defined by a "sort" declaration followed by a number of \emph{productions},
+    each introduced by a "|" (bar). (The first "|" corresponds to what is usually written ``::='' or
+    ``→'' in grammars.)
+
+  \item Concrete syntax is enclosed in "⟦…⟧" (``double'' or ``white'' brackets). Everything inside
+    double brackets should be seen as literal syntax, even "\" (backslash), \emph{except} for \HAX
+    white space (corresponding to "[ \t\n\r]"), which is ignored, and fragments in "⟨…⟩" (angle
+    brackets), which are special.
+
+  \item References to \emph{nonterminals} (other productions) are wrapped in "⟨…⟩" (angle brackets).
+
+  \item \emph{Precedence} is indicated with "@"$n$, where higher numbers $n$ designate higher
+    (tighter) precedence.  Any reference in as well as the alternative itself may have a precedence
+    in this way; in the example we establish that "*" binds tighter than "+", and that both
+    operators are left recursive. Note that we specify the precedence of both the entire expression,
+    after the "⟦⟧"s, and of each component, inside the "⟨⟩". (In fact where the precedence is
+    omitted we could have written "@0".)
+
+  \item The special "sugar" declaration expresses that the concrete syntax can use parentheses to
+    raise the precedence of the enclosed expression to~3: it is the first example of a \emph{rewrite
+      rule} with a "→" that we see, where we remark that the expression is marked "#" so we can use
+    the "#" to indicate that it is extracted as the abstract result of concrete syntax with
+    parenthesis.  (In fact the general rule is that when an "→" is used then all sort specifiers
+    must be ``disambiguated'' with distinct markers like "#" or "#5" in this way.)
+
+  \item The "Name" sort is defined as a "symbol", which is only allowed because the underlying "Id"
+    token permits a trailing "_"$n$ (underscore and count); this permits the use as binders and
+    automatic symbol generation.
+
+  \end{itemize}
+\end{example}
+
+\begin{commands}
+  %%
+  We can parse an expression from the command line:
+  %%
+\begin{code}[commandchars=\\\{\}]
+$ \textcolor{blue}{./first.run --sort=Exp --term="(2+(3*(4+5)))"}
+2 + 3 * ( 4 + 5 )
+\end{code}
+  %%
+  Notice that the printout differs slightly from the input term as it has been ``resugared'' from
+  the AST with minimal insertion of parentheses.
+  %%
+\end{commands}
+
+\begin{manual}[syntactic sorts]\label{man:syntax}
+  %%
+  Formally, \HAX uses the following notations for specifying the syntax to use for terms.
+  %%
+  \begin{enumerate}
+
+  \item \HAX \emph{production names} are capitalized words, so we can for example use "Exp" for the
+    production of expressions.  The name of a production also serves as the name of its \emph{sort},
+    \ie, the semantic category that is used internally for abstract syntax trees with that root
+    production.  If particular instances of a sort need to be referenced later they can be
+    \emph{disambiguated} with a "#"$i$ suffix, \eg, "Exp#2", where $i$ is an optional number or
+    other simple word.
+
+  \item A sort is declared by one or more "sort" declarations of the name optionally followed by a
+    number of \emph{abstract syntax production} alternatives, each starting with a~"|". A sort
+    declaration sets the \emph{current sort} for subsequent declarations and in particular any
+    stand-alone production alternatives. All sort declarations for a sort are cumulative.
+
+  \item Double square brackets "⟦…⟧" (unicode U+27E6 and U+27E7) are used for \emph{concrete syntax}
+    but can contain nested angle brackets "⟨…⟩" (unicode U+27E8 and U+27E9) with \emph{production
+      references} like "⟨Exp⟩" for an expression (as well as several other things that we will come
+    to later).  We for example write "⟦⟨Exp⟩+⟨Exp⟩⟧" to describe the form where two expressions are
+    separated by a "+" sign.
+
+  \item Concrete syntax specification can include "¶" characters to indicate where \emph{newlines}
+    should be inserted in the printed output. (The system can also control indentation but that is
+    not enabled yet.)
+
+  \item A trailing "@"$p$ for some precedence integer $p$ indicates that either the subexpression or
+    the entire alternative (as appropriate) should be considered to have the indicated precedence,
+    with higher numbers indicating higher precedence, \ie, tighter association.  (For details on the
+    limitations of how the precedence and left recursion mechanisms are implemented, see
+    Appendix~\ref{lim:list}.)
+
+  \item "sugar ⟦…⟧→…" alternatives specify equivalent forms for existing syntax: anything matching
+    the left alternative will be interpreted the same as the right one (which must have been
+    previously defined); references must be disambiguated.
+
+  \item A simple sort which contains only a reference to a token, where furthermore the token is
+    defined such that it can end with "_"$n$ (an underscore followed by a count), then the sort can
+    be qualified as a "symbol" sort, which can be used for variables and binders.
+
+  \end{enumerate}
+  %%
+\end{manual}
+
+
+\section{Semantic Sorts and Schemes}
+\label{sec:schemes}
+
+When analyzing the AST, which we cover in the next section, we shall need some utility sorts and
+functions. This section details how these are defined.
+
+\begin{example}\label{ex:types}
+  %%
+  The third part of the \emph{first.hx} example has the semantic sorts and operations used. For our
+  toy language that just means the notion of \emph{type} used and the way that types are unified.
+  %%
+\begin{code}[xleftmargin=1.66em,numbers=left]
+/* 3. SEMANTIC SORTS & SCHEMES. */
+
+sort Type | Int | Float ;
+
+| scheme Unif(Type,Type) ;
+Unif(Int, Int) → Int;
+Unif(#t1, Float) → Float;
+Unif(Float, #t2) → Float;
+\end{code}
+  %%
+  The code declares a new sort, "Type", which is a \emph{semantic} sort because it does not include
+  any syntactic cases: all the possible values (as usual listed after leading "|"s) are simple term
+  structures written without any ⟦⟧s.  Structures are written with a leading ``constructor,'' which
+  should be a capitalized word (the same as sort names), optionally followed by some ``arguments''
+  in "()"s, where the declaration gives the sort for each argument.
+
+  The semantic sort also includes a "scheme" declaration for the "Unif" constructor followed by an
+  argument list with two "Type" arguments. The scheme declaration is followed by \emph{rules} of the
+  form ``pattern→replacement,'' which must specify for each possible shape of "Unif"-construction
+  how it should be simplified by the scheme.  Rules may include ``meta-variables'' starting with "#"
+  (hash), like "#t1", to designate ``function arguments'' that should be copied from the pattern to
+  the replacement.
+  %%
+\end{example}
+
+\begin{manual}[raw terms, schemes, and rules]\label{man:raw}
+  %%
+  ``Raw'' declarations consist of the following elements:
+  %%
+  \begin{enumerate}
+
+  \item A \emph{constructor} is a capitalized word (similar to a sort name but in a separate name
+    space).
+
+  \item A \emph{variable} is a lower case word (subject to scoping, described below).
+
+  \item A sort can be given a \emph{semantic production} as a "|" (bar) followed by a \emph{form},
+    which consists of a constructor name, optionally followed by a "()"ed ","-separated list of
+    \emph{scope forms}, which each consist of a \emph{sort} optionally preceded by a \emph{binder
+      form}, which is a list of sorts followed by a "." (dot). Thus in the most general case, a
+    semantic production has the form
+    %%
+    \begin{equation*}
+      \texttt{|}~C~\texttt{(}
+      ~S_{11}\cdots S_{1n_1}~\texttt{.}~S_1~\texttt{,}
+      …~\texttt{,}
+      ~S_{m1}\cdots S_{mn_m}~\texttt{.}~S_m
+      \texttt{)}
+    \end{equation*}
+    %%
+    with $C$ a constructor name and all $S_i$ and $S_{ij}$ sort names. The $S_i$ declares the
+    \emph{argument sort} for the $i$th argument of the construction term, and the $S_{ij}$ is the
+    \emph{binder sort} of the $j$th binder for the $i$th argument; $m$ is the \emph{arity} of the
+    construction and $n_i$ the \emph{rank} of the $i$th argument.
+
+  \item A semantic production can be qualified as a "scheme", which marks the declared construction
+    as a candidate for rewrite rules (defined below).
+
+  \item A \emph{raw term} is either a \emph{construction}, a \emph{variable use}, or a
+    \emph{meta-application}, as follows
+    %%
+    \begin{enumerate}
+
+    \item A \emph{construction} term is a constructor name followed by an optional "()"ed
+      ","-separated list of \emph{scope arguments}, which each consist of a term optionally preceded
+      by a \emph{binder list}, which is a list of variables followed by a "." (dot).  So in the most
+      general case, a term looks like this:
+      %% 
+      \begin{equation*}
+        C~\texttt{(}
+        ~x_{11}\cdots x_{1n_1}~\texttt{.}~t_1~\texttt{,}
+        ~…\texttt{,}
+        ~x_{m1}\cdots x_{mn_m}~\texttt{.}~t_m
+        \texttt{)}
+      \end{equation*}
+      %%
+      The ``$C$-construction'' is said to have the \emph{subterms} $t_1,…,t_m$, and the arity $m$
+      and ranks $n_1…n_m$ must correspond to a semantic production.  If present, the binder prefix
+      of each introduces the specified variables \emph{only} for the appropriate subterm modulo
+      usual renaming, \ie, writing \texttt{A(x y.x, x y.y)} and \texttt{A(a b.a, a b.b)} and even
+      \texttt{A(s t.s, t s.s)} all denote the same term following the conventions of
+      \emph{α-equivalence}.  In a scope argument $x\texttt{.}t$ we say that occurrences of $x$ in
+      $t$ are \emph{bound} by the binder.
+
+    \item A \emph{variable use} term is a variable, subject to the usual lexical scoping rules.
+
+    \item A \emph{meta-application} term is a \emph{meta-variable}, consisting of a "#" (hash)
+      followed by a number or word and optionally by a meta-argument list of ","-separated terms
+      enclosed in "[]". Examples include "#t1" (with no arguments), "#[a,b,c]", and "#1[OK,#]".
+
+    \end{enumerate}
+
+  \item A term can have a \emph{sort prefix}. So the term "Type Unif(Type #t1, Type Float)" is the
+    same as "Unif(#t1,Float)" provided "Unif" was declared with the raw production
+    "|Unif(Type,Type)".
+
+  \item A \emph{rewrite rule} is a pair of terms separatede by "→" (arrow, U+2192), with a few
+    additional constraints: in the rule $p→t$, $p$ must be a \emph{pattern}, which means it must be
+    a construction term that has been declared as a "scheme" (syntactic or raw) and with the
+    restriction that all contained arguments to meta-applications must be bound variables, and all
+    meta-applications in $t$ must have meta-variables that also occur in $p$ with the same number of
+    meta-arguments.
+
+    Rule declarations must either occur with the appropriate current sort or have a pattern with a
+    sort prefix.
+
+  \item One rule per scheme can be prefixed with the qualifier "default". If so then the pattern can
+    have no structure: all subterms of the pattern scheme construction must be plain
+    meta-applications. Such a default rule is applied \emph{after} it has been ensured that all
+    other rules fail for the scheme.
+
+  \item Finally, a rule can be prefixed with the word "rule" for clarity, which can be followed by a
+    raw term and a ":" (TODO: document possible name/option choices).
+
+  \end{enumerate}
+  %%
+  Rules are used for \emph{rewriting}, a definition of which is beyond the scope of this document;
+  please refer to the literature on higher order rewriting for details~\cite{Klop+:tcs1993}.
+  %%
+\end{manual}
+
+
+\section{Semantic Analysis I}
+\label{sec:analysis}
+
+Once the AST is loaded we can analyze it.  We demonstrate this by fully developing a simple type
+checking analysis.  In this section we deal with analysis of expressions. 
+
+\begin{example}\label{ex:analysis}
+  %%
+  In Ex.~\ref{ex:syntax} we presented the abstract syntax of the small language processed by
+  \emph{first.hx}. A type analysis of the expressions of language might look as follows as a
+  standard SDT (syntax directed translation), where we use $E$ for the "Exp" non-terminal, and these attributes:
+  \begin{itemize}
+  \item $E.e$ inherited ``environment'' symbol table mapping names to types.
+  \item $E.t$ synthesized type of expression.
+  \end{itemize}
+  %%
+  In the notations of \cite{Aho+:2006}, the SDT can be specified something like this:
+  %% 
+  \begin{equation*}
+    \begin{array}{r@{\,}l|lr}
+      \hline
+      \hline
+      \multicolumn{2}{c|}{\textsc{Production}}  & \textsc{Semantic Rules} &\\
+      \hline
+      E &→ E_1 + E_2 & E_1.e=E.e; E_2.e=E.e; E.t = \op{Unif}(E_1.t, E_2.t) &(E1)\\[\jot]
+      &\mid E_1 \ast E_2 & E_1.e=E.e; E_2.e=E.e; E.t = \op{Unif}(E_1.t, E_2.t) &(E2)\\[\jot]
+      &\mid \textbf{int} & E.t = \op{Int}&(E3)\\[\jot]
+      &\mid \textbf{float} & E.t = \op{Float}&(E4)\\[\jot]
+      &\mid \textbf{name} & E.t = \text{if}~\op{defined}(E.e,\textbf{name}.sym)~\text{then}~\op{lookup}(E.e,\textbf{name}.sym)&(E5)\\
+      && \qquad\quad\text{else} \op{TypeError}\\
+      \hline
+    \end{array}
+  \end{equation*}
+  %%
+  The SDT has one locations where the attribute dependencies are interesting: 
+  $(E5)$ defines the synthesized attribute $E.t$ in terms of the inherited attribute $E.e$ in a
+  ``down then up'' configuration.  To translate this into \HAX, we create a recursive scheme to
+  propagate inherited attributes as needed.
+
+  The following code contains the fourth part of \emph{first.hx}, which implements the SDT in
+  \HAX.
+  %%
+%%  \begin{figure}[p]\small
+\begin{code}[xleftmargin=1.66em,numbers=left]
+/* 4. SEMANTIC EXPRESSION ANALYSIS. */
+
+attribute ↑t(Type);       // synthesized expression type
+attribute ↓e{Name:Type};  // inherited type environment
+
+// TA, expression case.
+
+sort Exp | scheme ⟦ TA ⟨Exp⟩ ⟧ ↓e ;
+
+⟦ TA ⟨Int#⟩ ⟧ → ⟦ ⟨Int#⟩ ⟧;
+⟦ TA ⟨Float#⟩ ⟧ → ⟦ ⟨Float#⟩ ⟧;
+⟦ TA (⟨Exp#1⟩ + ⟨Exp#2⟩) ⟧ → ⟦ (TA ⟨Exp#1⟩) + (TA ⟨Exp#2⟩) ⟧;
+⟦ TA (⟨Exp#1⟩ * ⟨Exp#2⟩) ⟧ → ⟦ (TA ⟨Exp#1⟩) * (TA ⟨Exp#2⟩) ⟧;
+⟦ TA ⟨Name id⟩ ⟧ ↓e{id : #t} → ⟦ id ⟧ ↑t(#t);
+⟦ TA ⟨Name id⟩ ⟧ ↓e{¬id} → error⟦Undefined identifier ⟨id⟩⟧;
+
+sort Exp; ↑t;
+⟦ ⟨Exp#1 ↑t(#t1)⟩ + ⟨Exp#2 ↑t(#t2)⟩ ⟧ ↑t(Unif(#t1,#t2));
+⟦ ⟨Exp#1 ↑t(#t1)⟩ * ⟨Exp#2 ↑t(#t2)⟩ ⟧ ↑t(Unif(#t1,#t2));
+⟦ ⟨Int#⟩ ⟧ ↑t(Int);
+⟦ ⟨Float#⟩ ⟧ ↑t(Float);
+\end{code}
+%%    \caption{Semantic Expression Analysis.}
+%%    \label{fig:semantic}
+%%  \end{figure}
+%%  %%
+%%  Fig.~\ref{fig:semantic} contains the fourth part of \emph{first.hx}, which implements the SDT
+
+%%  above in \HAX. 
+  The first block sets up the synthesized $E.t$ and inherited $E.e$ attributes, using
+  "↑" and "↓" for synthetic/inherited, respectively, and distinguishing between a value "(Type)" and
+  symbol mapping "{Name:Type}".
+
+  This is followed by a definition of the recursive "TA" scheme for \emph{distributing} all types in
+  the symbol table to actual symbol occurrences. Specifically, "scheme⟦TA⟨Exp⟩⟧↓e" means that (the
+  sort "Exp") has a scheme with the specified syntax that distributes the inherited attribute "e".
+  Note that the scheme uses \emph{concrete syntax} for applications of the scheme: this is a
+  convenience that makes it possible to invoke specific schemes directly from expressions entered in
+  the command line. It does mean that we have to be careful with using the syntax correctly: we have
+  not, for example, given a precedence to "TA", so in the recursive rules we have expressions like
+\begin{code}[xleftmargin=5pc]
+    ⟦ (TA⟨Exp#1⟩) + (TA⟨Exp#2⟩) ⟧
+\end{code}
+  which uses the "(…)" syntactic sugar to properly nest the expression.  We could also have written
+\begin{code}[xleftmargin=5pc]
+    ⟦ ⟨Exp ⟦TA ⟨Exp#1⟩⟧⟩ + ⟨Exp ⟦TA ⟨Exp#2⟩⟧⟩ ⟧
+\end{code}
+  using nested "⟨…⟩" constructs instead, which does not depend on the syntactic sugar.
+
+  Otherwise, the scheme just exploits the syntax to express \emph{where} the recursion goes, which
+  then automatically means that the inherited attribute will follow, as \HAX inherited attributes
+  always follow a scheme.  The first two ``"TA"-rules'' have the cases for looking up a symbol in
+  the environment: if it is there, \ie, if the "id" specified can make the environment pattern
+  "↓{id:#t}" match, instantiating "#t" to the type of "id", then the first rule is used and the
+  result is the "id" with the added synthesized attribute value "↑t(#t)", \ie, the $t$ attribute
+  gets the value we value we extracted from the environment. The rule with the negated pattern
+  "↓e{¬id}" will match if the "id" symbol is \emph{not} defined in the environment, then printing a
+  simple error message.  In a sense the two "Name" cases correspond to $(E5)$ in the SDT.
+
+  Finally, we associate the synthetic attribute "t" to the "Exp" sort---all synthetic attributes are
+  associated with one or more sorts---and we give a special \emph{synthesis rule} that shows for
+  each form of "Exp", where "t" is not populated by "TA", how synthetic attributes matches on
+  fragments propagate to the entire expression, \eg, the rule for the SDT's $(1)$ is
+\begin{code}[xleftmargin=1.66em]
+⟦ ⟨Exp#1 ↑t(#t1)⟩ + ⟨Exp#2 ↑t(#t2)⟩ ⟧ ↑t(Unif(#t1,#t2));
+\end{code}
+  and should be read ``When considering an "Exp" (the current sort) which has the shape
+  $⟦(⟨Exp⟩+⟨Exp⟩⟧$ where furthermore the first expression has a value matching "#t1" for the
+  synthesized attribute "t", and the second expression has a value matching "#t2" for the
+  synthesized attribute "t", then the entire expression has the value "Unif(#t1,#t2)" for the
+  synthesized attribute "t".''  Notice that the attribute patterns have the same shape as the
+  attribute declaration---a recurring feature of \HAX. The folowing three lines correspond in the
+  same way to $(E2,E3,E4)$.
+  %%
+\end{example}
+
+\begin{manual}[attributes and synthesis rules]\label{man:attributes}\leavevmode
+  %%
+  \begin{enumerate}
+
+  \item Attributes are declared by "attribute" declarations followed by an \emph{attribute form} of
+    one of the following shapes:
+    %%
+    \begin{enumerate}
+    \item "↑Name(ValueSort)" defines that the synthesized attribute "Name" has "ValueSort" values;
+    \item "↓Name(ValueSort)" similarly for a simple inherited attribute;
+    \item "↓Name{SymbolSort:ValueSort}" defines the inherited symbol table attribute "Name" which
+      for each constant or variable of "SymbolSort" has a distinct "ValueSort" value.
+    \end{enumerate}
+
+  \item One can add a simple \emph{synthesized attributes} after a raw data term as
+    "↑"\emph{name}"("\emph{value}")", where the \emph{name} is an attribute name and the
+    \emph{value} can be any term.
+
+  \item Simple \emph{inherited attributes} are added similarly after a raw scheme term as
+    "↓"\emph{name}"("\emph{value}")".
+
+  \item An \emph{inherited symbol table attribute extension} is added to a raw scheme term as
+    "↓"\emph{name}"{"\emph{symbol}":"\emph{value}"}", where the \emph{symbol} is either a variable
+    or a constant (of the appropriate sort).
+
+  \item A \emph{synthesized attribute reference} has the simple form "↑"\emph{name}";" and declares
+    that the current sort synthesizes \emph{name} attributes.
+
+  \item A scheme declaration can include \emph{inherited attribute references} of the form
+    "↓"\emph{name}, which declares that the scheme inherits the \emph{name} attributes.
+
+  \item A \emph{synthesis rule} is a special rule of the form $t↑name(t')$, where the term $t$ may
+    contain subterms with attribute constraints. The rule specifies how terms of the current sort
+    and shape $t$ synthesize \emph{name} attributes.
+
+  \end{enumerate}
+  %%
+  Inherited attributes are managed with regular rules (for schemes) with inherited attribute
+  constraints and extensions.
+  %%
+\end{manual}
+
+\begin{manual}[parsed terms]\label{man:parsed}
+  Man.~\ref{man:raw} documented terms without concrete syntax. The full term model combines this
+  with \emph{parsed terms}.
+  %%
+  \begin{enumerate}
+
+  \item Double square brackets "⟦…⟧" (unicode U+27E6 and U+27E7) can be used for \emph{concrete
+      terms}, provided the \emph{sort} is clear, either
+    \begin{enumerate}
+    \item by immediately prefixing with the sort (as in "Exp⟦1+2⟧"), or
+    \item by using as the argument of a defined constructor (as "IsType(⟦mytype⟧)"), or
+    \item by usng as an attribute value, or
+    \item by using as a top level rule pattern or replacement term with a defined current sort.
+    \end{enumerate}
+
+  \item Concrete terms can contain nested raw terms in "⟨…⟩" (unicode U+27E8 and U+27E9). Such
+    nested raw terms \emph{must} have an explicit sort prefix.
+
+  \item The special term "error⟦…⟧" will print the error message embedded in "⟦…⟧", where one is
+    permitted to embed "symbol"-declared variables in "⟨…⟩".
+
+  \end{enumerate}
+
+\end{manual}
+
+
+\section{Semantic Analysis II}
+\label{sec:analysis2}
+
+We continue the analysis by explaining how the environment is initialized and maintained across
+statements, where new names are introduced.
+
+\begin{example}\label{ex:analysis2}
+  %%
+  Our type analysis from Ex.~\ref{ex:analysis} is extended to $S,S^*$ for the non-terminals for the
+  sorts "Stat" and "Stat*", respectively, with these attributes:
+  \begin{itemize}
+  \item $S.e, S^*.e$ inherited ``environment'' symbol table mapping names to types.
+  \item $S.sym$ synthesized ``defines'' attribute with name introduced by $S$, or $ε$ if none.
+  \item $S.t$ synthesized type of $S.sym$, if any.
+  \end{itemize}
+  %%
+  with these rules:
+  %% 
+  \begin{equation*}
+    \begin{array}{r@{\,}l|lr}
+      \hline
+      \hline
+      \multicolumn{2}{c|}{\textsc{Production}}  & \textsc{Semantic Rules} &\\
+      \hline
+      S &→ \textbf{name} := E & E.e = S.e; S.sym = \textbf{name}.sym; S.t = E.t &(1)\\[\jot]
+      &\mid \{~S^*~\} & S^*.e = S.e; S.sym = ε; S.t = ε &(2)\\[\jot]
+      %%
+      S^* &→ S_1~S^*_2 & S_1.e = S^*.e &(3)\\
+      &&S^*_2.e = \text{if $S_1.sym≠ε$ then extend($S^*.e$, $S_1.sym$, $S_1.t$) else $S^*.e$}\\[\jot]
+      &\mid ε & &(4)\\[\jot]
+      \hline
+    \end{array}
+  \end{equation*}
+  %%
+  The SDT has one locations where the attribute dependencies are interesting: $(3)$ copies the
+  synthesized $S_1.sym$ and $S_1.t$ ``left to right'' into the inherited attribute $S^*_2.e$.  To
+  translate this into \HAX, we create a specific scheme for each ``left to right'' dependency.  Also
+  note that in this particular SDT, the $S.sym$ and $S.t$ attributes are used in a trivial way to
+  just allow the containing $S^*$ sequence to extract information from assigments $\textbf{name}:=E$
+  and avoid nested blocks.
+
+  Here is the code with the fifth part of \emph{first.hx}, which implements the SDT above in \HAX.
+  %%
+\begin{code}[xleftmargin=1.66em,numbers=left]
+/* 5. SEMANTIC ANALYSIS. */
+
+// TA, Statement case.
+
+sort Stat | scheme ⟦ TA ⟨Stat⟩ ⟧ ↓e ;
+
+⟦ TA ⟨Name id⟩ := ⟨Exp#2⟩; ⟧ → ⟦ ⟨Name id⟩ := TA ⟨Exp#2⟩; ⟧;
+
+⟦ TA {} ⟧ → ⟦{}⟧;
+
+⟦ TA { ⟨Name id⟩ := ⟨Exp#2⟩; ⟨Stat*#3⟩ } ⟧ → ⟦ TA2 { ⟨Name id⟩ := TA ⟨Exp#2⟩; ⟨Stat*#3⟩ } ⟧;
+{
+  | scheme ⟦ TA2 ⟨Stat⟩ ⟧ ↓e;
+  ⟦ TA2 { ⟨Name id⟩ := ⟨Exp#2 ↑t(#t2)⟩; ⟨Stat*#3⟩ } ⟧ →
+    ⟦ { ⟨Name id⟩ := ⟨Exp#2⟩; ⟨Stat ⟦TA {⟨Stat*#3⟩}⟧ ↓e{id:#t2}⟩ } ⟧;
+}
+
+⟦ TA { {⟨Stat*#1⟩} ⟨Stat*#2⟩ } ⟧ → ⟦ { TA {⟨Stat*#1⟩} TA {⟨Stat*#2⟩} } ⟧;
+\end{code}
+  For $(2,3,4)$ a slight refactoring is in order.  Imagine that we could have written the following
+  pseudo-SDT instead, inlining the leading statement of a sequence and unfolding the rather silly
+  ``one-step'' $S.sym$ and $S.t$ attributes and their ``absent'' $ε$ value:
+  %%
+  \begin{equation*}
+    \begin{array}{r@{\,}l|lr}
+      \hline
+      S &→ \textbf{name} := E & E.e = S.e &(1)\\[\jot]
+      &\mid \{~S^*~\} & S^*.e = S.e &(2)\\[\jot]
+      S^* &→ ε & &(3)\\[\jot]
+      &\mid \textbf{name} := E; S^*_2 & S^*_2.e = \op{extend}(S^*.e, \textbf{name}.sym, E.t) &(4.1)\\[\jot]
+      &\mid \{S^*_1\} S^*_2 & S^*_2.e = S^*_1.e &(4.2)\\
+      \hline
+    \end{array}
+  \end{equation*}
+  %%
+  This is not a usual SDT, because the cases do not follow the productions strictly, however, it is
+  easy to see that these rules cover the full language just in a slightly different way.  This
+  trick, which we can call ``inlining the sequence head,'' is frequently very useful.  For
+  $(1,2,3,4.2)$ these modified rules are straightforward propagations, implemented directly in the
+  code.  (The code in fact goes even further than this: in order to keep the "TA" scheme on just
+  plain "Stat" they implement the cases for $S^*$ by reconstructing a single statement $\{S^*\}$ in
+  each case.)
+
+  Next, we handle $(4.1)$, the ``left-to-right'' dependency, where the inherited attribute $S^*_2.e$
+  depends on the synthesized attribute $E.t$. In \HAX this means that a \emph{wrapper scheme} is
+  needed, and we implement $(4.1)$ as follows (with "Stat" the current sort):
+\begin{code}
+⟦ TA { ⟨Name id⟩ := ⟨Exp#2⟩; ⟨Stat*#3⟩ } ⟧ → ⟦ TA2 { ⟨Name id⟩ := TA ⟨Exp#2⟩; ⟨Stat*#3⟩ } ⟧;
+{
+  | scheme ⟦ TA2 ⟨Stat⟩ ⟧ ↓e;
+  ⟦ TA2 { ⟨Name id⟩ := ⟨Exp#2 ↑t(#t2)⟩; ⟨Stat*#3⟩ } ⟧ →
+    ⟦ { ⟨Name id⟩ := ⟨Exp#2⟩; ⟨Stat ⟦TA {⟨Stat*#3⟩}⟧ ↓e{id:#t2}⟩ } ⟧;
+}
+\end{code}
+  The first rule recurses the "TA" scheme into the expression to associate types with any names. A
+  new, second scheme, "TA2", then takes over once the synthesized attribute has been instantiated
+  for the expression, passing the environment extension to the subsequent statement.  (The "{}"
+  wrappers serve as a grouping for the ``current sort'' status, which here is not in fact changed.)
+
+  Here is the breakdown of the "TA2" rule. The pattern is an instance of the "TA2" syntactic scheme
+  with these fragments:
+  \begin{itemize}
+  \item "TA2"---the prefix marking this as an instance of the scheme.
+  \item "{"…"}" wrapper making the contained "Stat*" sequence into a single "Stat" as required.
+  \item "⟨Name id⟩ :=" an identifier being assigned as part of the first assignment statement;
+    matching will remember the identifier symbol as "id".
+  \item "⟨Exp#2 ↑t(#t2)⟩" is the assigned expression, which includes a constraint that the rule can
+    only fire if there is in fact a type annotation that can match "#t2", corresponding to the idea
+    that it has already been analyzed.
+  \item ";" the end of the assignment statement.
+  \item "⟨Stat*#3⟩" is the following statement sequence that we shall annotate next.
+  \end{itemize}
+  Then comes the arrow ("→") followed by the replacement term:
+  \begin{itemize}
+  \item "{"…"}" wrapper making the contained "Stat*" sequence into a single result "Stat" as
+    required.
+  \item "⟨Name#1⟩ := ⟨Exp#2⟩;" is the assignment that we matched, unchanged (omitting the attribute
+    means it is not modified).
+  \item "⟨Stat …⟩" denotes the replacement follow-on (single) statement, where the ``"…"'' in this
+    case is an embedded computation, namely---
+  \item "⟦TA {⟨Stat*#3⟩}⟧ ↓e{id:#t2}" is the embedded computation to perform to annotate the
+    following statements properly. It is a recursive call of "TA" on a single statement containing
+    the remainder of the statements, annotated with the inherited type environment extended with the
+    binding from the symbol to its type.
+  \end{itemize}
+  Notice how the environment extension uses nested ⟦⟧-brackets because the invocation of "TA" on the
+  following statement needs the inherited attribute argument, which is not permitted in the language
+  syntax.
+  %%
+\end{example}
+
+\begin{manual}[attributes and synthesis rules]\leavevmode
+  %%
+  \begin{enumerate}
+
+  \item Attributes are declared by "attribute" declarations followed by an \emph{attribute form} of
+    one of the following shapes:
+    %%
+    \begin{enumerate}
+    \item "↑Name(ValueSort)" defines that the synthesized attribute "Name" has "ValueSort" values;
+    \item "↓Name(ValueSort)" similarly for a simple inherited attribute;
+    \item "↓Name{SymbolSort:ValueSort}" defines the inherited symbol table attribute "Name" which
+      for each constant or variable of "SymbolSort" has a distinct "ValueSort" value.
+    \end{enumerate}
+
+  \item One can add a simple \emph{synthesized attributes} after a raw data term as
+    "↑"\emph{name}"("\emph{value}")", where the \emph{name} is an attribute name and the
+    \emph{value} can be any term.
+
+  \item Simple \emph{inherited attributes} are added similarly after a raw scheme term as
+    "↓"\emph{name}"("\emph{value}")".
+
+  \item An \emph{inherited symbol table attribute extension} is added to a raw scheme term as
+    "↓"\emph{name}"{"\emph{symbol}":"\emph{value}"}", where the \emph{symbol} is either a variable
+    or a constant (of the appropriate sort).
+
+  \item A \emph{synthesized attribute reference} has the simple form "↑"\emph{name}";" and declares
+    that the current sort synthesizes \emph{name} attributes.
+
+  \item A scheme declaration can include \emph{inherited attribute references} of the form
+    "↓"\emph{name}, which declares that the scheme inherits the \emph{name} attributes.
+
+  \item A \emph{synthesis rule} is a special rule of the form $t↑name(t')$, where the term $t$ may
+    contain subterms with attribute constraints. The rule specifies how terms of the current sort
+    and shape $t$ synthesize \emph{name} attributes.
+
+  \end{enumerate}
+  %%
+  Inherited attributes are managed with regular rules (for schemes) with inherited attribute
+  constraints and extensions.
+  %%
+\end{manual}
+
+\begin{manual}[special replacement terms]
+  The special term "error⟦…⟧" will print the error message embedded in "⟦…⟧", where one is permitted
+  to embed "symbol"-declared variables in "⟨…⟩".
+\end{manual}
+
+
+\section{Intermediate and Code Generation}
+\label{sec:cg}
+
+After the analysis we are ready for generating code.
+
+\begin{figure}[p]\small
+\begin{code}[xleftmargin=1.66em,numbers=left]
+/* 6. INTERMEDIATE CODE GENERATION. */
+
+token T | T ('_' ⟨Int⟩)? ; // temporary
+
+// Concrete syntax & abstract syntax sorts.
+
+sort I_Progr | ⟦⟨I_Instr⟩ ⟨I_Progr⟩⟧ | ⟦⟧ ;
+
+sort I_Instr | ⟦⟨Tmp⟩ = ⟨I_Arg⟩ + ⟨I_Arg⟩; ¶⟧
+             | ⟦⟨Tmp⟩ = ⟨I_Arg⟩ * ⟨I_Arg⟩; ¶⟧
+             | ⟦⟨Tmp⟩ = ⟨I_Arg⟩; ¶⟧
+             | ⟦⟨Name⟩ = ⟨Tmp⟩; ¶⟧ ;
+
+sort I_Arg | ⟦⟨Name⟩⟧
+           | ⟦⟨Float⟩⟧
+           | ⟦⟨Int⟩⟧
+           | ⟦⟨Tmp⟩⟧ ;
+
+sort Tmp | symbol ⟦ ⟨T⟩ ⟧ ;
+
+// Translation scheme.
+
+attribute ↓TmpType{Tmp:Type} ;
+
+sort I_Progr ;
+
+| scheme ⟦ ICG ⟨Stat⟩ ⟧ ↓TmpType ;
+⟦ ICG id := ⟨Exp#2 ↑HasType(#t2)⟩; ⟧
+  → ⟦ { ⟨I_Progr ⟦ICGExp T ⟨Exp#2⟩⟧ ↓TmpType{T:#t2}⟩ } id = T; ⟧ ;
+⟦ ICG { } ⟧ → ⟦ ⟧;
+⟦ ICG { ⟨Stat#s⟩ ⟨Stat*#ss⟩ } ⟧ → ⟦ { ICG ⟨Stat#s⟩ } ICG { ⟨Stat*#ss⟩ } ⟧ ;
+
+| scheme ⟦ ICGExp ⟨Tmp⟩ ⟨Exp⟩ ⟧ ;
+
+⟦ ICGExp T ⟨Int#1⟩ ⟧ → ⟦ T = ⟨Int#1⟩; ⟧ ;
+⟦ ICGExp T ⟨Float#1⟩ ⟧ → ⟦ T = ⟨Float#1⟩; ⟧ ;
+⟦ ICGExp T id ⟧ → ⟦ T = id; ⟧ ;
+
+⟦ ICGExp T ⟨Exp#1⟩ + ⟨Exp#2⟩ ⟧
+  → ⟦ {ICGExp T_1 ⟨Exp#1⟩} {ICGExp T_2 ⟨Exp#2⟩} T = T_1 + T_2; ⟧ ;
+
+⟦ ICGExp T ⟨Exp#1⟩ * ⟨Exp#2⟩ ⟧
+  → ⟦ {ICGExp T_1 ⟨Exp#1⟩} {ICGExp T_2 ⟨Exp#2⟩} T = T_1 * T_2; ⟧ ;
+
+// Helper to flatten code sequence.
+| scheme ⟦ {⟨I_Progr⟩} ⟨I_Progr⟩ ⟧;
+⟦ {} ⟨I_Progr#3⟩ ⟧ → #3 ;
+⟦ {⟨I_Instr#1⟩ ⟨I_Progr#2⟩} ⟨I_Progr#3⟩ ⟧ → ⟦ ⟨I_Instr#1⟩ {⟨I_Progr#2⟩} ⟨I_Progr#3⟩ ⟧;
+\end{code}
+  \caption{Intermediate Code Generation.}
+  \label{fig:icgen}
+\end{figure}
+
+\begin{example}\label{ex:icgen}
+  %%
+  The sixth part of \emph{first.hx} is the translation from abstract syntax to the intermediate
+  representation, shown in Fig.~\ref{fig:icgen}. The fragment contains the usual components: a
+  syntax specification, rewrite schemes, and rewrite rules for the "ICG" scheme.
+
+  The code only uses two new features: "¶" markers in the syntax to indicate newlines, and rules
+  that introduce \emph{fresh} variables (of "Tmp" sort): when the replacement of a rule uses a
+  symbol, which was not in the pattern, then this corresponds to \emph{generating} a new globally
+  unique symbol. So each time the rule
+\begin{code}
+⟦ ICG id := ⟨Exp#2 ↑HasType(#t2)⟩; ⟧
+  → ⟦ { ⟨I_Progr ⟦ICGExp T ⟨Exp#2⟩⟧ ↓TmpType{T:#t2}⟩ } id = T; ⟧ ;
+\end{code}
+  is used, "T" denotes a new so-called ``fresh'' symbol.  When printed, the various incarnations of
+  "T" will be named "T_1", "T_86", \etc
+  %%
+\end{example}
+
+\begin{figure}[p]\small
+\begin{code}[xleftmargin=1.66em,numbers=left]
+/* 7. CODE GENERATOR. */
+
+sort A_Progr | ⟦ ⟨A_Instr⟩ ⟨A_Progr⟩ ⟧ | ⟦⟧ ;
+
+sort A_Instr | ⟦ LDF ⟨Tmp⟩, ⟨A_Arg⟩ ¶⟧
+             | ⟦ STF ⟨Name⟩, ⟨Tmp⟩ ¶⟧
+             | ⟦ ADDF ⟨A_Arg⟩, ⟨A_Arg⟩, ⟨A_Arg⟩ ¶⟧
+             | ⟦ MULF ⟨A_Arg⟩, ⟨A_Arg⟩, ⟨A_Arg⟩ ¶⟧ ;
+
+sort A_Arg | ⟦ #⟨Float⟩ ⟧ | ⟦ #⟨Int⟩ ⟧ | ⟦ ⟨Name⟩ ⟧ | ⟦ ⟨Tmp⟩ ⟧ ;
+
+sort A_Progr | scheme ⟦ CG ⟨I_Progr⟩ ⟧ ;
+
+⟦ CG ⟧ → ⟦⟧ ;
+
+⟦ CG T = ⟨I_Arg#1⟩ + ⟨I_Arg#2⟩ ; ⟨I_Progr#⟩ ⟧
+  → ⟦ ADDF T, [⟨I_Arg#1⟩], [⟨I_Arg#2⟩] CG ⟨I_Progr#⟩ ⟧ ;
+
+⟦ CG T = ⟨I_Arg#1⟩ * ⟨I_Arg#2⟩ ; ⟨I_Progr#⟩ ⟧
+  → ⟦ MULF T, [⟨I_Arg#1⟩], [⟨I_Arg#2⟩] CG ⟨I_Progr#⟩ ⟧ ;
+  
+⟦ CG T = ⟨I_Arg#1⟩ ; ⟨I_Progr#⟩ ⟧
+  → ⟦ LDF T, [⟨I_Arg#1⟩] CG ⟨I_Progr#⟩ ⟧ ;
+
+⟦ CG name = T ; ⟨I_Progr#⟩ ⟧
+  → ⟦ STF name, T CG ⟨I_Progr#⟩ ⟧ ;
+
+sort A_Arg | scheme ⟦ [⟨I_Arg⟩] ⟧ ;
+⟦ [T] ⟧ → ⟦ T ⟧ ;
+⟦ [name] ⟧ → ⟦ name ⟧ ;
+⟦ [⟨Float#1⟩] ⟧ → ⟦ #⟨Float#1⟩ ⟧ ;
+⟦ [⟨Int#1⟩] ⟧ → ⟦ #⟨Int#1⟩ ⟧ ;
+\end{code}
+  \caption{Code Generation.}
+  \label{fig:cgen}
+\end{figure}
+
+\begin{example}\label{ex:cgen}
+  The seventh part of \emph{first.hx} is the final translation "CG" from the intermediate
+  representation to assembly code. This uses no new features, and is shown in Fig.~\ref{fig:cgen},
+  however, it is still worth a sanity check, walking through the "CG" scheme and checking that all
+  syntactic cases are covered.
+\end{example}
+
+\begin{remark}[concrete \emph{vs.} raw syntax]
+  In the presentation we have chosen to use \emph{concrete syntax} even for semantic
+  operations. This has the advantage of allowing direct invocation of even complex structured
+  calculations from the command line but it does ``pollute'' the syntax of the defined language.
+  (Production versions of \HAX (not yet released) will have the option of generating parsers that
+  ignore concrete syntax of schemes when running the compiler.) It is sometimes practical to define
+  ``bridge schemes'' that make schemes available both in syntax and raw; we give an example of this
+  in the following section.
+\end{remark}
+
+
+\section{Main}
+\label{sec:main}
+
+Finally, we put everything together.
+
+\begin{example}
+  The eighth and last fragment of \emph{first.hx} is the main compilation function, which pulls
+  together the three stages defined in previous sections.
+\begin{code}[xleftmargin=1.66em,numbers=left]
+/* 8. MAIN. */
+
+sort A_Progr | scheme ⟦ Compile ⟨Stat⟩ ⟧ ;
+⟦ Compile ⟨Stat#1⟩ ⟧ → ⟦ CG ICG TA ⟨Stat#1⟩ ⟧ ;
+\end{code}
+  It is also possible to define wrapper schemes that can be invoked with an option, this is useful
+  when the input term is read from a file where it is not obvious to include the compiler
+  instructions.
+\begin{code}[xleftmargin=1.66em,numbers=left,firstnumber=last]
+| scheme Compile(Stat);
+Compile(#stat) → ⟦ Compile ⟨Stat#stat⟩ ⟧ ;
+\end{code}
+  This is the "--action" we invoked back in Com.~\ref{com:all}.  Such wrapper raw schemes must have
+  a single argument.
+\end{example}
+
+\begin{manual}[building and running]\label{man:run}\leavevmode
+  %%
+  To use \HAX you need a copy of the \emph{hacs} directory somewhere. If you are working on a \HAX
+  specification, say \emph{mycompiler.hx}, then your working directory should have a \emph{Makefile}
+  containing (at least) the following:
+  %%
+\begin{code}[xleftmargin=1.66em,numbers=left,commandchars=\\\{\}]
+# Makefile for mycompiler.
+
+# HACS configuration.
+HACS = $(abspath \textcolor{blue}{\emph{hacs}})
+include $(HACS)/Makefile-hx
+
+# Dependencies.
+mycompiler.run: mycompiler.hx
+\end{code}
+  %%
+  where you have replaced \texttt{\textcolor{blue}{\emph{hacs}}} with the path to the \HAX directory
+  on your system (as written the system expects to find \emph{hacs} as a local subdirectory of your
+  working directory). With this setup, and a suitable \emph{mycompiler.hx}, you have the following
+  options:
+  %%
+  \begin{enumerate}
+
+  \item "make mycompiler.run" will generate the script \emph{mycompiler.run}, which implements the
+    compiler you specify in \emph{mycompiler.hx}. Generation creates a number of support files,
+    specifically
+    \begin{enumerate}
+    \item \emph{build} subdirectory has runtime resources needed by the script.
+    \item \emph{src} subdirectory contains auxiliary Java resources used by the build process.
+    \item \emph{mycompiler.crs-installed} and \emph{mycompiler.pg-installed} record when the
+      generated parser and rewrite system were installed.
+    \end{enumerate}
+    Note that the first time, some utility programs are compiled from C to ensure that \HAX is fully
+    enabled on your system.
+
+  \item "make clean" will remove all temporaries not needed for running the compiler script.
+
+  \item "make realclean" will remove all traces of the generated compiler.
+
+  \item "make distclean" will remove all traces of the generated compiler as well as all generated
+    \HAX tooling files. Do not do this unless you really mean it: recovering a useable \HAX system
+    requires getting a fresh copy of \emph{hacs.zip} or half an hour of CPU time on nontrivial
+    hardware.
+
+  \end{enumerate}
+  %%
+  The generated script refers absolutely to files under the \emph{hacs} directory, so the generated
+  \emph{mycompiler.run} script itself can be moved but the \emph{hacs} directory cannot.
+
+  The script accepts a number of options:
+  %% 
+  \begin{enumerate}
+
+  \item "--sort="\emph{Sort} sets the expected sort (and thus parser productions) for the input to
+    \emph{Sort}. The input is read, normalized, and printed.
+
+  \item "--action="\emph{Constructor} sets the computation for the compiler to \emph{Constructor},
+    which must be a unary raw scheme; the argument sort of \emph{Constructor} defines the parser
+    productions to use.  The input is read, wrapped in the action, normalized, and printed.
+
+  \item "--term="\emph{term} use the \emph{term} as the input.
+
+  \item "--input="\emph{file} reads the input from \emph{file}.
+
+  \item "--output="\emph{file} sends the input to \emph{file} (the default is the standard output).
+
+  \item "--verbose="\emph{n} sets the verbosity of the underlying \CRSX rewrite engine to $n$. The
+    default is 0 (quiet) but 1--3 are useful (above 3 you get a lot of low level diagnostic output).
+
+  \item "--parse-verbose" activates verbose output from JavaCC of the parsing.
+
+  \end{enumerate}
+  %%
+  You must provide one of "--sort" or "--action", and one of "--term" and "--input".
+
+  \HAX will eventually contain a convention for defining ``main'' sorts and schemes such that
+  defaults can be provided for the configuration options.
+\end{manual}
+
+
+
+\appendix\small
+
+\section{Tables}
+\label{app:tables}
+
+\begin{notation}[used unicode characters]\label{nota:unicode}\leavevmode
+\begin{displaymath}
+  \begin{tabular}{|c|c|c|}
+    \hline
+    \emph{Glyph} & \emph{Code Point} & \emph{Character} \\
+    \hline
+    {¬} & U+00AC & logical negation sign \\
+    {¶} & U+00B6 & paragraph sign \\
+    ↑ & U+2191 & upwards arrow \\
+    → & U+2192 & rightwards arrow \\
+    ↓ & U+2193 & downwards arrow \\
+    ⟦ & U+27E6 & mathematical left white square bracket \\
+    ⟧ & U+27E7 & mathematical right white square bracket \\
+    ⟨ & U+27E8 & mathematical left angle bracket \\
+    ⟩ & U+27E9 & mathematical right angle bracket \\
+    \hline
+  \end{tabular}
+\end{displaymath}
+If you are using a Linux computer (or any where the display is controlled by the X Window System),
+then you can create a file called \emph{.XCompose}, which has your special characters. A minimal one
+looks something like this (adjust for your locale, \etc):
+\begin{code}[fontsize=\footnotesize]
+include "/usr/share/X11/locale/en_US.UTF-8/Compose"
+<Multi_key> <P> <P>                       : "¶" U00B6 # PARAGRAPH SIGN
+<Multi_key> <u> <greater>                 : "↑" U2191 # UPWARDS ARROW
+<Multi_key> <minus> <greater>             : "→" U2192 # RIGHTWARDS ARROW
+<Multi_key> <d> <greater>                 : "↓" U2193 # DOWNWARDS ARROW
+<Multi_key> <bracketleft> <bracketleft>   : "⟦" U27E6 # MATHEMATICAL LEFT WHITE SQUARE BRACKET
+<Multi_key> <bracketright> <bracketright> : "⟧" U27E7 # MATHEMATICAL RIGHT WHITE SQUARE BRACKET
+<Multi_key> <less> <period>               : "⟨" U27E8 # MATHEMATICAL LEFT ANGLE BRACKET
+<Multi_key> <greater> <period>            : "⟩" U27E9 # MATHEMATICAL RIGHT ANGLE BRACKET
+\end{code}
+(We have included a slightly more extensive one in the \emph{gentle} directory.) You should then map
+the \emph{MultiKey} key to some key on your keyboard in the keyboard options (this is done in the
+keyboard settings), and then you are ready to enter the fancy characters as the indicated three-key
+combinations. In some programs (like Eclipse) you need to select the ``Input Method'' to be the ``X
+Input Method'' for this to work.
+\end{notation}
+
+\begin{manual}[limitations]\label{lim:list}\leavevmode
+  \begin{itemize}
+
+  \item At most one "nested" declaration per "token".
+
+  \item Precedence can only be used on self references, \ie, "⟨E@2⟩" can only occur inside
+    productions for the sort "E".
+
+  \item It is not possible to use binders and left recursion in the same production with the same
+    precedence.
+
+  \item Only \emph{direct} left recursion is currently supported, \ie, the left recursion should be
+    within a single production.
+
+  \item Productions can share a prefix but only within productions for the same sort, and the prefix
+    has to be literally identical unit by unit, \ie,
+\begin{code}
+sort S | ⟦ ⟨A⟩ then ⟨B⟩ then C ⟧
+       | ⟦ ⟨A⟩ then ⟨B⟩ or else D ⟧ ;
+\end{code}
+    is fine but
+\begin{code}
+sort S | ⟦ ⟨A⟩ then ⟨B⟩ then C ⟧
+       | ⟦ ⟨A⟩ ⟨ThenB⟩ or else D ⟧ ;
+sort ThenB | ⟦ then ⟨B⟩ ⟧;
+\end{code}
+    is not.
+
+  \item It is not possible to left-factor a binder (so multiple binding constructs cannot have the
+    same binder prefix).
+
+  \item Binders must occur to the left of all their occurrences.
+
+  \item Repeated production references cannot be used in sorts that also use precedence, \ie, you
+    cannot mix "⟨E*⟩" and "⟨E@2⟩" inside the productions for the sort "E".
+
+  \item Variables embedded in "error⟦…⟧" instructions must start with a lower case letter.
+
+  \item When using the "symbol" qualifier on a reference to a token then the token \emph{must} allow
+    ending in "_"$n$ for $n$ any natural number.
+
+  \item When using the same name for a symbol inside of "⟦…⟧" and the corresponding raw variable
+    outside of the ⟦⟧, then the common symbol and variable name must be a plain word starting with a
+    lower case letter.
+
+  \item Special terms like "error⟦…⟧" cannot be used as raw subterms.
+
+  \item The "default" rule qualifier is rather fragile and does not yet always work.
+
+  \end{itemize}
+\end{manual}
+
+\section{Bonus Examples}
+\label{app:bonus}
+
+Some additional examples. \emph{Note: still need to be worked through.}
+
+\begin{example}[\emph{crsx/samples/gentle/bool.hx}]\leavevmode
+\inputhacs{../samples/bool.hx}
+\end{example}
+
+\begin{example}[\emph{crsx/samples/gentle/deriv.hx}]\leavevmode
+\inputhacs{../samples/deriv.hx}
+\end{example}
+
+
+\section{Common Errors}
+\label{app:errors}
+
+\begin{error}[\HAX syntax]\leavevmode
+\begin{code}
+Exception in thread "main" java.lang.RuntimeException: net.sf.crsx.CRSException:
+ Encountered " "." ". "" at line 35, column 6.
+Was expecting one of:
+    <MT_Repeat> ...
+    "%Repeat" ...
+    <MT_Attributes> ...
+\end{code}
+  Indicates a simple syntax errors in the \emph{.hx} file.
+\end{error}
+
+\begin{error}[user syntax]\leavevmode
+\begin{code}
+Exception in thread "main" java.lang.RuntimeException:
+  net.sf.crsx.CRSException: net.sf.crsx.parser.ParseException:
+mycompiler.crs: Parse error in embedded myDecSome term at line 867, column 42:
+ ⟦ $TA_Let2b ⟨Dec (#d)⟩{ ⟨DecSome (#ds)⟩} ⟧ at line 867, column 42
+ Encountered " "\u27e9" "\u27e8Dec (#d)\u27e9 "" at line 867, column 53
+…
+\end{code}
+  This indicates a concrete syntax error in some parsed syntax---inside "⟦…⟧"---in the \emph{.hx}
+  file. The offending fragment is given in double angles in the message. Check that it is correctly
+  entered in the \HAX specification in a way that corresponds to a syntax production. Note that the
+  line/column numbers refer to the generated \emph{build/…Rules.crs} file, which us not immediately
+  helpful (this is a known bug). In error messages a sort is typically referenced as a lower case
+  prefix followed by the sort name---here "myDecSome" indicates that the problem is with parsing the
+  "DecSome" sort of the "My" parser.
+\end{error}
+
+\begin{error}[JavaCC noise]\leavevmode
+\begin{code}
+Java Compiler Compiler Version ??.??_?? (Parser Generator)
+(type "javacc" with no arguments for help)
+Reading from file net/sf/crsx/samples/gentle/FirstParser.jj . . .
+Warning: Line 769, Column 51: Non-ASCII characters used in regular expression.
+Please make sure you use the correct Reader when you create the parser,
+ one that can handle your character set.
+File "TokenMgrError.java" does not exist.  Will create one.
+File "ParseException.java" does not exist.  Will create one.
+File "Token.java" does not exist.  Will create one.
+File "SimpleCharStream.java" does not exist.  Will create one.
+Parser generated with 0 errors and 1 warnings.
+Note: net/sf/crsx/samples/gentle/FirstParser.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+\end{code}
+  These are ``normal'' messages from JavaCC.
+\end{error}
+
+\begin{error}[missing library]\leavevmode
+\begin{code}
+gcc -std=c99 -g    -c -o crsx_scan.o crsx_scan.c
+crsx.c:11:30: fatal error: unicode/umachine.h: No such file or directory
+\end{code}
+  The \HAX tools only use one library in C: ICU. You should get the \emph{libicu-dev} package (or
+  similar) for your system.
+\end{error}
+
+\begin{error}[meta-variable mistake]\leavevmode
+\begin{code}
+Error in rule Tiger-Ty2222222222111_9148-1: contractum uses undefined meta-variable (#es)
+Errors prevent normalization.
+make: *** [pr3.crs-installed] Error 1
+\end{code}
+  A rule uses the metavariable "#es" in the replacement without defining it in the corresponding
+  pattern.
+\end{error}
+
+\begin{error}[]\leavevmode
+\begin{code}
+/home/krisrose/Desktop/teaching/.../hacs/cookmain PG pr3.hxt > pr3.pg
+cookmain: crsx.c:528: bufferEnd: Assertion
+   `(((childTerm)->descriptor == ((void *)0)) ? 0 :
+        (childTerm)->descriptor->arity) == bufferTop(buffer)->index' failed.
+/bin/sh: line 1: 14278 Aborted
+  (core dumped) /home/krisrose/Desktop/teaching/.../hacs/cookmain PG pr3.hxt > pr3.pg
+\end{code}
+  This indicates an arity error: a raw term in the \emph{.hx} file does not have the right number of
+  arguments.
+\end{error}
+
+
+\bibliography{crs}
+
+\end{document}
+
+
+%% $Log: hacs-gently.tex,v $
+%% Revision 1.29  2014/02/11 15:49:11  krisrose
+%% Hash.crs fixed to allow linear use of hash.
+%%
+%% Revision 1.28  2014/01/26 21:14:34  krisrose
+%% Compiled NumericEqual primitive fixed for rounding errors.
+%%
+%% Revision 1.27  2014/01/21 18:40:46  krisrose
+%% Regenerated rulecompiler.
+%%
+%% Revision 1.26  2014/01/16 14:07:17  krisrose
+%% Update compiled $[Decimal] to also handle double.
+%%
+%% Revision 1.25  2013/12/05 04:10:03  krisrose
+%% Manual fix.
+%%
+%% Revision 1.24  2013/12/03 21:41:55  krisrose
+%% Update of hacs.zip.
+%%
+%% Revision 1.23  2013/12/02 12:21:21  krisrose
+%% Option fixes.
+%%
+%% Revision 1.22  2013/11/25 06:35:09  krisrose
+%% HACS cleanup.
+%%
+%% Revision 1.21  2013/11/21 21:10:55  krisrose
+%% Duplicate table row removed.
+%%
+%% Revision 1.20  2013/11/21 06:19:39  krisrose
+%% HACS documentation rough version done.
+%%
+%% Revision 1.19  2013/11/21 04:01:32  krisrose
+%% Newline support in HACS.
+%%
+%% Revision 1.18  2013/11/20 05:08:17  krisrose
+%% HACS functional.
+%%
+%% Revision 1.17  2013/11/19 21:00:12  krisrose
+%% first.hx refactored for hacs-gently runs again.
+%%
+%% Revision 1.16  2013/11/18 02:28:07  krisrose
+%% HACS fully functional.
+%%
+%% Revision 1.15  2013/11/17 03:20:20  krisrose
+%% reify option respects simple-terms.
+%% Main .dr not output when modules generated.
+%%
+%% Revision 1.14  2013/10/30 04:28:28  krisrose
+%% HACS synthesized attributes almost ready!
+%%
+%% Revision 1.13  2013/10/21 18:02:12  krisrose
+%% HACS attribute grammar fixed.
+%%
+%% Revision 1.12  2013/10/17 16:51:43  krisrose
+%% Locify avoids $[PassLocationProperties] when possible.
+%%
+%% Revision 1.11  2013/10/12 21:35:40  krisrose
+%% Location and HACS work.
+%% Checkpoint before major attribute distribution fix.
+%%
+%% Revision 1.10  2013/10/06 15:38:28  krisrose
+%% First attempt at VariableUse with propserties.
+%% Preparing for HACS for unmetaness.
+%%
+%% Revision 1.9  2013/09/30 11:06:42  krisrose
+%% All HACS examples work again.
+%%
+%% Revision 1.8  2013/09/29 05:49:58  krisrose
+%% Attributes next...
+%%
+%% Revision 1.7  2013/09/27 10:05:12  krisrose
+%% Document RegExps.
+%%
+%% Revision 1.6  2013/09/25 17:14:15  krisrose
+%% Change default action to Drop.
+%%
+%% Revision 1.5  2013/09/20 08:32:04  krisrose
+%% Formatting.
+%%
+%% Revision 1.4  2013/09/20 08:17:57  krisrose
+%% Drop diagnostic output.
+%%
+%% Revision 1.3  2013/09/20 08:11:58  krisrose
+%% jar refresh
+%%
+%% Revision 1.2  2013/09/20 08:03:50  krisrose
+%% Ready for the NYU students...
+%%
+%% Revision 1.1  2013/09/18 14:42:24  krisrose
+%% Moved 'dragon' to 'gentle'.
+%%
+%% New.
+
+%%%------------------------------------------------------------------
+%%% Tell Emacs that this is a LaTeX document and how it is formatted:
+%%% Local Variables:
+%%% mode:latex
+%%% TeX-master: t
+%%% fill-column:100
+%%% End:

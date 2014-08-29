@@ -1,5 +1,5 @@
-build
-rulecompiler
+/build
+/rulecompiler
 *~
 #*
 *.tmp
