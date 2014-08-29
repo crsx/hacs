@@ -9,15 +9,19 @@ realclean:: clean
 	rm -fr build rulecompiler
 gitclean:: realclean
 
-# All targets propagate to subdirectories.
-all install::
+# Targets propagate to subdirectories...
+all install ::
 	mkdir -p build
 	$(MAKE) -C src BUILD=../build $@
 	$(MAKE) -C doc BUILD=../build $@
 
-clean realclean gitclean::
+clean realclean gitclean ::
 	$(MAKE) -C src BUILD=../build $@
 	$(MAKE) -C doc BUILD=../build $@
+	$(MAKE) -C samples BUILD=../build $@
 
-samples/% src/%: .
+samples/% src/% : .
 	$(MAKE) -C src BUILD=../build ../$@
+
+doc/% : .
+	$(MAKE) -C doc BUILD=../build ../$@
