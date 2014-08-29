@@ -1,6 +1,6 @@
-/** HxParser.pg: GRAMMAR FOR .hx HACS FILES (HACS version %%%VERSION%%%). */
+/** %%%PREFIX%%%Parser.pg: GRAMMAR FOR .hx HACS FILES (RAW HACS version %%%VERSION%%%). */
 
-class org.crsx.hacs.HxParser : <Module>, <ModuleName>, <EmbeddedModule>,
+class org.crsx.hacs.%%%PREFIX%%%Parser : <Module>, <ModuleName>, <EmbeddedModule>,
  <Declaration>, <Declarations>, <SortAbstraction>, <Rule>,
  <Sort>, <SortParam>, <SortName>, <SortNames>, <SimpleSort>, <SimpleSorts>, <SubstituteSorts>, <SubstituteSort>, <Tagging>,
  <SortAlternative>, <SortAlternatives>, <Form>, <FormPrec>,
@@ -8,27 +8,28 @@ class org.crsx.hacs.HxParser : <Module>, <ModuleName>, <EmbeddedModule>,
  <BindersScopeSorts>, <BindersScopeSort>, <ScopeSortPrecRepeat>, <ScopeSort>, <Repeat>, <Priority>,
  <FragmentName>, <FragmentRef>,
  <RegExp>, <RegExpChoice>, <RegExpUnits>, <RegExpUnit>, <RegExpSimple>, <RegExpLeaf>, <Word>,
- <Term>, <NotVariableTerm>, <Attributes>, <Attribute>, <AttributeValue>, <Scopes>, <Scope>, <Terms>,
+ %%%TERMNONTERMINALS%%%
  <Literal>, <Constructor>, <MetaVariable>, <MetaVariables>, <Variable>, <Variables>, <AttributeName>,
  <RegExpClass>, <CC>, <CC_RangesTop>, <CC_Ranges>, <CC_FirstRangeStartChar>, <CC_NonDashRangeStartChar>, <CC_RangeChar>,
  <ParsedForm>, <PP>
 
-prefix hx
+prefix %%%PREFIX%%%
 
 declarations
 %{
-static String hx(String s) {return "HX"+net.sf.crsx.util.Util.quoteJavaIdentifierPart(s);} // prefix for constructors
+static String pre(String s) {return "%%%PREFIX%%%"+net.sf.crsx.util.Util.quoteJavaIdentifierPart(s);} // prefix for constructors
 static String unwrap(String s) {return s.substring(1, s.length()-1);}
 static String unpp(String s) {return "\001"+s.substring(1, s.length()-1)+"\001";}
 static String checkModuleString(String s) throws ParseException {if (java.util.regex.Pattern.matches("[\"]([a-z0-9]+[.])*[A-Z][A-Za-z0-9]*[\"]", s)) return s; else throw new ParseException("Illegal module name "+s);}
 
 private String storedSort = "";
+String unmeta(String s) {if (System.getenv("meta") == null) return s.substring(1, s.length()-1); else return /*TODO: reparse as storedSort meta-term.*/ null;}
 %}
 
 
 //// HACS-INTERNAL META SYNTAX.
 
-// Guillemets ("French quotes") used for embedded  CRSX terms (for sort hacks in Hx.crs).
+// Guillemets ("French quotes") used for embedded  CRSX terms (for sort hacks in %%%PREFIX%%%.crs).
 <Embedded> (*) ::= Embedded$$:unwrap .
 token Embedded (*) ::= '«' (~['«','»'])* '»' .
 
@@ -39,27 +40,29 @@ inject[<Embedded>]  ::=  '%<PRODUCTION_NAME>', '', '' .
 
 //// STRUCTURE.
 
-<Module> ::= {top-module}:hx <EmbeddedModule> .
+<Module> ::= {top-module}:pre <EmbeddedModule> .
 
-<EmbeddedModule> ::= MODULE:hx <ModuleName> LBRACE <Storing_Declarations> RBRACE .
+<EmbeddedModule> ::= MODULE:pre <ModuleName> LBRACE <Storing_Declarations> RBRACE .
 
 <Declarations> ::= ( {$Cons} <Declaration> <Declarations> | {$Nil} ).
 
 <Declaration> ::=
-  {embedded-module}:hx <EmbeddedModule> SEMI
-| IMPORT:hx <ModuleName> ( LPAREN (<SortNames> | {$Nil}) RPAREN | {$Nil} ) SEMI
+  {embedded-module}:pre <EmbeddedModule> SEMI
+| IMPORT:pre <ModuleName> ( LPAREN (<SortNames> | {$Nil}) RPAREN | {$Nil} ) SEMI
 
-| SPACE:hx <RegExp> SEMI
-| TOKEN ( {'token'}:hx <Store_SortName> BAR <RegExp> SEMI | FRAGMENT:hx <FragmentName> BAR <RegExp> SEMI )
-| FRAGMENT:hx <FragmentName> BAR <RegExp> SEMI
+| SPACE:pre <RegExp> SEMI
+| TOKEN ( {'token'}:pre <Store_SortName> BAR <RegExp> SEMI | FRAGMENT:pre <FragmentName> BAR <RegExp> SEMI )
+| FRAGMENT:pre <FragmentName> BAR <RegExp> SEMI
 
-| ATTRIBUTE:hx <AttributeKind> <AttributeName> <AttributeForm> <AttributeOptions> SEMI
+| ATTRIBUTE:pre <AttributeKind> <AttributeName> <AttributeForm> <AttributeOptions> SEMI
 
-| {sort}:hx (MAIN:hx|{no-main}:hx) SORT <Store_SortName> <Repeat> <SortAbstraction> SEMI
-| {anonymous}:hx <SortAlternatives> SEMI
-| (RULE)? {rule}:hx <Rule> SEMI
-| {nestedDeclarations}:hx LBRACE <Declarations> RBRACE
+| {sort}:pre (MAIN:pre|{no-main}:pre) SORT <Store_SortName> <Repeat> <SortAbstraction> SEMI
+| {anonymous}:pre <SortAlternatives> SEMI
+| (RULE)? {rule}:pre <Rule> SEMI
+| {nestedDeclarations}:pre LBRACE <Declarations> RBRACE
 .
+
+<AttributeKind> ::= ( {AttributeKindUp}:pre UP | {AttributeKindDown}:pre DOWN ).
 
 
 //// TOKEN DECLARATIONS.
@@ -67,46 +70,46 @@ inject[<Embedded>]  ::=  '%<PRODUCTION_NAME>', '', '' .
 <RegExp> (RE) ::= {$Cons} <RegExpChoice> ( BAR <RegExp> | {$Nil} ) .
 
 <RegExpChoice> (RE) ::=
-  NESTED:hx <RegExpSimple> <RegExpSimple>
-| {RegExpConcat}:hx <RegExpUnits>
+  NESTED:pre <RegExpSimple> <RegExpSimple>
+| {RegExpConcat}:pre <RegExpUnits>
 .
 
 <RegExpUnits> (RE) ::= {$Cons} <RegExpUnit> <RegExpUnits> | {$Nil} .
 
-<RegExpUnit> (RE) ::= {RegExpUnit}:hx <RegExpSimple> <Repeat> .
+<RegExpUnit> (RE) ::= {RegExpUnit}:pre <RegExpSimple> <Repeat> .
 
 <Repeat> (DEFAULT,RE) ::=
-  PLUS ( {RepeatSomeSep}:hx SUB (<RegExpLeaf> | {RegExpWord}:hx <Separator>) | {RepeatSome}:hx )
-| {RepeatMaybeSome}:hx STAR
-| {RepeatMaybe}:hx QUEST
-| {RepeatSingle}:hx
+  PLUS ( {RepeatSomeSep}:pre SUB (<RegExpLeaf> | {RegExpWord}:pre <Separator>) | {RepeatSome}:pre )
+| {RepeatMaybeSome}:pre STAR
+| {RepeatMaybe}:pre QUEST
+| {RepeatSingle}:pre
 .
 
 <RegExpLeaf> (DEFAULT,RE) ::=
-  {RegExpString}:hx <String>
-| {RegExpWord}:hx <Word>
+  {RegExpString}:pre <String>
+| {RegExpWord}:pre <Word>
 .
 
 <RegExpSimple> (RE) ::=
   <RegExpLeaf>
-| {RegExpRef}:hx <FragmentRef>
-| {RegExpClass}:hx <RegExpClass>
-| {RegExpAny}:hx DOT
-| {RegExpClass}:hx {RegExpClassChar}:hx (ESCAPEDCHAR$) {RegExpClassDone}:hx
-| {RegExpNest}:hx LPAREN <RegExp> RPAREN
+| {RegExpRef}:pre <FragmentRef>
+| {RegExpClass}:pre <RegExpClass>
+| {RegExpAny}:pre DOT
+| {RegExpClass}:pre {RegExpClassChar}:pre (ESCAPEDCHAR$) {RegExpClassDone}:pre
+| {RegExpNest}:pre LPAREN <RegExp> RPAREN
 .
 
 
 //// ATTRIBUTE DECLARATIONS
 
 <AttributeForm> ::=
-  {AttributeFormSimple}:hx LPAREN <Sort> RPAREN
-| LBRACE <Sort>:# ( {AttributeFormMap}:hx {{#}} COLON <Sort> RBRACE
-                  | {AttributeFormSet}:hx {{#}} RBRACE )
+  {AttributeFormSimple}:pre LPAREN <Sort> RPAREN
+| LBRACE <Sort>:# ( {AttributeFormMap}:pre {{#}} COLON <Sort> RBRACE
+                  | {AttributeFormSet}:pre {{#}} RBRACE )
 .
 
 <AttributeOptions> ::= {$Cons} <AttributeOption> <AttributeOptions> | {$Nil} .
-<AttributeOption> ::= {AttributeOption}:hx <Variable> <Constructor> .
+<AttributeOption> ::= {AttributeOption}:pre <Variable> <Constructor> .
 
 
 //// SORT PRODUCTION DECLARATIONS 
@@ -114,67 +117,67 @@ inject[<Embedded>]  ::=  '%<PRODUCTION_NAME>', '', '' .
 <SortNames> ::= {$Cons} <SortName> (COMMA <SortNames> | {$Nil}) . 
 
 <SortAbstraction> ::=
-  {SortAbstractionParam}:hx <Variable>^a <SortAbstraction>[a]
-| {SortAbstractionBody}:hx <SortAlternatives>
+  {SortAbstractionParam}:pre <Variable>^a <SortAbstraction>[a]
+| {SortAbstractionBody}:pre <SortAlternatives>
 .
 
 <SortAlternatives> ::= {$Cons} <SortAlternative> <SortAlternatives> | {$Nil} .
 
 <SortAlternative> ::= BAR (
-  SCHEME:hx <Form>
-| {SynthesizedRef}:hx UP <AttributeName> 
-| SUGAR:hx <Form> ARROW <Term>
-| SYMBOL:hx <Form>
-| STATIC:hx (SYMBOL)? <Form>
-| {data}:hx (DATA)? <Form> <Tagging>
+  SCHEME:pre <Form>
+| {SynthesizedRef}:pre UP <AttributeName> 
+| SUGAR:pre <Form> ARROW <Term>
+| SYMBOL:pre <Form>
+| STATIC:pre (SYMBOL)? <Form>
+| {data}:pre (DATA)? <Form> <Tagging>
 ).
 
 <Form> ::=
   <Constructor>:#C
-    ( {FormParsedSorted}:hx {{#C}} <ParsedForm> <FormPrec> <InheritedRefs>
-    | {FormConstruction}:hx {{#C}} ( LPAREN (<BindersScopeSorts> | {$Nil}) RPAREN | {$Nil} ) <InheritedRefs>
+    ( {FormParsedSorted}:pre {{#C}} <ParsedForm> <FormPrec> <InheritedRefs>
+    | {FormConstruction}:pre {{#C}} ( LPAREN (<BindersScopeSorts> | {$Nil}) RPAREN | {$Nil} ) <InheritedRefs>
     )
-| {FormParsed}:hx <ParsedForm> <FormPrec> <InheritedRefs>
+| {FormParsed}:pre <ParsedForm> <FormPrec> <InheritedRefs>
 .
 
 <BindersScopeSorts> ::= {$Cons} <BindersScopeSort> (COMMA <BindersScopeSorts> | {$Nil}) .
 
 <BindersScopeSort> ::=
   <Sort>:#Sort
-   ( {BinderScopeSort}:hx BINDS <Variable>!!! {{#Sort}} <BindersScopeSort>
-   | {ScopeSort}:hx {{#Sort}} <Repeat> (LBRACKET <SubstituteSorts> RBRACKET | {$Nil})
+   ( {BinderScopeSort}:pre BINDS <Variable>!!! {{#Sort}} <BindersScopeSort>
+   | {ScopeSort}:pre {{#Sort}} <Repeat> (LBRACKET <SubstituteSorts> RBRACKET | {$Nil})
    )
-| {BinderScopeSort}:hx LBRACKET <Variable>!!! COLON <Sort> <BindersScopeSortTail>
+| {BinderScopeSort}:pre LBRACKET <Variable>!!! COLON <Sort> <BindersScopeSortTail>
 .
 
 <BindersScopeSortTail> ::=
   RBRACKET <BindersScopeSort>
-| {BinderScopeSort}:hx COMMA <Variable>!!! COLON <Sort> <BindersScopeSortTail>
+| {BinderScopeSort}:pre COMMA <Variable>!!! COLON <Sort> <BindersScopeSortTail>
 .
 
 <SubstituteSorts> ::= {$Cons} <SubstituteSort> ( COMMA <SubstituteSorts> | {$Nil} ) | {$Nil}  . 
-<SubstituteSort> ::= <Variable>!!!:#v ( {SubstituteSort}:hx {{#v}} (COLON|AS) <Sort> |
-  {SubstituteNoSort}:hx {{#v}} ) .
+<SubstituteSort> ::= <Variable>!!!:#v ( {SubstituteSort}:pre {{#v}} (COLON|AS) <Sort> |
+  {SubstituteNoSort}:pre {{#v}} ) .
 
-<Sort> ::= {Sort}:hx <SimpleSort> <SimpleSorts> .
+<Sort> ::= {Sort}:pre <SimpleSort> <SimpleSorts> .
 
 <SimpleSorts> ::= LPAREN ( {$Cons} <SimpleSort> <SimpleSortTail> | {$Nil} ) RPAREN | {$Nil} .
 <SimpleSortTail> ::= COMMA {$Cons} <SimpleSort> <SimpleSortTail> | {$Nil} .
 
 <SimpleSort> ::=
-  {SortName}:hx <SortName> <MetaVariables>
-| {SortParam}:hx <SortParam>
+  {SortName}:pre <SortName> <MetaVariables>
+| {SortParam}:pre <SortParam>
 .
 <MetaVariables> ::= {$Cons} <MetaVariable> {$Nil} | {$Nil} .
 <SortParam> ::= <Variable>! .
 
-<ScopeSortPrecRepeat> ::= {ScopeSortPrecRepeat}:hx <ScopeSort> <FormPrec> <Repeat> .
+<ScopeSortPrecRepeat> ::= {ScopeSortPrecRepeat}:pre <ScopeSort> <FormPrec> <Repeat> .
 <ScopeSort> ::=
   <Sort>:#Sort
-   ( {ScopeSortBinder}:hx BINDS <Variable>!!! {{#Sort}}
-   | {ScopeSort}:hx {{#Sort}} <Repeat> (LBRACKET <SubstituteSorts> RBRACKET | {$Nil})
+   ( {ScopeSortBinder}:pre BINDS <Variable>!!! {{#Sort}}
+   | {ScopeSort}:pre {{#Sort}} <Repeat> (LBRACKET <SubstituteSorts> RBRACKET | {$Nil})
    )
-| {ScopeSortBinder}:hx LBRACKET <Variable>!!! COLON <Sort> RBRACKET
+| {ScopeSortBinder}:pre LBRACKET <Variable>!!! COLON <Sort> RBRACKET
 .
 
 <FormPrec> ::= ( AT <Natural> | {"0"} ) .
@@ -182,86 +185,24 @@ inject[<Embedded>]  ::=  '%<PRODUCTION_NAME>', '', '' .
 <Tagging> ::= ( {$Cons} TAG <Constructor> ({$Nil}) | {$Nil} ).
 
 <InheritedRefs> ::=( {$Cons} <InheritedRef> <InheritedRefs> | {$Nil} ).
-<InheritedRef> ::= {InheritedRef}:hx DOWN <AttributeName> . 
+<InheritedRef> ::= {InheritedRef}:pre DOWN <AttributeName> . 
 
 //// RULES.
 
 <Rule> ::=
- {Rule}:hx <Priority>
+ {Rule}:pre <Priority>
  <Construction>:#first
- ( COLON {{#first}} <Construction> | ({OMITTED}:hx) {{#first}} )
- ( ARROW <Term> | {OMITTED}:hx )
+ ( COLON {{#first}} <Construction> | ({OMITTED}:pre) {{#first}} )
+ ( ARROW <Term> | {OMITTED}:pre )
 .
-<Priority> ::=( DEFAULT:hx | PRIORITY:hx | {Normal}:hx ).
+<Priority> ::=( DEFAULT:pre | PRIORITY:pre | {Normal}:pre ).
 
-//// TERMS.
 
-<Term> ::=
-  <Variable>!!!:#v ( {Special}:hx {{#v}} CONCRETE$$:unwrap:{n} | {VariableUse}:hx {{#v}} <Attributes>)
-| <NotVariableTerm>
-.
+////////////////////////////////////////////////////////////////////////
 
-<NotVariableTerm> ::=
-  <Constructor>:#C
-  <Repeat>:#R
-  ( {UnparsedSorted}:hx {{#C}} {{#R}} (CONCRETE$:unwrap) <Attributes>
-  | {MetaApplicationSorted}:hx {{#C}} {{#R}} <MetaVariable> ( LBRACKET (<Terms> | {$Nil}) RBRACKET | {$Nil} ) <Attributes>
-  | {ConstructionSorted}:hx {{#C}} {{#R}} <Constructor> ( LPAREN (<Scopes> | {$Nil}) RPAREN
-                                                         | LBRACKET (<Scopes> | {$Nil}) RBRACKET
-                                                         | {$Nil}                                ) <Attributes>
-  | {VariableUseSorted}:hx {{#C}} {{#R}} <Variable>!!! <Attributes>
-  | {LiteralSorted}:hx {{#C}} {{#R}} <Literal> <Attributes>
-  | {Construction}:hx {{#C}} ( LPAREN (<Scopes> | {$Nil}) RPAREN
-                              | LBRACKET (<Scopes> | {$Nil}) RBRACKET
-                              | {$Nil}                                ) <Attributes>
-  )
-| {Literal}:hx <Literal> <Attributes>
-| {Unparsed}:hx (CONCRETE$:unwrap) <Attributes>
-| {MetaApplication}:hx <MetaVariable> ( LBRACKET (<Terms> | {$Nil}) RBRACKET | {$Nil} ) <Attributes>
-.
+%%%TERMPRODUCTIONS%%%
 
-// Note: these are subsets of the above, generating identical terms.
-<Construction> ::=
-  <Constructor>:#C
-  <Repeat>:#R
-  ( {UnparsedSorted}:hx {{#C}} {{#R}} (CONCRETE$:unwrap) <Attributes>
-  | {ConstructionSorted}:hx {{#C}} {{#R}} <Constructor> ( LPAREN (<Scopes> | {$Nil}) RPAREN
-                                                         | LBRACKET (<Scopes> | {$Nil}) RBRACKET
-                                                         | {$Nil}                                ) <Attributes>
-  | {LiteralSorted}:hx {{#C}} {{#R}} <Literal> <Attributes>
-  | {Construction}:hx {{#C}} ( LPAREN (<Scopes> | {$Nil}) RPAREN
-                              | LBRACKET (<Scopes> | {$Nil}) RBRACKET
-                              | {$Nil}                                ) <Attributes>
-  )
-| {Literal}:hx <Literal> <Attributes>
-| {Unparsed}:hx (CONCRETE$:unwrap) <Attributes>
-.
-
-<Scopes> ::= {$Cons} <Scope> (COMMA <Scopes> | {$Nil}) .
-<Scope> ::=
-  {Scope}:hx ({$Nil}) <NotVariableTerm>
-| <Variable>!!!:#v ({Scope}:hx ({$Cons} {{#v}} <Variables>) DOT <Term> | {Scope}:hx ({$Nil}) ({VariableUse}:hx {{#v}}))
-| {Scope}:hx LBRACKET (<VariableList> | {$Nil}) RBRACKET <Term>
-.
-
-<Variables> ::= {$Cons} <Variable>!!! <Variables> | {$Nil} .
-<VariableList> ::= {$Cons} <Variable>!!! ( COMMA <VariableList> | {$Nil} ) .
-
-<Terms> ::= {$Cons} <Term> (COMMA <Terms> | {$Nil}) .
-
-<Attributes> ::= ( {$Cons} <Attribute> <Attributes> | {$Nil} ).
-<Attribute> ::=
-  {Attribute}:hx <AttributeKind> <AttributeName> <AttributeValue>
-.
-
-<AttributeKind> ::= ( {AttributeKindUp}:hx UP | {AttributeKindDown}:hx DOWN ).
-
-<AttributeValue> ::= 
-  {AttributeValue}:hx LPAREN <Term> RPAREN
-| LBRACE ( <Term>:# ( {AttributeKeyValue}:hx {{#}} COLON <Term> RBRACE
-                    | {AttributeKey}:hx {{#}} RBRACE )
-         | {AttributeNotKey}:hx NOT <Term> RBRACE )
-.
+////////////////////////////////////////////////////////////////////////
 
 //// TOKENS.
 
@@ -412,7 +353,7 @@ token WORD (RE) ::= ~['⟨','⟩','⟦','⟧','(',')','[',']','.','*','+','?',';
 //// CC SUBPARSER FOR REGULAR EXPRESSION CHARACTER CLASSES.
 
 // Tokenizer for *entire* character class expression.
-<RegExpClass> (RE) ::= CHAR_CLASS$$:unwrap:{hxCC} .
+<RegExpClass> (RE) ::= CHAR_CLASS$$:unwrap:{%%%PREFIX%%%CC} .
 token CHAR_CLASS (RE) ::= '[' ('^')? (']')? (~[']',\\,\n] | ESCAPEDCHAR)* ']' .
 
 // (Re)Parser to parse the actual regular expression.
@@ -426,7 +367,7 @@ token CC_OTHER (CC) ::= ~['^',']','-',\\,\n,\u1] | ESCAPEDCHAR .
 token CC_SKIP (CC) ::= \u1 .
 
 <CC_RangesTop> (CC) ::=
-  {RegExpClassNot}:hx CC_NOT <CC_FirstRangeStartChar>:#lo <CC_RangeTail #lo>
+  {RegExpClassNot}:pre CC_NOT <CC_FirstRangeStartChar>:#lo <CC_RangeTail #lo>
 | <CC_FirstRangeStartChar>:#lo <CC_RangeTail #lo>
 | CC_SKIP <CC_RangesTop>
 .
@@ -434,14 +375,14 @@ token CC_SKIP (CC) ::= \u1 .
 <CC_Ranges> (CC) ::=
   <CC_RangeChar>:#lo <CC_RangeTail #lo>
 | CC_SKIP <CC_Ranges>
-| {RegExpClassDone}:hx
+| {RegExpClassDone}:pre
 .
 
 <CC_RangeTail #lo> (CC) ::=
-  CC_DASH ( {RegExpClassRange}:hx {{#lo}} <CC_RangeChar> <CC_Ranges> | {RegExpClassChar}:hx {{#lo}} {RegExpClassDone}:hx )
-| {RegExpClassChar}:hx {{#lo}} <CC_NonDashRangeStartChar>:#lo2 <CC_RangeTail #lo2>
+  CC_DASH ( {RegExpClassRange}:pre {{#lo}} <CC_RangeChar> <CC_Ranges> | {RegExpClassChar}:pre {{#lo}} {RegExpClassDone}:pre )
+| {RegExpClassChar}:pre {{#lo}} <CC_NonDashRangeStartChar>:#lo2 <CC_RangeTail #lo2>
 | CC_SKIP  <CC_RangeTail #lo>
-| {RegExpClassChar}:hx {{#lo}} {RegExpClassDone}:hx
+| {RegExpClassChar}:pre {{#lo}} {RegExpClassDone}:pre
 .
 
 <CC_FirstRangeStartChar> (CC) ::= (CC_RBRACKET$ | CC_DASH$ | CC_OTHER$) .
@@ -453,14 +394,14 @@ token CC_SKIP (CC) ::= \u1 .
 
 // Special syntactic tokens *inside* concrete syntax.
 
-<ParsedForm> ::= CONCRETE$$:unpp:{hxPP} .
+<ParsedForm> ::= CONCRETE$$:unpp:{%%%PREFIX%%%PP} .
 
 <PP> (PP) ::=
-  {ParsedFormSpace}:hx (PP_CONCRETESPACE$) <PP>
-| {ParsedFormWord}:hx (PP_CONCRETEWORD$) <PP>
-| {ParsedFormTerm}:hx PP_UNCONCRETE$$:unpp:{hxScopeSortPrecRepeat}  <PP>
+  {ParsedFormSpace}:pre (PP_CONCRETESPACE$) <PP>
+| {ParsedFormWord}:pre (PP_CONCRETEWORD$) <PP>
+| {ParsedFormTerm}:pre PP_UNCONCRETE$$:unpp:{%%%PREFIX%%%ScopeSortPrecRepeat}  <PP>
 | PP_SKIP <PP>
-| {ParsedFormDone}:hx
+| {ParsedFormDone}:pre
 .
 
 token PP_CONCRETESPACE (PP) ::= [' ',\t\r\n,\ub6]+ . // no comments but include special spacing marks

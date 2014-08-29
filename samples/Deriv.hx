@@ -1,6 +1,6 @@
-module "org.crsx.samples.Deriv" {
+module "org.crsx.hacs.samples.Deriv" {
 
-import "bool.hx"(B);
+import "Bool.hx";
 
 //// SYNTAX.
 

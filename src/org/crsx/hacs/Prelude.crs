@@ -159,11 +159,24 @@ StringConcat3When[Ok, $String, $String, $String] :: $String;
 
 StringJoin[$List[$String], $String] :: $String;
 -               : StringJoin[(), #sep] → "" ;
--[Data[#1,#sep]]: StringJoin[(#1;#s), #sep] → StringJoin2[#s, #sep, #1] ;
+-[Data[#1,#sep]]: StringJoin[(#1;#s), #sep] → StringJoin1[#s, #sep, #1] ;
 
-StringJoin2[$List[$String], $String, $String] :: $String;
--          : StringJoin2[(), #sep, #result] → #result ;
--[Data[#1]]: StringJoin2[(#1;#s), #sep, #result] → $[:,#result,#sep,#1] ;
+StringJoin1[$List[$String], $String, $String] :: $String;
+-                       : StringJoin1[(), #sep, #result] → #result ;
+-[Data[#1,#sep,#result]]: StringJoin1[(#1;#s), #sep, #result] → $[:,#result,#sep,#1] ;
+
+∀ a b . WrappedStringJoin[$List[$String], $String, $String, $String] :: $String;
+-[Discard[#open,#sep,#close]]: WrappedStringJoin[()     , #open, #sep, #close] → "" ;
+-                            : WrappedStringJoin[(#1;#s), #open, #sep, #close] → StringConcat3[#open, StringJoin1[#s, #sep, #1], #close] ;
+
+∀ a . MapStringConcat[x::a.$String, $List[a]] :: $String;
+MapStringConcat[x.#[x], ()] → "" ;
+MapStringConcat[x.#[x], (#1;##)] → StringConcat[#[#1], MapStringConcat[x.#[x], ##]] ;
+
+∀ a . MapStringConcat[x::a.$String, $List[a]] :: $String;
+MapStringConcatWhen[ok x.#[ok,x], ()] → "" ;
+MapStringConcatWhen[ok x.#[ok,x], (#1;##)] → StringConcat[#[OK,#1], MapStringConcatWhen[ok x.#[ok,x], ##]] ;
+
 
 
 /////////////////////////////////////////////////////////////////////
@@ -342,6 +355,10 @@ TextConcat[#text1, #text2] → %n⟪« #text1 »« #text2 »⟫ ;
 ∀ a . MapTextConcat[x::a.Text, $List[a]] :: Text;
 MapTextConcat[x.#[x], ()] → %n⟪⟫ ;
 MapTextConcat[x.#[x], (#1;##)] → %n⟪« #[#1] »« MapTextConcat[x.#[x], ##] »⟫ ;
+
+∀ a . MapTextConcat[x::a.Text, $List[a]] :: Text;
+MapTextConcatWhen[ok x.#[ok,x], ()] → %n⟪⟫ ;
+MapTextConcatWhen[ok x.#[ok,x], (#1;##)] → %n⟪« #[OK,#1] »« MapTextConcat[ok x.#[ok,x], ##] »⟫ ;
 
 // Map every element of a list to a text and wrap the text pieces together (outputs nothing for an empty list).
 

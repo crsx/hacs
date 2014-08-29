@@ -1,10 +1,11 @@
 # Makefile for compiling hacs/src.
 
+
 # SETUP.
 
 #TODO: Eliminate this hard-coding once crsx package exists...
 CRSXROOT = $(abspath ../../crsx)
-VERSION = $(shell cat ../VERSION)
+BUILD = ../build
 include ../Hacs.mk
 
 
@@ -19,16 +20,38 @@ install::
 
 # HACS BUILD DEPENDENCIES.
 
+# Get ball rolling...
+all:: $(BUILD)/org/crsx/hacs/HxRaw.class
+
+# Generic cleanup.
 clean::
 	rm -f org/crsx/hacs/*~ org/crsx/hacs/#*
-	rm -f org/crsx/hacs/*.class org/crsx/hacs/*.java org/crsx/hacs/*.jj
+	rm -f org/crsx/hacs/*.java org/crsx/hacs/*.jj org/crsx/hacs/*.crsp
+	rm -fr $(BUILD)
 
-# Parser for .hx files.
-org/crsx/hacs/HxParser.jj: org/crsx/hacs/HxParser.pg
-org/crsx/hacs/HxParser.java: org/crsx/hacs/HxParser.jj
-org/crsx/hacs/HxParser.class: org/crsx/hacs/HxParser.java
+# Raw parser for .hx files (as used by CookPG).
+org/crsx/hacs/HxRaw.pg: org/crsx/hacs/HxRaw.pgtemplate org/crsx/hacs/Hx.pgnames org/crsx/hacs/Hx.pgpre org/crsx/hacs/Hx.pgpost
+	sed \
+	 -e '/%%%HXNONTERMINALS%%%/ bnames' \
+	 -e '/%%%HXPREPRODUCTIONS%%%/ bpre' \
+	 -e '/%%%HXPOSTPRODUCTIONS%%%/ bpost' \
+	 -e 'b' \
+	 -e ':names' -e 'r org/crsx/hacs/Hx.pgnames' -e 'd' \
+	 -e ':pre'   -e 'r org/crsx/hacs/Hx.pgpre' -e 'd' \
+	 -e ':post'  -e 'r org/crsx/hacs/Hx.pgpost' -e 'd' \
+	 org/crsx/hacs/HxRaw.pgtemplate \
+	| sed -e 's/%%%PREFIX%%%/Hx/g' \
+	> '$@.tmp'
+	mv '$@.tmp' '$@'
+#
+org/crsx/hacs/HxRaw.jj: org/crsx/hacs/HxRaw.pg
+org/crsx/hacs/HxRaw.java: org/crsx/hacs/HxRaw.jj
+$(BUILD)/org/crsx/hacs/HxRaw.class: org/crsx/hacs/HxRaw.java
+#
+clean::; rm -f org/crsx/hacs/HxRaw.pg
 
-all:: org/crsx/hacs/HxParser.class
+
+
 
 
 

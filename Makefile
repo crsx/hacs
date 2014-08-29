@@ -10,6 +10,14 @@ realclean:: clean
 gitclean:: realclean
 
 # All targets propagate to subdirectories.
-all clean realclean install gitclean::
-	$(MAKE) -C src $@
-	$(MAKE) -C doc $@
+all install::
+	mkdir -p build
+	$(MAKE) -C src BUILD=../build $@
+	$(MAKE) -C doc BUILD=../build $@
+
+clean realclean gitclean::
+	$(MAKE) -C src BUILD=../build $@
+	$(MAKE) -C doc BUILD=../build $@
+
+samples/% src/%: .
+	$(MAKE) -C src BUILD=../build ../$@

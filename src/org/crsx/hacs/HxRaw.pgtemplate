@@ -1,0 +1,90 @@
+//// HxRaw.pg: GRAMMAR FOR .hx RAW HACS FILES.
+//// Copyright © 2012,2014 Kristoffer H. Rose <krisrose@rcsx.org>
+
+class org.crsx.hacs.HxRaw :
+%%%HXNONTERMINALS%%%
+ <Term>, <NotVariableTerm>, <Attributes>, <Attribute>, <AttributeValue>, <Scopes>, <Scope>, <Terms>
+
+prefix %%%PREFIX%%%
+
+declarations
+%{
+static String pre(String s) {return "%%%PREFIX%%%"+net.sf.crsx.util.Util.quoteJavaIdentifierPart(s);} // prefix for constructors
+static String unwrap(String s) {return s.substring(1, s.length()-1);}
+static String unpp(String s) {return "\001"+s.substring(1, s.length()-1)+"\001";}
+static String checkModuleString(String s) throws ParseException {if (java.util.regex.Pattern.matches("[\"]([a-z0-9]+[.])*[A-Z][A-Za-z0-9]*[\"]", s)) return s; else throw new ParseException("Illegal module name "+s);}
+
+private String storedSort = "";
+String unmeta(String s) {if (System.getenv("meta") == null) return s.substring(1, s.length()-1); else return /*TODO: reparse as storedSort meta-term.*/ null;}
+%}
+
+
+//// HACS-INTERNAL META RAW SYNTAX.
+
+// Guillemets ("French quotes") used for embedded  CRSX terms (for sort hacks???).
+<Embedded> (*) ::= Embedded$$:unwrap .
+token Embedded (*) ::= '«' (~['«','»'])* '»' .
+
+// Meta-variables #SortN# can be used in hx syntax. 
+meta[<SortParam>]  ::=  '#<PRODUCTION_NAME>' ( (DIGIT)* | '_' (DIGIT | UPPER | LOWER)* ) '#' , '⦃', '⦄', '∥' .
+inject[<Embedded>]  ::=  '%<PRODUCTION_NAME>', '', '' .
+
+
+////////////////////////////////////////////////////////////////////////
+%%%HXPREPRODUCTIONS%%%
+////////////////////////////////////////////////////////////////////////
+
+
+//// RAW TERMS.
+
+<Term> ::=
+  <Variable>!!!:#v ( {Special}:pre {{#v}} CONCRETE$$:unwrap:{n} | {VariableUse}:pre {{#v}} <Attributes>)
+| <NotVariableTerm>
+.
+
+<NotVariableTerm> ::=
+  <Constructor>:#C
+  <Repeat>:#R
+  ( {UnparsedSorted}:pre {{#C}} {{#R}} (CONCRETE$:unmeta) <Attributes>
+  | {MetaApplicationSorted}:pre {{#C}} {{#R}} <MetaVariable> ( LBRACKET (<Terms> | {$Nil}) RBRACKET | {$Nil} ) <Attributes>
+  | {ConstructionSorted}:pre {{#C}} {{#R}} <Constructor> ( LPAREN (<Scopes> | {$Nil}) RPAREN
+                                                        | LBRACKET (<Scopes> | {$Nil}) RBRACKET
+                                                        | {$Nil}                                ) <Attributes>
+  | {VariableUseSorted}:pre {{#C}} {{#R}} <Variable>!!! <Attributes>
+  | {LiteralSorted}:pre {{#C}} {{#R}} <Literal> <Attributes>
+  | {Construction}:pre {{#C}} ( LPAREN (<Scopes> | {$Nil}) RPAREN
+                             | LBRACKET (<Scopes> | {$Nil}) RBRACKET
+                             | {$Nil}                                ) <Attributes>
+  )
+| {Literal}:pre <Literal> <Attributes>
+| {Unparsed}:pre (CONCRETE$:unmeta) <Attributes>
+| {MetaApplication}:pre <MetaVariable> ( LBRACKET (<Terms> | {$Nil}) RBRACKET | {$Nil} ) <Attributes>
+.
+
+<Scopes> ::= {$Cons} <Scope> (COMMA <Scopes> | {$Nil}) .
+<Scope> ::=
+  {Scope}:pre ({$Nil}) <NotVariableTerm>
+| <Variable>!!!:#v ({Scope}:pre ({$Cons} {{#v}} <Variables>) DOT <Term> | {Scope}:pre ({$Nil}) ({VariableUse}:pre {{#v}}))
+| {Scope}:pre LBRACKET (<VariableList> | {$Nil}) RBRACKET <Term>
+.
+
+<Variables> ::= {$Cons} <Variable>!!! <Variables> | {$Nil} .
+<VariableList> ::= {$Cons} <Variable>!!! ( COMMA <VariableList> | {$Nil} ) .
+
+<Terms> ::= {$Cons} <Term> (COMMA <Terms> | {$Nil}) .
+
+<Attributes> ::= ( {$Cons} <Attribute> <Attributes> | {$Nil} ).
+<Attribute> ::=
+  {Attribute}:pre <AttributeKind> <AttributeName> <AttributeValue>
+.
+
+<AttributeValue> ::= 
+  {AttributeValue}:pre LPAREN <Term> RPAREN
+| LBRACE ( <Term>:# ( {AttributeKeyValue}:pre {{#}} COLON <Term> RBRACE
+                    | {AttributeKey}:pre {{#}} RBRACE )
+         | {AttributeNotKey}:pre NOT <Term> RBRACE )
+.
+
+////////////////////////////////////////////////////////////////////////
+%%%HXPOSTPRODUCTIONS%%%
+////////////////////////////////////////////////////////////////////////
