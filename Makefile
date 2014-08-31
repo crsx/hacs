@@ -5,28 +5,27 @@ all::
 install::
 clean::
 	rm -f *.tmp *~ ./#* *.log *~
+	rm -fr build temp rulecompiler
 realclean:: clean
-	rm -fr build rulecompiler
 gitclean:: realclean
 
 # Targets propagate to subdirectories...
 all install ::
-	mkdir -p build
-	$(MAKE) -C src BUILD=../build $@
-	$(MAKE) -C doc BUILD=../build $@
+	$(MAKE) -C src $@
+	$(MAKE) -C doc $@
 
 clean realclean gitclean ::
-	$(MAKE) -C src BUILD=../build $@
-	$(MAKE) -C doc BUILD=../build $@
-	$(MAKE) -C samples BUILD=../build $@
+	$(MAKE) -C src     $@
+	$(MAKE) -C doc     $@
+	$(MAKE) -C samples $@
 
-src/% build/% : all
-	$(MAKE) -C src BUILD=../build ../$@
+src/% build/% temp/% : all
+	$(MAKE) -C src ../$@
 
 samples/% : all
-	$(MAKE) -C samples BUILD=../build ../$@
+	$(MAKE) -C samples ../$@
 
 doc/% : .
-	$(MAKE) -C doc BUILD=../build ../$@
+	$(MAKE) -C doc ../$@
 
 ### TODO: packaging and installation...

@@ -5,6 +5,8 @@
 
 #TODO: Eliminate this hard-coding once crsx package exists...
 CRSXROOT = $(abspath ../../crsx)
+HACS = .
+TEMP = ../temp
 BUILD = ../build
 include ../Hacs.mk
 
@@ -28,7 +30,7 @@ clean::
 	@set -x && rm -fr $(BUILD)
 
 # Raw parser for .hx files (as used by CookPG).
-$(BUILD)/org/crsx/hacs/HxRaw.pg: org/crsx/hacs/HxRaw.pgtemplate org/crsx/hacs/Hx.pgnames org/crsx/hacs/Hx.pgpre org/crsx/hacs/Hx.pgpost
+$(TEMP)/org/crsx/hacs/HxRaw.pg: $(HACS)/org/crsx/hacs/HxRaw.pgtemplate $(HACS)/org/crsx/hacs/Hx.pgnames $(HACS)/org/crsx/hacs/Hx.pgpre $(HACS)/org/crsx/hacs/Hx.pgpost
 	@set -x \
 	&& $(NOEXEC) mkdir -p $(dir $@) \
 	&& $(NOEXEC) sed \
@@ -44,14 +46,9 @@ $(BUILD)/org/crsx/hacs/HxRaw.pg: org/crsx/hacs/HxRaw.pgtemplate org/crsx/hacs/Hx
 	> '$@.tmp'
 	@set -x && mv '$@.tmp' '$@'
 #
-$(BUILD)/org/crsx/hacs/HxRaw.jj: $(BUILD)/org/crsx/hacs/HxRaw.pg
-$(BUILD)/org/crsx/hacs/HxRaw.java: $(BUILD)/org/crsx/hacs/HxRaw.jj
-$(BUILD)/org/crsx/hacs/HxRaw.class: $(BUILD)/org/crsx/hacs/HxRaw.java
-
-
-
-
-
+$(TEMP)/org/crsx/hacs/HxRaw.jj: $(TEMP)/org/crsx/hacs/HxRaw.pg
+$(TEMP)/org/crsx/hacs/HxRaw.java: $(TEMP)/org/crsx/hacs/HxRaw.jj
+$(BUILD)/org/crsx/hacs/HxRaw.class: $(TEMP)/org/crsx/hacs/HxRaw.java
 
 
 

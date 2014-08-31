@@ -2,7 +2,9 @@
 #
 # Assumes the following environment variables set:
 # CRSXROOT - the root of the CRSX project (TODO: eliminate).
-# BUILD - the (existing) root directory for all generated files.
+# HACS - the (existing) root directory of main HACS source files.
+# TEMP - the root directory for all generated source files.
+# BUILD - the root directory for all generated binary and resource files.
 
 
 # STANDARD TARGETS.
@@ -51,6 +53,7 @@ $(RULEC):; cd $(CRSXROOT) && make bin/crsx
 #
 PG = $(JAVA) -ea -cp "$(CRSXJAR)" net.sf.crsx.pg.PG $(EXTRA)
 CRSX = $(JAVA) -ea -cp "$(BUILD):$(CRSXJAR)" net.sf.crsx.run.Crsx allow-unnamed-rules $(EXTRA)
+CRSX_NOEXTRA = $(JAVA) -ea -cp "$(BUILD):$(CRSXJAR)" net.sf.crsx.run.Crsx allow-unnamed-rules
 
 # So -n works...
 NOEXEC = $(if,$(findstring -n,$(MAKE)),echo)
@@ -59,17 +62,18 @@ SH_EXTRA = :
 
 # RULES.
 
-# Main rule: Generate "build stamp" by generating binaries everything $(BUILD)
+# Main rule: Generate "build stamp" by generating everything
 
 %.build-stamp : %.hx
 	@/bin/echo -e '\n>>> GENERATING $@.\n' && $(SH_EXTRA) && set -x \
-	&& module=$$( $(CRSX) \
+	&& $(NOEXEC) ( cd $(HACS) && find . -name '*.crs' | while read fn; do dir=$(BUILD)/$$(dirname $$fn) && mkdir -p $$dir && cp $$fn $(BUILD)/$$dir; done ) \
+	&& module=$$( $(CRSX_NOEXTRA) \
 		"grammar=('org.crsx.hacs.HxRaw';'net.sf.crsx.text.Text';)" \
-		rules=org/crsx/hacs/CookPG.crs wrapper=PG-GetModuleName \
+		rules=$(HACS)/org/crsx/hacs/CookPG.crs wrapper=PG-GetModuleName \
 		input='$<' category=HxModule sink=net.sf.crsx.text.TextSink ) \
 	&& dir=$(dir $@) && package=$${module%.*} && name=$${module##*.} && packagedir=$$(echo $$package | tr '.' '/') \
-	&& $(NOEXEC) mkdir -p $(BUILD)/$$packagedir \
-	&& $(NOEXEC) cp $< $(BUILD)/$$packagedir/ \
+	&& $(NOEXEC) mkdir -p $(TEMP)/$$packagedir \
+	&& $(NOEXEC) cp $< $(TEMP)/$$packagedir/ \
 	&& $(NOEXEC) $(MAKE) $(BUILD)/$$packagedir/$$name.class \
 	&& touch $@
 
@@ -88,61 +92,62 @@ clean::; find . -name '*.build-stamp' | xargs rm -f
 #
 #               ↳ %.crs                    ↲
 
-
-$(BUILD)/%.hxp : $(BUILD)/%.hx
+$(TEMP)/%.hxp : $(TEMP)/%.hx
 	@/bin/echo -e '\n>>> PARSING HACS TO TERM $@.\n' && $(SH_EXTRA) && set -x \
+	&& $(NOEXEC) mkdir -p $(TEMP) \
 	&& $(NOEXEC) $(CRSX) \
 		"grammar=('org.crsx.hacs.HxRaw';'net.sf.crsx.text.Text';)" \
 		input='$<' category=HxModule \
 		output='$@.tmp' simple-terms max-indent=10 width=255 \
 	&& $(NOEXEC) mv '$@.tmp' '$@'
 
-$(BUILD)/%.pgbase : $(BUILD)/%.hxp
+$(TEMP)/%.pgbase : $(TEMP)/%.hxp
 	@/bin/echo -e '\n>>> GENERATING PARSER GENERATOR BASE $@.\n' && $(SH_EXTRA) && set -x \
 	&& $(NOEXEC) $(CRSX) \
 		"grammar=('org.crsx.hacs.HxRaw';'net.sf.crsx.text.Text';)" \
-		rules=org/crsx/hacs/CookPG.crs wrapper=PG \
+		rules=$(HACS)/org/crsx/hacs/CookPG.crs wrapper=PG \
 		input='$<' \
 		output='$@.tmp' sink=net.sf.crsx.text.TextSink \
 	&& $(NOEXEC) mv '$@.tmp' '$@'
 
-$(BUILD)/%.pg : $(BUILD)/%.pgbase
+$(TEMP)/%.pg : $(TEMP)/%.pgbase
 	@/bin/echo -e '\n>>> GENERATING PLAIN TERM PARSER GENERATOR $@.\n' && $(SH_EXTRA) && set -x \
 	&& $(NOEXEC) sed -e 's;/[*][*][*]PG: *\(.*\)[*][*][*]/;\1;' -e 's;/[*][*][*].*[*][*][*]/;;' '$<' > '$@.tmp' \
 	&& $(NOEXEC) mv '$@.tmp' '$@'
 
-$(BUILD)/%-sorts.crs : $(BUILD)/%.pgbase
+$(BUILD)/%-sorts.crs : $(TEMP)/%.pgbase
 	@/bin/echo -e '\n>>> GENERATING PLAIN TERM SORT DECLARATIONS $@.\n' && $(SH_EXTRA) && set -x \
 	&& $(NOEXEC) sed -n -e 's;/[*][*][*]SORTS: *\(.*\)[*][*][*]/;\1;p' -e 's;/[*][*][*].*[*][*][*]/;;' '$<' > '$@.tmp' \
 	&& $(NOEXEC) mv '$@.tmp' '$@'
 
-$(BUILD)/%Meta.pg : $(BUILD)/%.pgbase
+$(TEMP)/%Meta.pg : $(TEMP)/%.pgbase
 	@/bin/echo -e '\n>>> GENERATING META-SOURCE PARSER GENERATOR $@.\n' && $(SH_EXTRA) && set -x \
 	&& $(NOEXEC) sed -e 's;\(^class [^ ]*\) ;\1Meta ;' -e 's;/[*][*][*]METAPG: *\(.*\)[*][*][*]/;\1;' -e 's;/[*][*][*].*[*][*][*]/;;' '$<' > '$@.tmp' \
 	&& $(NOEXEC) mv '$@.tmp' '$@'
 
-$(BUILD)/%Meta-sorts.crs : $(BUILD)/%.pgbase
+$(BUILD)/%Meta-sorts.crs : $(TEMP)/%.pgbase
 	@/bin/echo -e '\n>>> GENERATING META-SOURCE SORT DECLARATIONS $@.\n' && $(SH_EXTRA) && set -x \
 	&& $(NOEXEC) sed -n -e 's;/[*][*][*]METASORTS: *\(.*\)[*][*][*]/;\1;p' -e 's;/[*][*][*].*[*][*][*]/;;' '$<' > '$@.tmp' \
 	&& $(NOEXEC) mv '$@.tmp' '$@'
 
 # Compile PG+CRSX source files to Java source files.
 
-$(BUILD)/%.jj: $(BUILD)/%.pg
+$(TEMP)/%.jj: $(TEMP)/%.pg
 	@/bin/echo -e '\n>>> GENERATING JavaCC GRAMMAR $@.\n' && $(SH_EXTRA) && set -x \
-	&& $(NOEXEC) $(PG) -source=$(BUILD) $<
+	&& $(NOEXEC) $(PG) -source=$(TEMP) $<
 
 # Compile PG+CRSX source files to C source files.
 
 # Compile JavaCC+Java source files.
 
-$(BUILD)/%.java: $(BUILD)/%.jj
+$(TEMP)/%.java: $(TEMP)/%.jj
 	@/bin/echo -e '\n>>> GENERATING JAVA PARSER SOURCE $@.\n' && $(SH_EXTRA) && set -x \
 	&& cd $(dir $<) && $(NOEXEC) $(JAVACC) $(notdir $<)
 
-$(BUILD)/%.class: $(BUILD)/%.java
+$(BUILD)/%.class: $(TEMP)/%.java
 	@/bin/echo -e '\n>>> COMPILING JAVA CLASS $@.\n' && $(SH_EXTRA) && set -x \
-	&& $(NOEXEC) cd $(BUILD) && $(NOEXEC) $(JAVAC) -cp ":$(CRSXJAR)" $*.java
+	&& $(NOEXEC) mkdir -p $(BUILD) \
+	&& $(NOEXEC) cd $(TEMP) && $(NOEXEC) $(JAVAC) -d $(BUILD) -cp ":$(CRSXJAR)" $*.java
 
 # Debugging helpers.
 
