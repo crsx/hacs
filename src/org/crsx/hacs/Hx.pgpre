@@ -4,29 +4,29 @@
 
 //// STRUCTURE.
 
-<Module> ::= {top-module}:pre <EmbeddedModule> .
+<Module> ::= {top-module}:hacspre <EmbeddedModule> .
 
-<EmbeddedModule> ::= MODULE:pre <ModuleName> LBRACE <Storing_Declarations> RBRACE .
+<EmbeddedModule> ::= MODULE:hacspre <ModuleName> LBRACE <Storing_Declarations> RBRACE .
 
 <Declarations> ::= ( {$Cons} <Declaration> <Declarations> | {$Nil} ).
 
 <Declaration> ::=
-  {embedded-module}:pre <EmbeddedModule> SEMI
-| IMPORT:pre <ModuleName> ( LPAREN (<SortNames> | {$Nil}) RPAREN | {$Nil} ) SEMI
+  {embedded-module}:hacspre <EmbeddedModule> SEMI
+| IMPORT:hacspre <ModuleName> ( LPAREN (<SortNames> | {$Nil}) RPAREN | {$Nil} ) SEMI
 
-| SPACE:pre <RegExp> SEMI
-| TOKEN ( {'token'}:pre <Store_SortName> BAR <RegExp> SEMI | FRAGMENT:pre <FragmentName> BAR <RegExp> SEMI )
-| FRAGMENT:pre <FragmentName> BAR <RegExp> SEMI
+| SPACE:hacspre <RegExp> SEMI
+| TOKEN ( {'token'}:hacspre <Store_SortName> BAR <RegExp> SEMI | FRAGMENT:hacspre <FragmentName> BAR <RegExp> SEMI )
+| FRAGMENT:hacspre <FragmentName> BAR <RegExp> SEMI
 
-| ATTRIBUTE:pre <AttributeKind> <AttributeName> <AttributeForm> <AttributeOptions> SEMI
+| ATTRIBUTE:hacspre <AttributeKind> <AttributeName> <AttributeForm> <AttributeOptions> SEMI
 
-| {sort}:pre (MAIN:pre|{no-main}:pre) SORT <Store_SortName> <Repeat> <SortAbstraction> SEMI
-| {anonymous}:pre <SortAlternatives> SEMI
-| (RULE)? {rule}:pre <Rule> SEMI
-| {nestedDeclarations}:pre LBRACE <Declarations> RBRACE
+| {sort}:hacspre (MAIN:hacspre|{no-main}:hacspre) SORT <Store_SortName> <Repeat> <SortAbstraction> SEMI
+| {anonymous}:hacspre <SortAlternatives> SEMI
+| (RULE)? {rule}:hacspre <Rule> SEMI
+| {nestedDeclarations}:hacspre LBRACE <Declarations> RBRACE
 .
 
-<AttributeKind> ::= ( {AttributeKindUp}:pre UP | {AttributeKindDown}:pre DOWN ).
+<AttributeKind> ::= ( {AttributeKindUp}:hacspre UP | {AttributeKindDown}:hacspre DOWN ).
 
 
 //// TOKEN DECLARATIONS.
@@ -34,46 +34,46 @@
 <RegExp> (RE) ::= {$Cons} <RegExpChoice> ( BAR <RegExp> | {$Nil} ) .
 
 <RegExpChoice> (RE) ::=
-  NESTED:pre <RegExpSimple> <RegExpSimple>
-| {RegExpConcat}:pre <RegExpUnits>
+  NESTED:hacspre <RegExpSimple> <RegExpSimple>
+| {RegExpConcat}:hacspre <RegExpUnits>
 .
 
 <RegExpUnits> (RE) ::= {$Cons} <RegExpUnit> <RegExpUnits> | {$Nil} .
 
-<RegExpUnit> (RE) ::= {RegExpUnit}:pre <RegExpSimple> <Repeat> .
+<RegExpUnit> (RE) ::= {RegExpUnit}:hacspre <RegExpSimple> <Repeat> .
 
 <Repeat> (DEFAULT,RE) ::=
-  PLUS ( {RepeatSomeSep}:pre SUB (<RegExpLeaf> | {RegExpWord}:pre <Separator>) | {RepeatSome}:pre )
-| {RepeatMaybeSome}:pre STAR
-| {RepeatMaybe}:pre QUEST
-| {RepeatSingle}:pre
+  PLUS ( {RepeatSomeSep}:hacspre SUB (<RegExpLeaf> | {RegExpWord}:hacspre <Separator>) | {RepeatSome}:hacspre )
+| {RepeatMaybeSome}:hacspre STAR
+| {RepeatMaybe}:hacspre QUEST
+| {RepeatSingle}:hacspre
 .
 
 <RegExpLeaf> (DEFAULT,RE) ::=
-  {RegExpString}:pre <String>
-| {RegExpWord}:pre <Word>
+  {RegExpString}:hacspre <String>
+| {RegExpWord}:hacspre <Word>
 .
 
 <RegExpSimple> (RE) ::=
   <RegExpLeaf>
-| {RegExpRef}:pre <FragmentRef>
-| {RegExpClass}:pre <RegExpClass>
-| {RegExpAny}:pre DOT
-| {RegExpClass}:pre {RegExpClassChar}:pre (ESCAPEDCHAR$) {RegExpClassDone}:pre
-| {RegExpNest}:pre LPAREN <RegExp> RPAREN
+| {RegExpRef}:hacspre <FragmentRef>
+| {RegExpClass}:hacspre <RegExpClass>
+| {RegExpAny}:hacspre DOT
+| {RegExpClass}:hacspre {RegExpClassChar}:hacspre (ESCAPEDCHAR$) {RegExpClassDone}:hacspre
+| {RegExpNest}:hacspre LPAREN <RegExp> RPAREN
 .
 
 
 //// ATTRIBUTE DECLARATIONS
 
 <AttributeForm> ::=
-  {AttributeFormSimple}:pre LPAREN <Sort> RPAREN
-| LBRACE <Sort>:# ( {AttributeFormMap}:pre {{#}} COLON <Sort> RBRACE
-                  | {AttributeFormSet}:pre {{#}} RBRACE )
+  {AttributeFormSimple}:hacspre LPAREN <Sort> RPAREN
+| LBRACE <Sort>:# ( {AttributeFormMap}:hacspre {{#}} COLON <Sort> RBRACE
+                  | {AttributeFormSet}:hacspre {{#}} RBRACE )
 .
 
 <AttributeOptions> ::= {$Cons} <AttributeOption> <AttributeOptions> | {$Nil} .
-<AttributeOption> ::= {AttributeOption}:pre <Variable> <Constructor> .
+<AttributeOption> ::= {AttributeOption}:hacspre <Variable> <Constructor> .
 
 
 //// SORT PRODUCTION DECLARATIONS 
@@ -81,67 +81,67 @@
 <SortNames> ::= {$Cons} <SortName> (COMMA <SortNames> | {$Nil}) . 
 
 <SortAbstraction> ::=
-  {SortAbstractionParam}:pre <Variable>^a <SortAbstraction>[a]
-| {SortAbstractionBody}:pre <SortAlternatives>
+  {SortAbstractionParam}:hacspre <Variable>^a <SortAbstraction>[a]
+| {SortAbstractionBody}:hacspre <SortAlternatives>
 .
 
 <SortAlternatives> ::= {$Cons} <SortAlternative> <SortAlternatives> | {$Nil} .
 
 <SortAlternative> ::= BAR (
-  SCHEME:pre <Form>
-| {SynthesizedRef}:pre UP <AttributeName> 
-| SUGAR:pre <Form> ARROW <Term>
-| SYMBOL:pre <Form>
-| STATIC:pre (SYMBOL)? <Form>
-| {data}:pre (DATA)? <Form> <Tagging>
+  SCHEME:hacspre <Form>
+| {SynthesizedRef}:hacspre UP <AttributeName> 
+| SUGAR:hacspre <Form> ARROW <Term>
+| SYMBOL:hacspre <Form>
+| STATIC:hacspre (SYMBOL)? <Form>
+| {data}:hacspre (DATA)? <Form> <Tagging>
 ).
 
 <Form> ::=
   <Constructor>:#C
-    ( {FormParsedSorted}:pre {{#C}} <ParsedForm> <FormPrec> <InheritedRefs>
-    | {FormConstruction}:pre {{#C}} ( LPAREN (<BindersScopeSorts> | {$Nil}) RPAREN | {$Nil} ) <InheritedRefs>
+    ( {FormParsedSorted}:hacspre {{#C}} <ParsedForm> <FormPrec> <InheritedRefs>
+    | {FormConstruction}:hacspre {{#C}} ( LPAREN (<BindersScopeSorts> | {$Nil}) RPAREN | {$Nil} ) <InheritedRefs>
     )
-| {FormParsed}:pre <ParsedForm> <FormPrec> <InheritedRefs>
+| {FormParsed}:hacspre <ParsedForm> <FormPrec> <InheritedRefs>
 .
 
 <BindersScopeSorts> ::= {$Cons} <BindersScopeSort> (COMMA <BindersScopeSorts> | {$Nil}) .
 
 <BindersScopeSort> ::=
   <Sort>:#Sort
-   ( {BinderScopeSort}:pre BINDS <Variable>!!! {{#Sort}} <BindersScopeSort>
-   | {ScopeSort}:pre {{#Sort}} <Repeat> (LBRACKET <SubstituteSorts> RBRACKET | {$Nil})
+   ( {BinderScopeSort}:hacspre BINDS <Variable>!!! {{#Sort}} <BindersScopeSort>
+   | {ScopeSort}:hacspre {{#Sort}} <Repeat> (LBRACKET <SubstituteSorts> RBRACKET | {$Nil})
    )
-| {BinderScopeSort}:pre LBRACKET <Variable>!!! COLON <Sort> <BindersScopeSortTail>
+| {BinderScopeSort}:hacspre LBRACKET <Variable>!!! COLON <Sort> <BindersScopeSortTail>
 .
 
 <BindersScopeSortTail> ::=
   RBRACKET <BindersScopeSort>
-| {BinderScopeSort}:pre COMMA <Variable>!!! COLON <Sort> <BindersScopeSortTail>
+| {BinderScopeSort}:hacspre COMMA <Variable>!!! COLON <Sort> <BindersScopeSortTail>
 .
 
 <SubstituteSorts> ::= {$Cons} <SubstituteSort> ( COMMA <SubstituteSorts> | {$Nil} ) | {$Nil}  . 
-<SubstituteSort> ::= <Variable>!!!:#v ( {SubstituteSort}:pre {{#v}} (COLON|AS) <Sort> |
-  {SubstituteNoSort}:pre {{#v}} ) .
+<SubstituteSort> ::= <Variable>!!!:#v ( {SubstituteSort}:hacspre {{#v}} (COLON|AS) <Sort> |
+  {SubstituteNoSort}:hacspre {{#v}} ) .
 
-<Sort> ::= {Sort}:pre <SimpleSort> <SimpleSorts> .
+<Sort> ::= {Sort}:hacspre <SimpleSort> <SimpleSorts> .
 
 <SimpleSorts> ::= LPAREN ( {$Cons} <SimpleSort> <SimpleSortTail> | {$Nil} ) RPAREN | {$Nil} .
 <SimpleSortTail> ::= COMMA {$Cons} <SimpleSort> <SimpleSortTail> | {$Nil} .
 
 <SimpleSort> ::=
-  {SortName}:pre <SortName> <MetaVariables>
-| {SortParam}:pre <SortParam>
+  {SortName}:hacspre <SortName> <MetaVariables>
+| {SortParam}:hacspre <SortParam>
 .
 <MetaVariables> ::= {$Cons} <MetaVariable> {$Nil} | {$Nil} .
 <SortParam> ::= <Variable>! .
 
-<ScopeSortPrecRepeat> ::= {ScopeSortPrecRepeat}:pre <ScopeSort> <FormPrec> <Repeat> .
+<ScopeSortPrecRepeat> ::= {ScopeSortPrecRepeat}:hacspre <ScopeSort> <FormPrec> <Repeat> .
 <ScopeSort> ::=
   <Sort>:#Sort
-   ( {ScopeSortBinder}:pre BINDS <Variable>!!! {{#Sort}}
-   | {ScopeSort}:pre {{#Sort}} <Repeat> (LBRACKET <SubstituteSorts> RBRACKET | {$Nil})
+   ( {ScopeSortBinder}:hacspre BINDS <Variable>!!! {{#Sort}}
+   | {ScopeSort}:hacspre {{#Sort}} <Repeat> (LBRACKET <SubstituteSorts> RBRACKET | {$Nil})
    )
-| {ScopeSortBinder}:pre LBRACKET <Variable>!!! COLON <Sort> RBRACKET
+| {ScopeSortBinder}:hacspre LBRACKET <Variable>!!! COLON <Sort> RBRACKET
 .
 
 <FormPrec> ::= ( AT <Natural> | {"0"} ) .
@@ -149,19 +149,19 @@
 <Tagging> ::= ( {$Cons} TAG <Constructor> ({$Nil}) | {$Nil} ).
 
 <InheritedRefs> ::=( {$Cons} <InheritedRef> <InheritedRefs> | {$Nil} ).
-<InheritedRef> ::= {InheritedRef}:pre DOWN <AttributeName> . 
+<InheritedRef> ::= {InheritedRef}:hacspre DOWN <AttributeName> . 
 
 //// RULES.
 
-<Rule> ::= {Rule}:pre <RulePrefix> <NotVariableTerm> ( ARROW <Term> | {OMITTED}:pre ) .
+<Rule> ::= {Rule}:hacspre <RulePrefix> <NotVariableTerm> ( ARROW <Term> | {OMITTED}:hacspre ) .
 
-<RulePrefix> ::= {RuleOptions}:pre <Priority> ( LBRACKET (<Options> | {$Nil}) RBRACKET | {$Nil} ) .
+<RulePrefix> ::= {RuleOptions}:hacspre <Priority> ( LBRACKET (<Options> | {$Nil}) RBRACKET | {$Nil} ) .
 
-<Priority> ::=( DEFAULT:pre | PRIORITY:pre | {Normal}:pre ).
+<Priority> ::=( DEFAULT:hacspre | PRIORITY:hacspre | {Normal}:hacspre ).
 
 <Options> ::= {$Cons} <Option> ( COMMA <Options> | {$Nil} ) .
 
 <Option> ::=
-  {OptionConstruction}:pre <Constructor> ( LBRACKET (<Options> | {$Nil}) RBRACKET | {$Nil} ) <Attributes>
-| {OptionLiteral}:pre <Literal> <Attributes>
+  {OptionConstruction}:hacspre <Constructor> ( LBRACKET (<Options> | {$Nil}) RBRACKET | {$Nil} ) <Attributes>
+| {OptionLiteral}:hacspre <Literal> <Attributes>
 .

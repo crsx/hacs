@@ -167,7 +167,7 @@ token CC_OTHER (CC) ::= ~['^',']','-',\\,\n,\u1] | ESCAPEDCHAR .
 token CC_SKIP (CC) ::= \u1 .
 
 <CC_RangesTop> (CC) ::=
-  {RegExpClassNot}:pre CC_NOT <CC_FirstRangeStartChar>:#lo <CC_RangeTail #lo>
+  {RegExpClassNot}:hacspre CC_NOT <CC_FirstRangeStartChar>:#lo <CC_RangeTail #lo>
 | <CC_FirstRangeStartChar>:#lo <CC_RangeTail #lo>
 | CC_SKIP <CC_RangesTop>
 .
@@ -175,14 +175,14 @@ token CC_SKIP (CC) ::= \u1 .
 <CC_Ranges> (CC) ::=
   <CC_RangeChar>:#lo <CC_RangeTail #lo>
 | CC_SKIP <CC_Ranges>
-| {RegExpClassDone}:pre
+| {RegExpClassDone}:hacspre
 .
 
 <CC_RangeTail #lo> (CC) ::=
-  CC_DASH ( {RegExpClassRange}:pre {{#lo}} <CC_RangeChar> <CC_Ranges> | {RegExpClassChar}:pre {{#lo}} {RegExpClassDone}:pre )
-| {RegExpClassChar}:pre {{#lo}} <CC_NonDashRangeStartChar>:#lo2 <CC_RangeTail #lo2>
+  CC_DASH ( {RegExpClassRange}:hacspre {{#lo}} <CC_RangeChar> <CC_Ranges> | {RegExpClassChar}:hacspre {{#lo}} {RegExpClassDone}:hacspre )
+| {RegExpClassChar}:hacspre {{#lo}} <CC_NonDashRangeStartChar>:#lo2 <CC_RangeTail #lo2>
 | CC_SKIP  <CC_RangeTail #lo>
-| {RegExpClassChar}:pre {{#lo}} {RegExpClassDone}:pre
+| {RegExpClassChar}:hacspre {{#lo}} {RegExpClassDone}:hacspre
 .
 
 <CC_FirstRangeStartChar> (CC) ::= (CC_RBRACKET$ | CC_DASH$ | CC_OTHER$) .
@@ -197,11 +197,11 @@ token CC_SKIP (CC) ::= \u1 .
 <ParsedForm> ::= CONCRETE$$:unpp:{%%%PREFIX%%%PP} .
 
 <PP> (PP) ::=
-  {ParsedFormSpace}:pre (PP_CONCRETESPACE$) <PP>
-| {ParsedFormWord}:pre (PP_CONCRETEWORD$) <PP>
-| {ParsedFormTerm}:pre PP_UNCONCRETE$$:unpp:{%%%PREFIX%%%ScopeSortPrecRepeat}  <PP>
+  {ParsedFormSpace}:hacspre (PP_CONCRETESPACE$) <PP>
+| {ParsedFormWord}:hacspre (PP_CONCRETEWORD$) <PP>
+| {ParsedFormTerm}:hacspre PP_UNCONCRETE$$:unpp:{%%%PREFIX%%%ScopeSortPrecRepeat}  <PP>
 | PP_SKIP <PP>
-| {ParsedFormDone}:pre
+| {ParsedFormDone}:hacspre
 .
 
 token PP_CONCRETESPACE (PP) ::= [' ',\t\r\n,\ub6]+ . // no comments but include special spacing marks

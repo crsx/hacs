@@ -74,25 +74,32 @@ SH_EXTRA = :
 	&& dir=$(dir $@) && package=$${module%.*} && name=$${module##*.} && packagedir=$$(echo $$package | tr '.' '/') \
 	&& $(NOEXEC) mkdir -p $(TEMP)/$$packagedir \
 	&& $(NOEXEC) cp $< $(TEMP)/$$packagedir/ \
-	&& $(NOEXEC) $(MAKE) $(BUILD)/$$packagedir/$$name.class \
+	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${name}.pgbase $(BUILD)/$$packagedir/$${name}Parser.class \
 	&& touch $@
 
 clean::; find . -name '*.build-stamp' | xargs rm -f
 
-# Process HACS (.hx) source files to PG+CRSX sources.
-#
-# Workflow: %.hx
-#            ↳ %.hxp
-#               ↳ %.pgbase
-#                     ↳ %.pg → %.jj → %.java
-#                     ↳ %-sorts.crs
-#
-#                     ↳ %Meta.pg → %.jj → %.java
-#                     ↳ %Meta-sorts.crs
-#
-#               ↳ %.crs                    ↲
+# Process HACS (.hx) source files.
 
-$(TEMP)/%.hxp : $(TEMP)/%.hx
+# Workflow:
+#   %.hx
+#   ↳ %.hxp
+#     ↳ %.pgbase (by CookPG system)
+#
+#       ↳ %Meta.pgtemplate
+#         ↳ %Meta.pg → %Meta.jj → %Meta.java
+
+
+
+#       ↳ %Meta-sorts.crs
+#
+#       ↳ %.crs ↲
+
+#       ↳ %Parser.pg → %Parser.jj → %Parser.java
+#       ↳ %-sorts.crs
+
+# Parse HACS for CookPG using the HxRaw parser.
+%.hxp : %.hx
 	@/bin/echo -e '\n>>> PARSING HACS TO TERM $@.\n' && $(SH_EXTRA) && set -x \
 	&& $(NOEXEC) mkdir -p $(TEMP) \
 	&& $(NOEXEC) $(CRSX) \
@@ -100,8 +107,10 @@ $(TEMP)/%.hxp : $(TEMP)/%.hx
 		input='$<' category=HxModule \
 		output='$@.tmp' simple-terms max-indent=10 width=255 \
 	&& $(NOEXEC) mv '$@.tmp' '$@'
+.SECONDARY: %.hxp
 
-$(TEMP)/%.pgbase : $(TEMP)/%.hxp
+# Process (pre-raw-parsed) HACS with CookPG to get initial "PG and sort base".
+%.pgbase : %.hxp
 	@/bin/echo -e '\n>>> GENERATING PARSER GENERATOR BASE $@.\n' && $(SH_EXTRA) && set -x \
 	&& $(NOEXEC) $(CRSX) \
 		"grammar=('org.crsx.hacs.HxRaw';'net.sf.crsx.text.Text';)" \
@@ -109,45 +118,70 @@ $(TEMP)/%.pgbase : $(TEMP)/%.hxp
 		input='$<' \
 		output='$@.tmp' sink=net.sf.crsx.text.TextSink \
 	&& $(NOEXEC) mv '$@.tmp' '$@'
+.SECONDARY: %.pgbase
 
-$(TEMP)/%.pg : $(TEMP)/%.pgbase
-	@/bin/echo -e '\n>>> GENERATING PLAIN TERM PARSER GENERATOR $@.\n' && $(SH_EXTRA) && set -x \
-	&& $(NOEXEC) sed -e 's;/[*][*][*]PG: *\(.*\)[*][*][*]/;\1;' -e 's;/[*][*][*].*[*][*][*]/;;' '$<' > '$@.tmp' \
+# Extract template from "PG and sort base".
+%Meta.pgtemplate : %.pgbase
+	@/bin/echo -e '\n>>> GENERATING META-SOURCE PARSER GENERATOR TEMPLATE $@.\n' && $(SH_EXTRA) && set -x \
+	&& $(NOEXEC) sed -e 's;\(^class [^ ]*\) ;\1Meta ;' -e 's;/[*][*][*]METAPG: *\(\([^*]\|[*][^*]\)*\)[*][*][*]/;\1;' -e 's;/[*][*][*]\([^*]\|[*][^*]\)*[*][*][*]/;;g' '$<' > '$@.tmp' \
 	&& $(NOEXEC) mv '$@.tmp' '$@'
+.SECONDARY: %.pgtemplate
 
-$(BUILD)/%-sorts.crs : $(TEMP)/%.pgbase
-	@/bin/echo -e '\n>>> GENERATING PLAIN TERM SORT DECLARATIONS $@.\n' && $(SH_EXTRA) && set -x \
-	&& $(NOEXEC) sed -n -e 's;/[*][*][*]SORTS: *\(.*\)[*][*][*]/;\1;p' -e 's;/[*][*][*].*[*][*][*]/;;' '$<' > '$@.tmp' \
-	&& $(NOEXEC) mv '$@.tmp' '$@'
-
-$(TEMP)/%Meta.pg : $(TEMP)/%.pgbase
+# Assemble PG parser from template and Hx parser fragments.
+%Meta.pg: %Meta.pgtemplate
 	@/bin/echo -e '\n>>> GENERATING META-SOURCE PARSER GENERATOR $@.\n' && $(SH_EXTRA) && set -x \
-	&& $(NOEXEC) sed -e 's;\(^class [^ ]*\) ;\1Meta ;' -e 's;/[*][*][*]METAPG: *\(.*\)[*][*][*]/;\1;' -e 's;/[*][*][*].*[*][*][*]/;;' '$<' > '$@.tmp' \
-	&& $(NOEXEC) mv '$@.tmp' '$@'
+	&& prefix=$$($(NOEXEC) sed -n 's/prefix"\(.*\)".*/\1/p' $<) \
+	&& $(NOEXEC) sed \
+	 -e '/%%%HXNONTERMINALS%%%/ bnames' \
+	 -e '/%%%HXPREPRODUCTIONS%%%/ bpre' \
+	 -e '/%%%HXPOSTPRODUCTIONS%%%/ bpost' \
+	 -e 'b' \
+	 -e ':names' -e 'r org/crsx/hacs/Hx.pgnames' -e 'd' \
+	 -e ':pre'   -e 'r org/crsx/hacs/Hx.pgpre' -e 'd' \
+	 -e ':post'  -e 'r org/crsx/hacs/Hx.pgpost' -e 'd' \
+	 $< \
+	| sed -e "s/%%%PREFIX%%%/$$prefix/g" > '$@.tmp'
+	@set -x && mv '$@.tmp' '$@'
+.SECONDARY: %Meta.pg
 
-$(BUILD)/%Meta-sorts.crs : $(TEMP)/%.pgbase
+# Extract sorts from template for use by GenerateCRS.
+%Meta-sorts.crs : %.pgbase
 	@/bin/echo -e '\n>>> GENERATING META-SOURCE SORT DECLARATIONS $@.\n' && $(SH_EXTRA) && set -x \
-	&& $(NOEXEC) sed -n -e 's;/[*][*][*]METASORTS: *\(.*\)[*][*][*]/;\1;p' -e 's;/[*][*][*].*[*][*][*]/;;' '$<' > '$@.tmp' \
+	&& $(NOEXEC) sed -n -e 's;/[*][*][*]METASORTS: *\(\([^*]\|[*][^*]\)*\)[*][*][*]/;\1;p' -e 's;/[*][*][*]\([^*]\|[*][^*]\)*[*][*][*]/;;g' '$<' > '$@.tmp' \
 	&& $(NOEXEC) mv '$@.tmp' '$@'
 
-# Compile PG+CRSX source files to Java source files.
+# Generate PG parser for straight terms.
+%Parser.pg : %.pgbase
+	@/bin/echo -e '\n>>> GENERATING PLAIN TERM PARSER GENERATOR $@.\n' && $(SH_EXTRA) && set -x \
+	&& $(NOEXEC) sed -e 's;/[*][*][*]PG: *\(\([^*]\|[*][^*]\)*\)[*][*][*]/;\1;' -e 's;/[*][*][*]\([^*]\|[*][^*]\)*[*][*][*]/;;g' '$<' > '$@.tmp' \
+	&& $(NOEXEC) mv '$@.tmp' '$@'
+.SECONDARY: %Parser.pg
 
-$(TEMP)/%.jj: $(TEMP)/%.pg
+# Extract sort declarations for user's compiler from template.
+%-sorts.crs : %.pgbase
+	@/bin/echo -e '\n>>> GENERATING PLAIN TERM SORT DECLARATIONS $@.\n' && $(SH_EXTRA) && set -x \
+	&& $(NOEXEC) sed -n -e 's;/[*][*][*]SORTS: *\(\([^*]\|[*][^*]\)*\)[*][*][*]/;\1;p' -e 's;/[*][*][*]\([^*]\|[*][^*]\)*[*][*][*]/;;g' '$<' > '$@.tmp' \
+	&& $(NOEXEC) mv '$@.tmp' '$@'
+
+# Compile PG parser specification to JavaCC.
+%.jj : %.pg
 	@/bin/echo -e '\n>>> GENERATING JavaCC GRAMMAR $@.\n' && $(SH_EXTRA) && set -x \
 	&& $(NOEXEC) $(PG) -source=$(TEMP) $<
+.SECONDARY: %.jj
 
-# Compile PG+CRSX source files to C source files.
-
-# Compile JavaCC+Java source files.
-
-$(TEMP)/%.java: $(TEMP)/%.jj
+# Compile JavaCC parser to Java.
+%.java: %.jj
 	@/bin/echo -e '\n>>> GENERATING JAVA PARSER SOURCE $@.\n' && $(SH_EXTRA) && set -x \
 	&& cd $(dir $<) && $(NOEXEC) $(JAVACC) $(notdir $<)
+.SECONDARY: %.java
 
+# Compile Java to class file.
 $(BUILD)/%.class: $(TEMP)/%.java
 	@/bin/echo -e '\n>>> COMPILING JAVA CLASS $@.\n' && $(SH_EXTRA) && set -x \
 	&& $(NOEXEC) mkdir -p $(BUILD) \
-	&& $(NOEXEC) cd $(TEMP) && $(NOEXEC) $(JAVAC) -d $(BUILD) -cp ":$(CRSXJAR)" $*.java
+	&& $(NOEXEC) cd $(TEMP) && $(NOEXEC) $(JAVAC) -cp ":$(CRSXJAR)" -d $(BUILD) $*.java
+
+
 
 # Debugging helpers.
 

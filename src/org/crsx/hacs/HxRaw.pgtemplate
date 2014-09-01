@@ -9,7 +9,7 @@ prefix %%%PREFIX%%%
 
 declarations
 %{
-static String pre(String s) {return "%%%PREFIX%%%"+net.sf.crsx.util.Util.quoteJavaIdentifierPart(s);} // prefix for constructors
+static String hacspre(String s) {return "%%%PREFIX%%%"+net.sf.crsx.util.Util.quoteJavaIdentifierPart(s);} // prefix for constructors
 static String unwrap(String s) {return s.substring(1, s.length()-1);}
 static String unpp(String s) {return "\001"+s.substring(1, s.length()-1)+"\001";}
 static String checkModuleString(String s) throws ParseException {if (java.util.regex.Pattern.matches("[\"]([a-z0-9]+[.])*[A-Z][A-Za-z0-9]*[\"]", s)) return s; else throw new ParseException("Illegal module name "+s);}
@@ -38,34 +38,34 @@ inject[<Embedded>]  ::=  '%<PRODUCTION_NAME>', '', '' .
 //// RAW TERMS.
 
 <Term> ::=
-  <Variable>!!!:#v ( {Special}:pre {{#v}} CONCRETE$$:unwrap:{n} | {VariableUse}:pre {{#v}} <Attributes>)
+  <Variable>!!!:#v ( {Special}:hacspre {{#v}} CONCRETE$$:unwrap:{n} | {VariableUse}:hacspre {{#v}} <Attributes>)
 | <NotVariableTerm>
 .
 
 <NotVariableTerm> ::=
   <Constructor>:#C
   <Repeat>:#R
-  ( {UnparsedSorted}:pre {{#C}} {{#R}} (CONCRETE$:unmeta) <Attributes>
-  | {MetaApplicationSorted}:pre {{#C}} {{#R}} <MetaVariable> ( LBRACKET (<Terms> | {$Nil}) RBRACKET | {$Nil} ) <Attributes>
-  | {ConstructionSorted}:pre {{#C}} {{#R}} <Constructor> ( LPAREN (<Scopes> | {$Nil}) RPAREN
+  ( {UnparsedSorted}:hacspre {{#C}} {{#R}} (CONCRETE$:unmeta) <Attributes>
+  | {MetaApplicationSorted}:hacspre {{#C}} {{#R}} <MetaVariable> ( LBRACKET (<Terms> | {$Nil}) RBRACKET | {$Nil} ) <Attributes>
+  | {ConstructionSorted}:hacspre {{#C}} {{#R}} <Constructor> ( LPAREN (<Scopes> | {$Nil}) RPAREN
                                                         | LBRACKET (<Scopes> | {$Nil}) RBRACKET
                                                         | {$Nil}                                ) <Attributes>
-  | {VariableUseSorted}:pre {{#C}} {{#R}} <Variable>!!! <Attributes>
-  | {LiteralSorted}:pre {{#C}} {{#R}} <Literal> <Attributes>
-  | {Construction}:pre {{#C}} ( LPAREN (<Scopes> | {$Nil}) RPAREN
+  | {VariableUseSorted}:hacspre {{#C}} {{#R}} <Variable>!!! <Attributes>
+  | {LiteralSorted}:hacspre {{#C}} {{#R}} <Literal> <Attributes>
+  | {Construction}:hacspre {{#C}} ( LPAREN (<Scopes> | {$Nil}) RPAREN
                              | LBRACKET (<Scopes> | {$Nil}) RBRACKET
                              | {$Nil}                                ) <Attributes>
   )
-| {Literal}:pre <Literal> <Attributes>
-| {Unparsed}:pre (CONCRETE$:unmeta) <Attributes>
-| {MetaApplication}:pre <MetaVariable> ( LBRACKET (<Terms> | {$Nil}) RBRACKET | {$Nil} ) <Attributes>
+| {Literal}:hacspre <Literal> <Attributes>
+| {Unparsed}:hacspre (CONCRETE$:unmeta) <Attributes>
+| {MetaApplication}:hacspre <MetaVariable> ( LBRACKET (<Terms> | {$Nil}) RBRACKET | {$Nil} ) <Attributes>
 .
 
 <Scopes> ::= {$Cons} <Scope> (COMMA <Scopes> | {$Nil}) .
 <Scope> ::=
-  {Scope}:pre ({$Nil}) <NotVariableTerm>
-| <Variable>!!!:#v ({Scope}:pre ({$Cons} {{#v}} <Variables>) DOT <Term> | {Scope}:pre ({$Nil}) ({VariableUse}:pre {{#v}}))
-| {Scope}:pre LBRACKET (<VariableList> | {$Nil}) RBRACKET <Term>
+  {Scope}:hacspre ({$Nil}) <NotVariableTerm>
+| <Variable>!!!:#v ({Scope}:hacspre ({$Cons} {{#v}} <Variables>) DOT <Term> | {Scope}:hacspre ({$Nil}) ({VariableUse}:hacspre {{#v}}))
+| {Scope}:hacspre LBRACKET (<VariableList> | {$Nil}) RBRACKET <Term>
 .
 
 <Variables> ::= {$Cons} <Variable>!!! <Variables> | {$Nil} .
@@ -75,14 +75,14 @@ inject[<Embedded>]  ::=  '%<PRODUCTION_NAME>', '', '' .
 
 <Attributes> ::= ( {$Cons} <Attribute> <Attributes> | {$Nil} ).
 <Attribute> ::=
-  {Attribute}:pre <AttributeKind> <AttributeName> <AttributeValue>
+  {Attribute}:hacspre <AttributeKind> <AttributeName> <AttributeValue>
 .
 
 <AttributeValue> ::= 
-  {AttributeValue}:pre LPAREN <Term> RPAREN
-| LBRACE ( <Term>:# ( {AttributeKeyValue}:pre {{#}} COLON <Term> RBRACE
-                    | {AttributeKey}:pre {{#}} RBRACE )
-         | {AttributeNotKey}:pre NOT <Term> RBRACE )
+  {AttributeValue}:hacspre LPAREN <Term> RPAREN
+| LBRACE ( <Term>:# ( {AttributeKeyValue}:hacspre {{#}} COLON <Term> RBRACE
+                    | {AttributeKey}:hacspre {{#}} RBRACE )
+         | {AttributeNotKey}:hacspre NOT <Term> RBRACE )
 .
 
 ////////////////////////////////////////////////////////////////////////

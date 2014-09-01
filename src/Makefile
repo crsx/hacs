@@ -30,7 +30,7 @@ clean::
 	@set -x && rm -fr $(BUILD)
 
 # Raw parser for .hx files (as used by CookPG).
-$(TEMP)/org/crsx/hacs/HxRaw.pg: $(HACS)/org/crsx/hacs/HxRaw.pgtemplate $(HACS)/org/crsx/hacs/Hx.pgnames $(HACS)/org/crsx/hacs/Hx.pgpre $(HACS)/org/crsx/hacs/Hx.pgpost
+$(TEMP)/org/crsx/hacs/HxRaw.pg: $(HACS)/org/crsx/hacs/HxRaw.pgtemplate
 	@set -x \
 	&& $(NOEXEC) mkdir -p $(dir $@) \
 	&& $(NOEXEC) sed \
