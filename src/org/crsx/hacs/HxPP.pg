@@ -1,0 +1,33 @@
+//// HxPP.pg: GRAMMAR FOR PARSED FORMS IN HACS FILES.
+//// Copyright © 2012,2014 Kristoffer H. Rose <krisrose@rcsx.org>
+
+class org.crsx.hacs.HxPP : <HxPP>
+
+prefix hxPP
+
+declarations
+%{
+static String rawhx(String s) {return "rawHx"+net.sf.crsx.util.Util.quoteJavaIdentifierPart(s);}
+%}
+
+<HxPP> ::=
+  {ParsedFormSpace}:rawhx (PP_CONCRETESPACE$) <HxPP>
+| {ParsedFormWord}:rawhx (PP_CONCRETEWORD$) <HxPP>
+| {ParsedFormTerm}:rawhx PP_UNCONCRETE:{rawHxScopeSortPrecRepeat}  <HxPP>
+| PP_SKIP <HxPP>
+| {ParsedFormDone}:rawhx
+.
+
+token PP_CONCRETESPACE (PP) ::= [' ',\t\r\n,\ub6]+ . // no comments but include special spacing marks
+token PP_CONCRETEWORD (PP) ::= ~[' ',\t\r\n\ub6\u27e6\u27e7\u27e8\u27e9]+ .
+token PP_SKIP (PP) ::= \u1 .
+
+%{
+// Nested unconcrete token ⟨...⟩ inside PP.
+<PP> MORE : { "\u27e8" { nesting = 0; nestedState = curLexState; } : PP_IN_PP_UNCONCRETE }
+<PP_IN_PP_UNCONCRETE> MORE : { "\u27e8" { nesting = 1; } : PP_IN_NESTED_PP_UNCONCRETE }
+<PP_IN_NESTED_PP_UNCONCRETE> MORE : { "\u27e8" { nesting++; } }
+<PP_IN_NESTED_PP_UNCONCRETE> MORE : { "\u27e9" { if (--nesting <= 0) SwitchTo(PP_IN_PP_UNCONCRETE); } }
+<PP_IN_PP_UNCONCRETE> TOKEN : { <T_PP_UNCONCRETE : "\u27e9"> { SwitchTo(nestedState); } }
+<PP_IN_PP_UNCONCRETE,PP_IN_NESTED_PP_UNCONCRETE> MORE : { < ~[] > }
+%}

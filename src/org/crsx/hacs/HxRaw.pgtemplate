@@ -3,31 +3,25 @@
 
 class org.crsx.hacs.HxRaw :
 %%%HXNONTERMINALS%%%
- <Term>, <NotVariableTerm>, <Attributes>, <Attribute>, <AttributeValue>, <Scopes>, <Scope>, <Terms>
+ <HxTerm>, <HxNotVariableTerm>, <HxAttributes>, <HxAttribute>, <HxAttributeValue>, <HxScopes>, <HxScope>, <HxTerms>
 
-prefix %%%PREFIX%%%
+prefix raw
 
 declarations
 %{
-static String hacspre(String s) {return "%%%PREFIX%%%"+net.sf.crsx.util.Util.quoteJavaIdentifierPart(s);} // prefix for constructors
-static String unwrap(String s) {return s.substring(1, s.length()-1);}
-static String unpp(String s) {return "\001"+s.substring(1, s.length()-1)+"\001";}
-static String checkModuleString(String s) throws ParseException {if (java.util.regex.Pattern.matches("[\"]([a-z0-9]+[.])*[A-Z][A-Za-z0-9]*[\"]", s)) return s; else throw new ParseException("Illegal module name "+s);}
-
-private String storedSort = "";
-String unmeta(String s) {if (System.getenv("meta") == null) return s.substring(1, s.length()-1); else return /*TODO: reparse as storedSort meta-term.*/ null;}
+%%%HXDECLARATIONS%%%
 %}
 
 
 //// HACS-INTERNAL META RAW SYNTAX.
 
 // Guillemets ("French quotes") used for embedded  CRSX terms (for sort hacks???).
-<Embedded> (*) ::= Embedded$$:unwrap .
-token Embedded (*) ::= '«' (~['«','»'])* '»' .
+<HxEmbedded> (*) ::= HX_EMBEDDED$$:unwrap .
+token HX_EMBEDDED (*) ::= '«' (~['«','»'])* '»' .
 
 // Meta-variables #SortN# can be used in hx syntax. 
-meta[<SortParam>]  ::=  '#<PRODUCTION_NAME>' ( (DIGIT)* | '_' (DIGIT | UPPER | LOWER)* ) '#' , '⦃', '⦄', '∥' .
-inject[<Embedded>]  ::=  '%<PRODUCTION_NAME>', '', '' .
+meta[<HxSortParam>] ::=  '#<PRODUCTION_NAME>' ( (HX_DIGIT)* | '_' (HX_DIGIT | HX_UPPER | HX_LOWER)* ) '#' , '⦃', '⦄', '∥' .
+inject[<HxEmbedded>] ::=  '%<PRODUCTION_NAME>', '', '' .
 
 
 ////////////////////////////////////////////////////////////////////////
@@ -37,52 +31,46 @@ inject[<Embedded>]  ::=  '%<PRODUCTION_NAME>', '', '' .
 
 //// RAW TERMS.
 
-<Term> ::=
-  <Variable>!!!:#v ( {Special}:hacspre {{#v}} CONCRETE$$:unwrap:{n} | {VariableUse}:hacspre {{#v}} <Attributes>)
-| <NotVariableTerm>
+<HxTerm> ::=
+  <HxVariable>!!!:#v ( {Special}:rawhx {{#v}} HX_CONCRETE$$:unwrap:{n} | {VariableUse}:rawhx {{#v}} <HxAttributes>)
+| <HxNotVariableTerm>
 .
 
-<NotVariableTerm> ::=
-  <Constructor>:#C
-  <Repeat>:#R
-  ( {UnparsedSorted}:hacspre {{#C}} {{#R}} (CONCRETE$:unmeta) <Attributes>
-  | {MetaApplicationSorted}:hacspre {{#C}} {{#R}} <MetaVariable> ( LBRACKET (<Terms> | {$Nil}) RBRACKET | {$Nil} ) <Attributes>
-  | {ConstructionSorted}:hacspre {{#C}} {{#R}} <Constructor> ( LPAREN (<Scopes> | {$Nil}) RPAREN
-                                                        | LBRACKET (<Scopes> | {$Nil}) RBRACKET
-                                                        | {$Nil}                                ) <Attributes>
-  | {VariableUseSorted}:hacspre {{#C}} {{#R}} <Variable>!!! <Attributes>
-  | {LiteralSorted}:hacspre {{#C}} {{#R}} <Literal> <Attributes>
-  | {Construction}:hacspre {{#C}} ( LPAREN (<Scopes> | {$Nil}) RPAREN
-                             | LBRACKET (<Scopes> | {$Nil}) RBRACKET
-                             | {$Nil}                                ) <Attributes>
+<HxNotVariableTerm> ::=
+  <HxConstructor>:#C
+  <HxRepeat>:#R
+  ( {UnparsedSorted}:rawhx {{#C}} {{#R}} (HX_CONCRETE$:unwrap) <HxAttributes>
+  | {MetaApplicationSorted}:rawhx {{#C}} {{#R}} <HxMetaVariable> ( HX_LBRACKET (<HxTerms> | {$Nil}) HX_RBRACKET | {$Nil} ) <HxAttributes>
+  | {ConstructionSorted}:rawhx {{#C}} {{#R}} <HxConstructor> ( HX_LPAREN (<HxScopes> | {$Nil}) HX_RPAREN | {$Nil} ) <HxAttributes>
+  | {VariableUseSorted}:rawhx {{#C}} {{#R}} <HxVariable>!!! <HxAttributes>
+  | {LiteralSorted}:rawhx {{#C}} {{#R}} <HxLiteral> <HxAttributes>
+  | {Construction}:rawhx {{#C}} ( HX_LPAREN (<HxScopes> | {$Nil}) HX_RPAREN | {$Nil} ) <HxAttributes>
   )
-| {Literal}:hacspre <Literal> <Attributes>
-| {Unparsed}:hacspre (CONCRETE$:unmeta) <Attributes>
-| {MetaApplication}:hacspre <MetaVariable> ( LBRACKET (<Terms> | {$Nil}) RBRACKET | {$Nil} ) <Attributes>
+| {Literal}:rawhx <HxLiteral> <HxAttributes>
+| {Unparsed}:rawhx (HX_CONCRETE$:unwrap) <HxAttributes>
+| {MetaApplication}:rawhx <HxMetaVariable> ( HX_LBRACKET (<HxTerms> | {$Nil}) HX_RBRACKET | {$Nil} ) <HxAttributes>
 .
 
-<Scopes> ::= {$Cons} <Scope> (COMMA <Scopes> | {$Nil}) .
-<Scope> ::=
-  {Scope}:hacspre ({$Nil}) <NotVariableTerm>
-| <Variable>!!!:#v ({Scope}:hacspre ({$Cons} {{#v}} <Variables>) DOT <Term> | {Scope}:hacspre ({$Nil}) ({VariableUse}:hacspre {{#v}}))
-| {Scope}:hacspre LBRACKET (<VariableList> | {$Nil}) RBRACKET <Term>
+<HxScopes> ::= {$Cons} <HxScope> (HX_COMMA <HxScopes> | {$Nil}) .
+<HxScope> ::=
+  {Scope}:rawhx ({$Nil}) <HxNotVariableTerm>
+| <HxVariable>!!!:#v ({Scope}:rawhx ({$Cons} {{#v}} <HxVariables>) HX_DOT <HxTerm> | {Scope}:rawhx ({$Nil}) ({VariableUse}:rawhx {{#v}}))
+| {Scope}:rawhx HX_LBRACKET (<HxVariableList> | {$Nil}) HX_RBRACKET <HxTerm>
 .
 
-<Variables> ::= {$Cons} <Variable>!!! <Variables> | {$Nil} .
-<VariableList> ::= {$Cons} <Variable>!!! ( COMMA <VariableList> | {$Nil} ) .
+<HxVariables> ::= {$Cons} <HxVariable>!!! <HxVariables> | {$Nil} .
+<HxVariableList> ::= {$Cons} <HxVariable>!!! ( HX_COMMA <HxVariableList> | {$Nil} ) .
 
-<Terms> ::= {$Cons} <Term> (COMMA <Terms> | {$Nil}) .
+<HxTerms> ::= {$Cons} <HxTerm> (HX_COMMA <HxTerms> | {$Nil}) .
 
-<Attributes> ::= ( {$Cons} <Attribute> <Attributes> | {$Nil} ).
-<Attribute> ::=
-  {Attribute}:hacspre <AttributeKind> <AttributeName> <AttributeValue>
-.
+<HxAttributes> ::= ( {$Cons} <HxAttribute> <HxAttributes> | {$Nil} ).
+<HxAttribute> ::= {Attribute}:rawhx <HxAttributeKind> <HxAttributeName> <HxAttributeValue> .
 
-<AttributeValue> ::= 
-  {AttributeValue}:hacspre LPAREN <Term> RPAREN
-| LBRACE ( <Term>:# ( {AttributeKeyValue}:hacspre {{#}} COLON <Term> RBRACE
-                    | {AttributeKey}:hacspre {{#}} RBRACE )
-         | {AttributeNotKey}:hacspre NOT <Term> RBRACE )
+<HxAttributeValue> ::= 
+  {AttributeValue}:rawhx HX_LPAREN <HxTerm> HX_RPAREN
+| HX_LBRACE ( <HxTerm>:# ( {AttributeKeyValue}:rawhx {{#}} HX_COLON <HxTerm> HX_RBRACE
+            | {AttributeKey}:rawhx {{#}} HX_RBRACE )
+            | {AttributeNotKey}:rawhx HX_NOT <HxTerm> HX_RBRACE )
 .
 
 ////////////////////////////////////////////////////////////////////////

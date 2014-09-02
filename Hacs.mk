@@ -28,7 +28,7 @@ endif
 #
 JAVAC = javac
 JAR = jar
-JAVACC = javacc
+JAVACC = $(JAVA) -cp "$(abspath $(BUILD)/..)/lib/javacc.jar:" javacc
 #
 CC = gcc -std=c99 -g
 FLEX = flex
@@ -70,7 +70,7 @@ SH_EXTRA = :
 	&& module=$$( $(CRSX_NOEXTRA) \
 		"grammar=('org.crsx.hacs.HxRaw';'net.sf.crsx.text.Text';)" \
 		rules=$(HACS)/org/crsx/hacs/CookPG.crs wrapper=PG-GetModuleName \
-		input='$<' category=HxModule sink=net.sf.crsx.text.TextSink ) \
+		input='$<' category=rawHxModule sink=net.sf.crsx.text.TextSink ) \
 	&& dir=$(dir $@) && package=$${module%.*} && name=$${module##*.} && packagedir=$$(echo $$package | tr '.' '/') \
 	&& $(NOEXEC) mkdir -p $(TEMP)/$$packagedir \
 	&& $(NOEXEC) cp $< $(TEMP)/$$packagedir/ \
@@ -104,7 +104,7 @@ clean::; find . -name '*.build-stamp' | xargs rm -f
 	&& $(NOEXEC) mkdir -p $(TEMP) \
 	&& $(NOEXEC) $(CRSX) \
 		"grammar=('org.crsx.hacs.HxRaw';'net.sf.crsx.text.Text';)" \
-		input='$<' category=HxModule \
+		input='$<' category=rawHxModule \
 		output='$@.tmp' simple-terms max-indent=10 width=255 \
 	&& $(NOEXEC) mv '$@.tmp' '$@'
 .SECONDARY: %.hxp
@@ -132,13 +132,15 @@ clean::; find . -name '*.build-stamp' | xargs rm -f
 	@/bin/echo -e '\n>>> GENERATING META-SOURCE PARSER GENERATOR $@.\n' && $(SH_EXTRA) && set -x \
 	&& prefix=$$($(NOEXEC) sed -n 's/prefix"\(.*\)".*/\1/p' $<) \
 	&& $(NOEXEC) sed \
-	 -e '/%%%HXNONTERMINALS%%%/ bnames' \
-	 -e '/%%%HXPREPRODUCTIONS%%%/ bpre' \
-	 -e '/%%%HXPOSTPRODUCTIONS%%%/ bpost' \
+	 -e '/^%%%HXNONTERMINALS%%%$$/    bnames' \
+	 -e '/^%%%HXDECLARATIONS%%%$$/    bdecs' \
+	 -e '/^%%%HXPREPRODUCTIONS%%%$$/  bpre' \
+	 -e '/^%%%HXPOSTPRODUCTIONS%%%$$/ bpost' \
 	 -e 'b' \
 	 -e ':names' -e 'r org/crsx/hacs/Hx.pgnames' -e 'd' \
-	 -e ':pre'   -e 'r org/crsx/hacs/Hx.pgpre' -e 'd' \
-	 -e ':post'  -e 'r org/crsx/hacs/Hx.pgpost' -e 'd' \
+	 -e ':decs'  -e 'r org/crsx/hacs/Hx.pgdecs'  -e 'd' \
+	 -e ':pre'   -e 'r org/crsx/hacs/Hx.pgpre'   -e 'd' \
+	 -e ':post'  -e 'r org/crsx/hacs/Hx.pgpost'  -e 'd' \
 	 $< \
 	| sed -e "s/%%%PREFIX%%%/$$prefix/g" > '$@.tmp'
 	@set -x && mv '$@.tmp' '$@'

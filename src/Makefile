@@ -23,7 +23,7 @@ install::
 # HACS BUILD DEPENDENCIES.
 
 # Get ball rolling...
-all:: $(BUILD)/org/crsx/hacs/HxRaw.class
+all:: $(BUILD)/org/crsx/hacs/HxRaw.class $(BUILD)/org/crsx/hacs/HxPP.class
 
 # Generic cleanup.
 clean::
@@ -34,21 +34,30 @@ $(TEMP)/org/crsx/hacs/HxRaw.pg: $(HACS)/org/crsx/hacs/HxRaw.pgtemplate
 	@set -x \
 	&& $(NOEXEC) mkdir -p $(dir $@) \
 	&& $(NOEXEC) sed \
-	 -e '/%%%HXNONTERMINALS%%%/ bnames' \
-	 -e '/%%%HXPREPRODUCTIONS%%%/ bpre' \
-	 -e '/%%%HXPOSTPRODUCTIONS%%%/ bpost' \
+	 -e '/^%%%HXNONTERMINALS%%%$$/    bnames' \
+	 -e '/^%%%HXDECLARATIONS%%%$$/    bdecs' \
+	 -e '/^%%%HXPREPRODUCTIONS%%%$$/  bpre' \
+	 -e '/^%%%HXPOSTPRODUCTIONS%%%$$/ bpost' \
 	 -e 'b' \
 	 -e ':names' -e 'r org/crsx/hacs/Hx.pgnames' -e 'd' \
-	 -e ':pre'   -e 'r org/crsx/hacs/Hx.pgpre' -e 'd' \
-	 -e ':post'  -e 'r org/crsx/hacs/Hx.pgpost' -e 'd' \
+	 -e ':decs'  -e 'r org/crsx/hacs/Hx.pgdecs'  -e 'd' \
+	 -e ':pre'   -e 'r org/crsx/hacs/Hx.pgpre'   -e 'd' \
+	 -e ':post'  -e 'r org/crsx/hacs/Hx.pgpost'  -e 'd' \
 	 org/crsx/hacs/HxRaw.pgtemplate \
-	| sed -e 's/%%%PREFIX%%%/Hx/g' \
+	| sed -e 's/%%%PREFIX%%%/raw/g' \
 	> '$@.tmp'
 	@set -x && mv '$@.tmp' '$@'
 #
 $(TEMP)/org/crsx/hacs/HxRaw.jj: $(TEMP)/org/crsx/hacs/HxRaw.pg
 $(TEMP)/org/crsx/hacs/HxRaw.java: $(TEMP)/org/crsx/hacs/HxRaw.jj
 $(BUILD)/org/crsx/hacs/HxRaw.class: $(TEMP)/org/crsx/hacs/HxRaw.java
+#
+$(TEMP)/org/crsx/hacs/HxPP.jj: $(TEMP)/org/crsx/hacs/HxPP.pg
+$(TEMP)/org/crsx/hacs/HxPP.java: $(TEMP)/org/crsx/hacs/HxPP.jj
+$(BUILD)/org/crsx/hacs/HxPP.class: $(TEMP)/org/crsx/hacs/HxPP.java
+
+
+
 
 
 

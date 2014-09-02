@@ -4,164 +4,157 @@
 
 //// STRUCTURE.
 
-<Module> ::= {top-module}:hacspre <EmbeddedModule> .
+<HxModule> ::= {top-module}:rawhx <HxEmbeddedModule> .
 
-<EmbeddedModule> ::= MODULE:hacspre <ModuleName> LBRACE <Storing_Declarations> RBRACE .
+<HxEmbeddedModule> ::= HX_MODULE:rawhx <HxModuleName> HX_LBRACE <HxStoring_Declarations> HX_RBRACE .
 
-<Declarations> ::= ( {$Cons} <Declaration> <Declarations> | {$Nil} ).
+<HxDeclarations> ::= ( {$Cons} <HxDeclaration> <HxDeclarations> | {$Nil} ).
 
-<Declaration> ::=
-  {embedded-module}:hacspre <EmbeddedModule> SEMI
-| IMPORT:hacspre <ModuleName> ( LPAREN (<SortNames> | {$Nil}) RPAREN | {$Nil} ) SEMI
+<HxDeclaration> ::=
+  {embedded-module}:rawhx <HxEmbeddedModule> HX_SEMI
+| HX_IMPORT:rawhx <HxModuleName> ( HX_LPAREN (<HxSortNames> | {$Nil}) HX_RPAREN | {$Nil} ) HX_SEMI
 
-| SPACE:hacspre <RegExp> SEMI
-| TOKEN ( {'token'}:hacspre <Store_SortName> BAR <RegExp> SEMI | FRAGMENT:hacspre <FragmentName> BAR <RegExp> SEMI )
-| FRAGMENT:hacspre <FragmentName> BAR <RegExp> SEMI
+| HX_SPACE:rawhx <HxRegExp> HX_SEMI
+| HX_TOKEN ( {'token'}:rawhx <HxStore_SortName> HX_BAR <HxRegExp> HX_SEMI | HX_FRAGMENT:rawhx <HxFragmentName> HX_BAR <HxRegExp> HX_SEMI )
+| HX_FRAGMENT:rawhx <HxFragmentName> HX_BAR <HxRegExp> HX_SEMI
 
-| ATTRIBUTE:hacspre <AttributeKind> <AttributeName> <AttributeForm> <AttributeOptions> SEMI
+| HX_ATTRIBUTE:rawhx <HxAttributeKind> <HxAttributeName> <HxAttributeForm> <HxAttributeOptions> HX_SEMI
 
-| {sort}:hacspre (MAIN:hacspre|{no-main}:hacspre) SORT <Store_SortName> <Repeat> <SortAbstraction> SEMI
-| {anonymous}:hacspre <SortAlternatives> SEMI
-| (RULE)? {rule}:hacspre <Rule> SEMI
-| {nestedDeclarations}:hacspre LBRACE <Declarations> RBRACE
+| {sort}:rawhx (HX_MAIN:rawhx|{no-main}:rawhx) HX_SORT <HxStore_SortName> <HxRepeat> <HxSortAbstraction> HX_SEMI
+| {anonymous}:rawhx <HxSortAlternatives> HX_SEMI
+| (HX_RULE)? {rule}:rawhx <HxRule> HX_SEMI
+| {nestedDeclarations}:rawhx HX_LBRACE <HxDeclarations> HX_RBRACE
 .
 
-<AttributeKind> ::= ( {AttributeKindUp}:hacspre UP | {AttributeKindDown}:hacspre DOWN ).
+<HxAttributeKind> ::= ( {AttributeKindUp}:rawhx HX_UP | {AttributeKindDown}:rawhx HX_DOWN ).
 
 
 //// TOKEN DECLARATIONS.
 
-<RegExp> (RE) ::= {$Cons} <RegExpChoice> ( BAR <RegExp> | {$Nil} ) .
+<HxRegExp> (HX_RE) ::= {$Cons} <HxRegExpChoice> ( HX_BAR <HxRegExp> | {$Nil} ) .
 
-<RegExpChoice> (RE) ::=
-  NESTED:hacspre <RegExpSimple> <RegExpSimple>
-| {RegExpConcat}:hacspre <RegExpUnits>
+<HxRegExpChoice> (HX_RE) ::=
+  HX_NESTED:rawhx <HxRegExpSimple> <HxRegExpSimple>
+| {RegExpConcat}:rawhx <HxRegExpUnits>
 .
 
-<RegExpUnits> (RE) ::= {$Cons} <RegExpUnit> <RegExpUnits> | {$Nil} .
+<HxRegExpUnits> (HX_RE) ::= {$Cons} <HxRegExpUnit> <HxRegExpUnits> | {$Nil} .
 
-<RegExpUnit> (RE) ::= {RegExpUnit}:hacspre <RegExpSimple> <Repeat> .
+<HxRegExpUnit> (HX_RE) ::= {RegExpUnit}:rawhx <HxRegExpSimple> <HxRepeat> .
 
-<Repeat> (DEFAULT,RE) ::=
-  PLUS ( {RepeatSomeSep}:hacspre SUB (<RegExpLeaf> | {RegExpWord}:hacspre <Separator>) | {RepeatSome}:hacspre )
-| {RepeatMaybeSome}:hacspre STAR
-| {RepeatMaybe}:hacspre QUEST
-| {RepeatSingle}:hacspre
+<HxRepeat> (DEFAULT,HX_RE) ::=
+  HX_PLUS ( {RepeatSomeSep}:rawhx HX_SUB (<HxRegExpLeaf> | {RegExpWord}:rawhx <HxSeparator>) | {RepeatSome}:rawhx )
+| {RepeatMaybeSome}:rawhx HX_STAR
+| {RepeatMaybe}:rawhx HX_QUEST
+| {RepeatSingle}:rawhx
 .
 
-<RegExpLeaf> (DEFAULT,RE) ::=
-  {RegExpString}:hacspre <String>
-| {RegExpWord}:hacspre <Word>
+<HxRegExpLeaf> (DEFAULT,HX_RE) ::=
+  {RegExpString}:rawhx <HxString>
+| {RegExpWord}:rawhx <HxWord>
 .
 
-<RegExpSimple> (RE) ::=
-  <RegExpLeaf>
-| {RegExpRef}:hacspre <FragmentRef>
-| {RegExpClass}:hacspre <RegExpClass>
-| {RegExpAny}:hacspre DOT
-| {RegExpClass}:hacspre {RegExpClassChar}:hacspre (ESCAPEDCHAR$) {RegExpClassDone}:hacspre
-| {RegExpNest}:hacspre LPAREN <RegExp> RPAREN
+<HxRegExpSimple> (HX_RE) ::=
+  <HxRegExpLeaf>
+| {RegExpRef}:rawhx <HxFragmentRef>
+| {RegExpClass}:rawhx <HxRegExpClass>
+| {RegExpAny}:rawhx HX_DOT
+| {RegExpClass}:rawhx {RegExpClassChar}:rawhx (HX_ESCAPEDCHAR$) {RegExpClassDone}:rawhx
+| {RegExpNest}:rawhx HX_LPAREN <HxRegExp> HX_RPAREN
 .
 
 
 //// ATTRIBUTE DECLARATIONS
 
-<AttributeForm> ::=
-  {AttributeFormSimple}:hacspre LPAREN <Sort> RPAREN
-| LBRACE <Sort>:# ( {AttributeFormMap}:hacspre {{#}} COLON <Sort> RBRACE
-                  | {AttributeFormSet}:hacspre {{#}} RBRACE )
+<HxAttributeForm> ::=
+  {AttributeFormSimple}:rawhx HX_LPAREN <HxSort> HX_RPAREN
+| HX_LBRACE <HxSort>:# ( {AttributeFormMap}:rawhx {{#}} HX_COLON <HxSort> HX_RBRACE
+                  | {AttributeFormSet}:rawhx {{#}} HX_RBRACE )
 .
 
-<AttributeOptions> ::= {$Cons} <AttributeOption> <AttributeOptions> | {$Nil} .
-<AttributeOption> ::= {AttributeOption}:hacspre <Variable> <Constructor> .
+<HxAttributeOptions> ::= {$Cons} <HxAttributeOption> <HxAttributeOptions> | {$Nil} .
+<HxAttributeOption> ::= {AttributeOption}:rawhx <HxVariable> <HxConstructor> .
 
 
 //// SORT PRODUCTION DECLARATIONS 
 
-<SortNames> ::= {$Cons} <SortName> (COMMA <SortNames> | {$Nil}) . 
+<HxSortNames> ::= {$Cons} <HxSortName> (HX_COMMA <HxSortNames> | {$Nil}) . 
 
-<SortAbstraction> ::=
-  {SortAbstractionParam}:hacspre <Variable>^a <SortAbstraction>[a]
-| {SortAbstractionBody}:hacspre <SortAlternatives>
+<HxSortAbstraction> ::=
+  {SortAbstractionParam}:rawhx <HxVariable>^a <HxSortAbstraction>[a]
+| {SortAbstractionBody}:rawhx <HxSortAlternatives>
 .
 
-<SortAlternatives> ::= {$Cons} <SortAlternative> <SortAlternatives> | {$Nil} .
+<HxSortAlternatives> ::= {$Cons} <HxSortAlternative> <HxSortAlternatives> | {$Nil} .
 
-<SortAlternative> ::= BAR (
-  SCHEME:hacspre <Form>
-| {SynthesizedRef}:hacspre UP <AttributeName> 
-| SUGAR:hacspre <Form> ARROW <Term>
-| SYMBOL:hacspre <Form>
-| STATIC:hacspre (SYMBOL)? <Form>
-| {data}:hacspre (DATA)? <Form> <Tagging>
+<HxSortAlternative> ::= HX_BAR (
+  HX_SCHEME:rawhx <HxForm>
+| {SynthesizedRef}:rawhx HX_UP <HxAttributeName> 
+| HX_SUGAR:rawhx <HxForm> HX_ARROW <HxTerm>
+| HX_SYMBOL:rawhx <HxForm>
+| HX_STATIC:rawhx (HX_SYMBOL)? <HxForm>
+| {data}:rawhx (HX_DATA)? <HxForm> <HxTagging>
 ).
 
-<Form> ::=
-  <Constructor>:#C
-    ( {FormParsedSorted}:hacspre {{#C}} <ParsedForm> <FormPrec> <InheritedRefs>
-    | {FormConstruction}:hacspre {{#C}} ( LPAREN (<BindersScopeSorts> | {$Nil}) RPAREN | {$Nil} ) <InheritedRefs>
+<HxForm> ::=
+  <HxConstructor>:#C
+    ( {FormParsedSorted}:rawhx {{#C}} <HxParsedForm> <HxFormPrec> <HxInheritedRefs>
+    | {FormConstruction}:rawhx {{#C}} ( HX_LPAREN (<HxBindersScopeSorts> | {$Nil}) HX_RPAREN | {$Nil} ) <HxInheritedRefs>
     )
-| {FormParsed}:hacspre <ParsedForm> <FormPrec> <InheritedRefs>
+| {FormParsed}:rawhx <HxParsedForm> <HxFormPrec> <HxInheritedRefs>
 .
 
-<BindersScopeSorts> ::= {$Cons} <BindersScopeSort> (COMMA <BindersScopeSorts> | {$Nil}) .
+<HxBindersScopeSorts> ::= {$Cons} <HxBindersScopeSort> (HX_COMMA <HxBindersScopeSorts> | {$Nil}) .
 
-<BindersScopeSort> ::=
-  <Sort>:#Sort
-   ( {BinderScopeSort}:hacspre BINDS <Variable>!!! {{#Sort}} <BindersScopeSort>
-   | {ScopeSort}:hacspre {{#Sort}} <Repeat> (LBRACKET <SubstituteSorts> RBRACKET | {$Nil})
+<HxBindersScopeSort> ::=
+  <HxSort>:#Sort
+   ( {BinderScopeSort}:rawhx HX_BINDS <HxVariable>!!! {{#Sort}} <HxBindersScopeSort>
+   | {ScopeSort}:rawhx {{#Sort}} <HxRepeat> (HX_LBRACKET <HxSubstituteSorts> HX_RBRACKET | {$Nil})
    )
-| {BinderScopeSort}:hacspre LBRACKET <Variable>!!! COLON <Sort> <BindersScopeSortTail>
 .
 
-<BindersScopeSortTail> ::=
-  RBRACKET <BindersScopeSort>
-| {BinderScopeSort}:hacspre COMMA <Variable>!!! COLON <Sort> <BindersScopeSortTail>
+<HxSubstituteSorts> ::= {$Cons} <HxSubstituteSort> ( HX_COMMA <HxSubstituteSorts> | {$Nil} ) | {$Nil}  . 
+<HxSubstituteSort> ::= <HxVariable>!!!:#v ( {SubstituteSort}:rawhx {{#v}} (HX_COLON|HX_AS) <HxSort> |
+  {SubstituteNoSort}:rawhx {{#v}} ) .
+
+<HxSort> ::= {Sort}:rawhx <HxSimpleSort> <HxSimpleSorts> .
+
+<HxSimpleSorts> ::= HX_LPAREN ( {$Cons} <HxSimpleSort> <HxSimpleSortTail> | {$Nil} ) HX_RPAREN | {$Nil} .
+<HxSimpleSortTail> ::= HX_COMMA {$Cons} <HxSimpleSort> <HxSimpleSortTail> | {$Nil} .
+
+<HxSimpleSort> ::=
+  {SortName}:rawhx <HxSortName> <HxMetaVariables>
+| {SortParam}:rawhx <HxSortParam>
 .
+<HxMetaVariables> ::= {$Cons} <HxMetaVariable> {$Nil} | {$Nil} .
+<HxSortParam> ::= <HxVariable>! .
 
-<SubstituteSorts> ::= {$Cons} <SubstituteSort> ( COMMA <SubstituteSorts> | {$Nil} ) | {$Nil}  . 
-<SubstituteSort> ::= <Variable>!!!:#v ( {SubstituteSort}:hacspre {{#v}} (COLON|AS) <Sort> |
-  {SubstituteNoSort}:hacspre {{#v}} ) .
-
-<Sort> ::= {Sort}:hacspre <SimpleSort> <SimpleSorts> .
-
-<SimpleSorts> ::= LPAREN ( {$Cons} <SimpleSort> <SimpleSortTail> | {$Nil} ) RPAREN | {$Nil} .
-<SimpleSortTail> ::= COMMA {$Cons} <SimpleSort> <SimpleSortTail> | {$Nil} .
-
-<SimpleSort> ::=
-  {SortName}:hacspre <SortName> <MetaVariables>
-| {SortParam}:hacspre <SortParam>
-.
-<MetaVariables> ::= {$Cons} <MetaVariable> {$Nil} | {$Nil} .
-<SortParam> ::= <Variable>! .
-
-<ScopeSortPrecRepeat> ::= {ScopeSortPrecRepeat}:hacspre <ScopeSort> <FormPrec> <Repeat> .
-<ScopeSort> ::=
-  <Sort>:#Sort
-   ( {ScopeSortBinder}:hacspre BINDS <Variable>!!! {{#Sort}}
-   | {ScopeSort}:hacspre {{#Sort}} <Repeat> (LBRACKET <SubstituteSorts> RBRACKET | {$Nil})
+<HxScopeSortPrecRepeat> ::= {ScopeSortPrecRepeat}:rawhx <HxScopeSort> <HxFormPrec> <HxRepeat> .
+<HxScopeSort> ::=
+  <HxSort>:#Sort
+   ( {ScopeSortBinder}:rawhx HX_BINDS <HxVariable>!!! {{#Sort}}
+   | {ScopeSort}:rawhx {{#Sort}} <HxRepeat> (HX_LBRACKET <HxSubstituteSorts> HX_RBRACKET | {$Nil})
    )
-| {ScopeSortBinder}:hacspre LBRACKET <Variable>!!! COLON <Sort> RBRACKET
 .
 
-<FormPrec> ::= ( AT <Natural> | {"0"} ) .
+<HxFormPrec> ::= ( HX_AT <HxNatural> | {"0"} ) .
 
-<Tagging> ::= ( {$Cons} TAG <Constructor> ({$Nil}) | {$Nil} ).
+<HxTagging> ::= ( {$Cons} HX_TAG <HxConstructor> ({$Nil}) | {$Nil} ).
 
-<InheritedRefs> ::=( {$Cons} <InheritedRef> <InheritedRefs> | {$Nil} ).
-<InheritedRef> ::= {InheritedRef}:hacspre DOWN <AttributeName> . 
+<HxInheritedRefs> ::=( {$Cons} <HxInheritedRef> <HxInheritedRefs> | {$Nil} ).
+<HxInheritedRef> ::= {InheritedRef}:rawhx HX_DOWN <HxAttributeName> . 
 
 //// RULES.
 
-<Rule> ::= {Rule}:hacspre <RulePrefix> <NotVariableTerm> ( ARROW <Term> | {OMITTED}:hacspre ) .
+<HxRule> ::= {Rule}:rawhx <HxRulePrefix> <HxNotVariableTerm> ( HX_ARROW <HxTerm> | {OMITTED}:rawhx ) .
 
-<RulePrefix> ::= {RuleOptions}:hacspre <Priority> ( LBRACKET (<Options> | {$Nil}) RBRACKET | {$Nil} ) .
+<HxRulePrefix> ::= {RuleOptions}:rawhx <HxPriority> ( HX_LBRACKET (<HxOptions> | {$Nil}) HX_RBRACKET | {$Nil} ) .
 
-<Priority> ::=( DEFAULT:hacspre | PRIORITY:hacspre | {Normal}:hacspre ).
+<HxPriority> ::=( HX_DEFAULT:rawhx | HX_PRIORITY:rawhx | {Normal}:rawhx ).
 
-<Options> ::= {$Cons} <Option> ( COMMA <Options> | {$Nil} ) .
+<HxOptions> ::= {$Cons} <HxOption> ( HX_COMMA <HxOptions> | {$Nil} ) .
 
-<Option> ::=
-  {OptionConstruction}:hacspre <Constructor> ( LBRACKET (<Options> | {$Nil}) RBRACKET | {$Nil} ) <Attributes>
-| {OptionLiteral}:hacspre <Literal> <Attributes>
+<HxOption> ::=
+  {OptionConstruction}:rawhx <HxConstructor> ( HX_LBRACKET (<HxOptions> | {$Nil}) HX_RBRACKET | {$Nil} ) <HxAttributes>
+| {OptionLiteral}:rawhx <HxLiteral> <HxAttributes>
 .
