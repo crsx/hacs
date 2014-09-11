@@ -1,1 +1,25 @@
 This directory contains source files for the HACS system.
+
+Several components are built, using the generic ../Hacs.mk process:
+
+...
+
+
+
+
+# Workflow:
+#   %.hx
+#   ↳ %.hxp
+#     ↳ %.pgbase (by CookPG system)
+#
+#       ↳ %Meta.pgtemplate
+#         ↳ %Meta.pg → %Meta.jj → %Meta.java
+
+
+
+#       ↳ %Meta-sorts.crs
+#
+#       ↳ %.crs ↲
+
+#       ↳ %Parser.pg → %Parser.jj → %Parser.java
+#       ↳ %-sorts.crs

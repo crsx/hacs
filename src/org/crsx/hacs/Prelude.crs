@@ -124,6 +124,14 @@ Fold2[x y z.#[x,y,z], (), #_, #z] → #z ;
 Fold2[x y z.#[x,y,z], #_, (), #z] → #z ;
 Fold2[x y z.#[x,y,z], (#x;#xs), (#y;#ys), #z] → #[#x, #y, Fold2[x y z.#[x,y,z], #xs, #ys, #z]] ;
 
+∀ a . Filter[n::a.Boolean, $List[a]] :: $List[a] ;
+Filter[n.#[n], ()] → () ;
+Filter[n.#[n], (#x;#xs)] → If[#[#x], (#x; Filter[n.#[n], #xs]), Filter[n.#[n], #xs]] ;
+
+∀ a . FilterWhen[ok::Ok n::a.Boolean, $List[a]] :: $List[a] ;
+FilterWhen[ok n.#[ok,n], ()] → () ;
+FilterWhen[ok n.#[ok,n], (#x;#xs)] → If[#[OK,#x], (#x; FilterWhen[ok n.#[ok,n], #xs]), FilterWhen[ok n.#[ok,n], #xs]] ;
+
 
 /////////////////////////////////////////////////////////////////////
 // 5. STRING
@@ -145,29 +153,26 @@ Trim[$String] :: $String ;
 StringConcat[$String, $String] :: $String;
 -[Data[#1,#2]]: StringConcat[#1, #2] → $[:,#1,#2] ;
 
-StringConcat3[$String, $String, $String] :: $String;
--[Data[#1,#2,#3]]: StringConcat[#1, #2, #3] → $[:,#1,#2,#3] ;
-
 StringConcatWhen[Ok, $String, $String] :: $String;
 -[Data[#1,#2]]: StringConcatWhen[OK, #1, #2] → $[:,#1,#2] ;
 
 StringConcat3[$String, $String, $String] :: $String;
--[Data[#1,#2,#3]]: StringConcat[#1, #2, #3] → $[:,#1,#2,#3] ;
+-[Data[#1,#2,#3]]: StringConcat3[#1, #2, #3] → $[:,#1,#2,#3] ;
 
 StringConcat3When[Ok, $String, $String, $String] :: $String;
--[Data[#1,#2,#3]]: StringConcat[OK, #1, #2, #3] → $[:,#1,#2,#3] ;
+-[Data[#1,#2,#3]]: StringConcat3When[OK, #1, #2, #3] → $[:,#1,#2,#3] ;
 
 StringJoin[$List[$String], $String] :: $String;
--               : StringJoin[(), #sep] → "" ;
+StringJoin[(), #sep] → "" ;
 -[Data[#1,#sep]]: StringJoin[(#1;#s), #sep] → StringJoin1[#s, #sep, #1] ;
 
 StringJoin1[$List[$String], $String, $String] :: $String;
--                       : StringJoin1[(), #sep, #result] → #result ;
+StringJoin1[(), #sep, #result] → #result ;
 -[Data[#1,#sep,#result]]: StringJoin1[(#1;#s), #sep, #result] → $[:,#result,#sep,#1] ;
 
 ∀ a b . WrappedStringJoin[$List[$String], $String, $String, $String] :: $String;
 -[Discard[#open,#sep,#close]]: WrappedStringJoin[()     , #open, #sep, #close] → "" ;
--                            : WrappedStringJoin[(#1;#s), #open, #sep, #close] → StringConcat3[#open, StringJoin1[#s, #sep, #1], #close] ;
+WrappedStringJoin[(#1;#s), #open, #sep, #close] → StringConcat3[#open, StringJoin1[#s, #sep, #1], #close] ;
 
 ∀ a . MapStringConcat[x::a.$String, $List[a]] :: $String;
 MapStringConcat[x.#[x], ()] → "" ;
@@ -254,7 +259,7 @@ UnionNames1[NameSet, NameSet] :: NameSet ;
 UnionNames1[NAME_SET[#1], NAME_SET[#2]] → NAME_SET[$[:,#1,$[AfterFirst,#2,";"]]] ; 
 
 ∀ b . FoldNamesWhen[ok::Ok x::$String y::b . $sort[b], NameSet, b] :: b ;
-FoldNamesWhen[ok x y.#[ok,x,y], #List, #Base] → FoldWhen[ok x y.#[ok,x,y], NameSetList[#List], #Base] ;
+FoldNamesWhen[ok x y.#[ok,x,y], #Names, #Base] → FoldWhen[ok x y.#[ok,x,y], NameSetList[#Names], #Base] ;
 
 NameSetList[NameSet] :: $List[$String] ;
 -[Data[#Names]]: NameSetList[#Names] → If[HasNames[#Names], NameSetList1[#Names], ()] ;
@@ -262,11 +267,14 @@ NameSetList[NameSet] :: $List[$String] ;
 NameSetList1[NameSet] :: $List[$String] ;
 NameSetList1[NAME_SET[#Names]] → $[Split, $[Substring,#Names,1,$[Minus,$[Length,#Names],1]], ";"] ;
 
+∀ a . MapNames[x::$String.$Sort[a], NameSet] :: $List[a];
+MapNamesWhen[x.#[x], #NameSet] → Map[x.#[x], NameSetList[#NameSet]] ;
+
 ∀ a . MapNamesWhen[ok::Ok x::$String.$Sort[a], NameSet] :: $List[a];
 MapNamesWhen[ok x.#[ok,x], #NameSet] → MapWhen[ok x.#[ok,x], NameSetList[#NameSet]] ;
 
 FilterNamesWhen[ok::Ok n::$String.Boolean, NameSet] :: NameSet ;
-FilterNamesWhen[ok n.#[ok,n], #NameSet] → NAME_SET[FoldNamesWhen[ok n ns.If[#[ok,n], StringConcat3When[ok, ns, n, ';'], ns], NameSetList[#NameSet], ';']] ;
+FilterNamesWhen[ok n.#[ok,n], #NameSet] → NAME_SET[FoldWhen[ok n ns.If[#[ok,n], StringConcat3When[ok, ns, n, ';'], ns], NameSetList[#NameSet], ';']] ;
 
 
 /////////////////////////////////////////////////////////////////////
@@ -280,9 +288,10 @@ TextJoin1[$List[Text], Text] :: Text;
 -[Discard[#sep]]: TextJoin1[()     , #sep] → %n⟪⟫ ;
 -[Copy[#sep]]   : TextJoin1[(#1;#s), #sep] → %n⟪« #sep »« #1 »« TextJoin1[#s, #sep] »⟫ ;
 
- ∀ a b . WrappedTextJoin[$List[Text], a, Text, b] :: Text;
--[Discard[#open,#sep,#close]]: WrappedTextJoin[()     , #open, #sep, #close] → %n⟪⟫ ;
--                            : WrappedTextJoin[(#1;#s), #open, #sep, #close] → %n⟪« #open »« #1 »« TextJoin1[#s, #sep] »« #close »⟫ ;
+WrappedTextJoin[$List[Text], Text, Text, Text] :: Text;
+-[Discard[#open,#sep,#close]]:
+WrappedTextJoin[(), #open, #sep, #close] → %n⟪⟫ ;
+WrappedTextJoin[(#1;#s), #open, #sep, #close] → %n⟪« #open »« #1 »« TextJoin1[#s, #sep] »« #close »⟫ ;
 
 {$String : Text}TextMapSort ::=( TEXT_MAP[$List[$String]]; );
 

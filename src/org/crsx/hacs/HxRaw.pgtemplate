@@ -3,12 +3,14 @@
 
 class org.crsx.hacs.HxRaw :
 %%%HXNONTERMINALS%%%
- <HxTerm>, <HxNotVariableTerm>, <HxAttributes>, <HxAttribute>, <HxAttributeValue>, <HxScopes>, <HxScope>, <HxTerms>
+ <HxTopTerm>, <HxTopPattern>, <HxAttributes>,
+ <HxTerms>, <HxTerm>, <HxVariables>, <HxAttribute>, <HxAttributeValue>, <HxScopes>, <HxScope>
 
-prefix raw
+prefix "raw"
 
 declarations
 %{
+static String hx(String s) {return "RawHx"+s;} // prefix for constructors
 %%%HXDECLARATIONS%%%
 %}
 
@@ -29,34 +31,39 @@ inject[<HxEmbedded>] ::=  '%<PRODUCTION_NAME>', '', '' .
 ////////////////////////////////////////////////////////////////////////
 
 
-//// RAW TERMS.
+/// TERMS.
 
+<HxTopTerm> ::= <HxTerm> .
 <HxTerm> ::=
-  <HxVariable>!!!:#v ( {Special}:rawhx {{#v}} HX_CONCRETE$$:unwrap:{n} | {VariableUse}:rawhx {{#v}} <HxAttributes>)
-| <HxNotVariableTerm>
+  <HxVariable>!!!:#v ( {Special}:hx {{#v}} HX_CONCRETE$$:unwrap:{n} | {VariableUse}:hx {{#v}} <HxAttributes>)
+| <HxConstructor>:#C
+  <HxRepeat>:#R
+  ( {UnparsedSorted}:hx {{#C}} {{#R}} (HX_CONCRETE$:unwrap) <HxAttributes>
+  | {MetaApplicationSorted}:hx {{#C}} {{#R}} <HxMetaVariable> ( HX_LBRACKET (<HxTerms> | {$Nil}) HX_RBRACKET | {$Nil} ) <HxAttributes>
+  | {ConstructionSorted}:hx {{#C}} {{#R}} <HxConstructor> ( HX_LPAREN (<HxScopes> | {$Nil}) HX_RPAREN | {$Nil} ) <HxAttributes>
+  | {VariableUseSorted}:hx {{#C}} {{#R}} <HxVariable>!!! <HxAttributes>
+  | {LiteralSorted}:hx {{#C}} {{#R}} <HxLiteral> <HxAttributes>
+  | {Construction}:hx {{#C}} ( HX_LPAREN (<HxScopes> | {$Nil}) HX_RPAREN | {$Nil} ) <HxAttributes>
+  )
+| {Literal}:hx <HxLiteral> <HxAttributes>
+| {Unparsed}:hx (HX_CONCRETE$:unwrap) <HxAttributes>
+| {MetaApplication}:hx <HxMetaVariable> ( HX_LBRACKET (<HxTerms> | {$Nil}) HX_RBRACKET | {$Nil} ) <HxAttributes>
 .
 
-<HxNotVariableTerm> ::=
+<HxTopPattern> ::=
   <HxConstructor>:#C
   <HxRepeat>:#R
-  ( {UnparsedSorted}:rawhx {{#C}} {{#R}} (HX_CONCRETE$:unwrap) <HxAttributes>
-  | {MetaApplicationSorted}:rawhx {{#C}} {{#R}} <HxMetaVariable> ( HX_LBRACKET (<HxTerms> | {$Nil}) HX_RBRACKET | {$Nil} ) <HxAttributes>
-  | {ConstructionSorted}:rawhx {{#C}} {{#R}} <HxConstructor> ( HX_LPAREN (<HxScopes> | {$Nil}) HX_RPAREN | {$Nil} ) <HxAttributes>
-  | {VariableUseSorted}:rawhx {{#C}} {{#R}} <HxVariable>!!! <HxAttributes>
-  | {LiteralSorted}:rawhx {{#C}} {{#R}} <HxLiteral> <HxAttributes>
-  | {Construction}:rawhx {{#C}} ( HX_LPAREN (<HxScopes> | {$Nil}) HX_RPAREN | {$Nil} ) <HxAttributes>
+  ( {UnparsedSorted}:hx {{#C}} {{#R}} (HX_CONCRETE$:unwrap) <HxAttributes>
+  | {ConstructionSorted}:hx {{#C}} {{#R}} <HxConstructor> ( HX_LPAREN (<HxScopes> | {$Nil}) HX_RPAREN | {$Nil} ) <HxAttributes>
+  | {LiteralSorted}:hx {{#C}} {{#R}} <HxLiteral> <HxAttributes>
+  | {Construction}:hx {{#C}} ( HX_LPAREN (<HxScopes> | {$Nil}) HX_RPAREN | {$Nil} ) <HxAttributes>
   )
-| {Literal}:rawhx <HxLiteral> <HxAttributes>
-| {Unparsed}:rawhx (HX_CONCRETE$:unwrap) <HxAttributes>
-| {MetaApplication}:rawhx <HxMetaVariable> ( HX_LBRACKET (<HxTerms> | {$Nil}) HX_RBRACKET | {$Nil} ) <HxAttributes>
+| {Literal}:hx <HxLiteral> <HxAttributes>
+| {Unparsed}:hx (HX_CONCRETE$:unwrap) <HxAttributes>
 .
 
 <HxScopes> ::= {$Cons} <HxScope> (HX_COMMA <HxScopes> | {$Nil}) .
-<HxScope> ::=
-  {Scope}:rawhx ({$Nil}) <HxNotVariableTerm>
-| <HxVariable>!!!:#v ({Scope}:rawhx ({$Cons} {{#v}} <HxVariables>) HX_DOT <HxTerm> | {Scope}:rawhx ({$Nil}) ({VariableUse}:rawhx {{#v}}))
-| {Scope}:rawhx HX_LBRACKET (<HxVariableList> | {$Nil}) HX_RBRACKET <HxTerm>
-.
+<HxScope> ::= {Scope}:hx (HX_LBRACKET (<HxVariableList> | {$Nil}) HX_RBRACKET | {$Nil}) <HxTerm> .
 
 <HxVariables> ::= {$Cons} <HxVariable>!!! <HxVariables> | {$Nil} .
 <HxVariableList> ::= {$Cons} <HxVariable>!!! ( HX_COMMA <HxVariableList> | {$Nil} ) .
@@ -64,13 +71,13 @@ inject[<HxEmbedded>] ::=  '%<PRODUCTION_NAME>', '', '' .
 <HxTerms> ::= {$Cons} <HxTerm> (HX_COMMA <HxTerms> | {$Nil}) .
 
 <HxAttributes> ::= ( {$Cons} <HxAttribute> <HxAttributes> | {$Nil} ).
-<HxAttribute> ::= {Attribute}:rawhx <HxAttributeKind> <HxAttributeName> <HxAttributeValue> .
+<HxAttribute> ::= {Attribute}:hx <HxAttributeKind> <HxAttributeName> <HxAttributeValue> .
 
 <HxAttributeValue> ::= 
-  {AttributeValue}:rawhx HX_LPAREN <HxTerm> HX_RPAREN
-| HX_LBRACE ( <HxTerm>:# ( {AttributeKeyValue}:rawhx {{#}} HX_COLON <HxTerm> HX_RBRACE
-            | {AttributeKey}:rawhx {{#}} HX_RBRACE )
-            | {AttributeNotKey}:rawhx HX_NOT <HxTerm> HX_RBRACE )
+  {AttributeValue}:hx HX_LPAREN <HxTerm> HX_RPAREN
+| HX_LBRACE ( <HxTerm>:# ( {AttributeKeyValue}:hx {{#}} HX_COLON <HxTerm> HX_RBRACE
+            | {AttributeKey}:hx {{#}} HX_RBRACE )
+            | {AttributeNotKey}:hx HX_NOT <HxTerm> HX_RBRACE )
 .
 
 ////////////////////////////////////////////////////////////////////////

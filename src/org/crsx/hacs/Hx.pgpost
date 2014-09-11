@@ -5,7 +5,6 @@
 //// TOKENS.
 
 %{
-// Nesting.
 TOKEN_MGR_DECLS : { int nesting ; int nestedState; }
 %}
 
@@ -33,15 +32,15 @@ skip (DEFAULT,HX_RE) ::= ' ' | \r | \t | \n | '//' ~[\n\r]* | \u1 .
 %}
 
 // Combinations.
-<HxModuleName> ::= <HxString>:checkModuleString | <HxConstructor> | HX_DOTTEDNAME$ .
+<HxModuleName> ::= ( <HxString>:checkModuleString | <HxConstructor> | HX_DOTTEDNAME$ ).
 <HxSortName> (DEFAULT,HX_RE) ::= <HxConstructor> .
 <HxFragmentName> (HX_RE) ::= <HxConstructor> .
 <HxFragmentRef> (DEFAULT,HX_RE) ::= HX_FRAGMENT_REF$:unwrap .
-<HxAttributeName> ::= <HxLiteral> | <HxVariable> | <HxConstructor> .
-<HxConstructor> ::= ( HX_UPPER$ | HX_DASH$ | HX_CON$ ).
-<HxVariable> ::=  ( HX_LOWER$ | HX_VAR$ | HX_MODULE$ | HX_SORT$ | HX_MAIN$ | HX_DATA$ | HX_STATIC$ | HX_SYMBOL$ | HX_SCHEME$ | HX_AUTOMATIC$ | HX_ATTRIBUTE$ | HX_COMPOSE$
+<HxAttributeName> ::= ( <HxLiteral> | <HxVariable> | <HxConstructor> ).
+<HxConstructor> ::= HX_CON$ .
+<HxVariable> ::=  ( HX_VAR$ | HX_MODULE$ | HX_SORT$ | HX_MAIN$ | HX_DATA$ | HX_STATIC$ | HX_SYMBOL$ | HX_SCHEME$ | HX_AUTOMATIC$ | HX_ATTRIBUTE$ | HX_COMPOSE$
                   | HX_SUGAR$ | HX_RULE$ | HX_PRIORITY$ | HX_DEFAULT$ | HX_SPACE$ | HX_IMPORT$ | HX_TOKEN$ | HX_FRAGMENT$ | HX_NESTED$ | HX_TAG$ | HX_BINDS$ | HX_AS$ ).
-<HxMetaVariable> ::= ( HX_META$ | HX_HASH$ ).
+<HxMetaVariable> ::= HX_META$ .
 <HxSeparator> ::= ( HX_BAR$ | HX_SEMI$ | HX_COMMA$ | HX_COLON$ | HX_STAR$ | HX_DOT$ ).
 
 // Single character tokens.
@@ -61,7 +60,6 @@ token HX_COLON (DEFAULT,HX_RE) ::= ":" .
 // Exclusive to default mode.
 token HX_LBRACE ::= "{" .
 token HX_RBRACE ::= "}" .
-token HX_HASH ::= "#" .
 token HX_LBRACKET ::= "[" .
 token HX_RBRACKET ::= "]" .
 token HX_COMMA ::= "," .
@@ -71,17 +69,15 @@ token HX_UP ::= \u2191 . // ↑
 token HX_DOWN ::= \u2193 . // ↓
 token HX_NOT ::= \u00ac . // ¬
 token HX_AT ::= "@" .
-token HX_DASH ::= "-" .
 
 token HX_DOTTEDNAME ::= ( (HX_LOWER | HX_DIGIT)+ HX_DOT )+ HX_UPPER (HX_UPPER | HX_LOWER | HX_DIGIT)* .
 
-// Categories are separate tokens so remember to include where needed! TODO: eliminate.
-token HX_DIGIT ::= [0-9] .
-token HX_LOWER ::= [a-z] .
-token HX_UPPER (DEFAULT,HX_RE) ::= [A-Z] .
+// Common categories...TODO: should be Unicode...
+token fragment HX_DIGIT ::= [0-9] .
+token fragment HX_LOWER ::= [a-z] .
+token fragment HX_UPPER ::= [A-Z] .
 
-// Normal keywords (all special cases of <HxVariable>).
-
+// Normal keywords (cases of <HxVariable>).
 token HX_MODULE ::= "module" .
 token HX_SORT ::= "sort" .
 token HX_MAIN ::= "main" .
@@ -101,27 +97,29 @@ token HX_TAG ::= "tag" .
 token HX_BINDS ::= "binds" .
 token HX_AS ::= "as" .
 
-// Regular Expression introduction keywords.
+// Regular Expression introduction keywords (cases of <HxVariable>).
 token HX_SPACE (DEFAULT : HX_RE) ::= "space" .
 token HX_TOKEN (DEFAULT : HX_RE) ::= "token" .
 token HX_FRAGMENT (DEFAULT,HX_RE : HX_RE) ::= "fragment" .
 token HX_NESTED (HX_RE) ::= "nested" .
 
+token HX_FRAGMENT_REF (HX_RE) ::= \u27e8 (HX_UPPER | HX_CON) \u27e9 . //Note: fits with <HxFragmentName>
+
 // The basic identifier forms.
 token HX_META ::= HX_HASH (HX_NAME | HX_STRING)? (HX_HASH HX_NAME)* HX_SUFFIX* .
 token HX_VAR ::= HX_LOWER HX_NAME? HX_SUFFIX* | "v" HX_STRING HX_SUFFIX* .
 token HX_CON (DEFAULT,HX_RE) ::= (HX_UPPER | [$]) HX_NAME? HX_SUFFIX* | "C" HX_STRING HX_SUFFIX* .
+
+token fragment HX_HASH ::= "#" .
 token fragment HX_SUFFIX ::= "_" HX_NAME? | "_"? HX_NATURAL HX_NAME? .
 token fragment HX_NAME ::= (HX_LOWER | HX_UPPER | [$])+ .
 
-token HX_FRAGMENT_REF (HX_RE) ::= \u27e8 (HX_UPPER | HX_DASH | HX_CON) \u27e9 . //Note: fits with <HxFragmentName>
-
 // Constant values.
-<HxLiteral> ::= <HxString> | <HxNumber> .
+<HxLiteral> ::= ( <HxString> | <HxNumber> ).
 
 // Numbers.
-<HxNumber> ::= <HxNatural> | HX_UNNATURAL$ .
-<HxNatural> ::= HX_DIGIT$ | HX_NATURAL$ .
+<HxNumber> ::= ( <HxNatural> | HX_UNNATURAL$ ).
+<HxNatural> ::= HX_NATURAL$ .
 token HX_NATURAL ::= HX_DIGIT+ .
 token fragment HX_INTEGER ::= [-+]* HX_NATURAL .
 token HX_UNNATURAL ::= (HX_INTEGER? "." HX_NATURAL) ( [Ee] HX_INTEGER )? | HX_INTEGER [Ee] HX_INTEGER .
@@ -130,16 +128,15 @@ token HX_UNNATURAL ::= (HX_INTEGER? "." HX_NATURAL) ( [Ee] HX_INTEGER )? | HX_IN
 
 // Strings (in hx uninterpreted form).
 <HxString> (DEFAULT,HX_RE) ::= HX_STRING$ .
-token HX_STRING (DEFAULT,HX_RE) ::= "'" HX_STRING1CHAR* "'" | '"' HX_STRING2CHAR* '"' .
-token fragment HX_STRING1CHAR ::= ~[\\'\n] | HX_ESCAPEDCHAR .
-token fragment HX_STRING2CHAR ::= ~[\\"\n] | HX_ESCAPEDCHAR .
+token HX_STRING (DEFAULT,HX_RE) ::= ( "'" HX_STRING1CHAR* "'" | '"' HX_STRING2CHAR* '"' ).
+token fragment HX_STRING1CHAR ::= ( ~[\\'\n] | HX_ESCAPEDCHAR ).
+token fragment HX_STRING2CHAR ::= ( ~[\\"\n] | HX_ESCAPEDCHAR ).
 
 // Escaped characters...TODO: many more to add!
 token HX_ESCAPEDCHAR (DEFAULT,HX_RE) ::=
-  [\\] ~[0-9uUx]
+  [\\] ~[0-9ux]
 | [\\] [0-3]? [0-7]? [0-7]
 | [\\] [u] HX_HEX? HX_HEX? HX_HEX? HX_HEX
-| [\\] [U] HX_HEX? HX_HEX? HX_HEX? HX_HEX? HX_HEX? HX_HEX? HX_HEX? HX_HEX
 | [\\] [x] (HX_HEX HX_HEX | '{' HX_HEX+ '}')
 .
 token fragment HX_HEX ::= [0-9A-Fa-f] .
@@ -147,7 +144,7 @@ token fragment HX_HEX ::= [0-9A-Fa-f] .
 // Catch-all...
 token HX_OTHERCHAR ::= ~[] .
 
-<HxWord> (DEFAULT,HX_RE) ::= (HX_UPPER$ | HX_DASH$ | HX_CON$ | HX_WORD$) .
+<HxWord> (DEFAULT,HX_RE) ::= (HX_CON$ | HX_WORD$) .
 token HX_WORD (HX_RE) ::= ~['⟨','⟩','⟦','⟧','(',')','[',']','.','*','+','?',';','"',"'",',',':','«','»',' ',\t,\\,\n]+ .
 
 
@@ -168,7 +165,7 @@ token HX_CC_OTHER (HX_CC) ::= ~['^',']','-',\\,\n,\u1] | HX_ESCAPEDCHAR .
 token HX_CC_SKIP (HX_CC) ::= \u1 .
 
 <HxCC_RangesTop> (HX_CC) ::=
-  {RegExpClassNot}:rawhx HX_CC_NOT <HxCC_FirstRangeStartChar>:#lo <HxCC_RangeTail #lo>
+  {RegExpClassNot}:hx HX_CC_NOT <HxCC_FirstRangeStartChar>:#lo <HxCC_RangeTail #lo>
 | <HxCC_FirstRangeStartChar>:#lo <HxCC_RangeTail #lo>
 | HX_CC_SKIP <HxCC_RangesTop>
 .
@@ -176,53 +173,18 @@ token HX_CC_SKIP (HX_CC) ::= \u1 .
 <HxCC_Ranges> (HX_CC) ::=
   <HxCC_RangeChar>:#lo <HxCC_RangeTail #lo>
 | HX_CC_SKIP <HxCC_Ranges>
-| {RegExpClassDone}:rawhx
+| {RegExpClassDone}:hx
 .
 
 <HxCC_RangeTail #lo> (HX_CC) ::=
-  HX_CC_DASH ( {RegExpClassRange}:rawhx {{#lo}} <HxCC_RangeChar> <HxCC_Ranges> | {RegExpClassChar}:rawhx {{#lo}} {RegExpClassDone}:rawhx )
-| {RegExpClassChar}:rawhx {{#lo}} <HxCC_NonDashRangeStartChar>:#lo2 <HxCC_RangeTail #lo2>
+  HX_CC_DASH ( {RegExpClassRange}:hx {{#lo}} <HxCC_RangeChar> <HxCC_Ranges> | {RegExpClassChar}:hx {{#lo}} {RegExpClassDone}:hx )
+| {RegExpClassChar}:hx {{#lo}} <HxCC_NonDashRangeStartChar>:#lo2 <HxCC_RangeTail #lo2>
 | HX_CC_SKIP  <HxCC_RangeTail #lo>
-| {RegExpClassChar}:rawhx {{#lo}} {RegExpClassDone}:rawhx
+| {RegExpClassChar}:hx {{#lo}} {RegExpClassDone}:hx
 .
 
 <HxCC_FirstRangeStartChar> (HX_CC) ::= (HX_CC_RBRACKET$ | HX_CC_DASH$ | HX_CC_OTHER$) .
 <HxCC_NonDashRangeStartChar> (HX_CC) ::= (HX_CC_NOT$ | HX_CC_OTHER$) .
 <HxCC_RangeChar> (HX_CC) ::= (HX_CC_NOT$ | HX_CC_DASH$ | HX_CC_OTHER$) .
 
-<HxParsedForm> ::= HX_CONCRETE:{hxPP} .
-
-//// SPECIAL SORT NAME CACHE HACK?
-
-%{
-net.sf.crsx.Sink N_HxStore_SortName(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) :
-{
-	net.sf.crsx.util.Buffer b = new net.sf.crsx.util.Buffer(sink);
-}
-{
-	N_HxSortName(b.sink(), env)
-	{
-		net.sf.crsx.Term term = b.term(false);
-		storedSort = net.sf.crsx.util.Util.symbol(term);
-		return term.copy(sink, true, net.sf.crsx.util.LinkedExtensibleMap.EMPTY_RENAMING);
-	}
-}
-
-net.sf.crsx.Sink N_HxStored_SortName(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) :
-{}
-{
-	{return sink.start(sink.makeLiteral(storedSort, net.sf.crsx.CRS.STRING_SORT)).end();}
-}
-
-net.sf.crsx.Sink N_HxStoring_Declarations(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) :
-{
-	String savedStoredSort = storedSort;
-}
-{
-	sink=N_HxDeclarations(sink, env)
-	{
-		storedSort = savedStoredSort;
-		return sink;
-	}
-}
-%}
+<HxParsedForm> ::= HX_CONCRETE$$:unwrap:{hxPP} .
