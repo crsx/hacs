@@ -1,6 +1,6 @@
 gentle/
-*.hxp
+*.hxraw
 *.pg
 *.crs
 *.pgbase
-*.build
+*.run

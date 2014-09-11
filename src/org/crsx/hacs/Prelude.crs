@@ -183,7 +183,6 @@ MapStringConcatWhen[ok x.#[ok,x], ()] → "" ;
 MapStringConcatWhen[ok x.#[ok,x], (#1;##)] → StringConcat[#[OK,#1], MapStringConcatWhen[ok x.#[ok,x], ##]] ;
 
 
-
 /////////////////////////////////////////////////////////////////////
 // 6. SET OF NAMES
 
