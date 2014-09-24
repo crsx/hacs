@@ -4,10 +4,6 @@
 
 //// TOKENS.
 
-%{
-TOKEN_MGR_DECLS : { int nesting ; int nestedState; }
-%}
-
 // Special syntactic token for concrete syntax.
 
 %{

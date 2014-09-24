@@ -36,10 +36,10 @@ $Lax;
 // 1. PG: TOP LEVEL
 //
 // Convert HACS tree to .pgbase with text of ---
-// * .pg parser for user's language (unmarked + PG).
+// * .pg parser for user's language (unmarked + USERPG).
 // * .crs sort declarations for user's terms (SORTS).
 // * .pgtemplate for HACS parser extended with user's meta-terms (unmarked + METAPG).
-// * .pg parser for user's meta-terms as embedded in patterns (EMBEDPG).
+// * .pg parser for user's meta-terms as embedded in patterns (unmarked + EMBEDPG).
 // * .crs sort declarations for meta-terms (METASORTS).
 //
 // PG1: Extract declarations from HACS hx term with all modules inlined.
@@ -48,37 +48,34 @@ $Lax;
 PG[HxModule] :: Text;
 PG[%rawHxModule⟦ module #HxModuleName# { #HxDeclarations# } ⟧]
 →
-PG1[#HxModuleName#, PG-ResolveImports[#HxDeclarations#, #HxModuleName#]]
+PG1[#HxModuleName#, PG-ResolveImports[#HxDeclarations#, #HxModuleName#], dm ds.PG2[dm, ds, #HxModuleName#]]
 ;
 
-PG1[$String<!--ModuleName-->, $List[HxDeclaration]] :: Text;
-PG1[#ModuleName, #Declarations]
+PG1[$String<!--ModuleName-->, $List[HxDeclaration], ok::Ok dm::DeclarationMap.Text] :: Text;
+PG1[#ModuleName, #Declarations, ok dm.#[ok,dm]]
 →
-PG2[{} PG-MapDeclarations[#Declarations, #ModuleName], #Declarations, #ModuleName]
+#[{} PG-MapDeclarations[#Declarations, #ModuleName], #Declarations]
 ;
 
 PG2[DeclarationMap, $List[HxDeclaration], $String<!--ModuleName-->] :: Text ;
 -[Data[#Declarations]]:
 PG2[{#DM}DM, #Declarations, #ModuleName]
 →
-%n⟪/* PG Grammar for /***METAPG: HACS module specialized for parsed***/ †« #ModuleName » terms. */
-/***EMBEDPG:/* PG Grammar for HACS-embedded †« #ModuleName » terms. */ ***/
+%n⟪/* PG Grammar for /***METAPG&EMBED: HACS module specialized for parsed***/ †« #ModuleName » terms /***EMBEDPG: (embedded terms)***/ */
 
 /* INTERFACE. */
 
-/***USERPG: class †« PG-ClassName[#ModuleName] »Parser : ⟦<†« {#DM}PG-MainSymbol »>« MapTextConcat[n.%n⟨,<†‹n›>⟩, {#DM}PG-NonMainSymbols] »⟧ ***/
-
-/***METAPG: class †« PG-ClassName[#ModuleName] »Hx :
+class †« PG-ClassName[#ModuleName] »/***USERPG:Parser***//***METAPG:Hx***//***EMBEDPG:Embed***/ :⟦
+/***USERPG&EMBEDPG:<†« {#DM}PG-MainSymbol »>« MapTextConcat[n.%n⟨,<†‹n›>⟩, {#DM}PG-NonMainSymbols] » ***/
+/***METAPG:
 %%%HXNONTERMINALS%%%
  <HxTopTerm>, <HxTopPattern>, <HxAttributes>,
  <Term>, <PresortedMetaApplication>, <PresortedVariable>, <PresortedParsed>,
  <MetaApplication>, <BracketedTerms>, <Terms>, <Attribute>
 ***/
-/***EMBEDPG: class †« PG-ClassName[#ModuleName] »Embed :
- ⟦<†« {#DM}PG-MainSymbol »>« MapTextConcat[n.%n⟨,<†‹n›>⟩, {#DM}PG-NonMainSymbols] »⟧
-***/
+⟧
 
-/***USERPG: prefix "†« PG-Prefix[#ModuleName] »" ***/
+/***USERPG: prefix "†« PG-User-Prefix[#ModuleName] »" ***/
 /***METAPG: prefix "†« PG-Meta-Prefix[#ModuleName] »" ***/
 /***EMBEDPG: prefix "†« PG-Embed-Prefix[#ModuleName] »" ***/
 
@@ -89,7 +86,8 @@ declarations
 String hx(String s) { return "†« PG-LastName[#ModuleName] »Hx_"+s; }
 String user(String s) { return "†« PG-LastName[#ModuleName] »_"+s; }
 String embedPrefix(String sort) { return "†« PG-Embed-Prefix[#ModuleName] »"+sort; }
-%} ***/
+%}
+***/
 
 /***EMBEDPG:
 declarations
@@ -98,7 +96,8 @@ static String unwrap(String s) {return s.substring(1, s.length()-1);}
 String hx(String s) { return "†« PG-LastName[#ModuleName] »Hx_"+s; }
 String user(String s) { return "†« PG-LastName[#ModuleName] »_"+s; }
 String metaPrefix(String sort) { return "†« PG-Meta-Prefix[#ModuleName] »"+sort; }
-%} ***/
+%}
+***/
 
 /***USERPG&EMBEDPG:
 %{
@@ -116,7 +115,8 @@ TOKEN_MGR_DECLS : { int nesting; int nestedState;} /* Used by all nesting constr
 †« PG-QN[#ModuleName, "NodeSort", "Scope"] » ::= (⟦
 †« PG-QN[#ModuleName, "Tag", "Binder"] »[binder :: †« PG-QN[#ModuleName, "NodeSort", "Term"] » . †« PG-QN[#ModuleName, "NodeSort", "Scope"] »];
 †« PG-QN[#ModuleName, "Tag", "Subterm"]»[†« PG-QN[#ModuleName, "NodeSort", "Term"] »]; ⟧
-); ***/
+);
+***/
 
 /***METAPG:
 ////////////////////////////////////////////////////////////////////////
@@ -192,7 +192,7 @@ net.sf.crsx.Sink N_Term(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<St
 <Attribute> ::= ⟦« {#DM} PG-Meta-AttributeAlternatives[#ModuleName, NameSetList[{#DM} PG-AllSynthesizedNames], NameSetList[{#DM}PG-AllInheritedNames]] »⟧ .
 ***/
 
-/***USERPG&METAPG: /* USER GRAMMAR. */ ***/
+/* USER GRAMMAR. */
 
 « {#DM}PG-Productions[#ModuleName] »
 
@@ -252,6 +252,30 @@ PG-GetModuleName[HxModule] :: Text;
 PG-GetModuleName[%rawHxModule⟦ module #HxModuleName# { #HxDeclarations# } ⟧]
 →
 %n⟪†«$[Replace,#HxModuleName#,"\"",""]»⟫
+;
+
+PG-PrintEnvironment[HxModule] :: Text;
+PG-PrintEnvironment[%rawHxModule⟦ module #HxModuleName# { #HxDeclarations# } ⟧]
+→
+PG1[#HxModuleName#, PG-ResolveImports[#HxDeclarations#, #HxModuleName#], dm ds.PG2Print[dm, ds, #HxModuleName#]]
+;
+
+PG2Print[DeclarationMap, $List[HxDeclaration], $String<!--ModuleName-->] :: Text ;
+-[Data[#ModuleName]]:
+PG2Print[{#DM}DM, #Declarations, #ModuleName]
+→
+%n⟪MODULE='†« $[Replace,#ModuleName,"\"",""] »'
+NAME='†« PG-LastName[#ModuleName] »'
+SORT='†« {#DM}PG-MainSymbol  »'
+SORTS='†« {#DM}PG-MainSymbol »« MapTextConcat[n.%n⟨ †‹n›⟩, {#DM}PG-NonMainSymbols] »'
+SINKCLASS='net.sf.crsx.text.TextSink'
+PARSERCLASS='†« PG-ClassName[#ModuleName] »Parser'
+PREFIX='†« PG-User-Prefix[#ModuleName] »'
+METAPARSERCLASS='†« PG-ClassName[#ModuleName] »Meta'
+METAPREFIX='†« PG-Meta-Prefix[#ModuleName] »'
+EMBEDPARSERCLASS='†« PG-ClassName[#ModuleName] »Embed'
+EMBEDPREFIX='†« PG-Embed-Prefix[#ModuleName] »'
+⟫
 ;
 
 
@@ -1175,10 +1199,11 @@ PG-Production1[#ModuleName, DME_TOKEN[#SortName]]
 
 /***USERPG&EMBEDPG:
 « PG-GenerateNonterminalDeclaration[PG-ProductionNameText[#SortName],
-  %n⟨/***EMBEDPG: {†‹ PG-user[#ModuleName, StringConcat[#SortName, "_Wrapper"]] ›} ***/ ({†‹ PG-user[#ModuleName, StringConcat[#SortName, "_Token"]] ›} ‹PG-TokenNameText[#SortName]›$) /***EMBEDPG: ({$Nil}) ***/⟩] »
+  %n⟨/***EMBEDPG:‹ {#DM}PG-Embed-Head[B_TRUE, #ModuleName, #SortName, #SortName, B_FALSE, 0]›***/ (‹PG-TokenNameText[#SortName]›$)⟩] »
 ***/
-
-« {#DM}PG-EmbedTail[B_TRUE, #SortName, #SortName] »
+/***EMBEDPG:
+« {#DM}PG-Embed-Tail[B_TRUE, #SortName, #SortName] »
+***/
 
 /***METAPG:
 /* <†«#SortName»> covers Hacs terms restricted to †«#SortName» token sort. (Warning: JavaCC LOOKAHEAD hack ahead.) */
@@ -1205,7 +1230,7 @@ net.sf.crsx.Sink N_†«#SortName»(net.sf.crsx.Sink sink, net.sf.crsx.util.Exte
 ***/
 ⟫
 ;
-/// « PG-GenerateNonterminalDeclaration[PG-ProductionNameText[#SortName], %n⟨‹ {#DM}PG-Head[B_TRUE, #ModuleName, #SortName, #SortName, B_FALSE, 0]›(‹PG-TokenNameText[#SortName]›$)⟩] »
+/// « PG-GenerateNonterminalDeclaration[PG-ProductionNameText[#SortName], %n⟨(‹PG-TokenNameText[#SortName]›$)⟩] »
 
 PG-GenerateNonterminalDeclaration[Text, Text] → Text;
 PG-GenerateNonterminalDeclaration[#Name, #Alternatives] → %n⟪<«#Name»> ::= ⟦«#Alternatives»⟧ .⟫ ;
@@ -1537,39 +1562,39 @@ IfEmpty[#HxSubstituteSorts#,
 
 // Meta-definitions for sorts.
 
-{$String<!--SortName--> : DeclarationMapEntry} PG-Head[Boolean, $String<!--ModuleName-->, $String, $String, Boolean, $Numeric] :: Text;
+{$String<!--SortName--> : DeclarationMapEntry} PG-Embed-Head[Boolean, $String<!--ModuleName-->, $String, $String, Boolean, $Numeric] :: Text;
 
-PG-Head[B_FALSE, #ModuleName, #SortName, #Name, #isLeftRecursive, #Prec] → %n⟪⟫ ;
+PG-Embed-Head[B_FALSE, #ModuleName, #SortName, #Name, #isLeftRecursive, #Prec] → %n⟪⟫ ;
 
 -[Data[#SortName],Discard[#Prec]]:
 {#DM}
-PG-Head[B_TRUE, #ModuleName, #SortName, #Name, B_FALSE, #Prec] →
+PG-Embed-Head[B_TRUE, #ModuleName, #SortName, #Name, B_FALSE, #Prec] →
  %n⟪
-meta_« PG-TokenNameText[#Name] »$$:unwrap:{%%%PREFIX%%%HxTerm} |
+meta_« PG-TokenNameText[#Name] »$$:unwrap:{†« PG-Meta-Prefix[#ModuleName] »Term} |
 ⟫ ;
 
 -[Data[#SortName]]:
 {#DM}
-PG-Head[B_TRUE, #ModuleName, #SortName, #Name, B_TRUE, #Prec] →
+PG-Embed-Head[B_TRUE, #ModuleName, #SortName, #Name, B_TRUE, #Prec] →
  %n⟪
-meta_« PG-TokenNameText[#Name] »$$:unwrap:{%%%PREFIX%%%HxTerm}:#1 <« PG-ProductionNameWithPrecText[#SortName, #Prec] »LR #1> |
+meta_« PG-TokenNameText[#Name] »$$:unwrap:{†« PG-Meta-Prefix[#ModuleName] »Term}:#1 <« PG-ProductionNameWithPrecText[#SortName, #Prec] »LR #1> |
 ⟫ ;
 
 
-PG-EmbedTail[Boolean, $String, $String] :: Text;
+PG-Embed-Tail[Boolean, $String, $String] :: Text;
 
-PG-EmbedTail[B_FALSE, #SortName, #Name] → %n⟪⟫ ;
+PG-Embed-Tail[B_FALSE, #SortName, #Name] → %n⟪⟫ ;
 
--[Data[#SortName]]: PG-EmbedTail[B_TRUE, #SortName, #Name] → %n⟪
-/***EMBEDPG: %{ ***/
-/***EMBEDPG: /* Meta token for embedded user †«#SortName». */  ***/
-/***EMBEDPG: MORE : { < "\u27e8" (" ")* †« Stringify[#SortName] » (" ")* ~["\u27e8","\u27e9"] > { nesting = 0; nestedState = curLexState; } : IN_META_«PG-TokenNameText[#Name]» } ***/
-/***EMBEDPG: <IN_META_«PG-TokenNameText[#Name]»> MORE : { "\u27e8" { nesting = 1; } : IN_NESTED_META_«PG-TokenNameText[#Name]» } ***/
-/***EMBEDPG: <IN_NESTED_META_«PG-TokenNameText[#Name]»> MORE : { "\u27e8" { nesting++; } } ***/
-/***EMBEDPG: <IN_NESTED_META_«PG-TokenNameText[#Name]»> MORE : { "\u27e9" { if (--nesting <= 0) SwitchTo(IN_META_«PG-TokenNameText[#Name]»); } } ***/
-/***EMBEDPG: <IN_META_«PG-TokenNameText[#Name]»> TOKEN : { < T_meta_«PG-TokenNameText[#Name]» : "\u27e9" > { SwitchTo(nestedState); } } ***/
-/***EMBEDPG: <IN_META_«PG-TokenNameText[#Name]»,IN_NESTED_META_«PG-TokenNameText[#Name]»> MORE : { < ~[] > } ***/
-/***EMBEDPG: %} ***/
+-[Data[#SortName]]: PG-Embed-Tail[B_TRUE, #SortName, #Name] → %n⟪
+%{
+/* Meta token for embedded user †«#SortName». */ 
+MORE : { < "\u27e8" (" ")* †« Stringify[#SortName] » (" ")* ~["\u27e8","\u27e9"] > { nesting = 0; nestedState = curLexState; } : IN_META_«PG-TokenNameText[#Name]» }
+<IN_META_«PG-TokenNameText[#Name]»> MORE : { "\u27e8" { nesting = 1; } : IN_NESTED_META_«PG-TokenNameText[#Name]» }
+<IN_NESTED_META_«PG-TokenNameText[#Name]»> MORE : { "\u27e8" { nesting++; } }
+<IN_NESTED_META_«PG-TokenNameText[#Name]»> MORE : { "\u27e9" { if (--nesting <= 0) SwitchTo(IN_META_«PG-TokenNameText[#Name]»); } }
+<IN_META_«PG-TokenNameText[#Name]»> TOKEN : { < T_meta_«PG-TokenNameText[#Name]» : "\u27e9" > { SwitchTo(nestedState); } }
+<IN_META_«PG-TokenNameText[#Name]»,IN_NESTED_META_«PG-TokenNameText[#Name]»> MORE : { < ~[] > }
+%}
 ⟫ ;
 
 
@@ -1665,10 +1690,6 @@ CONSUMPTION_SORT ::=( C_BUFFER[$String<!--SortName-->, $Numeric<!--precedence-->
     PFK[#ParsedForm, #Kind]
     ;
 
-
-
-
-
 {#DM} PG-LeftRecursive2[#ModuleName, B_TRUE, #PFK1, #PFKs, #SortName, #Prec, #Last?, #LeftRecursivePFKs, #OtherPFKs]
 →
 {#DM} PG-LeftRecursive[#ModuleName, #PFKs, #SortName, #Prec, #Last?, Append[#LeftRecursivePFKs, (PG-stripLeftRecursion[#PFK1];)], #OtherPFKs]
@@ -1689,7 +1710,9 @@ IfEmpty[#LeftRecursivePFKs,
     %n⟪
 /***USERPG&EMBEDPG:
 /* Handle left recursion. */
-<«PG-ProductionNameWithPrecText[#SortName, #Prec]»LR #1> ::= ⟦«in»
+<«PG-ProductionNameWithPrecText[#SortName, #Prec]»LR #1> ::= ⟦
+/***/* HERE */
+«in»
 | {{#1}}⟧
 . ***/
 /***SORTS: †«PG-QN[#ModuleName, "NodeSort", #SortName]» ::= ( «tags» ); ***/
@@ -1706,14 +1729,21 @@ IfEmpty[#LeftRecursivePFKs,
 →
 {#DM} PG-ProduceBody[#ModuleName, #SortName, #PFKs, 1, (), (), C_LEFTRECURSIVE[#SortName9, #Prec9], in funs tags after .
   %n⟪
-/***USERPG&EMBEDPG: <«PG-ProductionNameWithPrecText[#SortName, #Prec]»> ::= ⟦«in»⟧ . ***/
+/***USERPG&EMBEDPG:
+/* HERE */
+<«PG-ProductionNameWithPrecText[#SortName, #Prec]»> ::= ⟦
+«in»⟧ .
+***/
 
 /***SORTS: †«PG-QN[#ModuleName, "NodeSort", #SortName]» ::= ( «tags» ); ***/
 «funs»
-« {#DM}PG-EmbedTail[#Last?, #SortName, #SortName] »« TextJoinMap[after, %n⟨
-⟩] »⟫]
+/***EMBEDPG:
+« {#DM}PG-Embed-Tail[#Last?, #SortName, #SortName] »« TextJoinMap[after, %n⟨
+⟩] »
+***/
+⟫]
 ;
-/// <«PG-ProductionNameWithPrecText[#SortName, #Prec]»> ::= ⟦« {#DM}PG-Head[#Last?, #ModuleName, #SortName, #SortName, B_TRUE, #Prec] »«in»⟧ .
+/// <«PG-ProductionNameWithPrecText[#SortName, #Prec]»> ::= ⟦« {#DM}PG-Embed-Head[#Last?, #ModuleName, #SortName, #SortName, B_TRUE, #Prec] »«in»⟧ .
 
 
 -[Data[#consumer]]:
@@ -1724,10 +1754,13 @@ IfEmpty[#LeftRecursivePFKs,
 /***USERPG&EMBEDPG: <«PG-ProductionNameWithPrecText[#SortName,#Prec]»> ::= ⟦«in»⟧ . ***/
 
 « PG-TagSortDeclaration[#ModuleName, #SortName, funs, tags] »
-« {#DM}PG-EmbedTail[#Last?, #SortName, #SortName] »« TextJoinMap[after, %n⟨
-⟩] »⟫]
+/***EMBEDPG:
+« {#DM}PG-Embed-Tail[#Last?, #SortName, #SortName] »« TextJoinMap[after, %n⟨
+⟩] »
+***/
+⟫]
 ;
-/// <«PG-ProductionNameWithPrecText[#SortName,#Prec]»> ::= « {#DM}PG-Head[#Last?, #ModuleName, #SortName, #SortName, B_FALSE, #Prec] »«in» .
+/// <«PG-ProductionNameWithPrecText[#SortName,#Prec]»> ::= « {#DM}PG-Embed-Head[#Last?, #ModuleName, #SortName, #SortName, B_FALSE, #Prec] »«in» .
 
 
 
@@ -1737,10 +1770,6 @@ PG-TagSortDeclaration[#ModuleName, #SortName, #funs, #tags]
 /***SORTS: †«PG-QN[#ModuleName, "TagSort", #SortName]» ::= ( « #tags » ); ***/
 «#funs»⟫
 ;
-
-///PG-Head[#dontcare, #SortName, #Name, #isLeftRecursive, #Prec] → %n⟪⟫ ;
-///PG-EmbedTail[#dontcare, #SortName, #Name] → %n⟪⟫ ;
-
 
 {$String<!--SortName--> : DeclarationMapEntry} PG-ProduceBody[$String<!--ModuleName-->, $String<!--HostSort-->, $List[PFK_SORT], $Numeric, $List[Text], $List[Text], CONSUMPTION_SORT, in::Text after::TextMapSort.Text] :: Text;
 
@@ -2113,8 +2142,8 @@ IfSingletonRepeat[#Repeat,
     -[Data[#Kind]]: PG-VariableMarker[#Kind, #Other] → PG-VariableMarker2[#Kind, #Other] ;
 
     PG-VariableMarker2[FormKind, Text] :: Text;
-    PG-VariableMarker2[FK_SYMBOL[$False,#t], #Other] → %n⟪!!!« #Other »⟫ ;
-    PG-VariableMarker2[FK_SYMBOL[$True,#t], #Other] → %n⟪!!« #Other »⟫ ;
+    PG-VariableMarker2[FK_SYMBOL[$False,#t], #Other] → %n⟪/***USERPG:!!!***/« #Other »⟫ ;
+    PG-VariableMarker2[FK_SYMBOL[$True,#t], #Other] → %n⟪/***USERPG:!!***/« #Other »⟫ ;
     PG-VariableMarker2[$[NotMatch,FK_SYMBOL[#IsStatic,#t],#Kind], #Other] → #Other ;
 
 
@@ -2513,6 +2542,9 @@ PG-Embed-Prefix[#ModuleName] → StringConcat[PG-Prefix[#ModuleName], "Embed_"] 
 PG-Meta-Prefix[$String] :: $String;
 PG-Meta-Prefix[#ModuleName] → StringConcat[PG-Prefix[#ModuleName], "Meta_"] ;
 
+PG-User-Prefix[$String] :: $String;
+PG-User-Prefix[#ModuleName] → StringConcat[PG-Prefix[#ModuleName], "_"] ;
+
 PG-user[#ModuleName, #Name] → StringConcat3[PG-LastName[#ModuleName], "_", #Name] ;
 
 // Extract last component of module name.
@@ -2682,7 +2714,7 @@ PG-BaseSortName2[$[NotMatch,%rawHxSort⟪ #HxSortName# #HxMetaVariables# #HxSimp
 /// <«#name»> ::= «
 ///   PG-Head[B_TRUE, #ModuleName, $[:,#s,"?"], TextToString[#name], B_FALSE, 0]
 /// »( <«PG-ProductionNameWithPrecText[#s, #p]»>:#1 {{ $Cons[#1,$Nil] }} | {{ $Nil }} ).
-/// « PG-EmbedTail[B_TRUE, $[:,#s,"?"], TextToString[#name]] »⟫]
+/// « PG-Embed-Tail[B_TRUE, $[:,#s,"?"], TextToString[#name]] »⟫]
 /// ;
 ///
 /// -[Data[#s]]:
@@ -2692,7 +2724,7 @@ PG-BaseSortName2[$[NotMatch,%rawHxSort⟪ #HxSortName# #HxMetaVariables# #HxSimp
 /// <«#name»> ::= «
 ///   PG-Head[B_TRUE, #ModuleName, $[:,#s,"*"], TextToString[#name], B_FALSE, 0]
 /// »( <«PG-ProductionNameWithPrecText[#s, #p]»>:#1 <«#name»>:#2 {{ $Cons[#1,#2] }} | {{ $Nil }} ).
-/// « PG-EmbedTail[B_TRUE, $[:,#s,"*"], TextToString[#name]] »⟫]
+/// « PG-Embed-Tail[B_TRUE, $[:,#s,"*"], TextToString[#name]] »⟫]
 /// ;
 ///
 /// -[Data[#s]]:
@@ -2702,7 +2734,7 @@ PG-BaseSortName2[$[NotMatch,%rawHxSort⟪ #HxSortName# #HxMetaVariables# #HxSimp
 /// <«#name»> ::= «
 ///   PG-Head[B_TRUE, #ModuleName, $[:,#s,"+"], TextToString[#name], B_FALSE, 0]
 /// » <«PG-ProductionNameWithPrecText[#s, #p]»>:#1 ( <«#name»>:#2 {{ $Cons[#1,#2] }} | {{ $Cons[#1,$Nil] }} ) .
-/// « PG-EmbedTail[B_TRUE, $[:,#s,"+"], TextToString[#name]] »⟫]
+/// « PG-Embed-Tail[B_TRUE, $[:,#s,"+"], TextToString[#name]] »⟫]
 /// ;
 ///
 /// -[Data[#s]]:
@@ -2712,7 +2744,7 @@ PG-BaseSortName2[$[NotMatch,%rawHxSort⟪ #HxSortName# #HxMetaVariables# #HxSimp
 /// <«#name»> ::= «
 ///   PG-Head[B_TRUE, #ModuleName, RegExpLeafSuffix[#HxRegExpLeaf#, $[:,#s,"+_"]], TextToString[#name], B_FALSE, 0]
 /// » <«PG-ProductionNameWithPrecText[#s, #p]»>:#1 ( « PG-InlineRegExpSimple[#HxRegExpLeaf#, ""] » <«#name»>:#2 {{ $Cons[#1,#2] }} | {{ $Cons[#1,$Nil] }} ) .
-/// « PG-EmbedTail[B_TRUE, RegExpLeafSuffix[#HxRegExpLeaf#, $[:,#s,"+_"]], TextToString[#name]] »⟫]
+/// « PG-Embed-Tail[B_TRUE, RegExpLeafSuffix[#HxRegExpLeaf#, $[:,#s,"+_"]], TextToString[#name]] »⟫]
 /// ;
 ///
 ///

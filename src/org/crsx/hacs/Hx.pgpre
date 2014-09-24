@@ -198,3 +198,9 @@ net.sf.crsx.Sink N_Storing_HxDeclarations(net.sf.crsx.Sink sink, net.sf.crsx.uti
 	}
 }
 %}
+
+// Shared nesting state.
+
+%{
+TOKEN_MGR_DECLS : { int nesting ; int nestedState; }
+%}

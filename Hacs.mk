@@ -97,37 +97,85 @@ SH_EXTRA = :
 
 # RULES.
 
-# Main rule: Generate "executable" by generating everything...
+# Main rules: Progress to generate
+# %.env: the setup for compiler
+# %.cooked: marker that all parsers have been generated
+# %.run: script implementing user comiler
 
-%.run : %.hx
+%.env : %.hx
+	@$(ECHO) -e '\n>>> GENERATING ENVIRONMENT DECLARATIONS $@.\n' && $(SH_EXTRA) && set -x \
+	&& $(NOEXEC) ( cd $(HACS) && find . -name '*.crs' | while read fn; do dir=$(BUILD)/$$(dirname $$fn) && mkdir -p $$dir && cp -f $$fn $(BUILD)/$$dir; done ) \
+	&& $(CRSX_NOEXTRA) \
+		"grammar=('org.crsx.hacs.HxRaw';'org.crsx.hacs.HxPP';'net.sf.crsx.text.Text';)" \
+		rules=$(HACS)/org/crsx/hacs/CookPG.crs wrapper=PG-PrintEnvironment \
+		input='$<' category=rawHxModule \
+		output='$@.tmp' sink=net.sf.crsx.text.TextSink \
+	&& $(NOEXEC) mv '$@.tmp' '$@'
+
+%.cooked : %.env
 	@$(ECHO) -e '\n>>> GENERATING $@.\n' && $(SH_EXTRA) && set -x \
 	&& $(NOEXEC) ( cd $(HACS) && find . -name '*.crs' | while read fn; do dir=$(BUILD)/$$(dirname $$fn) && mkdir -p $$dir && cp -f $$fn $(BUILD)/$$dir; done ) \
-	&& module=$$( $(CRSX_NOEXTRA) \
-		"grammar=('org.crsx.hacs.HxRaw';'org.crsx.hacs.HxPP';'net.sf.crsx.text.Text';)" \
-		rules=$(HACS)/org/crsx/hacs/CookPG.crs wrapper=PG-GetModuleName \
-		input='$<' category=rawHxModule sink=net.sf.crsx.text.TextSink ) \
-	&& dir=$(dir $@) && package=$${module%.*} && name=$${module##*.} && packagedir=$$(echo $$package | tr '.' '/') \
+	&& eval $$($(NOEXEC) cat '$<') \
+	&& dir=$(dir $@) && package=$${MODULE%.*} && packagedir=$$(echo $$package | tr '.' '/') \
 	&& $(NOEXEC) mkdir -p $(TEMP)/$$packagedir \
-	&& ( $(NOEXEC) cp -f $< $(TEMP)/$$packagedir/ || : ) \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${name}.pgbase \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${name}Parser.pg \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${name}Hx.pgtemplate \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${name}Hx.pg \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${name}Embed.pg \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${name}-sorts.crs \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${name}Hx-sorts.crs \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${name}Parser.jj \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${name}Hx.jj \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${name}Embed.jj \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${name}Parser.java \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${name}Hx.java \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${name}Embed.java \
-	&& $(NOEXEC) $(MAKE) $(BUILD)/$$packagedir/$${name}Parser.class \
-	&& $(NOEXEC) $(MAKE) $(BUILD)/$$packagedir/$${name}Hx.class \
-	&& $(NOEXEC) $(MAKE) $(BUILD)/$$packagedir/$${name}Embed.class \
-	&& $(NOEXEC) $(ECHO) -e '#!/bin/bash\njava -cp $(BUILD):$(CRSXJAR) "$$@"' > $@ \
-	&& $(NOEXEC) chmod +x $@
+	&& ( $(NOEXEC) cp -f '$*.hx' $(TEMP)/$$packagedir/ || : ) \
+	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}.pgbase \
+	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}Parser.pg \
+	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}Hx.pgtemplate \
+	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}Hx.pg \
+	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}Embed.pg \
+	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}-sorts.crs \
+	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}Hx-sorts.crs \
+	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}Parser.jj \
+	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}Hx.jj \
+	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}Embed.jj \
+	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}Parser.java \
+	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}Hx.java \
+	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}Embed.java \
+	&& $(NOEXEC) $(MAKE) $(BUILD)/$$packagedir/$${NAME}Parser.class \
+	&& $(NOEXEC) $(MAKE) $(BUILD)/$$packagedir/$${NAME}Hx.class \
+	&& $(NOEXEC) $(MAKE) $(BUILD)/$$packagedir/$${NAME}Embed.class \
+	&& $(NOEXEC) touch '$@'
 
+%.run : %.env
+	@$(ECHO) -e '\n>>> GENERATING $@.\n' && $(SH_EXTRA) && set -x \
+	&& $(NOEXEC) ( cd $(HACS) && find . -name '*.crs' | while read fn; do dir=$(BUILD)/$$(dirname $$fn) && mkdir -p $$dir && cp -f $$fn $(BUILD)/$$dir; done ) \
+	&& eval $$($(NOEXEC) cat '$*.env') \
+	&& dir=$(dir $@) && package=$${MODULE%.*} && packagedir=$$(echo $$package | tr '.' '/') \
+	&& $(CRSX_NOEXTRA) \
+		rules=$(HACS)/org/crsx/hacs/MakeRun.crs term=Run "grammar=('net.sf.crsx.text.Text';)" \
+		MODULE="$$MODULE" PACKAGE="$$package" NAME="$$NAME" SORT="$$SORT" SORTS="$$SORTS" REWRITER="$$packagedir/$${NAME}Rewriter.crs" \
+		SINKCLASS="$$SINKCLASS" PARSERCLASS="$$PARSERCLASS" METAPARSERCLASS="$$METAPARSERCLASS" EMBEDPARSERCLASS="$$EMBEDPARSERCLASS" \
+		PREFIX="$$PREFIX" METAPREFIX="$$METAPREFIX" EMBEDPREFIX="$$EMBEDPREFIX" \
+		HACSVERSION="$$(cat $(HACS)/../VERSION)" \
+		SHELL='$(SHELL)' JAVA='$(JAVA)' JAVAC='$(JAVAC)' CRSXJAR='$(abspath $(CRSXJAR))' HACSBUILD='$(abspath $(BUILD))' \
+		output='$@.tmp' sink=net.sf.crsx.text.TextSink \
+	&& $(NOEXEC) mv '$@.tmp' '$@'
+	chmod +x '$@'
+
+##MAKERUN = $(JAVA) -ea -cp "$(BUILD):$(CRSXJAR)" net.sf.crsx.run.Crsx allow-unnamed-rules $(EXTRA)
+
+# Environment definitions for module...
+#
+#%.env : %.hx
+#	@$(ECHO) -e '\n>>> GENERATING $@.\n' && $(SH_EXTRA) && set -x \
+#	&& HACSVERSION=
+#	&& MODULE=$$( $(CRSX_NOEXTRA) \
+#		"grammar=('org.crsx.hacs.HxRaw';'org.crsx.hacs.HxPP';'net.sf.crsx.text.Text';)" \
+#		rules=$(HACS)/org/crsx/hacs/CookPG.crs wrapper=PG-PrintModuleName \
+#		input='$<' category=rawHxModule sink=net.sf.crsx.text.TextSink ) \
+#	&& SORT=$$( $(CRSX_NOEXTRA) \
+#		"grammar=('org.crsx.hacs.HxRaw';'org.crsx.hacs.HxPP';'net.sf.crsx.text.Text';)" \
+#		rules=$(HACS)/org/crsx/hacs/CookPG.crs wrapper=PG-PrintTopSort \
+#		input='$<' category=rawHxModule sink=net.sf.crsx.text.TextSink ) \
+#	&& SORT=$$( $(CRSX_NOEXTRA) \
+#		"grammar=('org.crsx.hacs.HxRaw';'org.crsx.hacs.HxPP';'net.sf.crsx.text.Text';)" \
+#		rules=$(HACS)/org/crsx/hacs/CookPG.crs wrapper=PG-PrintTopSort \
+#		input='$<' category=rawHxModule sink=net.sf.crsx.text.TextSink ) \
+#	&& PACKAGE=$${module%.*} \
+#	&& NAME=$${module##*.} \
+
+clean::; find . -name '*.env' | xargs rm -f
 realclean::; find . -name '*.run' | xargs rm -f
 
 # Process HACS (.hx) source files.
@@ -183,7 +231,7 @@ realclean::; find . -name '*.run' | xargs rm -f
 # Generate PG parser for embedded user meta- terms.
 %Embed.pg : %.pgbase
 	$(ECHO) -e '\n>>> GENERATING EMBEDDED META-TERM PARSER $@.\n' && $(SH_EXTRA) && set -x \
-	&& $(NOEXEC) $(call EXTRACTONLY,EMBEDPG,$<) > '$@.tmp' \
+	&& $(NOEXEC) $(call EXTRACT,EMBEDPG,$<) > '$@.tmp' \
 	&& $(NOEXEC) mv '$@.tmp' '$@'
 .SECONDARY: %Embed.pg
 

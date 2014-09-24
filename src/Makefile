@@ -4,7 +4,7 @@
 # SETUP.
 
 #TODO: Eliminate this hard-coding once crsx package exists...
-CRSXROOT = $(abspath ../../crsx)
+CRSXROOT = $(abspath ../../../master/crsx)
 HACS = .
 TEMP = ../temp
 BUILD = ../build
