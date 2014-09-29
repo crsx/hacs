@@ -106,7 +106,7 @@ SH_EXTRA = :
 	@$(ECHO) -e '\n>>> GENERATING ENVIRONMENT DECLARATIONS $@.\n' && $(SH_EXTRA) && set -x \
 	&& $(NOEXEC) ( cd $(HACS) && find . -name '*.crs' | while read fn; do dir=$(BUILD)/$$(dirname $$fn) && mkdir -p $$dir && cp -f $$fn $(BUILD)/$$dir; done ) \
 	&& $(CRSX_NOEXTRA) \
-		"grammar=('org.crsx.hacs.HxRaw';'org.crsx.hacs.HxPP';'net.sf.crsx.text.Text';)" \
+		"grammar=('org.crsx.hacs.HxRaw';'net.sf.crsx.text.Text';)" \
 		rules=$(HACS)/org/crsx/hacs/CookPG.crs wrapper=PG-PrintEnvironment \
 		input='$<' category=rawHxModule \
 		output='$@.tmp' sink=net.sf.crsx.text.TextSink \
@@ -118,7 +118,8 @@ SH_EXTRA = :
 	&& eval $$($(NOEXEC) cat '$<') \
 	&& dir=$(dir $@) && package=$${MODULE%.*} && packagedir=$$(echo $$package | tr '.' '/') \
 	&& $(NOEXEC) mkdir -p $(TEMP)/$$packagedir \
-	&& ( $(NOEXEC) cp -f '$*.hx' $(TEMP)/$$packagedir/ || : ) \
+	&& ( $(NOEXEC) rsync -v '$*.hx' $(TEMP)/$$packagedir/ || : ) \
+	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}.hxraw \
 	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}.pgbase \
 	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}Parser.pg \
 	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}Hx.pgtemplate \
@@ -135,6 +136,7 @@ SH_EXTRA = :
 	&& $(NOEXEC) $(MAKE) $(BUILD)/$$packagedir/$${NAME}Parser.class \
 	&& $(NOEXEC) $(MAKE) $(BUILD)/$$packagedir/$${NAME}Hx.class \
 	&& $(NOEXEC) $(MAKE) $(BUILD)/$$packagedir/$${NAME}Embed.class \
+	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}.hxcooked \
 	&& $(NOEXEC) touch '$@'
 
 %.run : %.env
@@ -161,15 +163,15 @@ SH_EXTRA = :
 #	@$(ECHO) -e '\n>>> GENERATING $@.\n' && $(SH_EXTRA) && set -x \
 #	&& HACSVERSION=
 #	&& MODULE=$$( $(CRSX_NOEXTRA) \
-#		"grammar=('org.crsx.hacs.HxRaw';'org.crsx.hacs.HxPP';'net.sf.crsx.text.Text';)" \
+#		"grammar=('org.crsx.hacs.HxRaw';'net.sf.crsx.text.Text';)" \
 #		rules=$(HACS)/org/crsx/hacs/CookPG.crs wrapper=PG-PrintModuleName \
 #		input='$<' category=rawHxModule sink=net.sf.crsx.text.TextSink ) \
 #	&& SORT=$$( $(CRSX_NOEXTRA) \
-#		"grammar=('org.crsx.hacs.HxRaw';'org.crsx.hacs.HxPP';'net.sf.crsx.text.Text';)" \
+#		"grammar=('org.crsx.hacs.HxRaw';'net.sf.crsx.text.Text';)" \
 #		rules=$(HACS)/org/crsx/hacs/CookPG.crs wrapper=PG-PrintTopSort \
 #		input='$<' category=rawHxModule sink=net.sf.crsx.text.TextSink ) \
 #	&& SORT=$$( $(CRSX_NOEXTRA) \
-#		"grammar=('org.crsx.hacs.HxRaw';'org.crsx.hacs.HxPP';'net.sf.crsx.text.Text';)" \
+#		"grammar=('org.crsx.hacs.HxRaw';'net.sf.crsx.text.Text';)" \
 #		rules=$(HACS)/org/crsx/hacs/CookPG.crs wrapper=PG-PrintTopSort \
 #		input='$<' category=rawHxModule sink=net.sf.crsx.text.TextSink ) \
 #	&& PACKAGE=$${module%.*} \
@@ -183,9 +185,8 @@ realclean::; find . -name '*.run' | xargs rm -f
 # Parse HACS for CookPG using the HxRaw parser.
 %.hxraw : %.hx
 	@$(ECHO) -e '\n>>> PARSING HACS TO TERM $@.\n' && $(SH_EXTRA) && set -x \
-	&& $(NOEXEC) mkdir -p $(TEMP) \
 	&& $(NOEXEC) $(CRSX) \
-		"grammar=('org.crsx.hacs.HxRaw';'org.crsx.hacs.HxPP';'net.sf.crsx.text.Text';)" \
+		"grammar=('org.crsx.hacs.HxRaw';'net.sf.crsx.text.Text';)" \
 		input='$<' category=rawHxModule \
 		output='$@.tmp' simple-terms max-indent=10 width=255 \
 	&& $(NOEXEC) mv '$@.tmp' '$@'
@@ -195,7 +196,7 @@ realclean::; find . -name '*.run' | xargs rm -f
 %.pgbase : %.hxraw
 	@$(ECHO) -e '\n>>> GENERATING PARSER GENERATOR BASE $@.\n' && $(SH_EXTRA) && set -x \
 	&& $(NOEXEC) $(CRSX) \
-		"grammar=('org.crsx.hacs.HxRaw';'org.crsx.hacs.HxPP';'net.sf.crsx.text.Text';)" \
+		"grammar=('org.crsx.hacs.HxRaw';'net.sf.crsx.text.Text';)" \
 		rules=$(HACS)/org/crsx/hacs/CookPG.crs wrapper=PG \
 		input='$<' \
 		output='$@.tmp' sink=net.sf.crsx.text.TextSink \
@@ -272,6 +273,18 @@ $(BUILD)/%.class: $(TEMP)/%.java
 	&& $(NOEXEC) mkdir -p $(BUILD) \
 	&& $(NOEXEC) cd $(TEMP) && $(NOEXEC) $(JAVAC) -cp ":$(CRSXJAR)" -d $(BUILD) $*.java
 
+# Parse HACS for ServeCRS using the "cookedHx" parser.
+%.hxcooked : %.env
+	@$(ECHO) -e '\n>>> PARSING CUSTOM HACS TO TERM $@.\n' && $(SH_EXTRA) && set -x \
+	&& eval $$($(NOEXEC) cat '$<') \
+	&& dir=$(dir $@) && package=$${MODULE%.*} && packagedir=$$(echo $$package | tr '.' '/') \
+	&& $(NOEXEC) $(CRSX) \
+		"grammar=('$$METAPARSERCLASS';'$$EMBEDPARSERCLASS';'net.sf.crsx.text.Text';)" \
+		input='$*.hx' category="$${METAPREFIX}HxModule" \
+		parse-verbose \
+		output='$@.tmp' simple-terms max-indent=10 width=255 \
+	&& $(NOEXEC) mv '$@.tmp' '$@'
+.SECONDARY: %.hxcooked
 
 
 # Debugging helpers.

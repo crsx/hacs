@@ -4,15 +4,17 @@
 // Emits a CRSX3 ParserGenerator grammar (.pg as text) for the user's terms.
 //
 // Units:
-// 1. Top level (PG)
-// 2. Resolve imports (PG-ResolveImports).
-// 3. Declaration maps (PG-MapDeclarations).
-// 4. Text of all non-terminal productions (PG-Productions).
+// . Top level (PG).
+// . Resolve imports (PG-ResolveImports).
+// . Declaration map datastructure and access (DeclarationMap).
+// . Declaration map creation (PG-MakeDeclarationMap).
+// . Text of all non-terminal productions (PG-Productions).
 
-// 15. PG-Lexical: Text of Lexical Declarations.
-// 16. Text naming conventions.
+// . PG-Lexical: Text of Lexical Declarations.
+// . Text naming conventions.
 
-// x. Helpers.
+// . JJ Helpers.
+// . Other Helpers.
 
 
 PG[(
@@ -32,8 +34,8 @@ $Use["org/crsx/hacs/Prelude.crs"];
 $Lax;
 
 
-/////////////////////////////////////////////////////////////////////
-// 1. PG: TOP LEVEL
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// . PG: TOP LEVEL
 //
 // Convert HACS tree to .pgbase with text of ---
 // * .pg parser for user's language (unmarked + USERPG).
@@ -54,7 +56,7 @@ PG1[#HxModuleName#, PG-ResolveImports[#HxDeclarations#, #HxModuleName#], dm ds.P
 PG1[$String<!--ModuleName-->, $List[HxDeclaration], ok::Ok dm::DeclarationMap.Text] :: Text;
 PG1[#ModuleName, #Declarations, ok dm.#[ok,dm]]
 →
-#[{} PG-MapDeclarations[#Declarations, #ModuleName], #Declarations]
+#[{} PG-MakeDeclarationMap[#Declarations, #ModuleName], #Declarations]
 ;
 
 PG2[DeclarationMap, $List[HxDeclaration], $String<!--ModuleName-->] :: Text ;
@@ -69,9 +71,9 @@ class †« PG-ClassName[#ModuleName] »/***USERPG:Parser***//***METAPG:Hx***//*
 /***USERPG&EMBEDPG:<†« {#DM}PG-MainSymbol »>« MapTextConcat[n.%n⟨,<†‹n›>⟩, {#DM}PG-NonMainSymbols] » ***/
 /***METAPG:
 %%%HXNONTERMINALS%%%
- <HxTopTerm>, <HxTopPattern>, <HxAttributes>,
- <Term>, <PresortedMetaApplication>, <PresortedVariable>, <PresortedParsed>,
- <MetaApplication>, <BracketedTerms>, <Terms>, <Attribute>
+<HxTopTerm>, <HxTopPattern>, <HxAttributes>, <HxSortName>, <HxAttributeName>, <HxConstructor>,
+<PresortedMetaApplication>, <PresortedVariable>, <PresortedParsed>, <SortedTerm>,
+<MetaApplication>, <BracketedTerms>, <Terms>, <Term>, <Attribute>
 ***/
 ⟧
 
@@ -86,6 +88,10 @@ declarations
 String hx(String s) { return "†« PG-LastName[#ModuleName] »Hx_"+s; }
 String user(String s) { return "†« PG-LastName[#ModuleName] »_"+s; }
 String embedPrefix(String sort) { return "†« PG-Embed-Prefix[#ModuleName] »"+sort; }
+static final java.util.HashMap<String, String> constructorSortMap = new java.util.HashMap<String, String>();
+static{
+  ⟦« MapTextConcat[t.t, {#DM} PG-MapAllConstructorSorts[c s . %n⟨constructorSortMap.put("†‹c›", "†‹s›");¶⟩]] »⟧
+}
 %}
 ***/
 
@@ -119,17 +125,21 @@ TOKEN_MGR_DECLS : { int nesting; int nestedState;} /* Used by all nesting constr
 ***/
 
 /***METAPG:
-////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 %%%HXPREPRODUCTIONS%%%
-////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ***/
 
 /***METAPG:
 /* HX INTERFACE. */
 
 <HxTopTerm> ::= <PresortedVariable> | <PresortedMetaApplication> | <HxTopPattern> .
-<HxTopPattern> ::= <PresortedParsed> | <Term> .
+<HxTopPattern> ::= <PresortedParsed> | <SortedTerm> .
 <HxAttributes> ::= ( {$Cons} <Attribute> <HxAttributes> | {$Nil} ).
+<HxSortName> ::= ( « TextJoin[MapNames[n.%n⟨"†‹n›"$⟩, UnionNames[{#DM}PG-AllTokenNames, {#DM}PG-AllSortNames]], %n⟨ | ⟩] » ).
+<HxConstructor> ::= (« TextJoin[{#DM} PG-MapAllConstructorSorts[c s.%n⟨"†‹c›"$⟩], %n⟨ | ⟩] » ).
+
+/* GENERAL TERMS. */
 
 <PresortedVariable> ::= <HxVariable>!!!:#v ( {Special}:hx {{#v}} HX_CONCRETE$$:unwrap:{n} <HxAttributes> | <PresortedVariableIs #v> ) .
 %{
@@ -167,27 +177,38 @@ net.sf.crsx.Sink N_PresortedParsed(net.sf.crsx.Sink sink, net.sf.crsx.util.Exten
   {return sink.end();}
 }
 
-/* <Term> ::= stand-alone term with explicit sort. */
-net.sf.crsx.Sink N_Term$WithEOF(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) : {}{ sink=N_Term(sink, env) <EOF> {return sink;} }
-net.sf.crsx.Sink N_Term(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) :
-{Token t; String savedSort;}⟦{
-« MapTextConcat[n.%n⟨ sink=N_†‹n›_Construction(sink,env) ¶|⟩, FilterWhen[ok s.{#DM} PG-then-SortHasHx[ok, s], NameSetList[{#DM} PG-AllSortNames]]] » (
-    t=<T_HX_CON>
-    {savedSort = storedSort; storedSort = t.toString();}
-    (  sink=N_PresortedVariable(sink, env)
-    |  sink=N_PresortedMetaApplication(sink, env)
-    |  sink=N_PresortedParsed(sink, env)
-    )
-    {storedSort = savedSort;}
-    {return sink;}
-  )⟧
+/* <SortedTerm> ::= stand-alone term with explicit sort. */
+net.sf.crsx.Sink N_SortedTerm$WithEOF(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) : {}{ sink=N_SortedTerm(sink, env) <EOF> {return sink;} }
+net.sf.crsx.Sink N_SortedTerm(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) :
+{⟦
+String savedSort;
+net.sf.crsx.util.Buffer b = new net.sf.crsx.util.Buffer(sink);
+net.sf.crsx.Sink s = null;⟧
+}{⟦
+(
+  sink=N_Construction(sink, env)
+|⟦
+{s = b.sink();}
+s=N_HxSortName(s, env)
+{savedSort = storedSort; storedSort = b.term(true).constructor().symbol();}
+( sink=N_PresortedVariable(sink, env)
+| sink=N_Construction(sink, env)
+| sink=N_PresortedMetaApplication(sink, env)
+| sink=N_PresortedParsed(sink, env)
+)
+{storedSort = savedSort;}⟧
+)
+{return sink;}⟧
 }
 %}
 
+<Construction> ::= (⟦ « TextJoin[Map[s.%n⟨<†‹s›_Construction>⟩, FilterWhen[ok s. {#DM}PG-then-SortHasHx[ok, s], NameSetList[{#DM}PG-AllSortNames]]], %n⟨ | ⟩] »⟧ ).
 
 <MetaApplication> ::= {MetaApplication}:hx <HxMetaVariable> <BracketedTerms> .
 <BracketedTerms> ::= ( HX_LBRACKET (<Terms> | {$Nil}) HX_RBRACKET | {$Nil} ) .
 <Terms> ::= {$Cons} <Term> (HX_COMMA <Terms> | {$Nil}) .
+
+<Term> ::= <HxVariable>!!! | <SortedTerm> .
 
 <Attribute> ::= ⟦« {#DM} PG-Meta-AttributeAlternatives[#ModuleName, NameSetList[{#DM} PG-AllSynthesizedNames], NameSetList[{#DM}PG-AllInheritedNames]] »⟧ .
 ***/
@@ -198,9 +219,9 @@ net.sf.crsx.Sink N_Term(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<St
 
 
 /***METAPG:
-////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 %%%HXPOSTPRODUCTIONS%%%
-////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ***/
 
 /***USERPG&EMBEDPG:
@@ -271,7 +292,7 @@ SORTS='†« {#DM}PG-MainSymbol »« MapTextConcat[n.%n⟨ †‹n›⟩, {#DM}P
 SINKCLASS='net.sf.crsx.text.TextSink'
 PARSERCLASS='†« PG-ClassName[#ModuleName] »Parser'
 PREFIX='†« PG-User-Prefix[#ModuleName] »'
-METAPARSERCLASS='†« PG-ClassName[#ModuleName] »Meta'
+METAPARSERCLASS='†« PG-ClassName[#ModuleName] »Hx'
 METAPREFIX='†« PG-Meta-Prefix[#ModuleName] »'
 EMBEDPARSERCLASS='†« PG-ClassName[#ModuleName] »Embed'
 EMBEDPREFIX='†« PG-Embed-Prefix[#ModuleName] »'
@@ -279,8 +300,8 @@ EMBEDPREFIX='†« PG-Embed-Prefix[#ModuleName] »'
 ;
 
 
-/////////////////////////////////////////////////////////////////////
-// 2. PG-ResolveImports: RESOLVE IMPORTS.
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// . PG-ResolveImports: RESOLVE IMPORTS.
 //
 // Echo full list of declarations with all imported modules inlined.
 // TODO: Alias MyPrefix$Symbol with ImportedPrefix$Symbol for the imported names.
@@ -288,7 +309,7 @@ EMBEDPREFIX='†« PG-Embed-Prefix[#ModuleName] »'
 PG-ResolveImports[$List[HxDeclaration], $String] :: $List[HxDeclaration];
 
 Resolve-Import:
-PG-ResolveImports[%rawHxDeclarations⟪ import #HxModuleName# ( #HxSortNames# ) ; #HxDeclarations# ⟫, #ModuleName]
+PG-ResolveImports[%rawHxDeclarations⟪ import #HxModuleName# ; #HxDeclarations# ⟫, #ModuleName]
 →
 PG-ResolveImports[%rawHxDeclarations⟪ %HxEmbeddedModule« $[ParseURL, "hxEmbeddedModule", $[Replace,#HxModuleName#,"\"",""]] » ; #HxDeclarations# ⟫, #ModuleName]
 ;
@@ -309,21 +330,21 @@ PG-ResolveImports[%rawHxDeclarations⟪ space #HxRegExp# ; #HxDeclarations# ⟫,
 ;
 
 Resolve-Token:
-PG-ResolveImports[%rawHxDeclarations⟪ token #HxSortName# | #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName]
+PG-ResolveImports[%rawHxDeclarations⟪ token #HxTokenName# | #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName]
 →
-%rawHxDeclarations⟪ token #HxSortName# | #HxRegExp# ; %HxDeclarations« PG-ResolveImports[#HxDeclarations#, #ModuleName] » ⟫
+%rawHxDeclarations⟪ token #HxTokenName# | #HxRegExp# ; %HxDeclarations« PG-ResolveImports[#HxDeclarations#, #ModuleName] » ⟫
 ;
 
 Resolve-Fragment:
-PG-ResolveImports[%rawHxDeclarations⟪ fragment #HxFragmentName# | #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName]
+PG-ResolveImports[%rawHxDeclarations⟪ fragment #HxTokenName# | #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName]
 →
-%rawHxDeclarations⟪ fragment #HxFragmentName# | #HxRegExp# ; %HxDeclarations« PG-ResolveImports[#HxDeclarations#, #ModuleName] » ⟫
+%rawHxDeclarations⟪ fragment #HxTokenName# | #HxRegExp# ; %HxDeclarations« PG-ResolveImports[#HxDeclarations#, #ModuleName] » ⟫
 ;
 
 Resolve-Attribute:
-PG-ResolveImports[%rawHxDeclarations⟪ attribute #HxAttributeKind# #HxAttributeName# #HxAttributeForm# #HxAttributeOptions# ; #HxDeclarations# ⟫, #ModuleName]
+PG-ResolveImports[%rawHxDeclarations⟪ attribute #HxAttributeKind# #HxAttributeName# #HxAttributeForm# ; #HxDeclarations# ⟫, #ModuleName]
 →
-%rawHxDeclarations⟪ attribute #HxAttributeKind# #HxAttributeName# #HxAttributeForm# #HxAttributeOptions# ; %HxDeclarations« PG-ResolveImports[#HxDeclarations#, #ModuleName] » ⟫
+%rawHxDeclarations⟪ attribute #HxAttributeKind# #HxAttributeName# #HxAttributeForm# ; %HxDeclarations« PG-ResolveImports[#HxDeclarations#, #ModuleName] » ⟫
 ;
 
 Resolve-Sort:
@@ -363,8 +384,8 @@ PG-ResolveImports[%rawHxDeclarations⟪ ⟫, #ModuleName]
 ;
 
 
-/////////////////////////////////////////////////////////////////////
-// 3. DECLARATION MAPS (PG-MapDeclarations)
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// . DECLARATION MAPS DATA STRUCTURE (PG-MakeDeclarationMap)
 //
 // Contains all declarations of tokens, attributes, sorts, and some extras,
 // needed for grammar generation.
@@ -405,6 +426,9 @@ FormKind ::=( FK_DATA[$List[$String]<!--Tags-->]; FK_SCHEME[NameSet<!--inherits-
 {$String<!--Name--> : DeclarationMapEntry} PG-AllSortNames :: NameSet;
 {#DM; "$AllSortNames" : DME_NAMES[#Names]} PG-AllSortNames → #Names ;
 
+{$String<!--Name--> : DeclarationMapEntry} PG-AllTokenNames :: NameSet;
+{#DM; "$AllTokenNames" : DME_NAMES[#Names]} PG-AllTokenNames → #Names ;
+
 {$String<!--Name--> : DeclarationMapEntry} PG-AllInheritedNames :: NameSet;
 {#DM; "$AllInheritedNames" : DME_NAMES[#Names]} PG-AllInheritedNames → #Names ;
 
@@ -416,6 +440,15 @@ FormKind ::=( FK_DATA[$List[$String]<!--Tags-->]; FK_SCHEME[NameSet<!--inherits-
 
 {$String<!--Name--> : DeclarationMapEntry} PG-AllSynthesizedMapNames :: NameSet;
 {#DM; "$AllSynthesizedMapNames" : DME_NAMES[#Names]} PG-AllSynthesizedMapNames → #Names ;
+
+// Extract just the token names.
+
+{$String<!--TokenName--> : DeclarationMapEntry} PG-MakeTokenNames :: NameSet;
+{#DM} PG-MakeTokenNames[#Names] → FilterNamesWhen[ok n.{#DM} PG-then-TestIfToken[ok, n], #Names] ;
+
+{#DM} PG-then-TestIfToken[OK, #Name] → PG-TestIfToken1[$[{#DM}Get, #Name, DME_NONE]] ;
+PG-TestIfToken1[DME_TOKEN[#Name]] → B_TRUE ;
+PG-TestIfToken1[$[NotMatch,DME_TOKEN[#Name],#_]] → B_FALSE ;
 
 // Extract just the sort names.
 
@@ -485,93 +518,123 @@ PG-SymbolSortTokenName2[$[{#DM}Get,#SortName,DME_NONE]]
 PG-SymbolSortTokenName2[DME_SORT[(D_FORM[#Form, FK_SYMBOL[#static, #TokenName]];), #Name, #Precs, #Wrapper, #IsMain]] → #TokenName ;
 PG-SymbolSortTokenName2[$[NotMatch,DME_SORT[(D_FORM[#Form, FK_SYMBOL[#static, #TokenName]];), #Name, #Precs, #Wrapper, #IsMain], #_]] → "" ;
 
-// Start mapping...
+// Extract constructors-sorts relationship.
 
-PG-MapDeclarations[$List[HxDeclaration], $String<!--ModuleName-->] :: DeclarationMap ;
-PG-MapDeclarations[#Declarations, #ModuleName]
+{#DM} PG-MapAllConstructorSorts[c s.#[c,s]] → {#DM} PG-MapAllConstructorsForSorts[NameSetList[{#DM} PG-AllSortNames], c s.#[c,s]] ;
+
+{#DM} PG-MapAllConstructorsForSorts[(),        c s.#[c,s]] → () ;
+{#DM} PG-MapAllConstructorsForSorts[(#s; #ss), c s.#[c,s]] → {#DM} PG-MapAllConstructorsForSorts2[{#DM} PG-ConstructorsForSort[#s], #s, #ss, c s.#[c,s]] ;
+
+    {#DM} PG-MapAllConstructorsForSorts2[(),        #s, #ss, c s.#[c,s]] → {#DM} PG-MapAllConstructorsForSorts[#ss, c s.#[c,s]] ;
+    {#DM} PG-MapAllConstructorsForSorts2[(#c; #cs), #s, #ss, c s.#[c,s]] → ( #[#c, #s] ; {#DM} PG-MapAllConstructorsForSorts2[#cs, #s, #ss, c s.#[c,s]] ) ;
+
+{#DM} PG-ConstructorsForSort[#s] → PG-EntryConstructors[$[{#DM}Get, #s, DME_NONE]] ;
+
+PG-EntryConstructors[DME_SORT[#Defines, #Name, #Precs, #Wrapper, #IsMain]] → PG-DefinesConstructors[#Defines] ;
+PG-EntryConstructors[$[NotMatch,DME_SORT[#Defines, #Name, #Precs, #Wrapper, #IsMain], #_]] → () ;
+
+PG-DefinesConstructors[(D_FORM[RawHxFormConstruction[#Constructor, #ScopeSorts, #InheritedRefs], #FormKind]; #Defines)]
+→
+(#Constructor; PG-DefinesConstructors[#Defines])
+;
+PG-DefinesConstructors[($[NotMatch,D_FORM[RawHxFormConstruction[#Constructor, #ScopeSorts, #InheritedRefs], #FormKind],#_]; #Defines)]
+→
+PG-DefinesConstructors[#Defines]
+;
+PG-DefinesConstructors[()] → () ;
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// . DECLARATION MAP CREATION (PG-MakeDeclarationMap)
+//
+// Contains all declarations of tokens, attributes, sorts, and some extras,
+// needed for grammar generation.
+
+PG-MakeDeclarationMap[$List[HxDeclaration], $String<!--ModuleName-->] :: DeclarationMap ;
+PG-MakeDeclarationMap[#Declarations, #ModuleName]
 →
 {}
-PG-MapDeclarations1[#Declarations, #ModuleName, "", NoNames, ok¹ s ss.PG-Finish[ss]] // data without required environment!
+PG-MakeDeclarationMap1[#Declarations, #ModuleName, "", NoNames, ok¹ s ss.PG-Finish[ss]] // data without required environment!
 ;
 
 // Process declarations.
 
 {$String<!--SortName--> : DeclarationMapEntry}
-PG-MapDeclarations1[$List[HxDeclaration], $String<!--ModuleName-->, $String<!--LastSortName-->, NameSet<!--Names-->,
+PG-MakeDeclarationMap1[$List[HxDeclaration], $String<!--ModuleName-->, $String<!--LastSortName-->, NameSet<!--Names-->,
                     ok¹::Ok s::$String<!--SortName--> ss::NameSet<!--SortNames--> . DeclarationMap] :: DeclarationMap ;
 
 {#DM}
-PG-MapDeclarations1[%rawHxDeclarations⟪ module #HxModuleName2# { #HxDeclarations2# } ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+PG-MakeDeclarationMap1[%rawHxDeclarations⟪ module #HxModuleName2# { #HxDeclarations2# } ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
 →
 {#DM}
-PG-MapDeclarations1[#HxDeclarations2# , #HxModuleName2#, "", #Names, ok¹ s ss.PG-then-Declarations1[ok¹, #HxDeclarations#, #ModuleName, #LastSortName, ss, ok2¹ s2 ss2.#[ok2¹,s2,ss2]]]
+PG-MakeDeclarationMap1[#HxDeclarations2# , #HxModuleName2#, "", #Names, ok¹ s ss.PG-then-Declarations1[ok¹, #HxDeclarations#, #ModuleName, #LastSortName, ss, ok2¹ s2 ss2.#[ok2¹,s2,ss2]]]
 ;
 
 Declarations-space:
 {#DM}
-PG-MapDeclarations1[%rawHxDeclarations⟪ space #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+PG-MakeDeclarationMap1[%rawHxDeclarations⟪ space #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
 →
 {#DM}
-PG-MapDeclarations1[#HxDeclarations#, #ModuleName, "", #Names, ok¹ s ss.#[ok¹,s,ss]]
+PG-MakeDeclarationMap1[#HxDeclarations#, #ModuleName, "", #Names, ok¹ s ss.#[ok¹,s,ss]]
 ;
 
 Declarations-token[Data[#SortName]]:
 {#DM}
-PG-MapDeclarations1[%rawHxDeclarations⟪ token #HxSortName# | #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+PG-MakeDeclarationMap1[%rawHxDeclarations⟪ token #HxTokenName# | #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
 →
-{#DM; #HxSortName# : DME_TOKEN[#HxSortName#]}
-PG-MapDeclarations1[#HxDeclarations#, #ModuleName, "", AddName[#Names, #HxSortName#], ok¹ s ss.#[ok¹,s,ss]]
+{#DM; #HxTokenName# : DME_TOKEN[#HxTokenName#]}
+PG-MakeDeclarationMap1[#HxDeclarations#, #ModuleName, "", AddName[#Names, #HxTokenName#], ok¹ s ss.#[ok¹,s,ss]]
 ;
 /// {#DM}
-/// PG-MapDeclarationsInsertToken[PG-QN[#ModuleName, "NodeSort", #HxSortName#], #HxDeclarations#, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+/// PG-MakeDeclarationMapInsertToken[PG-QN[#ModuleName, "NodeSort", #HxTokenName#], #HxDeclarations#, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
 /// ;
 ///     // Local helper to compute qualified token name and insert declaration.
 ///     -[Data[#QualifiedName]]:
-///     {#DM}PG-MapDeclarationsInsertToken[#QualifiedName, #Declarations, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+///     {#DM}PG-MakeDeclarationMapInsertToken[#QualifiedName, #Declarations, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
 ///     →
 ///     {#DM; #QualifiedName : DME_TOKEN[#QualifiedName]}
-///     PG-MapDeclarations1[#Declarations, #ModuleName, "", AddName[#Names, #QualifiedName], ok¹ s ss.#[ok¹,s,ss]]
+///     PG-MakeDeclarationMap1[#Declarations, #ModuleName, "", AddName[#Names, #QualifiedName], ok¹ s ss.#[ok¹,s,ss]]
 ///     ;
 
 Declarations-fragment:
 {#DM}
-PG-MapDeclarations1[%rawHxDeclarations⟪ fragment #HxFragmentName# | #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+PG-MakeDeclarationMap1[%rawHxDeclarations⟪ fragment #HxTokenName# | #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
 →
 {#DM}
-PG-MapDeclarations1[#HxDeclarations#, #ModuleName, "", #Names, ok¹ s ss.#[ok¹,s,ss]]
+PG-MakeDeclarationMap1[#HxDeclarations#, #ModuleName, "", #Names, ok¹ s ss.#[ok¹,s,ss]]
 ;
 
 Declarations-attribute[Data[#HxAttributeName#,#HxAttributeForm#]]:
 {#DM}
-PG-MapDeclarations1[%rawHxDeclarations⟪ attribute #HxAttributeKind# #HxAttributeName# #HxAttributeForm# #HxAttributeOptions# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+PG-MakeDeclarationMap1[%rawHxDeclarations⟪ attribute #HxAttributeKind# #HxAttributeName# #HxAttributeForm# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
 →
-{#DM; #HxAttributeName# : DME_ATTRIBUTE[#HxAttributeKind#, #HxAttributeName#, #HxAttributeForm#, #HxAttributeOptions#]}
-PG-MapDeclarations1[#HxDeclarations#, #ModuleName, "", AddName[#Names, #HxAttributeName#], ok¹ s ss.#[ok¹,s,ss]]
+{#DM; #HxAttributeName# : DME_ATTRIBUTE[#HxAttributeKind#, #HxAttributeName#, #HxAttributeForm#, ()]}
+PG-MakeDeclarationMap1[#HxDeclarations#, #ModuleName, "", AddName[#Names, #HxAttributeName#], ok¹ s ss.#[ok¹,s,ss]]
 ;
 /// {#DM}
-/// PG-MapDeclarationsInsertAttribute[PG-QN[#ModuleName, "Attribute" #HxAttributeName#], #HxAttributeKind#, #HxAttributeForm#, #HxAttributeOptions#, #HxDeclarations#, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+/// PG-MakeDeclarationMapInsertAttribute[PG-QN[#ModuleName, "Attribute" #HxAttributeName#], #HxAttributeKind#, #HxAttributeForm#, #HxAttributeOptions#, #HxDeclarations#, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
 /// ;
 ///     // Local helper to compute qualified attribute name and insert declaration.
 ///     -[Data[#QualifiedName]]:
-///     {#DM}PG-MapDeclarationsInsertAttribute[#QualifiedName, #AttributeKind, #AttributeForm, #AttributeOptions, #Declarations, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+///     {#DM}PG-MakeDeclarationMapInsertAttribute[#QualifiedName, #AttributeKind, #AttributeForm, #AttributeOptions, #Declarations, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
 ///     →
 ///     {#DM; #QualifiedName : DME_ATTRIBUTE[#AttributeKind, #QualifiedName, #AttributeForm, #AttributeOptions]}
-///     PG-MapDeclarations1[#Declarations, #ModuleName, "", AddName[#Names, #QualifiedName], ok¹ s ss.#[ok¹,s,ss]]
+///     PG-MakeDeclarationMap1[#Declarations, #ModuleName, "", AddName[#Names, #QualifiedName], ok¹ s ss.#[ok¹,s,ss]]
 ///     ;
 
 Declarations-sort:
 {#DM}
-PG-MapDeclarations1[%rawHxDeclarations⟪ sort #HxSortName# #HxRepeat# #HxSortAbstraction# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+PG-MakeDeclarationMap1[%rawHxDeclarations⟪ sort #HxSortName# #HxRepeat# #HxSortAbstraction# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
 →
 {#DM}
 PG-SortAbstraction[#HxSortAbstraction#, B_FALSE, #ModuleName, PG-SortNameWithRepeat1[#HxSortName#, #HxRepeat#], #Names, ok¹ s ss.PG-then-Declarations1[ok¹, #HxDeclarations#, #ModuleName, s, ss, ok2¹ s2 ss2.#[ok2¹,s2,ss2]]]
 ;
 /// {#DM}
-/// PG-MapDeclarationsInsertSort[PG-QN[#ModuleName, "NodeSort", #HxSortName#], #HxRepeat#, #HxSortAbstraction#, #HxDeclarations#, B_TRUE, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+/// PG-MakeDeclarationMapInsertSort[PG-QN[#ModuleName, "NodeSort", #HxSortName#], #HxRepeat#, #HxSortAbstraction#, #HxDeclarations#, B_TRUE, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
 /// ;
 ///     // Local helper to compute qualified sort name and insert declaration.
 ///     -[Data[#QualifiedName]]:
-///     {#DM}PG-MapDeclarationsInsertSort[#QualifiedName, #Repeat, #SortAbstraction, #Declarations, #IsMain, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+///     {#DM}PG-MakeDeclarationMapInsertSort[#QualifiedName, #Repeat, #SortAbstraction, #Declarations, #IsMain, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
 ///     →
 ///     {#DM}
 ///     PG-SortAbstraction[#SortAbstraction, #IsMain, #ModuleName, PG-SortNameWithRepeat1[#QualifiedName, #Repeat], #Names, ok¹ s ss.PG-then-Declarations1[ok¹, #Declarations, #ModuleName, s, ss, ok2¹ s2 ss2.#[ok2¹,s2,ss2]]]
@@ -579,18 +642,18 @@ PG-SortAbstraction[#HxSortAbstraction#, B_FALSE, #ModuleName, PG-SortNameWithRep
 
 Declarations-main-sort:
 {#DM}
-PG-MapDeclarations1[%rawHxDeclarations⟪ main sort #HxSortName# #HxRepeat# #HxSortAbstraction# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+PG-MakeDeclarationMap1[%rawHxDeclarations⟪ main sort #HxSortName# #HxRepeat# #HxSortAbstraction# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
 →
 {#DM}
 PG-SortAbstraction[#HxSortAbstraction#, B_TRUE, #ModuleName, PG-SortNameWithRepeat1[#HxSortName#, #HxRepeat#], #Names, ok¹ s ss.PG-then-Declarations1[ok¹, #HxDeclarations#, #ModuleName, s, ss, ok2¹ s2 ss2.#[ok2¹,s2,ss2]]]
 ;
 /// {#DM}
-/// PG-MapDeclarationsInsertSort[PG-QN[#ModuleName, "NodeSort", #HxSortName#], #HxRepeat#, #HxSortAbstraction#, #HxDeclarations#, B_FALSE, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+/// PG-MakeDeclarationMapInsertSort[PG-QN[#ModuleName, "NodeSort", #HxSortName#], #HxRepeat#, #HxSortAbstraction#, #HxDeclarations#, B_FALSE, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
 /// ;
 
 Declarations-alternatives:
 {#DM}
-PG-MapDeclarations1[%rawHxDeclarations⟪ #HxSortAlternatives# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+PG-MakeDeclarationMap1[%rawHxDeclarations⟪ #HxSortAlternatives# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
 →
 {#DM}
 PG-SortAlternatives[#HxSortAlternatives#, #ModuleName, #LastSortName, #Names, ok¹ s ss.PG-then-Declarations1[ok¹, #HxDeclarations#, #ModuleName, s, ss, ok2¹ s2 ss2.#[ok2¹,s2,ss2]]]
@@ -598,7 +661,7 @@ PG-SortAlternatives[#HxSortAlternatives#, #ModuleName, #LastSortName, #Names, ok
 
 Declarations-rule:
 {#DM}
-PG-MapDeclarations1[%rawHxDeclarations⟪ rule #HxRule# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+PG-MakeDeclarationMap1[%rawHxDeclarations⟪ rule #HxRule# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
 →
 {#DM}
 PG-InsertDefine[D_RULE[#HxRule#, PG-RuleTopSort[#HxRule#, #LastSortName], B_FALSE], B_BALSE<!--NotMain-->, #ModuleName, PG-RuleTopSort[#HxRule#, #LastSortName], #Names, ok¹ s ss.PG-then-Declarations1[ok¹, #HxDeclarations#, #ModuleName, s, ss, ok2¹ s2 ss2.#[ok2¹,s2,ss2]]]
@@ -636,27 +699,27 @@ PG-InsertDefine[D_RULE[#HxRule#, PG-RuleTopSort[#HxRule#, #LastSortName], B_FALS
     PG-SortRepeatString2[#SortName, %rawHxRepeat⟪ ? ⟫] → $[:,#SortName,"?"] ;
     PG-SortRepeatString2[#SortName, %rawHxRepeat⟪ * ⟫] → $[:,#SortName,"*"] ;
     PG-SortRepeatString2[#SortName, %rawHxRepeat⟪ + ⟫] → $[:,#SortName,"+"] ;
-    PG-SortRepeatString2[#SortName, %rawHxRepeat⟪ + _ #HxRegExpLeaf# ⟫] → PG-RegExpLeafSuffix[#HxRegExpLeaf#, $[:,#SortName,"+_"]] ;
+    PG-SortRepeatString2[#SortName, %rawHxRepeat⟪ + _ #HxRegExpSub# ⟫] → PG-RegExpSubSuffix[#HxRegExpSub#, $[:,#SortName,"+_"]] ;
     //
-    PG-RegExpLeafSuffix[HxRegExpSimple, $String] :: $String;
-    -[Data[#HxString#]]: PG-RegExpLeafSuffix[%rawHxRegExpLeaf⟪ #HxString# ⟫, #prefix] → $[:,#prefix,#HxString#] ;
-    -[Data[#HxWord#]]:   PG-RegExpLeafSuffix[%rawHxRegExpLeaf⟪ #HxWord# ⟫,   #prefix] → $[:,#prefix,#HxWord#] ;
+    PG-RegExpSubSuffix[HxRegExpSimple, $String] :: $String;
+    -[Data[#HxString#]]: PG-RegExpSubSuffix[%rawHxRegExpSub⟪ #HxString# ⟫, #prefix] → $[:,#prefix,#HxString#] ;
+    -[Data[#HxSeparator#]]:   PG-RegExpSubSuffix[%rawHxRegExpSub⟪ #HxSeparator# ⟫,   #prefix] → $[:,#prefix,#HxSeparator#] ;
     //
-    PG-RegExpLeafWord[HxRegExpSimple] :: $String;
-    -[Data[#HxString#]]: PG-RegExpLeafWord[%rawHxRegExpLeaf⟪ #HxString# ⟫] → $[Rescape, #HxString#] ;
-    -[Data[#HxWord#]]:   PG-RegExpLeafWord[%rawHxRegExpLeaf⟪ #HxWord# ⟫] → #HxWord# ;
+    PG-RegExpSubWord[HxRegExpSimple] :: $String;
+    -[Data[#HxString#]]: PG-RegExpSubWord[%rawHxRegExpSub⟪ #HxString# ⟫] → $[Rescape, #HxString#] ;
+    -[Data[#HxSeparator#]]:   PG-RegExpSubWord[%rawHxRegExpSub⟪ #HxSeparator# ⟫] → #HxSeparator# ;
 
 Declarations-local:
 {#DM}
-PG-MapDeclarations1[%rawHxDeclarations⟪ { #HxDeclarations2# } #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+PG-MakeDeclarationMap1[%rawHxDeclarations⟪ { #HxDeclarations2# } #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
 →
 {#DM}
-PG-MapDeclarations1[#HxDeclarations2# , #ModuleName, #LastSortName, #Names, ok¹ s ss.PG-then-Declarations1[ok¹, #HxDeclarations#, #ModuleName, #LastSortName, ss, ok2¹ s2 ss2.#[ok2¹,s2,ss2]]]
+PG-MakeDeclarationMap1[#HxDeclarations2# , #ModuleName, #LastSortName, #Names, ok¹ s ss.PG-then-Declarations1[ok¹, #HxDeclarations#, #ModuleName, #LastSortName, ss, ok2¹ s2 ss2.#[ok2¹,s2,ss2]]]
 ;
 
 Declarations-none:
 {#DM}
-PG-MapDeclarations1[%rawHxDeclarations⟪ ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+PG-MakeDeclarationMap1[%rawHxDeclarations⟪ ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
 →
 {#DM}
 #[OK, #LastSortName, #Names]
@@ -671,7 +734,7 @@ PG-then-Declarations1[Ok, $List[HxDeclaration], $String<!--ModuleName-->, $Strin
 PG-then-Declarations1[OK, #Declaration*, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
 →
 {#DM}
-PG-MapDeclarations1[#Declaration*, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+PG-MakeDeclarationMap1[#Declaration*, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
 ;
 
 // Sort declarations factor any leading parameters over all declarations.
@@ -724,9 +787,9 @@ PG-SortAlternativesDefines[%rawHxSortAlternatives⟪ #HxSortAlternative# #HxSort
 
 PG-SortAlternativeDefine[HxSortAlternative] :: Define ;
 
-PG-SortAlternativeDefine[{#LOC} %rawHxSortAlternative⟪ | scheme #HxForm#         ⟫] → {#LOC} D_FORM[#HxForm#, FK_SCHEME[PG-FormInheritedAttributes[#HxForm#]]] ;
-PG-SortAlternativeDefine[{#LOC} %rawHxSortAlternative⟪ | data #HxForm# #HxTagging# ⟫] → {#LOC} D_FORM[#HxForm#, FK_DATA[#HxTagging#]];
-PG-SortAlternativeDefine[{#LOC} %rawHxSortAlternative⟪ | symbol #HxForm#         ⟫] → {#LOC} D_FORM[#HxForm#, FK_SYMBOL[$False, PG-ExtractSymbolFormToken[#HxForm#]]];
+PG-SortAlternativeDefine[{#LOC} %rawHxSortAlternative⟪ | scheme #HxForm# ⟫] → {#LOC} D_FORM[#HxForm#, FK_SCHEME[PG-FormInheritedAttributes[#HxForm#]]] ;
+PG-SortAlternativeDefine[{#LOC} %rawHxSortAlternative⟪ | data #HxForm# ⟫] → {#LOC} D_FORM[#HxForm#, FK_DATA[()]];
+PG-SortAlternativeDefine[{#LOC} %rawHxSortAlternative⟪ | symbol #HxForm# ⟫] → {#LOC} D_FORM[#HxForm#, FK_SYMBOL[$False, PG-ExtractSymbolFormToken[#HxForm#]]];
 PG-SortAlternativeDefine[{#LOC} %rawHxSortAlternative⟪ | static symbol #HxForm#  ⟫] → {#LOC} D_FORM[#HxForm#, FK_SYMBOL[$True, PG-ExtractSymbolFormToken[#HxForm#]]];
 PG-SortAlternativeDefine[{#LOC} %rawHxSortAlternative⟪ | sugar #HxForm# → #HxTerm# ⟫] → {#LOC} D_FORM[#HxForm#, FK_SUGAR[#HxTerm#]] ;
 
@@ -759,7 +822,7 @@ PG-SortAlternativeDefine[{#LOC} %rawHxSortAlternative⟪ | ↑ #HxAttributeName#
 {$String<!--SortName--> : DeclarationMapEntry} PG-Finish1[Boolean, NameSet, NameSet] :: DeclarationMap;
 {#DM} PG-Finish1[B_FALSE, #RestNames, #Names]
 →
-{#DM} PG-Finish9[#Names, {#DM} PG-MakeSortNames[#Names], {#DM} PG-MakeInheritedNames, {#DM} PG-MakeInheritedMapNames, {#DM} PG-MakeSynthesizedNames, {#DM} PG-MakeSynthesizedMapNames]
+{#DM} PG-Finish9[#Names, {#DM} PG-MakeSortNames[#Names], {#DM} PG-MakeTokenNames[#Names], {#DM} PG-MakeInheritedNames, {#DM} PG-MakeInheritedMapNames, {#DM} PG-MakeSynthesizedNames, {#DM} PG-MakeSynthesizedMapNames]
 ;
 {#DM} PG-Finish1[B_TRUE, #RestNames, #Names]
 →
@@ -839,11 +902,12 @@ $[If, $[GreaterThan,#Prec,0],
 {#DM} PG-Finish7[#Prec, #Name, #RestNames, #Names]
 ;
 
-{$String<!--SortName--> : DeclarationMapEntry} PG-Finish9[NameSet, NameSet, NameSet, NameSet, NameSet, NameSet] :: DeclarationMap;
-{#DM} PG-Finish9[#Names, #SortNames, #InheritedNames, #InheritedMapNames, #SynthesizedNames, #SynthesizedMapNames]
+{$String<!--SortName--> : DeclarationMapEntry} PG-Finish9[NameSet<!--All-->, NameSet<!--Sorts-->, NameSet<!--Tokens-->, NameSet, NameSet, NameSet, NameSet] :: DeclarationMap;
+{#DM} PG-Finish9[#Names, #SortNames, #TokenNames, #InheritedNames, #InheritedMapNames, #SynthesizedNames, #SynthesizedMapNames]
 →
 {#DM; "$AllNames" : DME_NAMES[#Names];
       "$AllSortNames" : DME_NAMES[#SortNames];
+      "$AllTokenNames" : DME_NAMES[#TokenNames];
       "$AllInheritedNames" : DME_NAMES[#InheritedNames];
       "$AllInheritedMapNames" : DME_NAMES[#InheritedMapNames];
       "$AllSynthesizedNames" : DME_NAMES[#SynthesizedNames];
@@ -1153,8 +1217,14 @@ PG-DefineWrapperSugar[RawHxParsedFormDone, $False, #TopParsedForm, #TopPrec, #To
 PG-DefineWrapperSugar[RawHxParsedFormDone, $True,  #TopParsedForm, #TopPrec, #TopTerm, #Name, #OldWrapper] → WRAPPER[#TopParsedForm] ;
 
 
-/////////////////////////////////////////////////////////////////////
-// 4. TEXT OF ALL PG NON-TERMINAL PRODUCTIONS.
+
+
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// . TEXT OF ALL PG NON-TERMINAL PRODUCTIONS.
 //
 // Productions are extracted by sort and for each sort grouped by precedence,
 // each group producing a PG production.
@@ -1206,22 +1276,16 @@ PG-Production1[#ModuleName, DME_TOKEN[#SortName]]
 ***/
 
 /***METAPG:
-/* <†«#SortName»> covers Hacs terms restricted to †«#SortName» token sort. (Warning: JavaCC LOOKAHEAD hack ahead.) */
+/* <†«#SortName»> covers Hacs terms restricted to †«#SortName» token sort. */
 %{
 net.sf.crsx.Sink N_†«#SortName»$WithEOF(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) : {}{ sink=N_†«#SortName»(sink, env) <EOF> {return sink;} }
 net.sf.crsx.Sink N_†«#SortName»(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) :
-{Token t; String savedSort;}{
+{String savedSort;}{
   {savedSort = storedSort; storedSort = "†«#SortName»";}
+  ( "†«#SortName»" )?
   ( sink=N_PresortedVariable(sink, env)
   | sink=N_PresortedMetaApplication(sink, env)
   | sink=N_PresortedParsed(sink, env)
-  |
-    LOOKAHEAD( {getToken(1).kind == T_HX_CON && getToken(1).image.equals("†«#SortName»")} )
-    t=<T_HX_CON>
-    (  sink=N_PresortedVariable(sink, env)
-    |  sink=N_PresortedMetaApplication(sink, env)
-    |  sink=N_PresortedParsed(sink, env)
-    )
   )
   {storedSort = savedSort;}
   {return sink;}
@@ -1241,35 +1305,62 @@ PG-GenerateNonterminalDeclaration[#Name, #Alternatives] → %n⟪<«#Name»> ::=
 {#DM} PG-Production1[#ModuleName, DME_ATTRIBUTE[#Kind, #Name, #AttributeForm, #AttributeOptions]]
 →
 %n⟪
+/***METAPG:
 /* Productions for †«#Name» attribute. */
-
-« PG-Production-Attribute[#ModuleName, #Kind, #Name, #AttributeForm, #AttributeOptions] »
+%{
+« PG-MetaJJ-Production-Attribute[#ModuleName, #Kind, #Name, #AttributeForm, #AttributeOptions] »
+%}
+***/
 ⟫;
 
     // Handle an attribute definition.
 
-    PG-Production-Attribute[$String<!--ModuleName-->, HxAttributeKind, $String, HxAttributeForm, $List[HxAttributeOption]] :: Text;
-    PG-Production-Attribute[#ModuleName, #Kind, #Name, #AttributeForm, #AttributeOptions]
+    PG-MetaJJ-Production-Attribute[$String<!--ModuleName-->, HxAttributeKind, $String, HxAttributeForm, $List[HxAttributeOption]] :: Text;
+    PG-MetaJJ-Production-Attribute[#ModuleName, #Kind, #Name, #AttributeForm, #AttributeOptions]
     →
     %n⟪
-    /***METAPG: <Attribute« AttributeKindCategory[#Kind] »_†«#Name»> ::= {RawHxAttribute} « AttributeKindIndicator[#Kind] » "†«#Name»" « AttributeFormSyntax[#ModuleName, #AttributeForm, #AttributeOptions] » . ***/
-    ⟫
-    ;
+/* <Attribute« AttributeKindCategory[#Kind] »_†«#Name»> ::= ... */
+net.sf.crsx.Sink N_Attribute« AttributeKindCategory[#Kind] »_†«#Name»(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) :
+{Token t;}
+{
+  LOOKAHEAD( {getToken(1).kind == T_HX_VAR && "†«#Name»".equals(getToken(1).image)} )
+  {sink = sink.start(makeTConstructor(sink, null, hx("Attribute"), null));}
+  {sink = sink.start(makeTConstructor(sink, null, hx("« AttributeKindIndicator[#Kind] »"), null)).end();}
+  t=<T_HX_VAR>
+  ⟦« PG-MetaJJ-AttributeFormSyntax[#ModuleName, #AttributeForm, #AttributeOptions] »⟧
+  {return sink.end();}
+}
+⟫;
 
     AttributeKindCategory[HxAttributeKind] :: Text ;
     AttributeKindCategory[%rawHxAttributeKind⟪ ↑ ⟫] → %n⟪Synthesized⟫ ;
     AttributeKindCategory[%rawHxAttributeKind⟪ ↓ ⟫] → %n⟪Inherited⟫ ;
 
     AttributeKindIndicator[HxAttributeKind] :: Text ;
-    AttributeKindIndicator[%rawHxAttributeKind⟪ ↑ ⟫] → %n⟪({RawHxAttributeKindUp})⟫ ;
-    AttributeKindIndicator[%rawHxAttributeKind⟪ ↓ ⟫] → %n⟪({RawHxAttributeKindDown})⟫ ;
+    AttributeKindIndicator[%rawHxAttributeKind⟪ ↑ ⟫] → %n⟪AttributeKindUp⟫ ;
+    AttributeKindIndicator[%rawHxAttributeKind⟪ ↓ ⟫] → %n⟪AttributeKindDown⟫ ;
 
-    AttributeFormSyntax[$String<!--ModuleName-->, HxAttributeForm, $List[HxAttributeOption]] :: Text ;
-    AttributeFormSyntax[#ModuleName, %rawHxAttributeForm⟪ ( #HxSort# ) ⟫, #AttributeOptions] → %n⟪HX_LPAREN ({RawHxAttributeValue} <†« PG-SortName[#HxSort#] »>) HX_RPAREN⟫ ;
-    AttributeFormSyntax[#ModuleName, %rawHxAttributeForm⟪ { #HxSort# } ⟫, #AttributeOptions] → %n⟪HX_LBRACE ({RawHxAttributeKey} <†« PG-SortName[#HxSort#] »>) HX_RBRACE⟫ ;
-    AttributeFormSyntax[#ModuleName, %rawHxAttributeForm⟪ { #HxSort1# : #HxSort2# } ⟫, #AttributeOptions]
+
+    PG-MetaJJ-AttributeFormSyntax[$String<!--ModuleName-->, HxAttributeForm, $List[HxAttributeOption]] :: Text ;
+    PG-MetaJJ-AttributeFormSyntax[#ModuleName, %rawHxAttributeForm⟪ ( #HxSort# ) ⟫, #AttributeOptions]
     →
-    %n⟪HX_LBRACE ({RawHxAttributeKeyValue} <†« PG-SortName[#HxSort1#] »> HX_COLON <†« PG-SortName[#HxSort2#] »>) HX_RBRACE⟫ ;
+    %n⟪« JJ-Token[%n⟨HX_LPAREN⟩] »« JJ-Construction[%n⟨hx("AttributeValue")⟩, JJ-Nonterminal[%n⟨†‹ PG-SortName[#HxSort#] ›⟩, e.e]] »« JJ-Token[%n⟨HX_RPAREN⟩] »⟫
+    ;
+    PG-MetaJJ-AttributeFormSyntax[#ModuleName, %rawHxAttributeForm⟪ { #HxSort# } ⟫, #AttributeOptions]
+    →
+    %n⟪« JJ-Token[%n⟨HX_LBRACE⟩] »« JJ-Construction[%n⟨hx("AttributeKey")⟩, JJ-Nonterminal[%n⟨†‹ PG-SortName[#HxSort#] ›⟩, e.e]] »« JJ-Token[%n⟨HX_RBRACE⟩] »⟫
+    ;
+    PG-MetaJJ-AttributeFormSyntax[#ModuleName, %rawHxAttributeForm⟪ { #HxSort1# : #HxSort2# } ⟫, #AttributeOptions]
+    →
+    %n⟪« JJ-Token[%n⟨HX_LBRACE⟩] »«
+      JJ-Construction[%n⟨hx("AttributeKeyValue")⟩,
+        MapTextConcat[t.t, (
+	  JJ-Nonterminal[%n⟨†‹ PG-SortName[#HxSort1#] ›⟩, e.e];
+          JJ-Token[%n⟨HX_COLON⟩];
+          JJ-Nonterminal[%n⟨†‹ PG-SortName[#HxSort2#] ›⟩, e.e];
+      )]]
+    »« JJ-Token[%n⟨HX_RBRACE⟩] »⟫
+    ;
 
     AttributeKindToken[HxAttributeKind] :: Text ;
     AttributeKindToken[%rawHxAttributeKind⟪ ↑ ⟫] → %n⟪HX_UP⟫ ;
@@ -1281,7 +1372,9 @@ PG-GenerateNonterminalDeclaration[#Name, #Alternatives] → %n⟪<«#Name»> ::=
 →
 %n⟪« {#DM} PG-Production-Defines[#ModuleName, #Defines, #SortName, 0, ()] »
 /***METAPG:
-« {#DM} PG-Meta-Production-Defines[#ModuleName, #Defines, #SortName, PG-DefinesHaveHx[#Defines]] »
+%{
+« {#DM} PG-MetaJJ-Production-Defines[#ModuleName, #Defines, #SortName, PG-DefinesHaveHx[#Defines]] »
+%}
 ***/⟫
 ;
 
@@ -1371,7 +1464,9 @@ $[If, $[NumericEqual,#Prec1,#Prec],
 
 // Test if a sort has user HACS terms.
 
--[Data[#SortName]]: {#DM} PG-then-SortHasHx[OK, #SortName] → PG-SortHasHx1[$[{#DM}Get, #SortName, DME_NONE]] ;
+{#DM} PG-then-SortHasHx[OK, #SortName] → {#DM} PG-SortHasHx[#SortName] ;
+
+-[Data[#SortName]]: {#DM} PG-SortHasHx[#SortName] → {#DM} PG-SortHasHx1[$[{#DM}Get, #SortName, DME_NONE]] ;
 
 PG-SortHasHx1[DME_SORT[#Defines, #SortName, #Precs, #Wrapper, #IsMain]] → PG-DefinesHaveHx[#Defines] ;
 PG-SortHasHx1[$[NotMatch,DME_SORT[#Defines, #SortName, #Precs, #Wrapper, #IsMain],#_]] → B_FALSE ;
@@ -1414,155 +1509,159 @@ PG-DefinesHaveHx[()]
 B_FALSE
 ;
 
-{$String<!--SortName--> : DeclarationMapEntry} PG-Meta-Production-Defines[$String<!--<ModuleName-->, $List[Define], $String<!--SortName-->, Boolean<!--HasHxConstructors-->] :: Text;
+{$String<!--SortName--> : DeclarationMapEntry} PG-MetaJJ-Production-Defines[$String<!--<ModuleName-->, $List[Define], $String<!--SortName-->, Boolean<!--HasHxConstructors-->] :: Text;
 
 {#DM}
-PG-Meta-Production-Defines[#ModuleName, #Defines, #SortName, B_TRUE]
+PG-MetaJJ-Production-Defines[#ModuleName, #Defines, #SortName, B_TRUE]
 →
 %n⟪
-/* <†«#SortName»> covers Hacs terms restricted to †«#SortName» user sort (including user naked terms). */
-%{
+/* <†«#SortName»> covers Hacs terms prerestricted to †«#SortName» user sort (including user naked terms). */
 net.sf.crsx.Sink N_†«#SortName»$WithEOF(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) : {}{ sink=N_†«#SortName»(sink, env) <EOF> {return sink;} }
 net.sf.crsx.Sink N_†«#SortName»(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) :
-{Token t; String savedSort;}{⟦
- {savedSort = storedSort; storedSort = "†«#SortName»";}
-  ( sink=N_PresortedVariable(sink, env)
-  | sink=N_PresortedMetaApplication(sink, env)
-  | sink=N_PresortedParsed(sink, env)
-  | sink=N_†«#SortName»_Construction(sink, env)
+{String savedSort;}{
+  (
+    sink=N_†«#SortName»_Construction(sink, env)
   |
-    LOOKAHEAD( {getToken(1).kind == T_HX_CON && getToken(1).image.equals("†«#SortName»")} )
-    t=<T_HX_CON>
+    {savedSort = storedSort; storedSort = "†«#SortName»";}
     (  sink=N_PresortedVariable(sink, env)
     |  sink=N_PresortedMetaApplication(sink, env)
     |  sink=N_PresortedParsed(sink, env)
-  ))
-  {storedSort = savedSort;}
-  {return sink;}⟧
+    | "†«#SortName»"
+      (  sink=N_PresortedVariable(sink, env)
+      |  sink=N_Construction(sink, env)
+      |  sink=N_PresortedMetaApplication(sink, env)
+      |  sink=N_PresortedParsed(sink, env)
+    ))
+    {storedSort = savedSort;}
+  )
+  {return sink;}
 }
-%}
 
 /* <†«#SortName»_Construction> covers just Hacs user terms of †«#SortName» sort. */
-<†«#SortName»_Construction> ::= ⟦« {#DM} PG-Meta-Production-Defines1[#ModuleName, #Defines, #SortName, ""] »⟧ .
+net.sf.crsx.Sink N_†«#SortName»_Construction$WithEOF(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) : {}{ sink=N_†«#SortName»_Construction(sink, env) <EOF> {return sink;} }
+net.sf.crsx.Sink N_†«#SortName»_Construction(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) :
+{}{⟦
+« {#DM} PG-MetaJJ-Production-Defines1[#ModuleName, #Defines, #SortName, "("] »
+)
+{return sink;}⟧
+}
 ⟫;
 
 {#DM}
-PG-Meta-Production-Defines[#ModuleName, #Defines, #SortName, B_FALSE]
+PG-MetaJJ-Production-Defines[#ModuleName, #Defines, #SortName, B_FALSE]
 →
 %n⟪
 /* <†«#SortName»> covers Hacs terms restricted to †«#SortName» user sort (no naked terms). */
-%{
 net.sf.crsx.Sink N_†«#SortName»$WithEOF(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) : {}{ sink=N_†«#SortName»(sink, env) <EOF> {return sink;} }
 net.sf.crsx.Sink N_†«#SortName»(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) :
-{Token t; String savedSort;}{⟦
- {savedSort = storedSort; storedSort = "†«#SortName»";}
+{String savedSort;}{
+  {savedSort = storedSort; storedSort = "†«#SortName»";}
+  ( "†«#SortName»" )?
   ( sink=N_PresortedVariable(sink, env)
   | sink=N_PresortedMetaApplication(sink, env)
   | sink=N_PresortedParsed(sink, env)
-  |
-    LOOKAHEAD( {getToken(1).kind == T_HX_CON && getToken(1).image.equals("†«#SortName»")} )
-    t=<T_HX_CON>
-    (  sink=N_PresortedVariable(sink, env)
-    |  sink=N_PresortedMetaApplication(sink, env)
-    |  sink=N_PresortedParsed(sink, env)
-  ))
+  )
   {storedSort = savedSort;}
-  {return sink;}⟧
+  {return sink;}
 }
-%}
 ⟫;
 
-{$String<!--SortName--> : DeclarationMapEntry} PG-Meta-Production-Defines1[$String<!--ModuleName-->, $List[Define], $String<!--SortName-->, $String<!--lead-->] :: Text;
+
+{$String<!--SortName--> : DeclarationMapEntry} PG-MetaJJ-Production-Defines1[$String<!--ModuleName-->, $List[Define], $String<!--SortName-->, $String<!--lead-->] :: Text;
 
 -[Fresh[dummy::HxSortParam]]:
-{#DM} PG-Meta-Production-Defines1[#ModuleName, (D_ABSTRACTION[a.#Define1[a]]; #Defines), #SortName, #lead]
+{#DM} PG-MetaJJ-Production-Defines1[#ModuleName, (D_ABSTRACTION[a.#Define1[a]]; #Defines), #SortName, #lead]
 →
-{#DM} PG-Meta-Production-Defines1[#ModuleName, (#Define1[dummy]; #Defines), #SortName, #lead]
+{#DM} PG-MetaJJ-Production-Defines1[#ModuleName, (#Define1[dummy]; #Defines), #SortName, #lead]
 ;
 
-{#DM} PG-Meta-Production-Defines1[#ModuleName, (D_RULE[#Rule, #RuleSort, #IsData]; #Defines), #SortName, #lead]
+{#DM} PG-MetaJJ-Production-Defines1[#ModuleName, (D_RULE[#Rule, #RuleSort, #IsData]; #Defines), #SortName, #lead]
 →
-{#DM} PG-Meta-Production-Defines1[#ModuleName, #Defines, #SortName, #lead]
+{#DM} PG-MetaJJ-Production-Defines1[#ModuleName, #Defines, #SortName, #lead]
 ;
 
-{#DM} PG-Meta-Production-Defines1[#ModuleName, (D_FORM[#Form1, #Kind1]; #Defines), #SortName, #lead]
+{#DM} PG-MetaJJ-Production-Defines1[#ModuleName, (D_FORM[#Form1, #Kind1]; #Defines), #SortName, #lead]
 →
-{#DM} PG-Meta-Production-HxForm[#ModuleName, #Form1, #Kind1, #SortName, #lead, lead.{#DM} PG-Meta-Production-Defines1[#ModuleName, #Defines, #SortName, lead]]
+{#DM} PG-MetaJJ-Production-HxForm[#ModuleName, #Form1, #Kind1, #SortName, #lead, lead.{#DM} PG-MetaJJ-Production-Defines1[#ModuleName, #Defines, #SortName, lead]]
 ;
 
-{#DM} PG-Meta-Production-Defines1[#ModuleName, (D_SYNTHESIZES[#AttributeName1]; #Defines), #SortName, #lead]
+{#DM} PG-MetaJJ-Production-Defines1[#ModuleName, (D_SYNTHESIZES[#AttributeName1]; #Defines), #SortName, #lead]
 →
-{#DM} PG-Meta-Production-Defines1[#ModuleName, #Defines, #SortName, #lead]
+{#DM} PG-MetaJJ-Production-Defines1[#ModuleName, #Defines, #SortName, #lead]
 ;
 
-{#DM} PG-Meta-Production-Defines1[#ModuleName, (), #SortName, #lead]
+{#DM} PG-MetaJJ-Production-Defines1[#ModuleName, (), #SortName, #lead]
 →
 %n⟪⟫
 ;
 
-{$String<!--SortName--> : DeclarationMapEntry} PG-Meta-Production-HxForm[HxForm, FormKind, $String<!--SortName-->, $String<!--lead-->, l::$String . Text] :: Text;
 
-{#DM} PG-Meta-Production-HxForm[#ModuleName, RawHxFormParsedSorted[#Sort1, #ParsedForm1, #Prec1, #InheritedRefs], #Kind1, #SortName, #lead, lead.#[lead]]
+{$String<!--SortName--> : DeclarationMapEntry} PG-MetaJJ-Production-HxForm[HxForm, FormKind, $String<!--SortName-->, $String<!--lead-->, l::$String . Text] :: Text;
+{#DM} PG-MetaJJ-Production-HxForm[#ModuleName, RawHxFormParsedSorted[#Sort1, #ParsedForm1, #Prec1, #InheritedRefs], #Kind1, #SortName, #lead, lead.#[lead]] → #[#lead] ;
+{#DM} PG-MetaJJ-Production-HxForm[#ModuleName, RawHxFormParsed[#ParsedForm1, #Prec1, #InheritedRefs], #Kind1, #SortName, #lead, lead.#[lead]] → #[#lead] ;
+{#DM} PG-MetaJJ-Production-HxForm[#ModuleName, RawHxFormConstruction[#Constructor, #ScopeSortList, #InheritedRefs], #Kind1, #SortName, #lead, lead.#[lead]]
 →
-#[#lead]
+%n⟪†«#lead» ⟦
+"†«#Constructor»"
+« JJ-Construction[%n⟨"†‹ PG-user[#ModuleName, StringConcat[#SortName, "_Wrapper"]] ›"⟩,
+%n⟨( ⟦‹ {#DM} PG-MetaJJ-Production-HxFormConstruction[#ModuleName, #SortName, #Constructor, #ScopeSortList]›⟧ )
+sink=N_HxAttributes(sink, env)⟩]»⟧
+« #["|"] »⟫
 ;
 
-{#DM} PG-Meta-Production-HxForm[#ModuleName, RawHxFormParsed[#ParsedForm1, #Prec1, #InheritedRefs], #Kind1, #SortName, #lead, lead.#[lead]]
+{#DM} PG-MetaJJ-Production-HxFormConstruction[#ModuleName, #SortName, #Constructor, #ScopeSortList]
 →
-#[#lead]
+JJ-Construction[%n⟨"†‹ PG-user[#ModuleName, StringConcat3[#SortName, "_", #Constructor]] ›"⟩,
+  IfEmpty[#ScopeSortList,
+    %n⟨(<T_HX_LPAREN> <T_HX_RPAREN>)?⟩,
+    %n⟨ <T_HX_LPAREN> ‹ {#DM} PG-MetaJJ-Production-HxScopeSortList[#ModuleName, #ScopeSortList, #SortName, B_TRUE] › <T_HX_RPAREN> ⟩]]
 ;
 
-{#DM} PG-Meta-Production-HxForm[#ModuleName, RawHxFormConstruction[#Constructor, #ScopeSortList, #InheritedRefs], #Kind1, #SortName, #lead, lead.#[lead]]
-→
-%n⟪†«#lead»  "†«#Constructor»" {†‹ PG-user[#ModuleName, StringConcat[#SortName, "_Wrapper"]] ›} ( {†‹ PG-user[#ModuleName, StringConcat3[#SortName, "_", #Constructor]] ›} «
-  IfEmpty[#ScopeSortList, %n⟨( HX_LPAREN HX_RPAREN )? ⟩, %n⟨ HX_LPAREN ‹ {#DM} PG-Meta-Production-HxScopeSortList[#ModuleName, #ScopeSortList, #SortName, B_TRUE] › HX_RPAREN ⟩]
-») <HxAttributes>
-« #[%n⟨|⟩] »⟫
-;
 
-{$String<!--SortName--> : DeclarationMapEntry} PG-Meta-Production-HxScopeSortList[$List[HxScopeSort], $String, Boolean] :: Text;
+{$String<!--SortName--> : DeclarationMapEntry} PG-MetaJJ-Production-HxScopeSortList[$List[HxScopeSort], $String, Boolean] :: Text;
 
-{#DM} PG-Meta-Production-HxScopeSortList[#ModuleName, (%rawHxScopeSort⟪ #HxSort# #HxRepeat# [ #HxSubstituteSorts# ] ⟫ ; #ScopeSortList), #SortName, #first]
+{#DM} PG-MetaJJ-Production-HxScopeSortList[#ModuleName, (%rawHxScopeSort⟪ #HxSort# #HxRepeat# [ #HxSubstituteSorts# ] ⟫ ; #ScopeSortList), #SortName, #first]
 →
-%n⟪« If[#first, %n⟨⟩, %n⟨ HX_COMMA ⟩] »« {#DM} PG-Meta-Production-HxScopeSort[#ModuleName, #HxSort#, #HxSubstituteSorts#, #SortName] »« {#DM} PG-Meta-Production-HxScopeSortList[#ModuleName, #ScopeSortList, #SortName, B_FALSE] »⟫
+%n⟪« If[#first, %n⟨⟩, %n⟨ <T_HX_COMMA> ⟩] »« {#DM} PG-MetaJJ-Production-HxScopeSort[#ModuleName, #HxSort#, #HxSubstituteSorts#, #SortName] »« {#DM} PG-MetaJJ-Production-HxScopeSortList[#ModuleName, #ScopeSortList, #SortName, B_FALSE] »⟫
 ;  //note: ignores #Repeat because arguments to Hx terms cannot use repeat-forms...or should they?
 
 -[Free[v::Text]]:
-{#DM} PG-Meta-Production-HxScopeSortList[#ModuleName, (%rawHxBindersScopeSort⟪ [#HxSort# binds v] #HxBindersScopeSort# ⟫ ; #ScopeSortList), #SortName, #first]
+{#DM} PG-MetaJJ-Production-HxScopeSortList[#ModuleName, (%rawHxBindersScopeSort⟪ [#HxSort# binds v] #HxBindersScopeSort# ⟫ ; #ScopeSortList), #SortName, #first]
 →
-{#DM} PG-Meta-Production-HxScopeSortList[#ModuleName, (#HxBindersScopeSort# ; #ScopeSortList), #SortName, #first]
+{#DM} PG-MetaJJ-Production-HxScopeSortList[#ModuleName, (#HxBindersScopeSort# ; #ScopeSortList), #SortName, #first]
 ;
 
 -[Free[v::Text]]:
-{#DM} PG-Meta-Production-HxScopeSortList[#ModuleName, (%rawHxScopeSort⟪ #HxSort# binds v ⟫ ; #ScopeSortList), #SortName, #first]
+{#DM} PG-MetaJJ-Production-HxScopeSortList[#ModuleName, (%rawHxScopeSort⟪ #HxSort# binds v ⟫ ; #ScopeSortList), #SortName, #first]
 →
 $[Error, "There should not be binder subterm sorts."]
 ;
 
-{#DM} PG-Meta-Production-HxScopeSortList[#ModuleName, (), #SortName, #first] → %n⟪⟫ ;
+{#DM} PG-MetaJJ-Production-HxScopeSortList[#ModuleName, (), #SortName, #first] → %n⟪⟫ ;
 
-{$String<!--SortName--> : DeclarationMapEntry} PG-Meta-Production-HxScopeSort[HxSort, $List[HxSubstituteSort], $String] :: Text;
+{$String<!--SortName--> : DeclarationMapEntry} PG-MetaJJ-Production-HxScopeSort[HxSort, $List[HxSubstituteSort], $String] :: Text;
 
-{#DM} PG-Meta-Production-HxScopeSort[#ModuleName, #HxSort#, #HxSubstituteSorts#, #SortName]
+{#DM} PG-MetaJJ-Production-HxScopeSort[#ModuleName, #HxSort#, #HxSubstituteSorts#, #SortName]
 →
 IfEmpty[#HxSubstituteSorts#,
-  %n⟪<†«PG-SortName[#HxSort#]»>⟫,
-  %n⟪« {#DM}PG-Meta-Production-HxScope[#ModuleName, #HxSubstituteSorts#, %n⟨<†‹PG-SortName[#HxSort#]›>⟩, %n⟨⟩, %n⟨HX_LBRACKET⟩, %n⟨[⟩] »⟫]  //start:[
+  %n⟪sink=N_†«PG-SortName[#HxSort#]»(sink, env)
+⟫,
+  %n⟪« {#DM}PG-MetaJJ-Production-HxScope[#ModuleName, #HxSubstituteSorts#, %n⟨sink=N_†‹PG-SortName[#HxSort#]›(sink, env)⟩, %n⟨⟩, %n⟨<T_HX_LBRACKET>⟩, %n⟨[⟩] »⟫]  //start:[
 ;
 
-{$String<!--SortName--> : DeclarationMapEntry} PG-Meta-Production-HxScope[$List[HxSubstituteSort], Text, Text, Text, Text] :: Text;
+{$String<!--SortName--> : DeclarationMapEntry} PG-MetaJJ-Production-HxScope[$String<!--ModuleName-->, $List[HxSubstituteSort], Text<!--SortRef-->, Text<!--ScopedVars-->, Text<!--Sep-->, Text<!--ArgSep-->] :: Text;
 
 -[Fresh[x::Text]]:
-{#DM}PG-Meta-Production-HxScope[#ModuleName, (#SubstituteSort ; #SubstituteSorts), #SortRef, #ScopedVars, #sep, #argsep]
+{#DM}PG-MetaJJ-Production-HxScope[#ModuleName, (#SubstituteSort ; #SubstituteSorts), #SortRef, #ScopedVars, #sep, #argsep]
 →
-%n⟪ «#sep» HX_VARIABLE^«x» « {#DM}PG-Meta-Production-HxScope[#ModuleName, #SubstituteSorts, #SortRef, %n⟨‹#ScopedVars›‹#argsep›‹x›⟩, %n⟨HX_COMMA⟩, %n⟨¸⟩] »⟫
+%n⟪MISSING[ «#sep» HX_VARIABLE^«x» « {#DM}PG-MetaJJ-Production-HxScope[#ModuleName, #SubstituteSorts, #SortRef, %n⟨‹#ScopedVars›‹#argsep›‹x›⟩, %n⟨<T_HX_COMMA>⟩, %n⟨,⟩] »]MISSING⟫
 ;
 
-{#DM}PG-Meta-Production-HxScope[#ModuleName, (), #SortRef, #ScopedVars, #sep, #argsep] → %n⟪ HX_RBRACKET « #SortRef »« #ScopedVars »]⟫ ;  //end:]
+{#DM}PG-MetaJJ-Production-HxScope[#ModuleName, (), #SortRef, #ScopedVars, #sep, #argsep] → %n⟪ HX_RBRACKET « #SortRef »« #ScopedVars »]⟫ ;  //end:]
 
 // Meta-definitions for sorts.
 
-{$String<!--SortName--> : DeclarationMapEntry} PG-Embed-Head[Boolean, $String<!--ModuleName-->, $String, $String, Boolean, $Numeric] :: Text;
+{$String<!--SortName--> : DeclarationMapEntry} PG-Embed-Head[Boolean<!--Last?-->, $String<!--ModuleName-->, $String, $String, Boolean<!--LeftRecursive?-->, $Numeric<!--Prec-->] :: Text;
 
 PG-Embed-Head[B_FALSE, #ModuleName, #SortName, #Name, #isLeftRecursive, #Prec] → %n⟪⟫ ;
 
@@ -1570,14 +1669,14 @@ PG-Embed-Head[B_FALSE, #ModuleName, #SortName, #Name, #isLeftRecursive, #Prec] �
 {#DM}
 PG-Embed-Head[B_TRUE, #ModuleName, #SortName, #Name, B_FALSE, #Prec] →
  %n⟪
-meta_« PG-TokenNameText[#Name] »$$:unwrap:{†« PG-Meta-Prefix[#ModuleName] »Term} |
+meta_« PG-TokenNameText[#Name] »$$:unwrap:{†« PG-Meta-Prefix[#ModuleName] »SortedTerm} |
 ⟫ ;
 
 -[Data[#SortName]]:
 {#DM}
 PG-Embed-Head[B_TRUE, #ModuleName, #SortName, #Name, B_TRUE, #Prec] →
  %n⟪
-meta_« PG-TokenNameText[#Name] »$$:unwrap:{†« PG-Meta-Prefix[#ModuleName] »Term}:#1 <« PG-ProductionNameWithPrecText[#SortName, #Prec] »LR #1> |
+meta_« PG-TokenNameText[#Name] »$$:unwrap:{†« PG-Meta-Prefix[#ModuleName] »SortedTerm}:#1 <« PG-ProductionNameWithPrecText[#SortName, #Prec] »LR #1> |
 ⟫ ;
 
 
@@ -1711,7 +1810,7 @@ IfEmpty[#LeftRecursivePFKs,
 /***USERPG&EMBEDPG:
 /* Handle left recursion. */
 <«PG-ProductionNameWithPrecText[#SortName, #Prec]»LR #1> ::= ⟦
-/***/* HERE */
+/***EMBEDPG: « {#DM}PG-Embed-Head[#Last?, #ModuleName, #SortName, #SortName, B_FALSE, 0] »***/
 «in»
 | {{#1}}⟧
 . ***/
@@ -1723,6 +1822,8 @@ IfEmpty[#LeftRecursivePFKs,
 « {#DM} PG-Produce[#ModuleName, #SortName, #Prec, #Last?, #OtherPFKs, C_LEFTRECURSIVE[#SortName, #Prec]] »⟫]]
 ;
 
+// 
+
 {$String<!--SortName--> : DeclarationMapEntry} PG-Produce[$String<!--ModuleName-->, $String<!--SortName-->, $Numeric<!--Prec-->, Boolean<!--Last?-->, $List[PFK_SORT], CONSUMPTION_SORT] :: Text;
 
 {#DM} PG-Produce[#ModuleName, #SortName, #Prec, #Last?, #PFKs, C_LEFTRECURSIVE[#SortName9, #Prec9]]
@@ -1730,7 +1831,6 @@ IfEmpty[#LeftRecursivePFKs,
 {#DM} PG-ProduceBody[#ModuleName, #SortName, #PFKs, 1, (), (), C_LEFTRECURSIVE[#SortName9, #Prec9], in funs tags after .
   %n⟪
 /***USERPG&EMBEDPG:
-/* HERE */
 <«PG-ProductionNameWithPrecText[#SortName, #Prec]»> ::= ⟦
 «in»⟧ .
 ***/
@@ -1743,7 +1843,6 @@ IfEmpty[#LeftRecursivePFKs,
 ***/
 ⟫]
 ;
-/// <«PG-ProductionNameWithPrecText[#SortName, #Prec]»> ::= ⟦« {#DM}PG-Embed-Head[#Last?, #ModuleName, #SortName, #SortName, B_TRUE, #Prec] »«in»⟧ .
 
 
 -[Data[#consumer]]:
@@ -1751,7 +1850,11 @@ IfEmpty[#LeftRecursivePFKs,
 →
 {#DM} PG-ProduceBody[#ModuleName, #SortName, #PFKs, 1, (), (), #consumer, in funs tags after .
   %n⟪
-/***USERPG&EMBEDPG: <«PG-ProductionNameWithPrecText[#SortName,#Prec]»> ::= ⟦«in»⟧ . ***/
+/***USERPG&EMBEDPG:
+<«PG-ProductionNameWithPrecText[#SortName,#Prec]»> ::= ⟦
+/***EMBEDPG: « {#DM}PG-Embed-Head[#Last?, #ModuleName, #SortName, #SortName, B_FALSE, 0] »***/
+«in»⟧ .
+***/
 
 « PG-TagSortDeclaration[#ModuleName, #SortName, funs, tags] »
 /***EMBEDPG:
@@ -1760,8 +1863,6 @@ IfEmpty[#LeftRecursivePFKs,
 ***/
 ⟫]
 ;
-/// <«PG-ProductionNameWithPrecText[#SortName,#Prec]»> ::= « {#DM}PG-Embed-Head[#Last?, #ModuleName, #SortName, #SortName, B_FALSE, #Prec] »«in» .
-
 
 
 PG-TagSortDeclaration[#ModuleName, #SortName, #funs, #tags]
@@ -2002,26 +2103,26 @@ $[If, $[Equal, #word, #word1],
     PG-SubRepeat-maybe-maybe: PG-SubRepeat[%rawHxRepeat⟪ ? ⟫, %rawHxRepeat⟪ ? ⟫] → B_TRUE;
     PG-SubRepeat-maybe-many: PG-SubRepeat[%rawHxRepeat⟪ ? ⟫, %rawHxRepeat⟪ * ⟫] → B_TRUE;
     PG-SubRepeat-maybe-some: PG-SubRepeat[%rawHxRepeat⟪ ? ⟫, %rawHxRepeat⟪ + ⟫] → B_FALSE;
-    PG-SubRepeat-maybe-somesep: PG-SubRepeat[%rawHxRepeat⟪ ? ⟫, %rawHxRepeat⟪ + _ #HxRegExpLeaf2# ⟫] → B_FALSE;
+    PG-SubRepeat-maybe-somesep: PG-SubRepeat[%rawHxRepeat⟪ ? ⟫, %rawHxRepeat⟪ + _ #HxRegExpSub2# ⟫] → B_FALSE;
 
     PG-SubRepeat-some-single: PG-SubRepeat[%rawHxRepeat⟪ + ⟫, %rawHxRepeat⟪ ⟫] → B_FALSE;
     PG-SubRepeat-some-maybe: PG-SubRepeat[%rawHxRepeat⟪ + ⟫, %rawHxRepeat⟪ ? ⟫] → B_FALSE;
     PG-SubRepeat-some-many: PG-SubRepeat[%rawHxRepeat⟪ + ⟫, %rawHxRepeat⟪ * ⟫] → B_TRUE;
     PG-SubRepeat-some-some: PG-SubRepeat[%rawHxRepeat⟪ + ⟫, %rawHxRepeat⟪ + ⟫] → B_TRUE;
-    PG-SubRepeat-some-somesep: PG-SubRepeat[%rawHxRepeat⟪ + ⟫, %rawHxRepeat⟪ + _ #HxRegExpLeaf2# ⟫] → B_FALSE;
+    PG-SubRepeat-some-somesep: PG-SubRepeat[%rawHxRepeat⟪ + ⟫, %rawHxRepeat⟪ + _ #HxRegExpSub2# ⟫] → B_FALSE;
 
     PG-SubRepeat-many-many: PG-SubRepeat[%rawHxRepeat⟪ * ⟫, %rawHxRepeat⟪ * ⟫] → B_TRUE ;
     PG-SubRepeat-many-other[Data[#_]]: PG-SubRepeat[%rawHxRepeat⟪ * ⟫, $[NotMatch,%rawHxRepeat⟪ * ⟫,#_]] → B_FALSE;
 
-    PG-SubRepeat-somesep-single: PG-SubRepeat[%rawHxRepeat⟪ + _ #HxRegExpLeaf1# ⟫, %rawHxRepeat⟪ ⟫] → B_FALSE;
-    PG-SubRepeat-somesep-maybe: PG-SubRepeat[%rawHxRepeat⟪ + _ #HxRegExpLeaf1# ⟫, %rawHxRepeat⟪ ? ⟫] → B_FALSE;
-    PG-SubRepeat-somesep-many: PG-SubRepeat[%rawHxRepeat⟪ + _ #HxRegExpLeaf1# ⟫, %rawHxRepeat⟪ * ⟫] → B_FALSE;
-    PG-SubRepeat-somesep-some: PG-SubRepeat[%rawHxRepeat⟪ + _ #HxRegExpLeaf1# ⟫, %rawHxRepeat⟪ + ⟫] → B_FALSE;
+    PG-SubRepeat-somesep-single: PG-SubRepeat[%rawHxRepeat⟪ + _ #HxRegExpSub1# ⟫, %rawHxRepeat⟪ ⟫] → B_FALSE;
+    PG-SubRepeat-somesep-maybe: PG-SubRepeat[%rawHxRepeat⟪ + _ #HxRegExpSub1# ⟫, %rawHxRepeat⟪ ? ⟫] → B_FALSE;
+    PG-SubRepeat-somesep-many: PG-SubRepeat[%rawHxRepeat⟪ + _ #HxRegExpSub1# ⟫, %rawHxRepeat⟪ * ⟫] → B_FALSE;
+    PG-SubRepeat-somesep-some: PG-SubRepeat[%rawHxRepeat⟪ + _ #HxRegExpSub1# ⟫, %rawHxRepeat⟪ + ⟫] → B_FALSE;
 
     PG-SubRepeat-somesep-string-string: PG-SubRepeat[%rawHxRepeat⟪ + _ #HxString1# ⟫, %rawHxRepeat⟪ + _ #HxString2# ⟫] → SameString[UnString[#HxString1#], UnString[#HxString2#]] ;
-    PG-SubRepeat-somesep-string-word: PG-SubRepeat[%rawHxRepeat⟪ + _ #HxString1# ⟫, %rawHxRepeat⟪ + _ #HxWord2# ⟫] → SameString[UnString[#HxString1#], #HxWord2#] ;
-    PG-SubRepeat-somesep-word-string: PG-SubRepeat[%rawHxRepeat⟪ + _ #HxWord1# ⟫, %rawHxRepeat⟪ + _ #HxString2# ⟫] → SameString[#HxWord1#, UnString[#HxString2#]] ;
-    PG-SubRepeat-somesep-word-word: PG-SubRepeat[%rawHxRepeat⟪ + _ #HxWord1# ⟫, %rawHxRepeat⟪ + _ #HxWord2# ⟫] → SameString[#HxWord1#, #HxWord2#] ;
+    PG-SubRepeat-somesep-string-word: PG-SubRepeat[%rawHxRepeat⟪ + _ #HxString1# ⟫, %rawHxRepeat⟪ + _ #HxSeparator2# ⟫] → SameString[UnString[#HxString1#], #HxSeparator2#] ;
+    PG-SubRepeat-somesep-word-string: PG-SubRepeat[%rawHxRepeat⟪ + _ #HxSeparator1# ⟫, %rawHxRepeat⟪ + _ #HxString2# ⟫] → SameString[#HxSeparator1#, UnString[#HxString2#]] ;
+    PG-SubRepeat-somesep-word-word: PG-SubRepeat[%rawHxRepeat⟪ + _ #HxSeparator1# ⟫, %rawHxRepeat⟪ + _ #HxSeparator2# ⟫] → SameString[#HxSeparator1#, #HxSeparator2#] ;
 
 
 
@@ -2112,10 +2213,14 @@ IfSingletonRepeat[#Repeat,
   Append[#words, (%n⟨†‹ PG-SortName[#HxSort#] ›⟩;)],
   #consumer,
   in funs tags after .
-    #[%n⟪⟦( « PG-VariablePrefix[#Kind, #ModuleName, #SortName, #ProductionName] » <« #ProductionName »>«
+    #[%n⟪⟦( <« #ProductionName »>«
 	WrappedTextJoin[Map[s.PG-ExtractSubstitutedSort[s], #HxSubstituteSorts#], %n⟨[⟩, %n⟨,⟩, %n⟨]⟩] »«
 	PG-VariableMarker[#Kind, %n⟨:†‹ PG-SortMetaVar[#HxSort#, #n] ›⟩] » ⟦« in »⟧ )
       ⟧⟫, funs, tags, after]]
+///    #[%n⟪⟦( « PG-VariablePrefix[#Kind, #ModuleName, #SortName, #ProductionName] » <« #ProductionName »>«
+///	WrappedTextJoin[Map[s.PG-ExtractSubstitutedSort[s], #HxSubstituteSorts#], %n⟨[⟩, %n⟨,⟩, %n⟨]⟩] »«
+///	PG-VariableMarker[#Kind, %n⟨:†‹ PG-SortMetaVar[#HxSort#, #n] ›⟩] » ⟦« in »⟧ )
+///      ⟧⟫, funs, tags, after]]
 ;
 
     PG-SortMetaVar[HxSort, $Numeric] :: $String;
@@ -2131,19 +2236,19 @@ IfSingletonRepeat[#Repeat,
     -[Free[v1::Text]]:
     PG-ExtractSubstitutedSort[%rawHxSubstituteSort⟪ v1 as #HxSort2# ⟫] → %n⟪«v1»⟫ ;
 
-    PG-VariablePrefix[FormKind, $String<!--ModuleName-->, $String<!--SortName-->, Text<!--Other-->] :: Text;
-    -[Data[#Kind,#ModuleName,#SortName]]: PG-VariablePrefix[#Kind, #ModuleName, #SortName, #Other] → PG-VariablePrefix2[#Kind, #ModuleName, #SortName, #Other] ;
-
-    PG-VariablePrefix2[FormKind, $String<!--ModuleName-->, $String<!--SortName-->, Text<!--Other-->] :: Text;
-    PG-VariablePrefix2[FK_SYMBOL[#free, #t], #ModuleName, #SortName, #Other] → %n⟪/***EMBEDPG:{†« PG-QN[#ModuleName,"Var", #SortName] »_«#Other»}***/⟫ ;
-    PG-VariablePrefix2[$[NotMatch,FK_SYMBOL[#IsStatic,#t],#Kind], #ModuleName, #SortName, #Other] → %n⟪⟫ ;
+///    PG-VariablePrefix[FormKind, $String<!--ModuleName-->, $String<!--SortName-->, Text<!--Other-->] :: Text;
+///    -[Data[#Kind,#ModuleName,#SortName]]: PG-VariablePrefix[#Kind, #ModuleName, #SortName, #Other] → PG-VariablePrefix2[#Kind, #ModuleName, #SortName, #Other] ;
+///
+///    PG-VariablePrefix2[FormKind, $String<!--ModuleName-->, $String<!--SortName-->, Text<!--Other-->] :: Text;
+///    PG-VariablePrefix2[FK_SYMBOL[#free, #t], #ModuleName, #SortName, #Other] → %n⟪/***EMBEDPG:{†« PG-QN[#ModuleName,"Var", #SortName] »_«#Other»}***/⟫ ;
+///    PG-VariablePrefix2[$[NotMatch,FK_SYMBOL[#IsStatic,#t],#Kind], #ModuleName, #SortName, #Other] → %n⟪⟫ ;
 
     PG-VariableMarker[FormKind, Text] :: Text;
     -[Data[#Kind]]: PG-VariableMarker[#Kind, #Other] → PG-VariableMarker2[#Kind, #Other] ;
 
     PG-VariableMarker2[FormKind, Text] :: Text;
-    PG-VariableMarker2[FK_SYMBOL[$False,#t], #Other] → %n⟪/***USERPG:!!!***/« #Other »⟫ ;
-    PG-VariableMarker2[FK_SYMBOL[$True,#t], #Other] → %n⟪/***USERPG:!!***/« #Other »⟫ ;
+    PG-VariableMarker2[FK_SYMBOL[$False,#t], #Other] → %n⟪!!!« #Other »⟫ ;
+    PG-VariableMarker2[FK_SYMBOL[$True,#t], #Other] → %n⟪!!« #Other »⟫ ;
     PG-VariableMarker2[$[NotMatch,FK_SYMBOL[#IsStatic,#t],#Kind], #Other] → #Other ;
 
 
@@ -2154,34 +2259,34 @@ IfSingletonRepeat[%rawHxRepeat⟪ ⟫, #1, #2] → #1 ;
 IfSingletonRepeat[%rawHxRepeat⟪ ? ⟫, #1, #2] → #2 ;
 IfSingletonRepeat[%rawHxRepeat⟪ * ⟫, #1, #2] → #2 ;
 IfSingletonRepeat[%rawHxRepeat⟪ + ⟫, #1, #2] → #2 ;
-IfSingletonRepeat[%rawHxRepeat⟪ + _ #HxRegExpLeaf# ⟫, #1, #2] → #2 ;
+IfSingletonRepeat[%rawHxRepeat⟪ + _ #HxRegExpSub# ⟫, #1, #2] → #2 ;
 
 NestedRepeat[HxRepeat, HxRepeat] :: HxRepeat;
 NestedRepeat-single-single:   NestedRepeat[%rawHxRepeat⟪ ⟫, %rawHxRepeat⟪ ⟫]                                     → %rawHxRepeat⟪ ⟫ ;
 NestedRepeat-single-maybe :   NestedRepeat[%rawHxRepeat⟪ ⟫, %rawHxRepeat⟪ ? ⟫]                                   → %rawHxRepeat⟪ ? ⟫ ;
 NestedRepeat-single-many:     NestedRepeat[%rawHxRepeat⟪ ⟫, %rawHxRepeat⟪ * ⟫]                                   → %rawHxRepeat⟪ * ⟫ ;
 NestedRepeat-single-some:     NestedRepeat[%rawHxRepeat⟪ ⟫, %rawHxRepeat⟪ + ⟫]                                   → %rawHxRepeat⟪ + ⟫ ;
-NestedRepeat-single-somesep:  NestedRepeat[%rawHxRepeat⟪ ⟫, %rawHxRepeat⟪ + _ #HxRegExpLeaf2# ⟫]                   → %rawHxRepeat⟪ + _ #HxRegExpLeaf2# ⟫ ;
+NestedRepeat-single-somesep:  NestedRepeat[%rawHxRepeat⟪ ⟫, %rawHxRepeat⟪ + _ #HxRegExpSub2# ⟫]                   → %rawHxRepeat⟪ + _ #HxRegExpSub2# ⟫ ;
 NestedRepeat-maybe-single:    NestedRepeat[%rawHxRepeat⟪ ? ⟫, %rawHxRepeat⟪ ⟫]                                   → %rawHxRepeat⟪ ? ⟫ ;
 NestedRepeat-maybe-maybe :    NestedRepeat[%rawHxRepeat⟪ ? ⟫, %rawHxRepeat⟪ ? ⟫]                                 → %rawHxRepeat⟪ ? ⟫ ;
 NestedRepeat-maybe-many:      NestedRepeat[%rawHxRepeat⟪ ? ⟫, %rawHxRepeat⟪ * ⟫]                                 → %rawHxRepeat⟪ * ⟫ ;
 NestedRepeat-maybe-some:      NestedRepeat[%rawHxRepeat⟪ ? ⟫, %rawHxRepeat⟪ + ⟫]                                 → %rawHxRepeat⟪ * ⟫ ;
-NestedRepeat-maybe-somesep:   NestedRepeat[%rawHxRepeat⟪ ? ⟫, %rawHxRepeat⟪ + _ #HxRegExpLeaf2# ⟫]                 → $[Error,"Cannot nest ? in +_'...' repeater."] ;
+NestedRepeat-maybe-somesep:   NestedRepeat[%rawHxRepeat⟪ ? ⟫, %rawHxRepeat⟪ + _ #HxRegExpSub2# ⟫]                 → $[Error,"Cannot nest ? in +_'...' repeater."] ;
 NestedRepeat-many-single:     NestedRepeat[%rawHxRepeat⟪ * ⟫, %rawHxRepeat⟪ ⟫]                                   → %rawHxRepeat⟪ * ⟫ ;
 NestedRepeat-many-maybe :     NestedRepeat[%rawHxRepeat⟪ * ⟫, %rawHxRepeat⟪ ? ⟫]                                 → %rawHxRepeat⟪ * ⟫ ;
 NestedRepeat-many-many:       NestedRepeat[%rawHxRepeat⟪ * ⟫, %rawHxRepeat⟪ * ⟫]                                 → %rawHxRepeat⟪ * ⟫ ;
 NestedRepeat-many-some:       NestedRepeat[%rawHxRepeat⟪ * ⟫, %rawHxRepeat⟪ + ⟫]                                 → %rawHxRepeat⟪ * ⟫ ;
-NestedRepeat-many-somesep:    NestedRepeat[%rawHxRepeat⟪ * ⟫, %rawHxRepeat⟪ + _ #HxRegExpLeaf2# ⟫]                 → $[Error,"Cannot nest * in +_'...' repeater."] ;
+NestedRepeat-many-somesep:    NestedRepeat[%rawHxRepeat⟪ * ⟫, %rawHxRepeat⟪ + _ #HxRegExpSub2# ⟫]                 → $[Error,"Cannot nest * in +_'...' repeater."] ;
 NestedRepeat-some-single:     NestedRepeat[%rawHxRepeat⟪ + ⟫, %rawHxRepeat⟪ ⟫]                                   → %rawHxRepeat⟪ + ⟫ ;
 NestedRepeat-some-maybe :     NestedRepeat[%rawHxRepeat⟪ + ⟫, %rawHxRepeat⟪ ? ⟫]                                 → %rawHxRepeat⟪ * ⟫ ;
 NestedRepeat-some-many:       NestedRepeat[%rawHxRepeat⟪ + ⟫, %rawHxRepeat⟪ * ⟫]                                 → %rawHxRepeat⟪ * ⟫ ;
 NestedRepeat-some-some:       NestedRepeat[%rawHxRepeat⟪ + ⟫, %rawHxRepeat⟪ + ⟫]                                 → %rawHxRepeat⟪ + ⟫ ;
-NestedRepeat-some-somesep:    NestedRepeat[%rawHxRepeat⟪ + ⟫, %rawHxRepeat⟪ + _ #HxRegExpLeaf2# ⟫]                 → %rawHxRepeat⟪ + _ #HxRegExpLeaf2# ⟫ ;
-NestedRepeat-somesep-single:  NestedRepeat[%rawHxRepeat⟪ + _ #HxRegExpLeaf1# ⟫, %rawHxRepeat⟪ ⟫]                   → %rawHxRepeat⟪ + _ #HxRegExpLeaf1# ⟫ ;
-NestedRepeat-somesep-maybe :  NestedRepeat[%rawHxRepeat⟪ + _ #HxRegExpLeaf1# ⟫, %rawHxRepeat⟪ ? ⟫]                 → $[Error,"Cannot nest +_'...' in ? repeater."] ;
-NestedRepeat-somesep-many:    NestedRepeat[%rawHxRepeat⟪ + _ #HxRegExpLeaf1# ⟫, %rawHxRepeat⟪ * ⟫]                 → $[Error,"Cannot nest +_'...' in * repeater."] ;
-NestedRepeat-somesep-some:    NestedRepeat[%rawHxRepeat⟪ + _ #HxRegExpLeaf1# ⟫, %rawHxRepeat⟪ + ⟫]                 → $[Error,"Cannot nest +_'...' in + repeater."] ;
-NestedRepeat-somesep-somesep: NestedRepeat[%rawHxRepeat⟪ + _ #HxRegExpLeaf1# ⟫, %rawHxRepeat⟪ + _ #HxRegExpLeaf2# ⟫] → $[Error,"Cannot nest +_'...' in another +_'...' repeater."] ;
+NestedRepeat-some-somesep:    NestedRepeat[%rawHxRepeat⟪ + ⟫, %rawHxRepeat⟪ + _ #HxRegExpSub2# ⟫]                 → %rawHxRepeat⟪ + _ #HxRegExpSub2# ⟫ ;
+NestedRepeat-somesep-single:  NestedRepeat[%rawHxRepeat⟪ + _ #HxRegExpSub1# ⟫, %rawHxRepeat⟪ ⟫]                   → %rawHxRepeat⟪ + _ #HxRegExpSub1# ⟫ ;
+NestedRepeat-somesep-maybe :  NestedRepeat[%rawHxRepeat⟪ + _ #HxRegExpSub1# ⟫, %rawHxRepeat⟪ ? ⟫]                 → $[Error,"Cannot nest +_'...' in ? repeater."] ;
+NestedRepeat-somesep-many:    NestedRepeat[%rawHxRepeat⟪ + _ #HxRegExpSub1# ⟫, %rawHxRepeat⟪ * ⟫]                 → $[Error,"Cannot nest +_'...' in * repeater."] ;
+NestedRepeat-somesep-some:    NestedRepeat[%rawHxRepeat⟪ + _ #HxRegExpSub1# ⟫, %rawHxRepeat⟪ + ⟫]                 → $[Error,"Cannot nest +_'...' in + repeater."] ;
+NestedRepeat-somesep-somesep: NestedRepeat[%rawHxRepeat⟪ + _ #HxRegExpSub1# ⟫, %rawHxRepeat⟪ + _ #HxRegExpSub2# ⟫] → $[Error,"Cannot nest +_'...' in another +_'...' repeater."] ;
 
 
 
@@ -2190,7 +2295,7 @@ NestedRepeat-somesep-somesep: NestedRepeat[%rawHxRepeat⟪ + _ #HxRegExpLeaf1# �
 
 
 
-/////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 15. TEXT OF LEXICAL DECLARATIONS.
 
 // a.
@@ -2217,21 +2322,21 @@ PG-Lexical2[%rawHxDeclarations⟪ space #HxRegExp# ; #HxDeclarations# ⟫, #Modu
 ;
 
 Lexical-token:
-PG-Lexical2[%rawHxDeclarations⟪ token #HxSortName# | #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #hasSkip, hasskip.#[hasskip]]
+PG-Lexical2[%rawHxDeclarations⟪ token #HxTokenName# | #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #hasSkip, hasskip.#[hasskip]]
 →
-%n⟪token «PG-TokenNameText[#HxSortName#]» ::= ⟦« PG-InlineRegExp[#HxRegExp#, #ModuleName, #HxSortName#] »⟧ .
-« PG-DeclareRegExp[#HxRegExp#, #ModuleName, #HxSortName#] »« PG-Lexical2[#HxDeclarations#, #ModuleName, #hasSkip, hasskip.#[hasskip]] »⟫
+%n⟪token «PG-TokenNameText[#HxTokenName#]» ::= ⟦« PG-InlineRegExp[#HxRegExp#, #ModuleName, #HxTokenName#] »⟧ .
+« PG-DeclareRegExp[#HxRegExp#, #ModuleName, #HxTokenName#] »« PG-Lexical2[#HxDeclarations#, #ModuleName, #hasSkip, hasskip.#[hasskip]] »⟫
 ;
 
 Lexical-fragment:
-PG-Lexical2[%rawHxDeclarations⟪ fragment #HxFragmentName# | #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #hasSkip, hasskip.#[hasskip]]
+PG-Lexical2[%rawHxDeclarations⟪ fragment #HxTokenName# | #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #hasSkip, hasskip.#[hasskip]]
 →
-%n⟪token fragment «PG-TokenNameText[#HxFragmentName#]» ::= ⟦« PG-InlineRegExp[#HxRegExp#, #ModuleName, #HxFragmentName#] »⟧ .
-« PG-DeclareRegExp[#HxRegExp#, #ModuleName, #HxFragmentName#] »« PG-Lexical2[#HxDeclarations#, #ModuleName, #hasSkip, hasskip.#[hasskip]] »⟫
+%n⟪token fragment «PG-TokenNameText[#HxTokenName#]» ::= ⟦« PG-InlineRegExp[#HxRegExp#, #ModuleName, #HxTokenName#] »⟧ .
+« PG-DeclareRegExp[#HxRegExp#, #ModuleName, #HxTokenName#] »« PG-Lexical2[#HxDeclarations#, #ModuleName, #hasSkip, hasskip.#[hasskip]] »⟫
 ;
 
 Lexical-attribute:
-PG-Lexical2[%rawHxDeclarations⟪ attribute #HxAttributeKind# #HxAttributeName# #HxAttributeForm# #HxAttributeOptions# ; #HxDeclarations# ⟫, #ModuleName, #hasSkip, hasskip.#[hasskip]]
+PG-Lexical2[%rawHxDeclarations⟪ attribute #HxAttributeKind# #HxAttributeName# #HxAttributeForm# ; #HxDeclarations# ⟫, #ModuleName, #hasSkip, hasskip.#[hasskip]]
 →
 PG-Lexical2[#HxDeclarations#, #ModuleName, #hasSkip, hasskip.#[hasskip]]
 ;
@@ -2348,9 +2453,9 @@ PG-InlineRegExpUnit[%rawHxRegExpUnit⟪ #HxRegExpSimple# + ⟫, #ModuleName, #id
 %n⟪( « PG-InlineRegExpSimple[#HxRegExpSimple#, #ModuleName, #id] » )+⟫
 ;
 
-PG-InlineRegExpUnit[%rawHxRegExpUnit⟪ #HxRegExpSimple# + _ #HxRegExpLeaf# ⟫, #ModuleName, #id]
+PG-InlineRegExpUnit[%rawHxRegExpUnit⟪ #HxRegExpSimple# + _ #HxRegExpSub# ⟫, #ModuleName, #id]
 →
-%n⟪( « PG-InlineRegExpSimple[#HxRegExpSimple#, #ModuleName, #id] » ( « PG-InlineRegExpSimple[#HxRegExpLeaf#, #ModuleName, #id] » « PG-InlineRegExpSimple[#HxRegExpSimple#, #ModuleName, #id] » )* )⟫
+%n⟪( « PG-InlineRegExpSimple[#HxRegExpSimple#, #ModuleName, #id] » ( « PG-InlineRegExpSimple[#HxRegExpSub#, #ModuleName, #id] » « PG-InlineRegExpSimple[#HxRegExpSimple#, #ModuleName, #id] » )* )⟫
 ;
 
 //
@@ -2362,9 +2467,9 @@ PG-InlineRegExpSimple[%rawHxRegExpSimple⟪ #HxString# ⟫, #ModuleName, #id]
 %n⟪†«#HxString#»⟫ // TODO: manually decode HACS and recode PG escapes (or at least check)!
 ;
 
-PG-InlineRegExpSimple[%rawHxRegExpSimple⟪ #HxWord# ⟫, #ModuleName, #id]
+PG-InlineRegExpSimple[%rawHxRegExpSimple⟪ #HxRegExpWord# ⟫, #ModuleName, #id]
 →
-%n⟪†« Stringify[#HxWord#] »⟫
+%n⟪†« Stringify[#HxRegExpWord#] »⟫
 ;
 
 PG-InlineRegExpSimple[%rawHxRegExpSimple⟪ #HxFragmentRef# ⟫, #ModuleName, #id]
@@ -2471,18 +2576,18 @@ PG-DeclareRegExpUnit[%rawHxRegExpUnit⟪ #HxRegExpSimple# ⟫, #ModuleName, #id]
 PG-DeclareRegExpUnit[%rawHxRegExpUnit⟪ #HxRegExpSimple# ? ⟫, #ModuleName, #id] → PG-DeclareRegExpSimple[#HxRegExpSimple#, #ModuleName, #id] ;
 PG-DeclareRegExpUnit[%rawHxRegExpUnit⟪ #HxRegExpSimple# * ⟫, #ModuleName, #id] → PG-DeclareRegExpSimple[#HxRegExpSimple#, #ModuleName, #id] ;
 PG-DeclareRegExpUnit[%rawHxRegExpUnit⟪ #HxRegExpSimple# + ⟫, #ModuleName, #id] → PG-DeclareRegExpSimple[#HxRegExpSimple#, #ModuleName, #id] ;
-PG-DeclareRegExpUnit[%rawHxRegExpUnit⟪ #HxRegExpSimple# + _ #HxRegExpLeaf# ⟫, #ModuleName, #id] → %n⟪« PG-DeclareRegExpSimple[#HxRegExpSimple#, #ModuleName, #id] »« PG-DeclareRegExpSimple[#HxRegExpLeaf#, #ModuleName, #id] »⟫ ;
+PG-DeclareRegExpUnit[%rawHxRegExpUnit⟪ #HxRegExpSimple# + _ #HxRegExpSub# ⟫, #ModuleName, #id] → %n⟪« PG-DeclareRegExpSimple[#HxRegExpSimple#, #ModuleName, #id] »« PG-DeclareRegExpSimple[#HxRegExpSub#, #ModuleName, #id] »⟫ ;
 
 PG-DeclareRegExpSimple[HxRegExpSimple, $String<!--ModuleName-->, $String] :: Text;
 PG-DeclareRegExpSimple[%rawHxRegExpSimple⟪ #HxString# ⟫, #ModuleName, #id] → %n⟪⟫ ;
-PG-DeclareRegExpSimple[%rawHxRegExpSimple⟪ #HxWord# ⟫, #ModuleName, #id] → %n⟪⟫ ;
 PG-DeclareRegExpSimple[%rawHxRegExpSimple⟪ #HxFragmentRef# ⟫, #ModuleName, #id] → %n⟪⟫ ;
 PG-DeclareRegExpSimple[%rawHxRegExpSimple⟪ . ⟫, #ModuleName, #id] → %n⟪⟫ ;
 PG-DeclareRegExpSimple[%rawHxRegExpSimple⟪ #HxRegExpClass# ⟫, #ModuleName, #id] → %n⟪⟫ ;
 PG-DeclareRegExpSimple[%rawHxRegExpSimple⟪ ( #HxRegExp# ) ⟫, #ModuleName, #id] → PG-DeclareRegExp[#HxRegExp#, #ModuleName, #id] ;
+PG-DeclareRegExpSimple[%rawHxRegExpSimple⟪ #HxRegExpWord# ⟫, #ModuleName, #id] → %n⟪⟫ ;
 
 
-/////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 16. PG TEXT NAMING CONVENTIONS.
 
 // PG token name and constructor.
@@ -2514,17 +2619,40 @@ PG-ProductionNameWithPrecRepeatText[#Name, #Prec, %rawHxRepeat⟪ ? ⟫]→ %n�
 PG-ProductionNameWithPrecRepeatText[#Name, #Prec, %rawHxRepeat⟪ * ⟫]→ %n⟪« PG-ProductionNameWithPrecText[#Name, #Prec] »_MaybeSome⟫ ;
 -[Data[#HxRegExpSimple#]]:
 PG-ProductionNameWithPrecRepeatText[#Name, #Prec, %rawHxRepeat⟪ + ⟫]→ %n⟪« PG-ProductionNameWithPrecText[#Name, #Prec] »_Some⟫ ;
--[Data[#HxRegExpLeaf#]]:
-PG-ProductionNameWithPrecRepeatText[#Name, #Prec, %rawHxRepeat⟪ + _ #HxRegExpLeaf# ⟫]→ %n⟪« PG-ProductionNameWithPrecText[#Name, #Prec] »« PG-RegExpLeafNameText["", #HxRegExpLeaf#] »⟫ ;
+-[Data[#HxRegExpSub#]]:
+PG-ProductionNameWithPrecRepeatText[#Name, #Prec, %rawHxRepeat⟪ + _ #HxRegExpSub# ⟫]→ %n⟪« PG-ProductionNameWithPrecText[#Name, #Prec] »« PG-RegExpSubNameText["", #HxRegExpSub#] »⟫ ;
 
     // Convert regular expression to name fragment...
-    PG-RegExpLeafNameText[$String, HxRegExpSimple] :: Text;
-    -[Data[#Name,#HxString#]]:      PG-RegExpLeafNameText[#Name, %rawHxRegExpLeaf⟪ #HxString# ⟫] → %n⟪†«#Name»_SomeS†« $[Mangle,#HxString#] »⟫ ;
-    -[Data[#Name,#HxWord#]]:        PG-RegExpLeafNameText[#Name, %rawHxRegExpLeaf⟪ #HxWord# ⟫] → %n⟪†«#Name»_SomeW†« $[Mangle,#HxWord#] »⟫ ;
+    PG-RegExpSubNameText[$String, HxRegExpSimple] :: Text;
+    -[Data[#Name,#HxString#]]:      PG-RegExpSubNameText[#Name, %rawHxRegExpSub⟪ #HxString# ⟫] → %n⟪†«#Name»_SomeS†« $[Mangle,#HxString#] »⟫ ;
+    -[Data[#Name,#HxSeparator#]]:        PG-RegExpSubNameText[#Name, %rawHxRegExpSub⟪ #HxSeparator# ⟫] → %n⟪†«#Name»_SomeW†« $[Mangle,#HxSeparator#] »⟫ ;
 
 
-/////////////////////////////////////////////////////////////////////
-// X. HELPERS.
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// X. JJ HELPERS.
+
+
+JJ-Construction[#Constructor, #Content]
+→
+%n⟪{sink = sink.start(makeTConstructor(sink, null, «#Constructor», null));}
+«#Content»{sink = sink.end();}
+⟫;
+
+JJ-Token[#TokenName]
+→
+%n⟪<T_« #TokenName »>
+⟫
+;
+
+JJ-Nonterminal[#NonTerminal, env.#[env]]
+→
+%n⟪sink=N_« #NonTerminal »(sink, « #[%n⟨env⟩] »)
+⟫
+;
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Y. OTHER HELPERS.
 
 // Convert hx module name string to Java style class name.
 
@@ -2575,7 +2703,7 @@ PG-SortNameWithRepeat2[#FullSortName, %rawHxRepeat⟪ ⟫] → #FullSortName ;
 PG-SortNameWithRepeat2[#FullSortName, %rawHxRepeat⟪ ? ⟫] → $[:,#FullSortName,"_Maybe"] ;
 PG-SortNameWithRepeat2[#FullSortName, %rawHxRepeat⟪ * ⟫] → $[:,#FullSortName,"_MaybeSome"] ;
 PG-SortNameWithRepeat2[#FullSortName, %rawHxRepeat⟪ + ⟫] → $[:,#FullSortName,"_Some"] ;
-PG-SortNameWithRepeat2[#FullSortName, %rawHxRepeat⟪ + _ #HxRegExpLeaf# ⟫] → RegExpLeafSuffix[#HxRegExpLeaf#, $[:,#FullSortName,"_Some_"]] ;
+PG-SortNameWithRepeat2[#FullSortName, %rawHxRepeat⟪ + _ #HxRegExpSub# ⟫] → RegExpSubSuffix[#HxRegExpSub#, $[:,#FullSortName,"_Some_"]] ;
 
 // Extract sort name from sort.
 
@@ -2660,7 +2788,7 @@ PG-BaseSortName2[$[NotMatch,%rawHxSort⟪ #HxSortName# #HxMetaVariables# #HxSimp
 )] //PG
 
 
-/// /////////////////////////////////////////////////////////////////////
+/// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// // PG-ProductionNames: Extract top level productions.
 /// //
 /// // Only include productions for tokens and sorts that have syntax.
@@ -2694,10 +2822,10 @@ PG-BaseSortName2[$[NotMatch,%rawHxSort⟪ #HxSortName# #HxMetaVariables# #HxSimp
 ///
 ///
 ///
-/// /////////////////////////////////////////////////////////////////////
+/// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///
 ///
-/// /////////////////////////////////////////////////////////////////////
+/// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// // TEXT LIST OF REPEAT-DERIVED DECLARATIONS.
 ///
 /// PG-ProduceDerived[DERIVED_SORT] :: TextMapSort;
@@ -2738,13 +2866,13 @@ PG-BaseSortName2[$[NotMatch,%rawHxSort⟪ #HxSortName# #HxMetaVariables# #HxSimp
 /// ;
 ///
 /// -[Data[#s]]:
-/// PG-ProduceRepeat[%rawHxRepeat⟪ + _ #HxRegExpLeaf# ⟫, #s, #p, #name]
+/// PG-ProduceRepeat[%rawHxRepeat⟪ + _ #HxRegExpSub# ⟫, #s, #p, #name]
 /// →
 /// SingletonTextMap[TextToString[#name], %n⟪
 /// <«#name»> ::= «
-///   PG-Head[B_TRUE, #ModuleName, RegExpLeafSuffix[#HxRegExpLeaf#, $[:,#s,"+_"]], TextToString[#name], B_FALSE, 0]
-/// » <«PG-ProductionNameWithPrecText[#s, #p]»>:#1 ( « PG-InlineRegExpSimple[#HxRegExpLeaf#, ""] » <«#name»>:#2 {{ $Cons[#1,#2] }} | {{ $Cons[#1,$Nil] }} ) .
-/// « PG-Embed-Tail[B_TRUE, RegExpLeafSuffix[#HxRegExpLeaf#, $[:,#s,"+_"]], TextToString[#name]] »⟫]
+///   PG-Head[B_TRUE, #ModuleName, RegExpSubSuffix[#HxRegExpSub#, $[:,#s,"+_"]], TextToString[#name], B_FALSE, 0]
+/// » <«PG-ProductionNameWithPrecText[#s, #p]»>:#1 ( « PG-InlineRegExpSimple[#HxRegExpSub#, ""] » <«#name»>:#2 {{ $Cons[#1,#2] }} | {{ $Cons[#1,$Nil] }} ) .
+/// « PG-Embed-Tail[B_TRUE, RegExpSubSuffix[#HxRegExpSub#, $[:,#s,"+_"]], TextToString[#name]] »⟫]
 /// ;
 ///
 ///
@@ -2775,8 +2903,8 @@ PG-BaseSortName2[$[NotMatch,%rawHxSort⟪ #HxSortName# #HxMetaVariables# #HxSimp
 ///
 ///
 ///
-/// /////////////////////////////////////////////////////////////////////
-/// /////////////////////////////////////////////////////////////////////
+/// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///
 /// // CookBase.crs: CRSX3 SUPPORT LIBRARY FOR HACS PREPROCESSOR OPERATIONS.
 /// //
@@ -2795,7 +2923,7 @@ PG-BaseSortName2[$[NotMatch,%rawHxSort⟪ #HxSortName# #HxMetaVariables# #HxSimp
 ///
 /// $Lax;
 ///
-/// /////////////////////////////////////////////////////////////////////
+/// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// // LOCATION EXTRACTION.
 ///
 /// $StringEntrySort ::=( STRING[$String]; );
@@ -2807,7 +2935,7 @@ PG-BaseSortName2[$[NotMatch,%rawHxSort⟪ #HxSortName# #HxMetaVariables# #HxSimp
 ///
 ///
 ///
-/// /////////////////////////////////////////////////////////////////////
+/// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// // SORT EXTRACTION.
 ///
 /// ScopePG-SortName[HxScopeSort] :: $String;
@@ -2827,15 +2955,15 @@ PG-BaseSortName2[$[NotMatch,%rawHxSort⟪ #HxSortName# #HxMetaVariables# #HxSimp
 ///
 ///
 ///
-/// /////////////////////////////////////////////////////////////////////
+/// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// // PRODUCTION NAMES.
 ///
 ///
-/// /////////////////////////////////////////////////////////////////////
+/// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// // ERRORS.
 ///
 ///
-/// /////////////////////////////////////////////////////////////////////
+/// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///
 ///
 ///
@@ -2849,14 +2977,14 @@ PG-BaseSortName2[$[NotMatch,%rawHxSort⟪ #HxSortName# #HxMetaVariables# #HxSimp
 
 ///
 ///
-/// /////////////////////////////////////////////////////////////////////
+/// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// // COMPARISON OF FORMS.
 ///
 ///
 ///
 ///
 ///
-/// /////////////////////////////////////////////////////////////////////
+/// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// // Extract all repeat-derived sort forms from DM structure.
 ///
 /// DERIVED_SORT ::=( DERIVED[$String, $Numeric<!--Precedence-->, HxRepeat]; );
@@ -2994,7 +3122,7 @@ PG-BaseSortName2[$[NotMatch,%rawHxSort⟪ #HxSortName# #HxMetaVariables# #HxSimp
 /// Un$Hx[HxTerm] :: HxTerm ;
 /// Un$Hx[#] → # ;
 ///
-/// /////////////////////////////////////////////////////////////////////
+/// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// // Extract scope sorts for unparsed constructor.
 ///
 /// {$String : DeclarationMapEntry}
@@ -3047,7 +3175,7 @@ PG-BaseSortName2[$[NotMatch,%rawHxSort⟪ #HxSortName# #HxMetaVariables# #HxSimp
 /// ConstructorScopeSorts3[$[NotMatch,RawHxFormConstruction[#Constructor, #ScopeSorts, #InheritedRefs],#_], #Defines, #Constructor2] → ConstructorScopeSorts2[#Defines, #Constructor2] ;
 ///
 ///
-/// /////////////////////////////////////////////////////////////////////
+/// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// // Extract sort names.
 ///
 /// {$String : DeclarationMapEntry} SortNameList :: $List[$String] ;
@@ -3069,7 +3197,7 @@ PG-BaseSortName2[$[NotMatch,%rawHxSort⟪ #HxSortName# #HxMetaVariables# #HxSimp
 /// ;
 ///
 ///
-/// /////////////////////////////////////////////////////////////////////
+/// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// // Extract token names.
 ///
 /// {$String : DeclarationMapEntry} TokenNameList :: $List[$String] ;
@@ -3091,7 +3219,7 @@ PG-BaseSortName2[$[NotMatch,%rawHxSort⟪ #HxSortName# #HxMetaVariables# #HxSimp
 /// ;
 ///
 ///
-/// /////////////////////////////////////////////////////////////////////
+/// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// // Extract attribute names.
 ///
 /// {$String : DeclarationMapEntry} AttributeNameList :: $List[$String] ;
@@ -3113,10 +3241,10 @@ PG-BaseSortName2[$[NotMatch,%rawHxSort⟪ #HxSortName# #HxMetaVariables# #HxSimp
 /// ;
 ///
 ///
-/// /////////////////////////////////////////////////////////////////////
+/// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///
 ///
-/// /////////////////////////////////////////////////////////////////////
+/// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// // Sort name for attribute value.
 ///
 /// {$String : DeclarationMapEntry} AttributeValuePG-SortName[$String] :: $String;
@@ -3146,7 +3274,7 @@ PG-BaseSortName2[$[NotMatch,%rawHxSort⟪ #HxSortName# #HxMetaVariables# #HxSimp
 /// {#DM}AttributeKeySortName2[$[NotMatch,DME_ATTRIBUTE[#AttributeKind, #AttributeName, #AttributeForm, #AttributeOptions],#_], #SortName] → "" ;
 ///
 ///
-/// /////////////////////////////////////////////////////////////////////
+/// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// // Initialize otherwise unused maps.
 ///
 /// {$String : DeclarationMapEntry} PG-InitOtherMaps[$List[HxAttribute], $String] :: Text;
@@ -3168,26 +3296,5 @@ PG-BaseSortName2[$[NotMatch,%rawHxSort⟪ #HxSortName# #HxMetaVariables# #HxSimp
 /// PG-InitOtherMaps2[(), #sep, #capture] → %n⟪⟫ ;
 /// PG-InitOtherMaps2[(#a;#as), #sep, #capture] → %n⟪†«#sep»"†«#a»" : {« $[If, #capture, %n⟨#InheritedMap_†‹#a›⟩, %n⟨⟩] »}Inherited_†«#a»« PG-InitOtherMaps2[#as, "; ", #capture] »⟫ ;
 ///
-/// /////////////////////////////////////////////////////////////////////
+/// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// )]//CookN
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///

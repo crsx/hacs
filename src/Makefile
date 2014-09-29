@@ -23,7 +23,7 @@ install::
 # HACS BUILD DEPENDENCIES.
 
 # Get ball rolling...
-all:: $(BUILD)/org/crsx/hacs/HxRaw.class $(BUILD)/org/crsx/hacs/HxPP.class
+all:: $(BUILD)/org/crsx/hacs/HxRaw.class
 
 # Generic cleanup.
 clean::
@@ -35,16 +35,6 @@ $(TEMP)/org/crsx/hacs/HxRaw.pgtemplate: $(HACS)/org/crsx/hacs/HxRaw.pgtemplate
 $(TEMP)/org/crsx/hacs/HxRaw.jj: $(TEMP)/org/crsx/hacs/HxRaw.pg
 $(TEMP)/org/crsx/hacs/HxRaw.java: $(TEMP)/org/crsx/hacs/HxRaw.jj
 $(BUILD)/org/crsx/hacs/HxRaw.class: $(TEMP)/org/crsx/hacs/HxRaw.java
-#
-$(TEMP)/org/crsx/hacs/HxPP.pg: $(HACS)/org/crsx/hacs/HxPP.pg
-	@set -x && $(NOEXEC) mkdir -p $(dir $@) && cp $< $@
-$(TEMP)/org/crsx/hacs/HxPP.jj: $(TEMP)/org/crsx/hacs/HxPP.pg
-$(TEMP)/org/crsx/hacs/HxPP.java: $(TEMP)/org/crsx/hacs/HxPP.jj
-$(BUILD)/org/crsx/hacs/HxPP.class: $(TEMP)/org/crsx/hacs/HxPP.java
-
-
-
-
 
 
 ### # Distribution.

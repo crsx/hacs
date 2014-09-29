@@ -267,7 +267,7 @@ NameSetList1[NameSet] :: $List[$String] ;
 NameSetList1[NAME_SET[#Names]] → $[Split, $[Substring,#Names,1,$[Minus,$[Length,#Names],1]], ";"] ;
 
 ∀ a . MapNames[x::$String.$Sort[a], NameSet] :: $List[a];
-MapNamesWhen[x.#[x], #NameSet] → Map[x.#[x], NameSetList[#NameSet]] ;
+MapNames[x.#[x], #NameSet] → Map[x.#[x], NameSetList[#NameSet]] ;
 
 ∀ a . MapNamesWhen[ok::Ok x::$String.$Sort[a], NameSet] :: $List[a];
 MapNamesWhen[ok x.#[ok,x], #NameSet] → MapWhen[ok x.#[ok,x], NameSetList[#NameSet]] ;

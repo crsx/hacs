@@ -28,16 +28,14 @@ skip (DEFAULT,HX_RE) ::= ' ' | \r | \t | \n | '//' ~[\n\r]* | \u1 .
 %}
 
 // Combinations.
-<HxModuleName> ::= ( <HxString>:checkModuleString | <HxConstructor> | HX_DOTTEDNAME$ ).
-<HxSortName> (DEFAULT,HX_RE) ::= <HxConstructor> .
-<HxFragmentName> (HX_RE) ::= <HxConstructor> .
-<HxFragmentRef> (DEFAULT,HX_RE) ::= HX_FRAGMENT_REF$:unwrap .
-<HxAttributeName> ::= ( <HxLiteral> | <HxVariable> | <HxConstructor> ).
-<HxConstructor> ::= HX_CON$ .
-<HxVariable> ::=  ( HX_VAR$ | HX_MODULE$ | HX_SORT$ | HX_MAIN$ | HX_DATA$ | HX_STATIC$ | HX_SYMBOL$ | HX_SCHEME$ | HX_AUTOMATIC$ | HX_ATTRIBUTE$ | HX_COMPOSE$
-                  | HX_SUGAR$ | HX_RULE$ | HX_PRIORITY$ | HX_DEFAULT$ | HX_SPACE$ | HX_IMPORT$ | HX_TOKEN$ | HX_FRAGMENT$ | HX_NESTED$ | HX_TAG$ | HX_BINDS$ | HX_AS$ ).
+<HxModuleName> ::= ( <HxString>:checkModuleString | HX_DOTTEDNAME$ ).
+<HxVariable> ::=  HX_VAR$ .
 <HxMetaVariable> ::= HX_META$ .
+<HxAttributeName> ::= HX_VAR$ .
 <HxSeparator> ::= ( HX_BAR$ | HX_SEMI$ | HX_COMMA$ | HX_COLON$ | HX_STAR$ | HX_DOT$ ).
+<HxTokenName> (HX_RE) ::= HX_RE_NAME$ .
+<HxFragmentRef> (HX_RE) ::= HX_FRAGMENT_REF$:unwrap .
+<HxRegExpWord> (HX_RE) ::= ( HX_RE_NAME$ | HX_RE_WORD$ ).
 
 // Single character tokens.
 
@@ -68,12 +66,12 @@ token HX_AT ::= "@" .
 
 token HX_DOTTEDNAME ::= ( (HX_LOWER | HX_DIGIT)+ HX_DOT )+ HX_UPPER (HX_UPPER | HX_LOWER | HX_DIGIT)* .
 
-// Common categories...TODO: should be Unicode...
+// Common categories...TODO: should be Unicode once we allow large lexers...
 token fragment HX_DIGIT ::= [0-9] .
 token fragment HX_LOWER ::= [a-z] .
 token fragment HX_UPPER ::= [A-Z] .
 
-// Normal keywords (cases of <HxVariable>).
+// Normal keywords.
 token HX_MODULE ::= "module" .
 token HX_SORT ::= "sort" .
 token HX_MAIN ::= "main" .
@@ -93,18 +91,20 @@ token HX_TAG ::= "tag" .
 token HX_BINDS ::= "binds" .
 token HX_AS ::= "as" .
 
-// Regular Expression introduction keywords (cases of <HxVariable>).
+// Regular Expression introduction keywords.
 token HX_SPACE (DEFAULT : HX_RE) ::= "space" .
 token HX_TOKEN (DEFAULT : HX_RE) ::= "token" .
 token HX_FRAGMENT (DEFAULT,HX_RE : HX_RE) ::= "fragment" .
 token HX_NESTED (HX_RE) ::= "nested" .
 
-token HX_FRAGMENT_REF (HX_RE) ::= \u27e8 (HX_UPPER | HX_CON) \u27e9 . //Note: fits with <HxFragmentName>
+// Regular Expression specific tokens.
+token HX_FRAGMENT_REF (HX_RE) ::= \u27e8 HX_RE_NAME \u27e9 .
+token HX_RE_NAME (HX_RE) ::= HX_UPPER (HX_UPPER | HX_LOWER | HX_DIGIT | [_$] )* .
+token HX_RE_WORD (HX_RE) ::= ~['⟨','⟩','⟦','⟧','(',')','[',']','.','*','+','?',';','"',"'",',',':','«','»',' ',\t,\\,\n]+ .
 
 // The basic identifier forms.
 token HX_META ::= HX_HASH (HX_NAME | HX_STRING)? (HX_HASH HX_NAME)* HX_SUFFIX* .
-token HX_VAR ::= HX_LOWER HX_NAME? HX_SUFFIX* | "v" HX_STRING HX_SUFFIX* .
-token HX_CON (DEFAULT,HX_RE) ::= (HX_UPPER | [$]) HX_NAME? HX_SUFFIX* | "C" HX_STRING HX_SUFFIX* .
+token HX_VAR ::= HX_LOWER HX_NAME? HX_SUFFIX* .
 
 token fragment HX_HASH ::= "#" .
 token fragment HX_SUFFIX ::= "_" HX_NAME? | "_"? HX_NATURAL HX_NAME? .
@@ -136,12 +136,6 @@ token HX_ESCAPEDCHAR (DEFAULT,HX_RE) ::=
 | [\\] [x] (HX_HEX HX_HEX | '{' HX_HEX+ '}')
 .
 token fragment HX_HEX ::= [0-9A-Fa-f] .
-
-// Catch-all...
-token HX_OTHERCHAR ::= ~[] .
-
-<HxWord> (DEFAULT,HX_RE) ::= (HX_CON$ | HX_WORD$) .
-token HX_WORD (HX_RE) ::= ~['⟨','⟩','⟦','⟧','(',')','[',']','.','*','+','?',';','"',"'",',',':','«','»',' ',\t,\\,\n]+ .
 
 
 //// CC SUBPARSER FOR REGULAR EXPRESSION CHARACTER CLASSES.
@@ -183,4 +177,27 @@ token HX_CC_SKIP (HX_CC) ::= \u1 .
 <HxCC_NonDashRangeStartChar> (HX_CC) ::= (HX_CC_NOT$ | HX_CC_OTHER$) .
 <HxCC_RangeChar> (HX_CC) ::= (HX_CC_NOT$ | HX_CC_DASH$ | HX_CC_OTHER$) .
 
-<HxParsedForm> ::= HX_CONCRETE$$:unwrap:{hxPP} .
+<HxParsedForm> ::= HX_CONCRETE$$:unwrap:{%%%PREFIX%%%HxPP} .
+
+
+//// PP SUBPARSER FOR PARSED FORMS.
+
+<HxPP> (HX_PP) ::=
+  {ParsedFormSpace}:hx (CONCRETESPACE$) <HxPP>
+| {ParsedFormWord}:hx (CONCRETEWORD$) <HxPP>
+| {ParsedFormTerm}:hx UNCONCRETE$$:unwrap:{%%%PREFIX%%%HxScopeSortPrecRepeat} <HxPP>
+| {ParsedFormDone}:hx
+.
+
+token CONCRETESPACE (HX_PP) ::= [' ',\t\r\n,\ub6]+ . // no comments but include special spacing marks
+token CONCRETEWORD (HX_PP) ::= ~[' ',\t\r\n\ub6\u27e6\u27e7\u27e8\u27e9]+ .
+
+%{
+// Nested unconcrete token ⟨...⟩ inside PP.
+<HX_PP> MORE : { "\u27e8" { nesting = 0; nestedState = curLexState; } : IN_PP_UNCONCRETE }
+<IN_PP_UNCONCRETE> MORE : { "\u27e8" { nesting = 1; } : IN_PP_NESTED_UNCONCRETE }
+<IN_PP_NESTED_UNCONCRETE> MORE : { "\u27e8" { nesting++; } }
+<IN_PP_NESTED_UNCONCRETE> MORE : { "\u27e9" { if (--nesting <= 0) SwitchTo(IN_PP_UNCONCRETE); } }
+<IN_PP_UNCONCRETE> TOKEN : { <T_UNCONCRETE : "\u27e9"> { SwitchTo(nestedState); } }
+<IN_PP_UNCONCRETE,IN_PP_NESTED_UNCONCRETE> MORE : { < ~[] > }
+%}

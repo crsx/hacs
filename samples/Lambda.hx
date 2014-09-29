@@ -25,12 +25,10 @@ main sort E
 
 // Reduction rules.
 
-[Beta] ⟦ (λ x : ⟨T#t⟩ . ⟨E#b[x]⟩) ⟨E#a⟩ ⟧ → E#b[E#a] ;
-[Eta]  ⟦ λ x : ⟨T#t⟩ . ⟨E#e⟩ x ⟧ → ⟦⟨E#e⟩⟧ ;
+⟦ (λ x : ⟨T#t⟩ . ⟨E#b[x]⟩) ⟨E#a⟩ ⟧ → E#b[E#a] ;
+⟦ λ x : ⟨T#t⟩ . ⟨E#e⟩ x ⟧ → E#e ;
 
 // Type analysis.
-
-// Spread variable types throughout term.
 
 attribute ↑t(T);
 attribute ↓te{TV : T};
@@ -50,5 +48,11 @@ TE2(⟦ x ⟧) ↓te{x : #t} → ⟦ x ⟧ ↑t(#tx) ;
 sort E;
 ⟦ λ x : ⟨T#tx⟩ . ⟨E#e[x] ↑t(#te)⟩ ⟧ ↑t(⟦ ⟨T#tx⟩ → ⟨T#te⟩ ⟧) ;
 ⟦ ⟨E#f ↑t(#tf)⟩ ⟨E#a ↑t(#ta)⟩ ⟧ ↑t(Unify(#tf, ⟦a→b⟧, Unify(#ta, ⟦a⟧, ⟦b⟧))) ;
+
+sort T;
+| scheme Unify(T,T,T);
+
+// Type unification: test that #1 and #2 unify, and then return #3.
+Unify(#1,#2,#3) → #3 ;
 
 }

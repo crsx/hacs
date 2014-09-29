@@ -99,7 +99,7 @@ termfile="$(mktemp)"
 parsecmd="$JAVA -cp '$HACSBUILD:$CRSXJAR' net.sf.crsx.run.Crsx allow-unnamed-rules 'grammar=(\"$PARSERCLASS\";)' 'category=$PREFIX$SORT' 'output=$termfile' $options"
 
 # Compose meta-parse command.
-metaparsecmd="$JAVA -cp '$HACSBUILD:$CRSXJAR' net.sf.crsx.run.Crsx allow-unnamed-rules 'grammar=(\"$METAPARSERCLASS\";\"$EMBEDPARSERCLASS\";\"net.sf.crsx.text.Text\";)' 'category=$PREFIX$SORT' 'output=$termfile' $options"
+metaparsecmd="$JAVA -cp '$HACSBUILD:$CRSXJAR' net.sf.crsx.run.Crsx allow-unnamed-rules 'grammar=(\"$METAPARSERCLASS\";\"$EMBEDPARSERCLASS\";\"net.sf.crsx.text.Text\";)' 'category=$EMBEDPREFIX$SORT' 'output=$termfile' $options"
 
 # Compose rewrite command.
 rewritecmd="$JAVA -cp '$HACSBUILD:$CRSXJAR' net.sf.crsx.run.Crsx allow-unnamed-rules 'grammar=(\"$METAPARSERCLASS\";\"$EMBEDPARSERCLASS\";\"net.sf.crsx.text.Text\";)' 'rules=$REWRITER' 'wrapper=\$$MODE-$ACTION' 'sink=$SINKCLASS' 'category=$PREFIX$SORT'  $options"
@@ -110,6 +110,8 @@ eval "$parsecmd"
 if $success; then
   if $justparse; then
     mv $termfile $input.tt
+    eval "$metaparsecmd"
+    mv $termfile $input.ttm
   else
     echo REWRITING
   fi
