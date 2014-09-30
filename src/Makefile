@@ -4,7 +4,7 @@
 # SETUP.
 
 #TODO: Eliminate this hard-coding once crsx package exists...
-CRSXROOT = $(abspath ../../../master/crsx)
+CRSXROOT = $(abspath ../../../develop/crsx)
 HACS = .
 TEMP = ../temp
 BUILD = ../build
@@ -29,7 +29,7 @@ all:: $(BUILD)/org/crsx/hacs/HxRaw.class
 clean::
 	@set -x && rm -fr $(BUILD)
 
-# Raw parser for .hx files (as used by CookPG).
+# Raw parser for .hx files (as used by PrepPG).
 $(TEMP)/org/crsx/hacs/HxRaw.pgtemplate: $(HACS)/org/crsx/hacs/HxRaw.pgtemplate
 	@set -x && $(NOEXEC) mkdir -p $(dir $@) && $(NOEXEC) cp -f $< $@
 $(TEMP)/org/crsx/hacs/HxRaw.jj: $(TEMP)/org/crsx/hacs/HxRaw.pg
@@ -39,8 +39,8 @@ $(BUILD)/org/crsx/hacs/HxRaw.class: $(TEMP)/org/crsx/hacs/HxRaw.java
 
 ### # Distribution.
 ### TOPFILES = 00README-hacs Makefile-hacs-template first.hx doc/hacs-gently.pdf
-### HACSSOURCES = Makefile Makefile-hx crsx.jar Cookmain.c run-hacs.sh
-### HACSGENERATED = Cook.h Cook_sorts.c Cook_rules.c Cook_symbols.c
+### HACSSOURCES = Makefile Makefile-hx crsx.jar Prepmain.c run-hacs.sh
+### HACSGENERATED = Prep.h Prep_sorts.c Prep_rules.c Prep_symbols.c
 ### 
 ### hacs.zip: $(TOPFILES)
 ### 	@rm -fr hacs.zip tmp
@@ -51,17 +51,17 @@ $(BUILD)/org/crsx/hacs/HxRaw.class: $(TEMP)/org/crsx/hacs/HxRaw.java
 ### 	d="`pwd`" && cd tmp && zip -r $$d/hacs.zip .
 ### 	rm -fr tmp
 ### 
-### # HACS Cook utility dependencies.
-### Cookmain.o: Cookmain.c Cook.h crsx.h
-### Cookmain: Cookmain.o Cook_sorts.o Cook_rules.o Cook_symbols.o crsx.o crsx_scan.o
-### #	$(CC) -o Cookmain Cookmain.o Cook_sorts.o Cook_rules.o Cook_symbols.o crsx.o crsx_scan.o -licuuc -licudata -licui18n -licuio
-### clean::; rm -f Cook_* Cook.*
-### realclean::; rm -fr Cookmain tmp
+### # HACS Prep utility dependencies.
+### Prepmain.o: Prepmain.c Prep.h crsx.h
+### Prepmain: Prepmain.o Prep_sorts.o Prep_rules.o Prep_symbols.o crsx.o crsx_scan.o
+### #	$(CC) -o Prepmain Prepmain.o Prep_sorts.o Prep_rules.o Prep_symbols.o crsx.o crsx_scan.o -licuuc -licudata -licui18n -licuio
+### clean::; rm -f Prep_* Prep.*
+### realclean::; rm -fr Prepmain tmp
 
 ### # Distribution.
 ### TOPFILES = 00README-hacs Makefile-hx Makefile-hacs-template
-### HACSSOURCES = Makefile crsx.jar Cookmain.c run-hacs.sh
-### HACSGENERATED = Cook.h Cook_sorts.c Cook_rules.c Cook_symbols.c
+### HACSSOURCES = Makefile crsx.jar Prepmain.c run-hacs.sh
+### HACSGENERATED = Prep.h Prep_sorts.c Prep_rules.c Prep_symbols.c
 ### 
 ### hacs.zip: $(TOPFILES)
 ### 	@rm -fr hacs.zip tmp
@@ -72,12 +72,12 @@ $(BUILD)/org/crsx/hacs/HxRaw.class: $(TEMP)/org/crsx/hacs/HxRaw.java
 ### 	d="`pwd`" && cd tmp && zip -r $$d/hacs.zip .
 ### 	rm -fr tmp
 ### 
-### # HACS Cook utility dependencies.
-### Cookmain.o: Cookmain.c Cook.h crsx.h
-### Cookmain: Cookmain.o Cook_sorts.o Cook_rules.o Cook_symbols.o crsx.o crsx_scan.o
-### #	$(CC) -o Cookmain Cookmain.o Cook_sorts.o Cook_rules.o Cook_symbols.o crsx.o crsx_scan.o -licuuc -licudata -licui18n -licuio
-### clean::; rm -f Cook_* Cook.*
-### realclean::; rm -fr Cookmain tmp
+### # HACS Prep utility dependencies.
+### Prepmain.o: Prepmain.c Prep.h crsx.h
+### Prepmain: Prepmain.o Prep_sorts.o Prep_rules.o Prep_symbols.o crsx.o crsx_scan.o
+### #	$(CC) -o Prepmain Prepmain.o Prep_sorts.o Prep_rules.o Prep_symbols.o crsx.o crsx_scan.o -licuuc -licudata -licui18n -licuio
+### clean::; rm -f Prep_* Prep.*
+### realclean::; rm -fr Prepmain tmp
 ### 
 ### # Final build location.
 ### BUILDROOT = build
@@ -115,10 +115,10 @@ $(BUILD)/org/crsx/hacs/HxRaw.class: $(TEMP)/org/crsx/hacs/HxRaw.java
 ### realclean::; rm -fr crsx.h crsx.c crsx_scan.l $(ROOT)/rulecompiler
 ### 
 ### 
-### # Build HACS 'Cook' utility.
-### $(COOK): $(CRSXJAR)
+### # Build HACS 'Prep' utility.
+### $(PREP): $(CRSXJAR)
 ### 	@/bin/echo -e '\n* Regenerate internal HACS binaries...'
-### 	$(MAKE) -C $(ROOT) Cookmain
+### 	$(MAKE) -C $(ROOT) Prepmain
 ### 
 ### 
 ### ## Debugging helpers.
@@ -194,8 +194,8 @@ $(BUILD)/org/crsx/hacs/HxRaw.class: $(TEMP)/org/crsx/hacs/HxRaw.java
 ### 
 ### # (2a) Generate CRSX system.
 ### #
-### %.crs : %.hxt $(COOK) 
-### 	$(COOK) CRS $< > $@
+### %.crs : %.hxt $(PREP) 
+### 	$(PREP) CRS $< > $@
 ### 
 ### # (2b) Install generated CRSX system.
 ### #
@@ -275,7 +275,7 @@ $(BUILD)/org/crsx/hacs/HxRaw.class: $(TEMP)/org/crsx/hacs/HxRaw.java
 ### 	@set -x \
 ### 	&& $(NOEXEC) $(CRSX) \
 ### 		"grammar=('org.crsx.hacs.bootstrap.Raw';'net.sf.crsx.text.Text';)" \
-### 		rules=org/crsx/hacs/CookPG.crs wrapper=PG \
+### 		rules=org/crsx/hacs/PrepPG.crs wrapper=PG \
 ### 		input='$<' category=rawModule \
 ### 		output='$@.tmp' sink=net.sf.crsx.text.TextSink \
 ### 	&& $(NOEXEC) mv '$@.tmp' '$@'
@@ -285,7 +285,7 @@ $(BUILD)/org/crsx/hacs/HxRaw.class: $(TEMP)/org/crsx/hacs/HxRaw.java
 ### 	@set -x \
 ### 	&& $(NOEXEC) $(CRSX) \
 ### 		"grammar=('org.crsx.hacs.bootstrap.Raw';'net.sf.crsx.text.Text';)" \
-### 		rules=org/crsx/hacs/CookCRS.crs wrapper=CRS \
+### 		rules=org/crsx/hacs/PrepCRS.crs wrapper=CRS \
 ### 		input='$<' category=rawModule \
 ### 		output='$@.tmp' sink=net.sf.crsx.text.TextSink \
 ### 	&& $(NOEXEC) mv '$@.tmp' '$@'

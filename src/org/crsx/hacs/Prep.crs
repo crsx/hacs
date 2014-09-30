@@ -1,4 +1,4 @@
-// CookPG: RULES FOR CONVERTING HX HACS FORMAT TO PG FORMAT.
+// PrepPG: RULES FOR CONVERTING HX HACS FORMAT TO PG FORMAT.
 //
 // Reads the HACS (.hx) file as "Hx" term.
 // Emits a CRSX3 ParserGenerator grammar (.pg as text) for the user's terms.
@@ -87,11 +87,6 @@ declarations
 %%%HXDECLARATIONS%%%
 String hx(String s) { return "†« PG-LastName[#ModuleName] »Hx_"+s; }
 String user(String s) { return "†« PG-LastName[#ModuleName] »_"+s; }
-String embedPrefix(String sort) { return "†« PG-Embed-Prefix[#ModuleName] »"+sort; }
-static final java.util.HashMap<String, String> constructorSortMap = new java.util.HashMap<String, String>();
-static{
-  ⟦« MapTextConcat[t.t, {#DM} PG-MapAllConstructorSorts[c s . %n⟨constructorSortMap.put("†‹c›", "†‹s›");¶⟩]] »⟧
-}
 %}
 ***/
 
@@ -101,7 +96,6 @@ declarations
 static String unwrap(String s) {return s.substring(1, s.length()-1);}
 String hx(String s) { return "†« PG-LastName[#ModuleName] »Hx_"+s; }
 String user(String s) { return "†« PG-LastName[#ModuleName] »_"+s; }
-String metaPrefix(String sort) { return "†« PG-Meta-Prefix[#ModuleName] »"+sort; }
 %}
 ***/
 
@@ -145,31 +139,38 @@ TOKEN_MGR_DECLS : { int nesting; int nestedState;} /* Used by all nesting constr
 %{
 /* <PresortedVariableIs #variable> */
 net.sf.crsx.Sink N_PresortedVariableIs(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env, net.sf.crsx.util.Buffer variable_b) :
-{}{
-  {sink = sink.start(makeTConstructor(sink, null, user(storedSort + "_Wrapper"), null));}
-  {sink = variable_b.term(true).copy(sink, true, net.sf.crsx.util.LinkedExtensibleMap.EMPTY_RENAMING);}
-  sink=N_HxAttributes(sink, env)
-  {return sink.end();}
+{}{⟦
+« JJ-Construction[%n⟨user("†‹ PG-user[#ModuleName, "Wrapper"] ›")⟩,
+  TextJoin[(
+    JJ-StringLiteral[%n⟨storedSort⟩];
+    %n⟨{sink = variable_b.term(true).copy(sink, true, net.sf.crsx.util.LinkedExtensibleMap.EMPTY_RENAMING);}⟩;
+    %n⟨sink=N_HxAttributes(sink, env)⟩;),
+    %n⟨
+⟩]] »{return sink;}⟧
 }
 
 /* <PresortedMetaApplication> ::= */
 net.sf.crsx.Sink N_PresortedMetaApplication$WithEOF(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) : {}{ sink=N_PresortedMetaApplication(sink, env) <EOF> {return sink;} }
 net.sf.crsx.Sink N_PresortedMetaApplication(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) :
-{}{
-  {sink = sink.start(makeTConstructor(sink, null, user(storedSort + "_Wrapper"), null));}
-  sink=N_MetaApplication(sink, env)
-  sink=N_HxAttributes(sink, env)
-  {return sink.end();}
+{}{⟦
+« JJ-Construction[%n⟨user("†‹ PG-user[#ModuleName, "Wrapper"] ›")⟩,
+  TextJoin[(
+    JJ-StringLiteral[%n⟨storedSort⟩];
+    %n⟨sink=N_MetaApplication(sink, env)⟩;
+    %n⟨sink=N_HxAttributes(sink, env)⟩;),
+    %n⟨
+⟩]] »{return sink;}⟧
 }
 
 /* <PresortedParsed> ::= */
 net.sf.crsx.Sink N_PresortedParsed$WithEOF(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) : {}{ sink=N_PresortedParsed(sink, env) <EOF> {return sink;} }
 net.sf.crsx.Sink N_PresortedParsed(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) :
 {Token t;}{
-  {sink = sink.start(makeTConstructor(sink, null, user(storedSort + "_Wrapper"), null));}
+  {sink = sink.start(makeTConstructor(sink, null, user("Wrapper"), null));}
+  {sink = sink.start(makeTConstructor(sink, null, storedSort, null)).end();}
   t=<T_HX_CONCRETE>
   {
-    try {sink = factory.parser(factory).parse(sink, embedPrefix(storedSort), new java.io.StringReader(unwrap(t.toString())), unit, t.beginLine, t.beginColumn+1, env);}
+    try {sink = factory.parser(factory).parse(sink, "†« PG-Embed-Prefix[#ModuleName] »"+storedSort, new java.io.StringReader(unwrap(t.toString())), unit, t.beginLine, t.beginColumn+1, env);}
     catch (java.io.IOException e) {throw new ParseException(e.getMessage());}
     catch (net.sf.crsx.CRSException e) {Throwable cause = e.getCause(); if (cause instanceof ParseException) throw (ParseException) cause; else throw new ParseException(e.getMessage());}
   }
@@ -264,7 +265,7 @@ PG-Meta-AttributeBody[#ModuleName, #Name, DME_ATTRIBUTE[#AttributeKind, #Attribu
 
 PG-Meta-AttributeBody[#ModuleName, #Name, $[NotMatch,DME_ATTRIBUTE[#AttributeKind, #AttributeName, #AttributeForm, #AttributeOptions],#_]]
 →
-CookError[$[:,"Inconsistent attribute...",#Name]]
+PrepError[$[:,"Inconsistent attribute...",#Name]]
 ;
 
 // ALTERNATE TOP LEVEL:
@@ -475,7 +476,7 @@ PG-TestIfSort1[$[NotMatch,DME_SORT[#Defines, #Name, #Precs, #Wrapper, #IsMain],#
 // Extract all non-main symbols.
 
 {$String<!--SortName--> : DeclarationMapEntry} PG-NonMainSymbols :: $List[$String] ;
-{#DM}PG-NonMainSymbols → {#DM}PG-NonMainSymbols1[NameSetList[{#DM} PG-AllSortNames], {#DM}PG-MainSymbol, ()] ;
+{#DM}PG-NonMainSymbols → {#DM}PG-NonMainSymbols1[NameSetList[UnionNames[{#DM} PG-AllSortNames, {#DM} PG-AllTokenNames]], {#DM}PG-MainSymbol, ()] ;
 
 {$String<!--SortName--> : DeclarationMapEntry} PG-NonMainSymbols1[$List[$String], $String<!--main-->, NameSet] :: $List[$String] ;
 {#DM}PG-NonMainSymbols1[(), #main, #accumulated] → #accumulated ;
@@ -690,7 +691,7 @@ PG-InsertDefine[D_RULE[#HxRule#, PG-RuleTopSort[#HxRule#, #LastSortName], B_FALS
     PG-TermTopSort[RawHxSpecial[#v, #Concrete], #FallbackSortName] → PG-CheckString[#FallbackSortName] ;
     //
     PG-CheckString[$String] :: $String;
-    PG-CheckString[#String] → #String ; //$[IfEmpty, #String, CookError[$[:,"Impossible HACS component ",#String]], #String] ;
+    PG-CheckString[#String] → #String ; //$[IfEmpty, #String, PrepError[$[:,"Impossible HACS component ",#String]], #String] ;
     //
     PG-SortRepeatString[$String, HxRepeat] :: $String;
     -[Data[#SortName]]: PG-SortRepeatString[#SortName, #Repeat] → $[IfEmpty, #SortName, "", PG-SortRepeatString2[#SortName, #Repeat]] ;
@@ -1603,18 +1604,21 @@ net.sf.crsx.Sink N_†«#SortName»(net.sf.crsx.Sink sink, net.sf.crsx.util.Exte
 →
 %n⟪†«#lead» ⟦
 "†«#Constructor»"
-« JJ-Construction[%n⟨"†‹ PG-user[#ModuleName, StringConcat[#SortName, "_Wrapper"]] ›"⟩,
-%n⟨( ⟦‹ {#DM} PG-MetaJJ-Production-HxFormConstruction[#ModuleName, #SortName, #Constructor, #ScopeSortList]›⟧ )
-sink=N_HxAttributes(sink, env)⟩]»⟧
+« JJ-Construction[%n⟨"†‹ PG-user[#ModuleName, "Wrapper"] ›"⟩, 
+TextConcat[JJ-StringLiteral[%n⟨"†‹#SortName›"⟩],
+%n⟨ ( ⟦‹ {#DM} PG-MetaJJ-Production-HxFormConstruction[#ModuleName, #SortName, #Constructor, #ScopeSortList]›⟧ )
+sink=N_HxAttributes(sink, env)⟩]] »⟧
 « #["|"] »⟫
 ;
 
 {#DM} PG-MetaJJ-Production-HxFormConstruction[#ModuleName, #SortName, #Constructor, #ScopeSortList]
 →
-JJ-Construction[%n⟨"†‹ PG-user[#ModuleName, StringConcat3[#SortName, "_", #Constructor]] ›"⟩,
-  IfEmpty[#ScopeSortList,
-    %n⟨(<T_HX_LPAREN> <T_HX_RPAREN>)?⟩,
-    %n⟨ <T_HX_LPAREN> ‹ {#DM} PG-MetaJJ-Production-HxScopeSortList[#ModuleName, #ScopeSortList, #SortName, B_TRUE] › <T_HX_RPAREN> ⟩]]
+JJ-Construction[%n⟨user("†‹ PG-user[#ModuleName, "Wrapper"] ›")⟩,
+  TextConcat[
+    JJ-StringLiteral[%n⟨"†‹ #Constructor ›"⟩],
+    IfEmpty[#ScopeSortList,
+      %n⟨(<T_HX_LPAREN> <T_HX_RPAREN>)?⟩,
+      %n⟨ <T_HX_LPAREN> ‹ {#DM} PG-MetaJJ-Production-HxScopeSortList[#ModuleName, #ScopeSortList, #SortName, B_TRUE] › <T_HX_RPAREN> ⟩]]]
 ;
 
 
@@ -1957,6 +1961,11 @@ PG-ProductionSortTagsText[#ModuleName, #SortName, #Prec, #scheme, #words, #terms
 %n⟪†« PG-QN[#ModuleName, #SortName, StringJoin[(PG-ProductionNameWithPrec[#SortName, #Prec]; IfEmpty[#words, "EMPTY", MapWhen[ok x.TextToStringWhen[ok, x], #words]]), "_"]] »; ⟫
 ;
 
+
+
+
+// Generate PG instructions to construct a result term.
+
 PG-ProductionConstructionText[$String<!--ModuleName-->, $String, $Numeric, FormKind, $List[Text], $List[Text]] :: Text;
 
 -[Data[#SortName,#Prec],Data[#words]]:
@@ -1973,6 +1982,7 @@ PG-ProductionConstructionText[#ModuleName, #SortName, #Prec, FK_SUGAR[#Inh], #wo
 ⟫
 ;
 
+
 -[Data[#SortName,#Prec,#Kind],Data[#words]]:
 PG-ProductionConstructionText[#ModuleName, #SortName, #Prec, $[NotMatch,FK_SCHEME[#_Inh],$[NotMatch,FK_SUGAR[#_term],#Kind]], #words, #terms]
 →
@@ -1981,10 +1991,13 @@ IfAliasKind[#Kind, WrappedTextJoin[#terms, %n⟨ {{⟩, %n⟨ ⟩, %n⟨}}⟩],
 ⟫]
 ;
 
-∀ a . IfAliasKind[FormKind, a, a] :: a;
-IfAliasKind[FK_ALIAS, #1, #2] → #1 ;
-IfAliasKind[FK_SYMBOL[#IsStatic, #t], #1, #2] → #1 ;
--[Data[#Kind]]: IfAliasKind[$[NotMatch,FK_ALIAS,$[NotMatch,FK_SYMBOL[#IsStatic, #t],#Kind]], #1, #2] → #2 ;
+    ∀ a . IfAliasKind[FormKind, a, a] :: a;
+    IfAliasKind[FK_ALIAS, #1, #2] → #1 ;
+    IfAliasKind[FK_SYMBOL[#IsStatic, #t], #1, #2] → #1 ;
+    -[Data[#Kind]]: IfAliasKind[$[NotMatch,FK_ALIAS,$[NotMatch,FK_SYMBOL[#IsStatic, #t],#Kind]], #1, #2] → #2 ;
+
+
+
 
 // (1) Constant Token Case: (a) collect productions starting with the constant token and ...
 
@@ -2024,12 +2037,12 @@ $[If, $[Equal, #word, #word1],
 
 {#DM} PG-ProduceBodyWord2[#ModuleName, #SortName, (), #word, #wordPFKs, #n, #terms, #words, #consumer, in funs tags after . #[in,funs,tags,after]]
 →
-{#DM} PG-ProduceBody[#ModuleName, #SortName, #wordPFKs, #n, #terms, Append[#words, (%n⟨†‹$[Mangle,#word]›⟩;)], #consumer, in1 funs1 tags1 after1 . #[%n⟪« ProductionWord[#word] »⟦« in1 »⟧⟫, funs1, tags1, after1]]
+{#DM} PG-ProduceBody[#ModuleName, #SortName, #wordPFKs, #n, #terms, Append[#words, (%n⟨†‹$[Escape[""],#word]›⟩;)], #consumer, in1 funs1 tags1 after1 . #[%n⟪« ProductionWord[#word] »⟦« in1 »⟧⟫, funs1, tags1, after1]]
 ;
 
 {#DM} PG-ProduceBodyWord2[#ModuleName, #SortName, (#PFK1;#PFKs), #word, #wordPFKs, #n, #terms, #words, #consumer, in funs tags after . #[in,funs,tags,after]]
 →
-{#DM} PG-ProduceBody[#ModuleName, #SortName, #wordPFKs, #n, #terms, Append[#words, (%n⟨†‹$[Mangle,#word]›⟩;)], #consumer, in1 funs1 tags1 after1 .
+{#DM} PG-ProduceBody[#ModuleName, #SortName, #wordPFKs, #n, #terms, Append[#words, (%n⟨†‹$[Escape[""],#word]›⟩;)], #consumer, in1 funs1 tags1 after1 .
   {#DM} PG-ProduceBody[#ModuleName, #SortName, (#PFK1;#PFKs), #n, #terms, #words, #consumer, in2 funs2 tags2 after2 .
     #[%n⟪(« ProductionWord[#word] » « in1 »
 | « in2 » ) ⟫, %n⟪«funs1»«funs2»⟫, %n⟪«tags1»«tags2»⟫, JoinTextMaps[after1, after2]]]]
@@ -2186,7 +2199,7 @@ PG-ProduceBodyTerm1x[$String<!--ModuleName-->, $String<!--HostSort-->, Boolean, 
 IfSingletonRepeat[#Repeat,
   {#DM} PG-ProduceBody[#ModuleName, #SortName, #nonterminalPFKs, #n, #terms,  Append[#words, (%n⟨†‹SortVar[#HxSort#]›⟩;)], #consumer, in funs tags after .
     #[%n⟪⟦ <«PG-ProductionNameWithPrecText[{#DM}PG-SymbolSortTokenName[PG-SortName[#HxSort#]], #Prec]»>^«v» ⟦« in »⟧ ⟧⟫, funs, tags, after]],
-  CookError["Cannot use repeat specification on binder"]]
+  PrepError["Cannot use repeat specification on binder"]]
 ;
 
     SortVar[HxSort] :: $String;
@@ -2296,7 +2309,7 @@ NestedRepeat-somesep-somesep: NestedRepeat[%rawHxRepeat⟪ + _ #HxRegExpSub1# �
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 15. TEXT OF LEXICAL DECLARATIONS.
+// . TEXT OF LEXICAL DECLARATIONS.
 
 // a.
 
@@ -2588,12 +2601,12 @@ PG-DeclareRegExpSimple[%rawHxRegExpSimple⟪ #HxRegExpWord# ⟫, #ModuleName, #i
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 16. PG TEXT NAMING CONVENTIONS.
+// . PG TEXT NAMING CONVENTIONS.
 
 // PG token name and constructor.
 
 PG-TokenNameText[$String] :: Text;
--[Data[#Name]]: PG-TokenNameText[#Name] → %n⟪†«#Name»⟫ ; ///%n⟪T†« $[Mangle,$[Trim,#Name]] »⟫ ;
+-[Data[#Name]]: PG-TokenNameText[#Name] → %n⟪†«#Name»⟫ ;
 
 PG-TokenConstructorText[$String<!--ModuleName-->, $String] :: Text;
 PG-TokenConstructorText[#ModuleName, #Name] → %n⟪†« PG-QN[#ModuleName, "Token", #Name] »⟫ ;
@@ -2629,13 +2642,18 @@ PG-ProductionNameWithPrecRepeatText[#Name, #Prec, %rawHxRepeat⟪ + _ #HxRegExpS
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// X. JJ HELPERS.
+// . JJ HELPERS.
 
 
 JJ-Construction[#Constructor, #Content]
 →
 %n⟪{sink = sink.start(makeTConstructor(sink, null, «#Constructor», null));}
 «#Content»{sink = sink.end();}
+⟫;
+
+JJ-StringLiteral[#Literal]
+→
+%n⟪{sink = sink.start(makeTConstructor(sink, null, «#Literal», net.sf.crsx.CRS.STRING_SORT)).end();}
 ⟫;
 
 JJ-Token[#TokenName]
@@ -2652,7 +2670,7 @@ JJ-Nonterminal[#NonTerminal, env.#[env]]
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Y. OTHER HELPERS.
+// . OTHER HELPERS.
 
 // Convert hx module name string to Java style class name.
 
@@ -2781,8 +2799,8 @@ PG-BaseSortName2[$[NotMatch,%rawHxSort⟪ #HxSortName# #HxMetaVariables# #HxSimp
 
 // Errors.
 
-∀ a . CookError[$String] :: a;
--[Data[#message]]: CookError[#message] → $[Error, #message] ;
+∀ a . PrepError[$String] :: a;
+-[Data[#message]]: PrepError[#message] → $[Error, #message] ;
 
 
 )] //PG
@@ -2906,11 +2924,11 @@ PG-BaseSortName2[$[NotMatch,%rawHxSort⟪ #HxSortName# #HxMetaVariables# #HxSimp
 /// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///
-/// // CookBase.crs: CRSX3 SUPPORT LIBRARY FOR HACS PREPROCESSOR OPERATIONS.
+/// // PrepBase.crs: CRSX3 SUPPORT LIBRARY FOR HACS PREPROCESSOR OPERATIONS.
 /// //
 /// // Declarations here depend only on the Prelude and the Hx syntax.
 /// //
-/// CookBase[(
+/// PrepBase[(
 ///
 /// $Use["org/crsx/hacs/Prelude.crs"];
 ///
@@ -3297,4 +3315,4 @@ PG-BaseSortName2[$[NotMatch,%rawHxSort⟪ #HxSortName# #HxMetaVariables# #HxSimp
 /// PG-InitOtherMaps2[(#a;#as), #sep, #capture] → %n⟪†«#sep»"†«#a»" : {« $[If, #capture, %n⟨#InheritedMap_†‹#a›⟩, %n⟨⟩] »}Inherited_†«#a»« PG-InitOtherMaps2[#as, "; ", #capture] »⟫ ;
 ///
 /// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// )]//CookN
+/// )]//PrepN
