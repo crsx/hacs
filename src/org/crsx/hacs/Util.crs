@@ -1,0 +1,985 @@
+// Util.crs: UTILITIES FOR PROCESSING HACS SPECIFICATIONS.
+// Copyright © 2012,2014 Kristoffer H. Rose <krisrose@crsx.org>
+
+Util[(
+
+// Contents.
+// 1. Setup.
+// 2. Resolve Imports.
+// 3. Declaration map datastructure and access (DeclarationMap).
+// 4. Declaration map creation (U-MakeDeclarationMap).
+// 5. Helpers for naming.
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 1. SETUP.
+
+// Format and sorts of this file.
+$CheckGrammar["org.crsx.hacs.HxRaw"];
+$Use["org/crsx/hacs/Hx.crs"];
+
+// Standard functions.
+$Use["org/crsx/hacs/Prelude.crs"];
+
+// Infer options.
+$Lax;
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 2. RESOLVE IMPORTS.
+//
+// Transform HACS structure to same structure with all imported modules inlined.
+
+U-ResolveImports[$List[HxDeclaration], $String<!--ModuleName-->, $String<!--ParsePrefix-->] :: $List[HxDeclaration];
+
+Resolve-Import:
+U-ResolveImports[{#LOC}%rawHxDeclarations⟪ import #HxModuleName# ; #HxDeclarations# ⟫, #ModuleName, #ParsePrefix]
+→
+U-ResolveImports[{#LOC}%rawHxDeclarations⟪ %HxEmbeddedModule« $[ParseURL, $[:,#ParsePrefix,"HxEmbeddedModule"], $[Replace,#HxModuleName#,"\"",""]] » ; #HxDeclarations# ⟫, #ModuleName, #ParsePrefix]
+;
+
+Resolve-Module:
+U-ResolveImports[{#LOC}%rawHxDeclarations⟪ module #HxModuleName2# { #HxDeclarations2# } ; #HxDeclarations# ⟫, #ModuleName, #ParsePrefix]
+→
+{#LOC}
+%rawHxDeclarations⟪
+  module #HxModuleName2# { %HxDeclarations« U-ResolveImports[#HxDeclarations2#, #HxModuleName2#] » } ;
+  %HxDeclarations« U-ResolveImports[#HxDeclarations#, #ModuleName, #ParsePrefix] »
+⟫
+;
+
+Resolve-Space:
+U-ResolveImports[{#LOC}%rawHxDeclarations⟪ space #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #ParsePrefix]
+→
+{#LOC}%rawHxDeclarations⟪ space #HxRegExp# ; %HxDeclarations« U-ResolveImports[#HxDeclarations#, #ModuleName, #ParsePrefix] » ⟫
+;
+
+Resolve-Token:
+U-ResolveImports[{#LOC}%rawHxDeclarations⟪ token #HxTokenName# | #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #ParsePrefix]
+→
+{#LOC}%rawHxDeclarations⟪ token #HxTokenName# | #HxRegExp# ; %HxDeclarations« U-ResolveImports[#HxDeclarations#, #ModuleName, #ParsePrefix] » ⟫
+;
+
+Resolve-Fragment:
+U-ResolveImports[{#LOC}%rawHxDeclarations⟪ fragment #HxTokenName# | #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #ParsePrefix]
+→
+{#LOC}%rawHxDeclarations⟪ fragment #HxTokenName# | #HxRegExp# ; %HxDeclarations« U-ResolveImports[#HxDeclarations#, #ModuleName, #ParsePrefix] » ⟫
+;
+
+Resolve-Attribute:
+U-ResolveImports[{#LOC}%rawHxDeclarations⟪ attribute #HxAttributeKind# #HxAttributeName# #HxAttributeForm# ; #HxDeclarations# ⟫, #ModuleName, #ParsePrefix]
+→
+{#LOC}%rawHxDeclarations⟪ attribute #HxAttributeKind# #HxAttributeName# #HxAttributeForm# ; %HxDeclarations« U-ResolveImports[#HxDeclarations#, #ModuleName, #ParsePrefix] » ⟫
+;
+
+Resolve-Sort:
+U-ResolveImports[{#LOC}%rawHxDeclarations⟪ sort #HxSortName# #HxRepeat# #HxSortAbstraction# ; #HxDeclarations# ⟫, #ModuleName, #ParsePrefix]
+→
+{#LOC}%rawHxDeclarations⟪ sort #HxSortName# #HxRepeat# #HxSortAbstraction# ; %HxDeclarations« U-ResolveImports[#HxDeclarations#, #ModuleName, #ParsePrefix] » ⟫
+;
+
+Resolve-Main-Sort:
+U-ResolveImports[{#LOC}%rawHxDeclarations⟪ main sort #HxSortName# #HxRepeat# #HxSortAbstraction# ; #HxDeclarations# ⟫, #ModuleName, #ParsePrefix]
+→
+{#LOC}%rawHxDeclarations⟪ main sort #HxSortName# #HxRepeat# #HxSortAbstraction# ; %HxDeclarations« U-ResolveImports[#HxDeclarations#, #ModuleName, #ParsePrefix] » ⟫
+;
+
+Resolve-NakedAlternative:
+U-ResolveImports[{#LOC}%rawHxDeclarations⟪ #HxSortAlternatives# ; #HxDeclarations# ⟫, #ModuleName, #ParsePrefix]
+→
+{#LOC}%rawHxDeclarations⟪ #HxSortAlternatives# ; %HxDeclarations« U-ResolveImports[#HxDeclarations#, #ModuleName, #ParsePrefix] » ⟫
+;
+
+ResolveRule:
+U-ResolveImports[{#LOC}%rawHxDeclarations⟪ rule #HxRule# ; #HxDeclarations# ⟫, #ModuleName, #ParsePrefix]
+→
+{#LOC}%rawHxDeclarations⟪ rule #HxRule# ; %HxDeclarations« U-ResolveImports[#HxDeclarations#, #ModuleName, #ParsePrefix] » ⟫
+;
+
+ResolveNesting:
+U-ResolveImports[{#LOC}%rawHxDeclarations⟪ { #HxDeclarations1# } #HxDeclarations2# ⟫, #ModuleName, #ParsePrefix]
+→
+{#LOC}%rawHxDeclarations⟪ { %HxDeclarations« U-ResolveImports[#HxDeclarations1#, #ModuleName, #ParsePrefix] » } %HxDeclarations« U-ResolveImports[#HxDeclarations2#, #ModuleName, #ParsePrefix] » ⟫
+;
+
+ResolveDone:
+U-ResolveImports[{#LOC}%rawHxDeclarations⟪ ⟫, #ModuleName, #ParsePrefix]
+→
+{#LOC}%rawHxDeclarations⟪ ⟫
+;
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 3. DECLARATION MAP DATA STRUCTURE AND ACCESS.
+//
+// Contains all declarations of tokens, attributes, sorts, and some extras,
+// needed for grammar generation.
+
+// Data sort for completed map.
+
+{$String<!--Name--> : DeclarationMapEntry}
+DeclarationMap ::=( DM; );
+
+DeclarationMapEntry ::=(
+ DME_TOKEN[$String<!--SortName-->];
+ DME_ATTRIBUTE[HxAttributeKind, $String<!--AttributeName-->, HxAttributeForm, $List[HxAttributeOption]];
+ DME_SORT[$List[Define], $String<!--FullSortName-->, NameSet<!--precs-->, Wrapper, Boolean<!--IsMainSort-->];
+ DME_NONE;
+ DME_ALIAS[HxSort];
+ DME_STRING[$String];
+ DME_NAMES[NameSet];
+);
+
+Wrapper ::=( NO_WRAPPER; WRAPPER[HxParsedForm]; );
+
+{$String : $StringEntrySort}
+Define ::=(
+ D_ABSTRACTION[a::HxSortParam . Define];
+ D_FORM[HxForm, FormKind];
+ D_SYNTHESIZES[$String<!--AttributeName-->];
+ D_RULE[HxRule, $String<!--sort-->, Boolean<!--IsDataEquivalence?-->];
+ D_NONE;
+);
+
+FormKind ::=( FK_DATA[$String<!--Tag-->]; FK_SCHEME[$String<!--Tag-->, NameSet<!--inherits-->]; FK_SYMBOL[$Boolean<!--IsStatic-->, $String<!--token-->]; FK_SUGAR[HxTerm]; FK_ALIAS; );
+
+// Extract all names.
+
+{$String<!--Name--> : DeclarationMapEntry} U-AllNames :: NameSet;
+{#DM; "$AllNames" : DME_NAMES[#Names]} U-AllNames → #Names ;
+
+{$String<!--Name--> : DeclarationMapEntry} U-AllSortNames :: NameSet;
+{#DM; "$AllSortNames" : DME_NAMES[#Names]} U-AllSortNames → #Names ;
+
+{$String<!--Name--> : DeclarationMapEntry} U-AllTokenNames :: NameSet;
+{#DM; "$AllTokenNames" : DME_NAMES[#Names]} U-AllTokenNames → #Names ;
+
+{$String<!--Name--> : DeclarationMapEntry} U-AllInheritedNames :: NameSet;
+{#DM; "$AllInheritedNames" : DME_NAMES[#Names]} U-AllInheritedNames → #Names ;
+
+{$String<!--Name--> : DeclarationMapEntry} U-AllInheritedMapNames :: NameSet;
+{#DM; "$AllInheritedMapNames" : DME_NAMES[#Names]} U-AllInheritedMapNames → #Names ;
+
+{$String<!--Name--> : DeclarationMapEntry} U-AllSynthesizedNames :: NameSet;
+{#DM; "$AllSynthesizedNames" : DME_NAMES[#Names]} U-AllSynthesizedNames → #Names ;
+
+{$String<!--Name--> : DeclarationMapEntry} U-AllSynthesizedMapNames :: NameSet;
+{#DM; "$AllSynthesizedMapNames" : DME_NAMES[#Names]} U-AllSynthesizedMapNames → #Names ;
+
+// Extract just the token names.
+
+{$String<!--TokenName--> : DeclarationMapEntry} U-MakeTokenNames :: NameSet;
+{#DM} U-MakeTokenNames[#Names] → FilterNamesWhen[ok n.{#DM} U-then-TestIfToken[ok, n], #Names] ;
+
+{#DM} U-then-TestIfToken[OK, #Name] → U-TestIfToken1[$[{#DM}Get, #Name, DME_NONE]] ;
+U-TestIfToken1[DME_TOKEN[#Name]] → B_TRUE ;
+U-TestIfToken1[$[NotMatch,DME_TOKEN[#Name],#_]] → B_FALSE ;
+
+// Extract just the sort names.
+
+{$String<!--SortName--> : DeclarationMapEntry} U-MakeSortNames :: NameSet;
+{#DM} U-MakeSortNames[#Names] → FilterNamesWhen[ok n.{#DM} U-then-TestIfSort[ok, n], #Names] ;
+
+{#DM} U-then-TestIfSort[OK, #Name] → U-TestIfSort1[$[{#DM}Get, #Name, DME_NONE]] ;
+U-TestIfSort1[DME_SORT[#Defines, #Name, #Precs, #Wrapper, #IsMain]] → B_TRUE ;
+U-TestIfSort1[$[NotMatch,DME_SORT[#Defines, #Name, #Precs, #Wrapper, #IsMain],#_]] → B_FALSE ;
+
+// Extract main sort name.
+
+{$String<!--SortName--> : DeclarationMapEntry} U-MainSymbol :: $String ;
+{#DM}U-MainSymbol → {#DM}U-MainSymbol1[NameSetList[{#DM} U-AllSortNames], ""] ;
+
+{$String<!--SortName--> : DeclarationMapEntry} U-MainSymbol1[$List[$String], $String] :: $String ;
+{#DM}U-MainSymbol1[(), #main] → #main ;
+-[Data[#n]]: {#DM}U-MainSymbol1[(#n; #ns), #main] → {#DM}U-MainSymbol2[$[{#DM}Get, #n, DME_NONE], #ns, #main] ;
+
+{$String<!--SortName--> : DeclarationMapEntry} U-MainSymbol2[DeclarationMapEntry, $List[$String]] :: $String ;
+{#DM}U-MainSymbol2[DME_SORT[#Defines, #Name, #Precs, #Wrapper, B_TRUE], #ns, #main] → #Name ;
+-[Fallback]: {#DM}U-MainSymbol2[#entry, #ns, #main] → {#DM}U-MainSymbol1[#ns, #main] ;
+
+// Extract all non-main symbols.
+
+{$String<!--SortName--> : DeclarationMapEntry} U-NonMainSymbols :: $List[$String] ;
+{#DM}U-NonMainSymbols → {#DM}U-NonMainSymbols1[NameSetList[UnionNames[{#DM} U-AllSortNames, {#DM} U-AllTokenNames]], {#DM}U-MainSymbol, ()] ;
+
+{$String<!--SortName--> : DeclarationMapEntry} U-NonMainSymbols1[$List[$String], $String<!--main-->, NameSet] :: $List[$String] ;
+{#DM}U-NonMainSymbols1[(), #main, #accumulated] → #accumulated ;
+-[Data[#n]]: {#DM}U-NonMainSymbols1[(#n; #ns), #main, #accumulated] → {#DM}U-NonMainSymbols2[$[{#DM}Get, #n, DME_NONE], #ns, #main, #accumulated] ;
+
+{$String<!--SortName--> : DeclarationMapEntry} U-NonMainSymbols2[DeclarationMapEntry, $List[$String], $String, NameSet] :: $List[$String] ;
+{#DM}U-NonMainSymbols2[DME_SORT[#Defines, #Name, #Precs, #Wrapper, #IsMain], #ns, #main, #accumulated]
+→
+If[SameString[#main, #Name],
+  {#DM}U-NonMainSymbols1[#ns, #main, #accumulated],
+  (#Name; {#DM}U-NonMainSymbols1[#ns, #main, #accumulated])
+]
+;
+{#DM}U-NonMainSymbols2[DME_TOKEN[#Name], #ns, #main, #accumulated]
+→
+(#Name; {#DM}U-NonMainSymbols1[#ns, #main, #accumulated])
+;
+-[Fallback]:
+{#DM}U-NonMainSymbols2[#entry, #ns, #main, #accumulated]
+→
+{#DM}U-NonMainSymbols1[#ns, #main, #accumulated]
+;
+
+// Extract token for symbol sorts...TODO: add sorts and complete patterns.
+
+U-ExtractSymbolFormToken[Hx_FormParsedSorted[#SortName, #ParsedForm, #prec, #InhRefs]] → U-ExtractSymbolParsedFormToken[#ParsedForm];
+U-ExtractSymbolFormToken[Hx_FormParsed[#ParsedForm, #prec, #InhRefs]] → U-ExtractSymbolParsedFormToken[#ParsedForm];
+
+U-ExtractSymbolParsedFormToken[Hx_ParsedFormSpace[#sp, #ParsedForm]] → U-ExtractSymbolParsedFormToken[#ParsedForm];
+U-ExtractSymbolParsedFormToken[Hx_ParsedFormTerm[%rawHxScopeSortPrecRepeat⟪ #HxSortName# #HxFormPrec# #HxRepeat# ⟫, #ParsedForm]] → #HxSortName# ;
+
+-[Data[#SortName]]:
+{#DM}U-SymbolSortTokenName[#SortName]
+→
+U-SymbolSortTokenName2[$[{#DM}Get,#SortName,DME_NONE]]
+;
+
+U-SymbolSortTokenName2[DME_SORT[(D_FORM[#Form, FK_SYMBOL[#static, #TokenName]];), #Name, #Precs, #Wrapper, #IsMain]] → #TokenName ;
+U-SymbolSortTokenName2[$[NotMatch,DME_SORT[(D_FORM[#Form, FK_SYMBOL[#static, #TokenName]];), #Name, #Precs, #Wrapper, #IsMain], #_]] → "" ;
+
+// Extract constructors-sorts relationship.
+
+{#DM} U-MapAllConstructorSorts[c s.#[c,s]] → {#DM} U-MapAllConstructorsForSorts[NameSetList[{#DM} U-AllSortNames], c s.#[c,s]] ;
+
+{#DM} U-MapAllConstructorsForSorts[(),        c s.#[c,s]] → () ;
+{#DM} U-MapAllConstructorsForSorts[(#s; #ss), c s.#[c,s]] → {#DM} U-MapAllConstructorsForSorts2[{#DM} U-ConstructorsForSort[#s], #s, #ss, c s.#[c,s]] ;
+
+    {#DM} U-MapAllConstructorsForSorts2[(),        #s, #ss, c s.#[c,s]] → {#DM} U-MapAllConstructorsForSorts[#ss, c s.#[c,s]] ;
+    {#DM} U-MapAllConstructorsForSorts2[(#c; #cs), #s, #ss, c s.#[c,s]] → ( #[#c, #s] ; {#DM} U-MapAllConstructorsForSorts2[#cs, #s, #ss, c s.#[c,s]] ) ;
+
+{#DM} U-ConstructorsForSort[#s] → U-EntryConstructors[$[{#DM}Get, #s, DME_NONE]] ;
+
+U-EntryConstructors[DME_SORT[#Defines, #Name, #Precs, #Wrapper, #IsMain]] → U-DefinesConstructors[#Defines] ;
+U-EntryConstructors[$[NotMatch,DME_SORT[#Defines, #Name, #Precs, #Wrapper, #IsMain], #_]] → () ;
+
+U-DefinesConstructors[(D_FORM[Hx_FormConstruction[#Constructor, #ScopeSorts, #InheritedRefs], #FormKind]; #Defines)]
+→
+(#Constructor; U-DefinesConstructors[#Defines])
+;
+U-DefinesConstructors[($[NotMatch,D_FORM[Hx_FormConstruction[#Constructor, #ScopeSorts, #InheritedRefs], #FormKind],#_]; #Defines)]
+→
+U-DefinesConstructors[#Defines]
+;
+U-DefinesConstructors[()] → () ;
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 4. DECLARATION MAP CREATION
+//
+// Contains all declarations of tokens, attributes, sorts, and some extras,
+// needed for grammar generation.
+
+U-MakeDeclarationMap[$List[HxDeclaration], $String<!--ModuleName-->] :: DeclarationMap ;
+U-MakeDeclarationMap[#Declarations, #ModuleName]
+→
+{}
+U-MakeDeclarationMap1[#Declarations, #ModuleName, "", NoNames, ok¹ s ss.U-Finish[ss]] // data without required environment!
+;
+
+// Process declarations.
+
+{$String<!--SortName--> : DeclarationMapEntry}
+U-MakeDeclarationMap1[$List[HxDeclaration], $String<!--ModuleName-->, $String<!--LastSortName-->, NameSet<!--Names-->,
+                    ok¹::Ok s::$String<!--SortName--> ss::NameSet<!--SortNames--> . DeclarationMap] :: DeclarationMap ;
+
+{#DM}
+U-MakeDeclarationMap1[%rawHxDeclarations⟪ module #HxModuleName2# { #HxDeclarations2# } ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+→
+{#DM}
+U-MakeDeclarationMap1[#HxDeclarations2# , #HxModuleName2#, "", #Names, ok¹ s ss.U-then-Declarations1[ok¹, #HxDeclarations#, #ModuleName, #LastSortName, ss, ok2¹ s2 ss2.#[ok2¹,s2,ss2]]]
+;
+
+Declarations-space:
+{#DM}
+U-MakeDeclarationMap1[%rawHxDeclarations⟪ space #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+→
+{#DM}
+U-MakeDeclarationMap1[#HxDeclarations#, #ModuleName, "", #Names, ok¹ s ss.#[ok¹,s,ss]]
+;
+
+Declarations-token[Data[#SortName]]:
+{#DM}
+U-MakeDeclarationMap1[%rawHxDeclarations⟪ token #HxTokenName# | #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+→
+{#DM; #HxTokenName# : DME_TOKEN[#HxTokenName#]}
+U-MakeDeclarationMap1[#HxDeclarations#, #ModuleName, "", AddName[#Names, #HxTokenName#], ok¹ s ss.#[ok¹,s,ss]]
+;
+/// {#DM}
+/// U-MakeDeclarationMapInsertToken[U-QN[#ModuleName, "NodeSort", #HxTokenName#], #HxDeclarations#, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+/// ;
+///     // Local helper to compute qualified token name and insert declaration.
+///     -[Data[#QualifiedName]]:
+///     {#DM}U-MakeDeclarationMapInsertToken[#QualifiedName, #Declarations, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+///     →
+///     {#DM; #QualifiedName : DME_TOKEN[#QualifiedName]}
+///     U-MakeDeclarationMap1[#Declarations, #ModuleName, "", AddName[#Names, #QualifiedName], ok¹ s ss.#[ok¹,s,ss]]
+///     ;
+
+Declarations-fragment:
+{#DM}
+U-MakeDeclarationMap1[%rawHxDeclarations⟪ fragment #HxTokenName# | #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+→
+{#DM}
+U-MakeDeclarationMap1[#HxDeclarations#, #ModuleName, "", #Names, ok¹ s ss.#[ok¹,s,ss]]
+;
+
+Declarations-attribute[Data[#HxAttributeName#,#HxAttributeForm#]]:
+{#DM}
+U-MakeDeclarationMap1[%rawHxDeclarations⟪ attribute #HxAttributeKind# #HxAttributeName# #HxAttributeForm# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+→
+{#DM; #HxAttributeName# : DME_ATTRIBUTE[#HxAttributeKind#, #HxAttributeName#, #HxAttributeForm#, ()]}
+U-MakeDeclarationMap1[#HxDeclarations#, #ModuleName, "", AddName[#Names, #HxAttributeName#], ok¹ s ss.#[ok¹,s,ss]]
+;
+/// {#DM}
+/// U-MakeDeclarationMapInsertAttribute[U-QN[#ModuleName, "Attribute" #HxAttributeName#], #HxAttributeKind#, #HxAttributeForm#, #HxAttributeOptions#, #HxDeclarations#, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+/// ;
+///     // Local helper to compute qualified attribute name and insert declaration.
+///     -[Data[#QualifiedName]]:
+///     {#DM}U-MakeDeclarationMapInsertAttribute[#QualifiedName, #AttributeKind, #AttributeForm, #AttributeOptions, #Declarations, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+///     →
+///     {#DM; #QualifiedName : DME_ATTRIBUTE[#AttributeKind, #QualifiedName, #AttributeForm, #AttributeOptions]}
+///     U-MakeDeclarationMap1[#Declarations, #ModuleName, "", AddName[#Names, #QualifiedName], ok¹ s ss.#[ok¹,s,ss]]
+///     ;
+
+Declarations-sort:
+{#DM}
+U-MakeDeclarationMap1[%rawHxDeclarations⟪ sort #HxSortName# #HxRepeat# #HxSortAbstraction# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+→
+{#DM}
+U-SortAbstraction[#HxSortAbstraction#, B_FALSE, #ModuleName, U-SortNameWithRepeat1[#HxSortName#, #HxRepeat#], #Names, ok¹ s ss.U-then-Declarations1[ok¹, #HxDeclarations#, #ModuleName, s, ss, ok2¹ s2 ss2.#[ok2¹,s2,ss2]]]
+;
+/// {#DM}
+/// U-MakeDeclarationMapInsertSort[U-QN[#ModuleName, "NodeSort", #HxSortName#], #HxRepeat#, #HxSortAbstraction#, #HxDeclarations#, B_TRUE, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+/// ;
+///     // Local helper to compute qualified sort name and insert declaration.
+///     -[Data[#QualifiedName]]:
+///     {#DM}U-MakeDeclarationMapInsertSort[#QualifiedName, #Repeat, #SortAbstraction, #Declarations, #IsMain, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+///     →
+///     {#DM}
+///     U-SortAbstraction[#SortAbstraction, #IsMain, #ModuleName, U-SortNameWithRepeat1[#QualifiedName, #Repeat], #Names, ok¹ s ss.U-then-Declarations1[ok¹, #Declarations, #ModuleName, s, ss, ok2¹ s2 ss2.#[ok2¹,s2,ss2]]]
+///     ;
+
+Declarations-main-sort:
+{#DM}
+U-MakeDeclarationMap1[%rawHxDeclarations⟪ main sort #HxSortName# #HxRepeat# #HxSortAbstraction# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+→
+{#DM}
+U-SortAbstraction[#HxSortAbstraction#, B_TRUE, #ModuleName, U-SortNameWithRepeat1[#HxSortName#, #HxRepeat#], #Names, ok¹ s ss.U-then-Declarations1[ok¹, #HxDeclarations#, #ModuleName, s, ss, ok2¹ s2 ss2.#[ok2¹,s2,ss2]]]
+;
+/// {#DM}
+/// U-MakeDeclarationMapInsertSort[U-QN[#ModuleName, "NodeSort", #HxSortName#], #HxRepeat#, #HxSortAbstraction#, #HxDeclarations#, B_FALSE, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+/// ;
+
+Declarations-alternatives:
+{#DM}
+U-MakeDeclarationMap1[%rawHxDeclarations⟪ #HxSortAlternatives# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+→
+{#DM}
+U-SortAlternatives[#HxSortAlternatives#, #ModuleName, #LastSortName, #Names, ok¹ s ss.U-then-Declarations1[ok¹, #HxDeclarations#, #ModuleName, s, ss, ok2¹ s2 ss2.#[ok2¹,s2,ss2]]]
+;
+
+Declarations-rule:
+{#DM}
+U-MakeDeclarationMap1[%rawHxDeclarations⟪ rule #HxRule# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+→
+{#DM}
+U-InsertDefine[D_RULE[#HxRule#, U-RuleTopSort[#HxRule#, #LastSortName], B_FALSE], B_BALSE<!--NotMain-->, #ModuleName, U-RuleTopSort[#HxRule#, #LastSortName], #Names, ok¹ s ss.U-then-Declarations1[ok¹, #HxDeclarations#, #ModuleName, s, ss, ok2¹ s2 ss2.#[ok2¹,s2,ss2]]]
+;
+
+    // Local helper to extract sort of rule.
+    //
+    U-RuleTopSort[HxRule, $String<!--FallBackName-->] :: $String;
+    U-RuleTopSort[%rawHxRule⟪ #HxRulePrefix# #HxTopPattern# → #HxTopTerm# ⟫, #FallBack]
+    →
+    U-TermTopSort[#HxTopPattern#, #FallBack]
+    ;
+    //
+    U-TermTopSort[HxTerm, $String<!--FallBackName-->] :: $String;
+    -[Free[v::HxTerm]]:
+    U-TermTopSort[%rawHxTerm⟪ v #HxAttributes# ⟫, #FallbackSortName] → U-CheckString[#FallbackSortName] ;
+    -[Free[v::HxTerm]]:
+    U-TermTopSort[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# v #HxAttributes# ⟫, #FallbackSortName] → U-SortRepeatString[#HxConstructor1#, #HxRepeat1#] ;
+    U-TermTopSort[Hx_Unparsed[#Unparsed, #Attributes], #FallbackSortName] → U-CheckString[#FallbackSortName] ;
+    U-TermTopSort[Hx_UnparsedSorted[#SortName, #Repeat, #Unparsed, #HxAttributes#], #FallbackSortName] → #SortName ;
+    U-TermTopSort[%rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #FallbackSortName] → U-CheckString[#FallbackSortName] ;
+    U-TermTopSort[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor2# ( #HxScopes# ) #HxAttributes# ⟫, #FallbackSortName] → U-SortRepeatString[#HxConstructor1#, #HxRepeat1#] ;
+    U-TermTopSort[%rawHxTerm⟪ #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫, #FallbackSortName] → U-CheckString[#FallbackSortName] ;
+    U-TermTopSort[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫, #FallbackSortName] → U-SortRepeatString[#HxConstructor1#, #HxRepeat1#] ;
+    U-TermTopSort[%rawHxTerm⟪ #HxLiteral# #HxAttributes# ⟫, #FallbackSortName] → U-CheckString[#FallbackSortName] ;
+    U-TermTopSort[Hx_Special[#v, #Concrete], #FallbackSortName] → U-CheckString[#FallbackSortName] ;
+    //
+    U-CheckString[$String] :: $String;
+    U-CheckString[#String] → #String ; //$[IfEmpty, #String, PrepError[$[:,"Impossible HACS component ",#String]], #String] ;
+
+Declarations-local:
+{#DM}
+U-MakeDeclarationMap1[%rawHxDeclarations⟪ { #HxDeclarations2# } #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+→
+{#DM}
+U-MakeDeclarationMap1[#HxDeclarations2# , #ModuleName, #LastSortName, #Names, ok¹ s ss.U-then-Declarations1[ok¹, #HxDeclarations#, #ModuleName, #LastSortName, ss, ok2¹ s2 ss2.#[ok2¹,s2,ss2]]]
+;
+
+Declarations-none:
+{#DM}
+U-MakeDeclarationMap1[%rawHxDeclarations⟪ ⟫, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+→
+{#DM}
+#[OK, #LastSortName, #Names]
+;
+
+// Delayed variant.
+{$String<!--SortName--> : DeclarationMapEntry}
+U-then-Declarations1[Ok, $List[HxDeclaration], $String<!--ModuleName-->, $String<!--LastSortName-->, NameSet<!--SortNames-->,
+                      ok¹::Ok s::$String<!--SortName--> ss::NameSet<!--SortNames--> . DeclarationMap] :: DeclarationMap ;
+//
+{#DM}
+U-then-Declarations1[OK, #Declaration*, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+→
+{#DM}
+U-MakeDeclarationMap1[#Declaration*, #ModuleName, #LastSortName, #Names, ok¹ s ss.#[ok¹,s,ss]]
+;
+
+// Sort declarations factor any leading parameters over all declarations.
+
+{$String<!--SortName--> : DeclarationMapEntry}
+U-SortAbstraction[HxSortAbstraction, Boolean<!--IsMain-->, $String<!--ModuleName-->, $String<!--SortName-->, NameSet<!--SortNames-->,
+                   ok¹::Ok s::$String<!--SortName--> ss::NameSet<!--SortNames--> . DeclarationMap] :: DeclarationMap ;
+
+{#DM}
+U-SortAbstraction[#SortAbstraction, #IsMain, #ModuleName, #Name, #Names, ok¹ s ss.#[ok¹, s, ss]]
+→
+{#DM}
+U-InsertDefines[U-SortAbstractionDefines[#SortAbstraction], #IsMain, #ModuleName, #Name, #Names, ok¹ s ss.#[ok¹, s, ss]]
+;
+{$String<!--SortName--> : DeclarationMapEntry}
+U-SortAlternatives[$List[HxSortAlternative], $String<!--ModuleName-->, $String<!--SortName-->, NameSet<!--SortNames-->,
+                   ok¹::Ok s::$String<!--SortName--> ss::NameSet<!--SortNames--> . DeclarationMap] :: DeclarationMap ;
+
+{#DM}
+U-SortAlternatives[(), #ModuleName, #Name, #Names, ok¹ s ss.#[ok¹, s, ss]]
+→
+{#DM}
+#[OK, #Name, #Names]
+;
+
+-[Data[#Name]]:
+{#DM}
+U-SortAlternatives[(#sa;#sas), #ModuleName, #Name, #Names, ok¹ s ss.#[ok¹, s, ss]]
+→
+$[IfEmpty, #Name, U-SortAlternatives-Error,
+  {#DM}U-InsertDefines[U-SortAlternativesDefines[(#sa;#sas)], B_FALSE, #ModuleName, #Name, #Names, ok¹ s ss.#[ok¹, s, ss]]]
+;
+U-SortAlternatives-Error :: DeclarationMap;
+U-SortAlternatives-Error → $[Error,"Error: cannot process stand-alone SortAlternatives with no current sort."];
+
+U-SortAbstractionDefines[HxSortAbstraction] :: $List[Define] ;
+U-SortAbstractionDefines[%rawHxSortAbstraction⟪ #HxSortAlternatives# ⟫] → U-SortAlternativesDefines[#HxSortAlternatives#] ;
+U-SortAbstractionDefines[%rawHxSortAbstraction⟪ a #HxSortAbstraction#⦃a⦄  ⟫] → U-SortAbstractionDefines2[a.U-SortAbstractionDefines[#HxSortAbstraction#[a]]] ;
+
+U-SortAbstractionDefines2[a::HxSortParam.$List[Define]] :: $List[Define] ;
+U-SortAbstractionDefines2[a.$Nil] → () ;
+U-SortAbstractionDefines2[a.$Cons[#Define[a], #Defines[a]]] → ( D_ABSTRACTION[a.#Define[a]] ; U-SortAbstractionDefines2[a.#Defines[a]] ) ;
+
+U-SortAlternativesDefines[$List[HxSortAlternative]] :: $List[Define] ;
+U-SortAlternativesDefines[%rawHxSortAlternatives⟪ ⟫] → () ;
+U-SortAlternativesDefines[%rawHxSortAlternatives⟪ #HxSortAlternative# #HxSortAlternatives# ⟫]
+→
+( U-SortAlternativeDefine[#HxSortAlternative#] ; U-SortAlternativesDefines[#HxSortAlternatives#] )
+;
+
+U-SortAlternativeDefine[HxSortAlternative] :: Define ;
+
+U-SortAlternativeDefine[{#LOC} %rawHxSortAlternative⟪ | scheme #HxForm# ⟫] → {#LOC} D_FORM[#HxForm#, FK_SCHEME[U-FormTag[#HxForm#], U-FormInheritedAttributes[#HxForm#]]] ;
+U-SortAlternativeDefine[{#LOC} %rawHxSortAlternative⟪ | data #HxForm# ⟫] → {#LOC} D_FORM[#HxForm#, FK_DATA[U-FormTag[#HxForm#]]];
+U-SortAlternativeDefine[{#LOC} %rawHxSortAlternative⟪ | symbol #HxForm# ⟫] → {#LOC} D_FORM[#HxForm#, FK_SYMBOL[$False, U-ExtractSymbolFormToken[#HxForm#]]];
+U-SortAlternativeDefine[{#LOC} %rawHxSortAlternative⟪ | static symbol #HxForm#  ⟫] → {#LOC} D_FORM[#HxForm#, FK_SYMBOL[$True, U-ExtractSymbolFormToken[#HxForm#]]];
+U-SortAlternativeDefine[{#LOC} %rawHxSortAlternative⟪ | sugar #HxForm# → #HxTerm# ⟫] → {#LOC} D_FORM[#HxForm#, FK_SUGAR[#HxTerm#]] ;
+
+U-SortAlternativeDefine[{#LOC} %rawHxSortAlternative⟪ | ↑ #HxAttributeName# ⟫] → {#LOC} D_SYNTHESIZES[#HxAttributeName#] ;
+
+    // Local helper to extract list of attributes from Form.
+    //
+    U-FormInheritedAttributes[HxForm] :: NameSet;
+    U-FormInheritedAttributes[Hx_FormParsedSorted[#Name, #ParsedForm, #Prec, #InheritedRefs]] → U-InheritedRefsList[#InheritedRefs] ;
+    U-FormInheritedAttributes[Hx_FormParsed[#ParsedForm, #Prec, #InheritedRefs]] → U-InheritedRefsList[#InheritedRefs] ;
+    U-FormInheritedAttributes[Hx_FormConstruction[#Constructor, #ScopeSorts, #InheritedRefs]] → U-InheritedRefsList[#InheritedRefs] ;
+    //
+    U-InheritedRefsList[$List[HxInheritedRef]] :: NameSet;
+    U-InheritedRefsList[()] → NoNames ;
+    U-InheritedRefsList[(%rawHxInheritedRef⟪ ↓ #HxAttributeName1# ⟫; #refs)]
+    →
+    AddName[U-InheritedRefsList[#refs], #HxAttributeName1#]
+    ;
+
+// Finish by inserting all precedence links.
+
+{$String<!--SortName--> : DeclarationMapEntry} U-Finish[NameSet] :: DeclarationMap;
+{#DM} U-Finish[#Names] → {#DM} U-Finish0[#Names, #Names] ;
+
+// Process all sort names.
+
+{$String<!--SortName--> : DeclarationMapEntry} U-Finish0[NameSet, NameSet] :: DeclarationMap;
+{#DM} U-Finish0[#RestNames, #Names] → {#DM} U-Finish1[HasNames[#RestNames], #RestNames, #Names] ;
+
+{$String<!--SortName--> : DeclarationMapEntry} U-Finish1[Boolean, NameSet, NameSet] :: DeclarationMap;
+{#DM} U-Finish1[B_FALSE, #RestNames, #Names]
+→
+{#DM} U-Finish9[#Names, {#DM} U-MakeSortNames[#Names], {#DM} U-MakeTokenNames[#Names], {#DM} U-MakeInheritedNames, {#DM} U-MakeInheritedMapNames, {#DM} U-MakeSynthesizedNames, {#DM} U-MakeSynthesizedMapNames]
+;
+{#DM} U-Finish1[B_TRUE, #RestNames, #Names]
+→
+{#DM} U-Finish2[FirstName[#RestNames], RemoveFirstName[#RestNames], #Names]
+;
+
+{$String<!--SortName--> : DeclarationMapEntry} U-Finish2[$String, NameSet, NameSet] :: DeclarationMap;
+-[Data[#Name]]: {#DM} U-Finish2[#Name, #RestNames, #Names] → {#DM} U-Finish3[$[{#DM}Get[DeclarationMapEntry], #Name, DME_NONE], #RestNames, #Names] ;
+
+{$String<!--SortName--> : DeclarationMapEntry} U-Finish3[DeclarationMapEntry, NameSet, NameSet] :: DeclarationMap;
+
+{#DM} U-Finish3[DME_NONE, #RestNames, #Names]
+→
+{#DM} U-Finish0[#RestNames, #Names]
+;
+
+{#DM} U-Finish3[DME_TOKEN[#Name], #RestNames, #Names]
+→
+{#DM} U-Finish0[#RestNames, #Names]
+;
+
+{#DM} U-Finish3[DME_ATTRIBUTE[#AttributeKind1, #AttributeName1, #AttributeForm1, #AttributeOptions1], #RestNames, #Names]
+→
+{#DM} U-Finish0[#RestNames, #Names]
+;
+
+{#DM} U-Finish3[DME_SORT[#Defines1, #Name1, #Precs1, #Wrapper1, #IsMain], #RestNames, #Names]
+→
+{#DM} U-Finish4[#Precs1, 0, #Name1, #RestNames, #Names]
+;
+
+// Find largest precedences.
+
+{$String<!--SortName--> : DeclarationMapEntry} U-Finish4[NameSet, $Numeric, $String, NameSet, NameSet] :: DeclarationMap;
+-[Data[#Precs]]:
+{#DM} U-Finish4[#Precs, #MaxPrec, #Name, #RestNames, #Names]
+→
+{#DM} U-Finish5[HasNames[#Precs], #Precs, #MaxPrec, #Name, #RestNames, #Names]
+;
+
+{$String<!--SortName--> : DeclarationMapEntry} U-Finish5[Boolean, NameSet, $Numeric, $String, NameSet, NameSet] :: DeclarationMap;
+
+{#DM} U-Finish5[B_FALSE, #Precs, #MaxPrec, #Name, #RestNames, #Names]
+→
+// Got the highest used precedence!
+{#DM} U-Finish7[#MaxPrec, #Name, #RestNames, #Names]
+;
+
+{#DM} U-Finish5[B_TRUE, #Precs, #MaxPrec, #Name, #RestNames, #Names]
+→
+{#DM} U-Finish6[FirstName[#Precs], RemoveFirstName[#Precs], #MaxPrec, #Name, #RestNames, #Names]
+;
+
+{$String<!--SortName--> : DeclarationMapEntry} U-Finish6[$String, NameSet, $Numeric, $String, NameSet, NameSet] :: DeclarationMap;
+-[Data[#Prec,#Precs,#MaxPrec]]:
+{#DM} U-Finish6[#Prec, #Precs, #MaxPrec, #Name, #RestNames, #Names]
+→
+{#DM} U-Finish4[#Precs, $[If, $[GreaterThan, $[Decimal,#Prec], #MaxPrec], $[Decimal,#Prec], #MaxPrec], #Name, #RestNames, #Names]
+;
+
+// Add links for all precedences from max down to 0.
+
+{$String<!--SortName--> : DeclarationMapEntry} U-Finish7[$Numeric, $String, NameSet, NameSet] :: DeclarationMap;
+
+-[Data[#Prec,#Name],Share[#RestNames,#Names]]:
+{#DM} U-Finish7[#Prec, #Name, #RestNames, #Names]
+→
+$[If, $[GreaterThan,#Prec,0],
+  {#DM} U-InsertDefine[U-LinkDefine[#Name, #Prec], B_FALSE, "", #Name, #Names,
+	ok¹ s ss.U-then-Finish7[ok¹, $[Minus,#Prec,1], s, #RestNames, ss]],
+  {#DM} U-Finish0[#RestNames, #Names]]
+;
+
+{$String<!--SortName--> : DeclarationMapEntry} U-then-Finish7[Ok, $Numeric, $String, NameSet, NameSet] :: DeclarationMap;
+{#DM} U-then-Finish7[OK, #Prec, #Name, #RestNames, #Names]
+→
+{#DM} U-Finish7[#Prec, #Name, #RestNames, #Names]
+;
+
+{$String<!--SortName--> : DeclarationMapEntry} U-Finish9[NameSet<!--All-->, NameSet<!--Sorts-->, NameSet<!--Tokens-->, NameSet, NameSet, NameSet, NameSet] :: DeclarationMap;
+{#DM} U-Finish9[#Names, #SortNames, #TokenNames, #InheritedNames, #InheritedMapNames, #SynthesizedNames, #SynthesizedMapNames]
+→
+{#DM; "$AllNames" : DME_NAMES[#Names];
+      "$AllSortNames" : DME_NAMES[#SortNames];
+      "$AllTokenNames" : DME_NAMES[#TokenNames];
+      "$AllInheritedNames" : DME_NAMES[#InheritedNames];
+      "$AllInheritedMapNames" : DME_NAMES[#InheritedMapNames];
+      "$AllSynthesizedNames" : DME_NAMES[#SynthesizedNames];
+      "$AllSynthesizedMapNames" : DME_NAMES[#SynthesizedMapNames]}
+DM[#Names]
+;
+
+U-LinkDefine[$String, $Numeric] :: Define;
+-[Data[#Name,#Prec]]:
+U-LinkDefine[#Name, #Prec]
+→
+// NOTE: hand-crafted!
+{}
+D_FORM[
+  Hx_FormParsedSorted[
+    #Name,
+    Hx_ParsedFormTerm[
+      Hx_ScopeSortPrecRepeat[
+        Hx_ScopeSort[Hx_Sort[Hx_SortName[#Name, '$Nil'], '$Nil'], Hx_RepeatSingle, '$Nil'],
+        #Prec,
+        Hx_RepeatSingle],
+      Hx_ParsedFormDone],
+    $[Minus,#Prec,1],
+    ()],
+  FK_ALIAS]
+;
+
+// Insert list of defines.
+
+{$String<!--SortName--> : DeclarationMapEntry}
+U-InsertDefines[$List[Define], Boolean<!--IsMain-->, $String<!--ModuleName-->, $String<!--SortName-->, NameSet<!--SortNames-->,
+                 ok¹::Ok s::$String<!--SortName--> ss::NameSet<!--SortNames--> . DeclarationMap] :: DeclarationMap ;
+
+{#DM}
+U-InsertDefines[(), #IsMain, #ModuleName, #Name, #Names, ok¹ s ss.#[ok¹,s,ss]]
+→
+{#DM}
+U-InsertDefinesMain[$[{#DM}Get[DeclarationMapEntry], #Name, DME_NONE], #IsMain, #Name, #Names, ok¹ s ss.#[ok¹,s,ss]]
+;
+
+    {#DM} U-InsertDefinesMain[DME_SORT[#existingDefines1, #Name1, #Precs1, #Wrapper1, #IsMain1], #IsMain, #Name, #Names, ok¹ s ss.#[ok¹,s,ss]]
+    →
+    {#DM} U-InsertDefinesMain1[#existingDefines1, #Name1, #Precs1, #Wrapper1, Or[#IsMain1, #IsMain], #Name, #Names, ok¹ s ss.#[ok¹,s,ss]]
+    ;
+    -[Data[#IsMain]]:
+    {#DM} U-InsertDefinesMain1[#existingDefines1, #Name1, #Precs1, #Wrapper1, #IsMain, #Name, #Names, ok¹ s ss.#[ok¹,s,ss]]
+    → 
+    {#DM; #Name : DME_SORT[#existingDefines1, #Name1, #Precs1, #Wrapper1, #IsMain]} #[OK, #Name, #Names]
+    ;
+    {#DM} U-InsertDefinesMain[$[NotMatch,DME_SORT[#existingDefines1, #Name1, #Precs1, #Wrapper1, #IsMain1],#_], #IsMain, #Name, #Names, ok¹ s ss.#[ok¹,s,ss]]
+    →
+    {#DM} #[OK, #Name, #Names]
+    ;
+
+{#DM}
+U-InsertDefines[(#Define ; #Defines), #IsMain, #ModuleName, #Name, #Names, ok¹ s ss.#[ok¹,s,ss]]
+→
+{#DM}
+U-InsertDefine[#Define, #IsMain, #ModuleName, #Name, #Names,
+	ok1¹ s1 ss1.U-then-InsertDefines[ok1¹, #Defines, #IsMain, #ModuleName, s1, ss1, ok2¹ s2 ss2.#[ok2¹,s2,ss2]]]
+;
+
+{$String<!--SortName--> : DeclarationMapEntry}
+U-then-InsertDefines[Ok, Boolean<!--IsMain-->, $String<!--ModuleName-->, $List[Define], $String<!--SortName-->, NameSet<!--SortNames-->,
+                      ok¹::Ok s::$String<!--SortName--> ss::NameSet<!--SortNames--> . DeclarationMap] :: DeclarationMap ;
+
+{#DM}
+U-then-InsertDefines[OK, #Defines, #IsMain, #ModuleName, #Name, #Names, ok¹ s ss.#[ok¹,s,ss]]
+→
+{#DM}
+U-InsertDefines[#Defines, #IsMain, #ModuleName, #Name, #Names, ok¹ s ss.#[ok¹,s,ss]]
+;
+
+// Insert single define: get existing list (if any) and insert in proper sorted place.
+
+{$String<!--SortName--> : DeclarationMapEntry}
+U-InsertDefine[Define<!--new-->, Boolean<!--IsMain-->, $String<!--ModuleName-->, $String<!--SortName-->, NameSet<!--SortNames-->,
+		    ok¹::Ok s::$String<!--SortName--> ss::NameSet<!--SortNames--> . DeclarationMap] :: DeclarationMap ;
+
+-[Data[#Name],Share[#Define,#]]:
+{#DM}
+U-InsertDefine[#Define, #IsMain, #ModuleName, #Name, #Names, ok¹ s ss.#[ok¹, s, ss]]
+→
+{#DM}
+U-InsertDefine1[$[{#DM}Get[DeclarationMapEntry], #Name, DME_NONE], #Define, #IsMain, #ModuleName, #Name, #Names, ok¹ s ss.#[ok¹, s, ss]]
+;
+
+    {$String<!--SortName--> : DeclarationMapEntry}
+    U-InsertDefine1[DeclarationMapEntry<!--existing-->, Define<!--new-->, Boolean<!--IsMain-->, $String<!--ModuleName-->, $String<!--SortName-->, NameSet<!--SortNames-->,
+		     ok¹::Ok s::$String<!--SortName--> ss::NameSet<!--SortNames--> . DeclarationMap] :: DeclarationMap ;
+
+    {#DM}
+    U-InsertDefine1[DME_SORT[#existingDefines1, #Name1, #Precs1, #Wrapper1, #IsMain1], #newDefine, #IsMain, #ModuleName, #Name, #Names, ok¹ s ss.#[ok¹, s, ss]]
+    →
+    {#DM}
+    U-InsertDefine4[
+	    U-InsertDefine2[#existingDefines1, #newDefine],
+	    AddNameNumber[#Precs1, U-DefinePrec[#newDefine]],
+	    #Name1,
+	    #Names,
+	    U-DefineWrapper[#newDefine, #Name, #Wrapper1],
+	    Or[#IsMain1, #IsMain],
+	    ok¹ s ss.#[ok¹, s, ss]]
+    ;
+    //
+    {#DM}
+    U-InsertDefine1[DME_NONE<!--not found-->, #newDefine, #IsMain, #ModuleName, #Name, #Names, ok¹ s ss.#[ok¹, s, ss]]
+    →
+    {#DM}
+    U-InsertDefine1b[#Name, #Names, #newDefine, AddNameNumber[NoNames, U-DefinePrec[#newDefine]], U-DefineWrapper[#newDefine, #Name, NO_WRAPPER], #IsMain, ok¹ s ss.#[ok¹, s, ss]]
+    ;
+
+    {$String<!--SortName--> : DeclarationMapEntry}
+    U-InsertDefine1b[$String<!--SortName-->, NameSet<!--SortNames-->, Define, NameSet<!--Precs-->, Wrapper, Boolean<!--IsMain-->,
+		    ok¹::Ok s::$String<!--SortName--> ss::NameSet<!--SortNames--> . DeclarationMap] :: DeclarationMap ;
+    -[Data[#newDefine,#Name,#Precs,#Wrapper]]:
+    {#DM}
+    U-InsertDefine1b[#Name, #Names, #newDefine, #Precs, #Wrapper, #IsMain, ok¹ s ss.#[ok¹, s, ss]]
+    →
+    {#DM; #Name : DME_SORT[(#newDefine;), #Name, #Precs, #Wrapper, #IsMain]}
+    #[OK, #Name, AddName[#Names, #Name]]
+    ;
+
+    U-InsertDefine2[$List[Define]<!--existing-->, Define<!--new-->] :: $List[Define]<!--merged-->;
+    //
+    U-InsertDefine2[(), #newDefine] → (#newDefine;) ;
+    //
+    U-InsertDefine2[(#Define1; #Defines), #newDefine]
+    →
+    U-InsertDefine3[U-DefineLessEqual[#newDefine, #Define1], #newDefine, #Define1, #Defines]
+    ;
+
+    U-InsertDefine3[Boolean<!--new goes before old-->, Define<!--new-->, Define<!--old-->, $List[Define]<!--old rest-->] :: $List[Define]<!--merged-->;
+    //,
+    U-InsertDefine3[B_TRUE , #newDefine, #Define1, #Defines] → (#newDefine; #Define1; #Defines) ;
+    U-InsertDefine3[B_FALSE, #newDefine, #Define1, #Defines] → (#Define1; U-InsertDefine2[#Defines, #newDefine]) ;
+
+    {$String<!--SortName--> : DeclarationMapEntry}
+    U-InsertDefine4[$List[Define], NameSet<!--precs-->, $String<!--SortName-->, NameSet<!--SortNames-->, Wrapper, Boolean<!--IsMain-->,
+		     ok¹::Ok s::$String<!--SortName--> ss::NameSet<!--SortNames--> . DeclarationMap] :: DeclarationMap ;
+    //
+    -[Data[#Defines,#Name,#Precs,#Wrapper]]:
+    {#DM}
+    U-InsertDefine4[#Defines, #Precs, #Name, #Names, #Wrapper, #IsMain, ok¹ s ss.#[ok¹, s, ss]]
+    →
+    {#DM; #Name : DME_SORT[#Defines, #Name, #Precs, #Wrapper, #IsMain]}
+    #[OK, #Name, #Names]
+    ;
+
+// Compare of defines.
+
+U-DefineLessEqual[Define, Define] :: Boolean ;
+
+//-[Discard[#Define1, #Define2]]: U-DefineLessEqual[#Define1, #Define2] → B_FALSE ;
+
+// Compare (1) Basic constructs are in order Abstraction/Form-Rule-Attribute.
+
+DLE-Abstraction-Rule     : U-DefineLessEqual[D_ABSTRACTION[a.#D1[a]], D_RULE[#R2, #S2, #D2]] → B_TRUE ;
+DLE-Rule-Abstraction     : U-DefineLessEqual[D_RULE[#R1, #S1, #D1], D_ABSTRACTION[a.#D2[a]]] → B_FALSE ;
+
+DLE-Synthesizes-Rule: U-DefineLessEqual[D_SYNTHESIZES[#A1], D_RULE[#R2, #S2, #D2]] → B_TRUE ;
+DLE-Rule-Synthesizes: U-DefineLessEqual[D_RULE[#R1, #S1, #D1], D_SYNTHESIZES[#A2]] → B_FALSE ;
+
+DLE-Form-Rule            : U-DefineLessEqual[D_FORM[#F1, #K1], D_RULE[#R2, #S2, #D2]] → B_TRUE ;
+DLE-Rule-Form            : U-DefineLessEqual[D_RULE[#R1, #S1, #D1], D_FORM[#F2, #K2]] → B_FALSE ;
+
+DLE-Abstraction-Synthesizes     : U-DefineLessEqual[D_ABSTRACTION[a.#D1[a]], D_SYNTHESIZES[#A2]] → B_TRUE ;
+DLE-Synthesizes-Abstraction     : U-DefineLessEqual[D_SYNTHESIZES[#A1], D_ABSTRACTION[a.#D2[a]]] → B_FALSE ;
+
+DLE-Abstraction-Form: U-DefineLessEqual[D_ABSTRACTION[a.#D1[a]], D_FORM[#F2, #K2]] → B_TRUE ;
+DLE-Form-Abstraction: U-DefineLessEqual[D_FORM[#F1, #K1], D_ABSTRACTION[a.#D2[a]]] → B_FALSE ;
+
+DLE-Form-Synthesizes: U-DefineLessEqual[D_FORM[#F1, #K1], D_SYNTHESIZES[#A2]] → B_TRUE ;
+DLE-Synthesizes-Form: U-DefineLessEqual[D_SYNTHESIZES[#A1], D_FORM[#F2, #K2]] → B_FALSE ;
+
+// Compare (2) Abstractions traversed in parallel.
+
+U-DefineLessEqual[D_ABSTRACTION[a.#Define1[a]], D_ABSTRACTION[a.#Define2[a]]]
+→
+U-DefineLessEqual2[a.U-DefineLessEqual[#Define1[a], #Define2[a]]]
+;
+U-DefineLessEqual2[a::HxSortParam.Boolean] :: Boolean ;
+U-DefineLessEqual2[a.B_TRUE] → B_TRUE ;
+U-DefineLessEqual2[a.B_FALSE] → B_FALSE ;
+
+// Compare (3) Forms sorted by precedence-tokens.
+
+DLE-Form-Form: U-DefineLessEqual[D_FORM[#F1, #FK1], D_FORM[#F2, #FK2]] → U-FormLess[#F1, #F2] ;
+
+    // Local helper to compare forms.
+    //
+    U-FormLess[HxForm, HxForm] :: Boolean ;
+    //
+    -[Data[#Prec1,#Prec2]]:
+    U-FormLess[Hx_FormParsedSorted[#Name1, #ParsedForm1, #Prec1, #InheritedRefs1], Hx_FormParsedSorted[#Name2, #ParsedForm2, #Prec2, #InheritedRefs2]]
+    →
+    $[If, $[NumericEqual, #Prec1, #Prec2], U-ParsedFormLess[#ParsedForm1, #ParsedForm2], $[If, $[LessThan, #Prec1, #Prec2], B_TRUE, B_FALSE]]
+    ;
+    //
+    -[Data[#Prec1,#Prec2]]:
+    U-FormLess[Hx_FormParsed[#ParsedForm1, #Prec1, #InheritedRefs1], Hx_FormParsedSorted[#Name2, #ParsedForm2, #Prec2, #InheritedRefs2]]
+    →
+    $[If, $[NumericEqual, #Prec1, #Prec2], U-ParsedFormLess[#ParsedForm1, #ParsedForm2], $[If, $[LessThan, #Prec1, #Prec2], B_TRUE, B_FALSE]]
+    ;
+    //
+    -[Data[#Prec1,#Prec2]]:
+    U-FormLess[Hx_FormParsedSorted[#Name1, #ParsedForm1, #Prec1, #InheritedRefs1], Hx_FormParsed[#ParsedForm2, #Prec2, #InheritedRefs2]]
+    →
+    $[If, $[NumericEqual, #Prec1, #Prec2], U-ParsedFormLess[#ParsedForm1, #ParsedForm2], $[If, $[LessThan, #Prec1, #Prec2], B_TRUE, B_FALSE]]
+    ;
+    //
+    -[Data[#Prec1,#Prec2]]:
+    U-FormLess[Hx_FormParsed[#ParsedForm1, #Prec1, #InheritedRefs1], Hx_FormParsed[#ParsedForm2, #Prec2, #InheritedRefs2]]
+    →
+    $[If, $[NumericEqual, #Prec1, #Prec2], U-ParsedFormLess[#ParsedForm1, #ParsedForm2], $[If, $[LessThan, #Prec1, #Prec2], B_TRUE, B_FALSE]]
+    ;
+    //
+    U-FormLess[Hx_FormConstruction[#Constructor1, #ScopeSorts1, #InheritedRefs1], #Form2] → B_FALSE ;
+    //
+    U-FormLess[Hx_FormParsedSorted[#Name1, #ParsedForm1, #Prec1, #InheritedRefs1], Hx_FormConstruction[#Constructor2, #ScopeSorts2, #InheritedRefs2]] → B_TRUE;
+    U-FormLess[Hx_FormParsed[#ParsedForm1, #Prec1, #InheritedRefs1], Hx_FormConstruction[#Constructor2, #ScopeSorts2, #InheritedRefs2]] → B_TRUE ;
+
+    U-ParsedFormLess[HxParsedForm, HxParsedForm] :: Boolean ;
+    //
+    U-ParsedFormLess[Hx_ParsedFormDone, #PF2] → B_FALSE ;
+    U-ParsedFormLess[#PF1, Hx_ParsedFormDone] → B_TRUE ;
+    //
+    U-ParsedFormLess[Hx_ParsedFormWord[#W1, #PF1], Hx_ParsedFormTerm[#SSPR2, #PF2]] → B_TRUE ;
+    U-ParsedFormLess[Hx_ParsedFormTerm[#SSPR1, #PF1], Hx_ParsedFormWord[#W2, #PF2]] → B_FALSE ;
+    //
+    -[Data[#W1,#W2]]:
+    U-ParsedFormLess[Hx_ParsedFormWord[#W1, #PF1], Hx_ParsedFormWord[#W2, #PF2]]
+    →
+    $[If, $[Equal, #W1, #W2], U-ParsedFormLess[#PF1, #PF2], $[If, $[StringLessThan, #W1, #W2], B_TRUE, B_FALSE]]
+    ;
+    //
+    U-ParsedFormLess[Hx_ParsedFormTerm[#SSPR1, #PF1], Hx_ParsedFormTerm[#SSPR2, #PF2]]
+    →
+    U-ParsedFormLess[#PF1, #PF2] // to ensure short come last!
+    ;
+    //
+    U-ParsedFormLess[Hx_ParsedFormSpace[#S1, #PF1], #PF2] → U-ParsedFormLess[#PF1, #PF2] ;
+    -[Data[#PF1]]: U-ParsedFormLess[$[NotMatch,Hx_ParsedFormSpace[#S1, #_], #PF1], Hx_ParsedFormSpace[#W2, #PF2]] → U-ParsedFormLess[#PF1, #PF2] ;
+    //
+    ///U-ParsedFormLess[Hx_ParsedFormAttribute[#K1, #N1, #PF1], Hx_ParsedFormAttribute[#K2, #N2, #PF2]]
+    ///→
+    ///U-ParsedFormLess[#PF1, #PF2] // to ensure short come last!
+    ///;
+
+// Compare (4) Rules are not sorted.
+
+DLE-Rule-Rule: U-DefineLessEqual[D_RULE[#R1, #S1, #D1], D_RULE[#R2, #S2, #D2]] → B_FALSE ;
+DLE-Syntesizes-Synthesizes: U-DefineLessEqual[D_SYNTHESIZES[#A1], D_SYNTHESIZES[#A2]] → B_FALSE ;
+
+
+
+
+
+
+// Precedence extraction.
+
+U-DefinePrec[Define] :: $Numeric;
+-[Fresh[dummy::HxSortParam]] : U-DefinePrec[D_ABSTRACTION[a.#Define[a]]] → U-DefinePrec[#Define[dummy]] ;
+U-DefinePrec[D_FORM[Hx_FormParsedSorted[#Name, #ParsedForm, #Precedence, #InheritedRefs], #Kind]] → #Precedence ;
+U-DefinePrec[D_FORM[Hx_FormParsed[#ParsedForm, #Precedence, #InheritedRefs], #Kind]] → #Precedence ;
+U-DefinePrec[D_FORM[Hx_FormConstruction[#Constructor, #ScopeSorts, #InheritedRefs], #Kind]] → 0 ;
+U-DefinePrec[D_SYNTHESIZES[#AttributeName]] → 0 ;
+U-DefinePrec[D_RULE[#Rule, #SortName, #IsData]] → 0 ;
+
+// Wrapper extraction.
+
+U-DefineWrapper[Define, $String<!--SortName-->, Wrapper] :: Wrapper ;
+-[Fresh[dummy::HxSortParam]] : U-DefineWrapper[D_ABSTRACTION[a.#Define[a]], #Name, #Wrapper] → U-DefineWrapper[#Define[dummy], #Name, #Wrapper] ;
+U-DefineWrapper[D_FORM[Hx_FormParsedSorted[#Name, #ParsedForm, #Prec, #InheritedRefs], #Kind], #Name, #Wrapper] → U-DefineWrapperForm[#ParsedForm, #Prec, #Kind, #Name, #Wrapper] ;
+U-DefineWrapper[D_FORM[Hx_FormParsed[#ParsedForm, #Prec, #InheritedRefs], #Kind], #Name, #Wrapper] → U-DefineWrapperForm[#ParsedForm, #Prec, #Kind, #Name, #Wrapper] ;
+
+U-DefineWrapper[D_FORM[Hx_FormConstruction[#Constructor, #ScopeSorts, #InheritedRefs], #Kind], #Name, #Wrapper] →  #Wrapper ;
+U-DefineWrapper[D_SYNTHESIZES[#AttributeName], #Name, #Wrapper] → #Wrapper ;
+U-DefineWrapper[D_RULE[#Rule, #SortName, #IsData], #Name, #Wrapper] → #Wrapper ;
+
+U-DefineWrapperForm[HxParsedForm, $Numeric, FormKind, $String<!--SortName-->, Wrapper] :: Wrapper ;
+U-DefineWrapperForm[#ParsedForm, #Prec, FK_SUGAR[#Term], #Name, #OldWrapper] → U-DefineWrapperSugar[#ParsedForm, $False<!--NotCandidate-->, #ParsedForm, #Prec, #Term, #Name, #OldWrapper] ;
+U-DefineWrapperForm[#ParsedForm, #Prec, $[NotMatch,FK_SUGAR[#Term],#Kind], #Name, #OldWrapper] → #OldWrapper ;
+
+U-DefineWrapperSugar[HxParsedForm, $Boolean<!--IsCandidate-->, HxParsedForm, $Numeric<!--Prec-->, HxTerm, $String<!--SortName-->, Wrapper] :: Wrapper ;
+
+-[Data[#Prec1,#Prec]]:
+U-DefineWrapperSugar[Hx_ParsedFormTerm[Hx_ScopeSortPrecRepeat[#ScopeSort1, #Prec1, #Repeat1], #ParsedForm1], #Candidate, #TopParsedForm, #TopPrec, #TopTerm, #Name, #OldWrapper]
+→
+$[If, #Candidate,
+  #OldWrapper, // not a candidate anyway (has at least two nonterminals)
+  $[If, $[LessThan, #TopPrec, #Prec1],
+    #OldWrapper, // not a candidate anyway (inner has higher precedence than outer)
+    U-DefineWrapperSugar[#ParsedForm1, $True, #TopParsedForm, #TopPrec, #TopTerm, #Name, #OldWrapper]
+]];
+// TODO: include #Name in comparison.
+
+U-DefineWrapperSugar[Hx_ParsedFormWord[#Word, #ParsedForm], #Candidate, #TopParsedForm, #TopPrec, #TopTerm, #Name, #OldWrapper]
+→
+U-DefineWrapperSugar[#ParsedForm, #Candidate, #TopParsedForm, #TopPrec, #TopTerm, #Name, #OldWrapper]
+;
+
+U-DefineWrapperSugar[Hx_ParsedFormSpace[#Space, #ParsedForm], #Candidate, #TopParsedForm, #TopPrec, #TopTerm, #Name, #OldWrapper]
+→
+U-DefineWrapperSugar[#ParsedForm, #Candidate, #TopParsedForm, #TopPrec, #TopTerm, #Name, #OldWrapper]
+;
+
+U-DefineWrapperSugar[Hx_ParsedFormDone, $False, #TopParsedForm, #TopPrec, #TopTerm, #Name, #OldWrapper] → #OldWrapper ;
+U-DefineWrapperSugar[Hx_ParsedFormDone, $True,  #TopParsedForm, #TopPrec, #TopTerm, #Name, #OldWrapper] → WRAPPER[#TopParsedForm] ;
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 5. HELPERS FOR NAMING.
+
+// Names involving Repeat.
+
+U-SortRepeatString[$String, HxRepeat] :: $String;
+-[Data[#SortName]]: U-SortRepeatString[#SortName, #Repeat] → $[IfEmpty, #SortName, "", U-SortRepeatString2[#SortName, #Repeat]] ;
+U-SortRepeatString2[$String, HxRepeat] :: $String;
+U-SortRepeatString2[#SortName, %rawHxRepeat⟪ ⟫] → #SortName ;
+U-SortRepeatString2[#SortName, %rawHxRepeat⟪ ? ⟫] → $[:,#SortName,"?"] ;
+U-SortRepeatString2[#SortName, %rawHxRepeat⟪ * ⟫] → $[:,#SortName,"*"] ;
+U-SortRepeatString2[#SortName, %rawHxRepeat⟪ + ⟫] → $[:,#SortName,"+"] ;
+U-SortRepeatString2[#SortName, %rawHxRepeat⟪ + _ #HxRegExpSub# ⟫] → U-RegExpSubSuffix[#HxRegExpSub#, $[:,#SortName,"+_"]] ;
+
+U-SortNameWithRepeat[HxSort, HxRepeat] :: $String;
+U-SortNameWithRepeat[#Sort, #Repeat] → U-SortNameWithRepeat1[U-SortName[#Sort], #Repeat] ;
+U-SortNameWithRepeat1[$String, HxRepeat] :: $String;
+-[Data[#FullSortName]] : U-SortNameWithRepeat1[#FullSortName, #Repeat] → If[SameString["", #FullSortName], "", U-SortNameWithRepeat2[#FullSortName, #Repeat]] ;
+U-SortNameWithRepeat2[$String, HxRepeat] :: $String;
+U-SortNameWithRepeat2[#FullSortName, %rawHxRepeat⟪ ⟫] → #FullSortName ;
+U-SortNameWithRepeat2[#FullSortName, %rawHxRepeat⟪ ? ⟫] → $[:,#FullSortName,"_Maybe"] ;
+U-SortNameWithRepeat2[#FullSortName, %rawHxRepeat⟪ * ⟫] → $[:,#FullSortName,"_MaybeSome"] ;
+U-SortNameWithRepeat2[#FullSortName, %rawHxRepeat⟪ + ⟫] → $[:,#FullSortName,"_Some"] ;
+U-SortNameWithRepeat2[#FullSortName, %rawHxRepeat⟪ + _ #HxRegExpSub# ⟫] → RegExpSubSuffix[#HxRegExpSub#, $[:,#FullSortName,"_Some_"]] ;
+
+// Create qualified name.
+
+U-QN[$String<!--ModuleName-->, $String<!--Kind-->, $String<!--LocalName-->] :: $String ;
+U-QN[#ModuleName, #Kind, #Name] → U-QN2[U-LastName[#ModuleName], #Kind, #Name] ;
+-[Data[#ModuleBase,#Kind,#Name]]: U-QN2[#ModuleBase, #Kind, #Name] → $[If, $[Contains,#Name,'$'], $[:,#Kind,'_',#Name], $[:,#ModuleBase,'$',#Kind,'_',#Name]] ;
+
+// Local name.
+
+U-LN[$String<!--BaseName-->, $String<!--Type-->] :: $String ;
+-[Data[#BaseName,#Kind]] : U-LN[#BaseName, #Kind] → $[:,#BaseName,'_',#Kind] ;
+
+// Extract tag from Form.
+
+U-FormTag[HxForm] :: $String;
+U-FormTag[%rawHxForm⟪ #HxConstructor# ( #HxBindersScopeSorts# ) #HxInheritedRefs# ⟫] → #HxConstructor# ;
+U-FormTag[%rawHxForm⟪ #HxParsedForm# #HxFormPrec# #HxInheritedRefs# ⟫] → U-ParsedFormTag1[#HxParsedForm#, "", ""] ;
+
+U-ParsedFormTag1[HxParsedForm, $String<!--Sep-->, $String<!--Accum-->] :: $String;
+
+/// U-ParsedFormTag1[%rawHxPP⟪ #HxPPConcreteSpace# #HxPP# ⟫, #sep, #accum] → U-ParsedFormTag1[#HxPP#, #sep, #accum] ;
+/// U-ParsedFormTag1[%rawHxPP⟪ #HxPPConcreteWord##HxPP# ⟫, #sep, #accum] → U-ParsedFormTag1[#HxPP#, "_", StringConcat3[#accum, #sep, #HxPPConcreteWord#]] ;
+/// U-ParsedFormTag1[%rawHxPP⟪ #HxPPUnconcrete# #HxPP# ⟫, #sep, #accum] → U-ParsedFormTag1[#HxPP#, #sep, #accum] ;
+/// -[Data[#accum]] : U-ParsedFormTag1[%rawHxPP⟪ ⟫, #sep, #accum] → $[IfEmpty,#accum,"EMPTY",#accum] ;
+
+U-ParsedFormTag1[Hx_ParsedFormSpace[#ConcreteSpace, #HxPP], #sep, #accum] → U-ParsedFormTag1[#HxPP, #sep, #accum] ;
+U-ParsedFormTag1[Hx_ParsedFormWord[#ConcreteWord, #HxPP], #sep, #accum] → U-ParsedFormTag1[#HxPP, "_", StringConcat3[#accum, #sep, #ConcreteWord]] ;
+U-ParsedFormTag1[Hx_ParsedFormTerm[#Term, #HxPP], #sep, #accum] → U-ParsedFormTag1[#HxPP, #sep, #accum] ;
+-[Data[#accum]] : U-ParsedFormTag1[Hx_ParsedFormDone, #sep, #accum] → $[IfEmpty,#accum,"EMPTY",#accum] ;
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+)] //Util
