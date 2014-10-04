@@ -1,5 +1,5 @@
 <HxModule>, <HxModuleName>, <HxEmbeddedModule>,
-<HxDeclaration>, <HxDeclarations>, <HxSortAbstraction>, <HxRule>, <HxRulePrefix>, <HxOptions>, <HxPriority>,  <HxOption>,
+<HxDeclaration>, <HxDeclarations>, <HxSortAbstraction>, <HxRule>, <HxRulePrefix>, <HxRulePriority>, <HxRuleOptions>,
 <HxSort>, <HxSortParam>, <HxSortNames>, <HxSimpleSort>, <HxSimpleSorts>, <HxSubstituteSorts>, <HxSubstituteSort>,
 <HxSortAlternative>, <HxSortAlternatives>, <HxForm>, <HxFormPrec>, <HxParsedForm>,
 <HxInheritedRefs>, <HxInheritedRef>, <HxAttributeKind>, <HxAttributeForm>,
@@ -8,4 +8,4 @@
 <HxRegExp>, <HxRegExpChoice>, <HxRegExpUnits>, <HxRegExpUnit>, <HxRegExpSimple>, <HxRegExpSub>, <HxSeparator>, <HxRegExpWord>,
 <HxLiteral>, <HxMetaVariable>, <HxMetaVariables>, <HxVariable>, <HxAttributeName>,
 <HxRegExpClass>, <HxCC>, <HxCC_RangesTop>, <HxCC_Ranges>, <HxCC_FirstRangeStartChar>, <HxCC_NonDashRangeStartChar>, <HxCC_RangeChar>,
-<HxPP>,
+<HxPP>, <HxPPConcreteSpace>, <HxPPConcreteSpace>, <HxPPConcreteWord>, <HxPPUnconcrete>,

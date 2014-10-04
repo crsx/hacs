@@ -90,6 +90,11 @@ Hd[()] → $[Error,"Hd of empty list"] ;
 Tl[(#;##)] → ## ;
 Tl[()] → $[Error,"Tl of empty list"] ;
 
+∀ a . Length[$List[a]] :: $Numeric ;
+Length[#list] → Length1[#list, 0] ;
+Length1[(), #n] → #n;
+Length1[(#; #s), #n] → $[Plus,#n,1] ;
+
 ∀ a . Append[$List[a], $List[a]] :: $List[a] ;
 Append[(), #tail] → #tail ;
 Append[(#1;#s), #tail] → (#1 ; Append[#s, #tail]) ;

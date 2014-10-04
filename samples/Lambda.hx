@@ -18,6 +18,7 @@ sort T
 
 main sort E
 | ⟦ λ ⟨V binds x⟩ : ⟨T⟩ . ⟨E[x as E]@1⟩ ⟧@1
+| ⟦ ⟨E@2⟩ $ ⟨E@1⟩ ⟧@1
 | ⟦ ⟨E@2⟩ ⟨E@3⟩ ⟧@2
 | ⟦ ⟨V⟩ ⟧@3
 | sugar ⟦ ( ⟨E#⟩ ) ⟧@3 → E#

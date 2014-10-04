@@ -177,27 +177,30 @@ token HX_CC_SKIP (HX_CC) ::= \u1 .
 <HxCC_NonDashRangeStartChar> (HX_CC) ::= (HX_CC_NOT$ | HX_CC_OTHER$) .
 <HxCC_RangeChar> (HX_CC) ::= (HX_CC_NOT$ | HX_CC_DASH$ | HX_CC_OTHER$) .
 
-<HxParsedForm> ::= HX_CONCRETE$$:unwrap:{%%%PREFIX%%%HxPP} .
-
 
 //// PP SUBPARSER FOR PARSED FORMS.
 
+<HxParsedForm> ::= HX_CONCRETE$$:unwrap:{%%%PREFIX%%%HxPP} .
+
 <HxPP> (HX_PP) ::=
-  {ParsedFormSpace}:hx (CONCRETESPACE$) <HxPP>
-| {ParsedFormWord}:hx (CONCRETEWORD$) <HxPP>
-| {ParsedFormTerm}:hx UNCONCRETE$$:unwrap:{%%%PREFIX%%%HxScopeSortPrecRepeat} <HxPP>
+  {ParsedFormSpace}:hx <HxPPConcreteSpace> <HxPP>
+| {ParsedFormWord}:hx <HxPPConcreteWord> <HxPP>
+| {ParsedFormTerm}:hx <HxPPUnconcrete> <HxPP>
 | {ParsedFormDone}:hx
 .
 
-token CONCRETESPACE (HX_PP) ::= [' ',\t\r\n,\ub6]+ . // no comments but include special spacing marks
-token CONCRETEWORD (HX_PP) ::= ~[' ',\t\r\n\ub6\u27e6\u27e7\u27e8\u27e9]+ .
+<HxPPConcreteSpace> (HX_PP) ::= HX_PP_CONCRETE_SPACE$ .
+<HxPPConcreteWord> (HX_PP) ::= HX_PP_CONCRETE_WORD$ .
+<HxPPUnconcrete> (HX_PP) ::= HX_PP_UNCONCRETE$$:unwrap:{%%%PREFIX%%%HxScopeSortPrecRepeat} .
 
+token HX_PP_CONCRETE_SPACE (HX_PP) ::= [' ',\t\r\n,\ub6]+ . // no comments but include special spacing marks
+token HX_PP_CONCRETE_WORD (HX_PP) ::= ~[' ',\t\r\n\ub6\u27e6\u27e7\u27e8\u27e9]+ .
 %{
 // Nested unconcrete token ⟨...⟩ inside PP.
 <HX_PP> MORE : { "\u27e8" { nesting = 0; nestedState = curLexState; } : IN_PP_UNCONCRETE }
 <IN_PP_UNCONCRETE> MORE : { "\u27e8" { nesting = 1; } : IN_PP_NESTED_UNCONCRETE }
 <IN_PP_NESTED_UNCONCRETE> MORE : { "\u27e8" { nesting++; } }
 <IN_PP_NESTED_UNCONCRETE> MORE : { "\u27e9" { if (--nesting <= 0) SwitchTo(IN_PP_UNCONCRETE); } }
-<IN_PP_UNCONCRETE> TOKEN : { <T_UNCONCRETE : "\u27e9"> { SwitchTo(nestedState); } }
+<IN_PP_UNCONCRETE> TOKEN : { <T_HX_PP_UNCONCRETE : "\u27e9"> { SwitchTo(nestedState); } }
 <IN_PP_UNCONCRETE,IN_PP_NESTED_UNCONCRETE> MORE : { < ~[] > }
 %}
