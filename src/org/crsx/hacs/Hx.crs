@@ -146,9 +146,10 @@ HxSubstituteSort ::=(
 
 {$String : $StringEntrySort}
 HxParsedForm ::=(
- %rawHxPP⟪ %HxPPConcreteSpace«$String» ⟫;
- %rawHxPP⟪ %HxPPConcreteWord«$String» ⟫;
- %rawHxPP⟪ %HxPPUnconcrete«HxScopeSortPrecRepeat» ⟫;
+ %rawHxPP⟪ %HxPPConcreteSpace«$String» %HxPP«HxParsedForm» ⟫;
+ %rawHxPP⟪ %HxPPConcreteWord«$String» %HxPP«HxParsedForm» ⟫;
+ %rawHxPP⟪ %HxPPUnconcrete«HxScopeSortPrecRepeat» %HxPP«HxParsedForm» ⟫;
+ %rawHxPP⟪ ⟫;
 );
 
 {$String : $StringEntrySort}

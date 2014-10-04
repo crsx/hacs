@@ -1,9 +1,17 @@
 // Cook: RULES FOR GENERATING CRSX3 REWRITE SYSTEM FOR HACS (.hx) SPECIFICATION.
-//
-// Expects input file with syntax-free "Hx"
-// Emits a CRSX3 rewriter (.crs as text) for the user's semantic rules.
+// Copyright © 2012,2014 Kristoffer H. Rose <krisrose@crsx.org>
 
 Cook[(
+
+// Contents
+// 1. Setup and Top Level.
+// 2. Preprocessing.
+// 3. Build Sort Declarations.
+// 4. Extract Rules.
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 1. SETUP AND TOP LEVEL
 
 // Sorts for input format.
 $CheckGrammar["org.crsx.hacs.HxRaw"];
@@ -20,22 +28,25 @@ $Use["org/crsx/hacs/Prelude.crs"];
 // Infer options.
 $Lax;
 
-
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// . TOP LEVEL
+// Main action.
+//
+// Expects input file with syntax-free ".hx" file (as parsed by a user meta-parser).
+// Emits a CRSX3 rewriter (.crs as text) for the user's semantic rules.
 
 Cook[HxModule] :: Text ;
-
 Cook[%rawHxModule⟦ module #HxModuleName# { #HxDeclarations# } ⟧]
 →
-C1-Declarations[#HxDeclarations#]
+Cook1[U-ResolveImports[#HxDeclarations#, #HxModuleName#], #HxModuleName#]
 ;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// . PREPROCESSING
+// 2. PREPROCESSING
+//
+// Meta-parser output contains two macros:
+// * C-AttributeWrapperSorted[ "SORT", TERM, ( ATTRIBUTE1; ... ATTRIBUTEn; )]
+// * C-UnravelScope[ binder1 ... bindern . TERM ]
+// The code here expands these macros into the proper corresponding Hx.crs terms.
 
 // Combine wrapped attributes into term.
 
@@ -83,10 +94,19 @@ C-AttributeWrapperSorted[#SortName, %rawHxTerm⟪ special #HxConcreteText# #HxAt
 C-UnravelScope_0[#] → Hx_Scope[(), #] ;
 -[Fresh[x1]]: C-UnravelScope_1[x1.#[x1]] → Hx_Scope[(x1;), #[x1]] ;
 -[Fresh[x1,x2]]: C-UnravelScope_2[x1 x2.#[x1,x2]] → Hx_Scope[(x1; x2;), #[x1,x2]] ;
+-[Fresh[x1,x2,x3]]: C-UnravelScope_3[x1 x2 x3.#[x1,x2,x3]] → Hx_Scope[(x1; x2; x3;), #[x1,x2,x3]] ;
+-[Fresh[x1,x2,x3,x4]]: C-UnravelScope_4[x1 x2 x3 x4.#[x1,x2,x3,x4]] → Hx_Scope[(x1; x2; x3; x4;), #[x1,x2,x3,x4]] ;
+-[Fresh[x1,x2,x3,x4,x5]]: C-UnravelScope_5[x1 x2 x3 x4 x5.#[x1,x2,x3,x4,x5]] → Hx_Scope[(x1; x2; x3; x4; x5;), #[x1,x2,x3,x4,x5]] ;
+-[Fresh[x1,x2,x3,x4,x5,x6]]: C-UnravelScope_5[x1 x2 x3 x4 x5 x6.#[x1,x2,x3,x4,x5,x6]] → Hx_Scope[(x1; x2; x3; x4; x5; x6;), #[x1,x2,x3,x4,x5,x6]] ;
+-[Fresh[x1,x2,x3,x4,x5,x6,x7]]: C-UnravelScope_5[x1 x2 x3 x4 x5 x6 x7.#[x1,x2,x3,x4,x5,x6,x7]] → Hx_Scope[(x1; x2; x3; x4; x5; x6; x7;), #[x1,x2,x3,x4,x5,x6,x7]] ;
+-[Fresh[x1,x2,x3,x4,x5,x6,x7,x8]]: C-UnravelScope_5[x1 x2 x3 x4 x5 x6 x7 x8.#[x1,x2,x3,x4,x5,x6,x7,x8]] → Hx_Scope[(x1; x2; x3; x4; x5; x6; x7; x8;), #[x1,x2,x3,x4,x5,x6,x7,x8]] ;
+-[Fresh[x1,x2,x3,x4,x5,x6,x7,x8,x9]]: C-UnravelScope_5[x1 x2 x3 x4 x5 x6 x7 x8 x9.#[x1,x2,x3,x4,x5,x6,x7,x8,x9]] → Hx_Scope[(x1; x2; x3; x4; x5; x6; x7; x8; x9;), #[x1,x2,x3,x4,x5,x6,x7,x8,x9]] ;
+-[Fresh[x1,x2,x3,x4,x5,x6,x7,x8,x9,x10]]: C-UnravelScope_5[x1 x2 x3 x4 x5 x6 x7 x8 x9 x10.#[x1,x2,x3,x4,x5,x6,x7,x8,x9,x10]] → Hx_Scope[(x1; x2; x3; x4; x5; x6; x7; x8; x9; x10;), #[x1,x2,x3,x4,x5,x6,x7,x8,x9,x10]] ;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// . EXTRACT RULES
+// 3. EXTRACT RULES
+
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
