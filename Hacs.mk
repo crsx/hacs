@@ -86,8 +86,8 @@ RULEC = $(CRSXROOT)/bin/crsxc
 $(RULEC):; cd $(CRSXROOT) && make bin/crsx
 #
 PG = $(JAVA) -ea -cp "$(CRSXJAR)" net.sf.crsx.pg.PG $(EXTRA)
-CRSX = $(JAVA) -ea -cp "$(BUILD):$(CRSXJAR)" net.sf.crsx.run.Crsx allow-unnamed-rules verbose=1 $(EXTRA)
-CRSX_NOEXTRA = $(JAVA) -ea -cp "$(BUILD):$(CRSXJAR)" net.sf.crsx.run.Crsx allow-unnamed-rules verbose=1
+CRSX = $(JAVA) -ea -cp "$(BUILD):$(CRSXJAR)" -Dfile.encoding=UTF-8 -Xss20000K -Xmx2000m net.sf.crsx.run.Crsx allow-unnamed-rules verbose=1 $(EXTRA)
+CRSX_NOEXTRA = $(JAVA) -ea -cp "$(BUILD):$(CRSXJAR)" -Dfile.encoding=UTF-8 -Xss20000K -Xmx2000m net.sf.crsx.run.Crsx allow-unnamed-rules verbose=1
 
 # So -n works...
 NOEXEC = $(if,$(findstring -n,$(MAKE)),echo)
@@ -98,7 +98,7 @@ SH_EXTRA = :
 
 # Main rules: Progress to generate
 # %.env: the setup for compiler
-# %.prepd: marker that all parsers have been generated
+# %.prepared: marker that all parsers have been generated
 # %.run: script implementing user comiler
 
 %.env : %.hx
@@ -111,33 +111,19 @@ SH_EXTRA = :
 		output='$@.tmp' sink=net.sf.crsx.text.TextSink \
 	&& $(NOEXEC) mv '$@.tmp' '$@'
 
-%.prepd : %.env
+%.prepared : %.env
 	@$(ECHO) -e '\n>>> GENERATING $@.' && $(SH_EXTRA) \
 	&& $(NOEXEC) ( cd $(HACS) && find . -name '*.crs' | while read fn; do dir=$(BUILD)/$$(dirname $$fn) && mkdir -p $$dir && cp -f $$fn $(BUILD)/$$dir; done ) \
 	&& eval $$($(NOEXEC) cat '$<') \
 	&& dir=$(dir $@) && package=$${MODULE%.*} && packagedir=$$(echo $$package | tr '.' '/') \
 	&& $(NOEXEC) mkdir -p $(TEMP)/$$packagedir \
 	&& ( $(NOEXEC) rsync -v '$*.hx' $(TEMP)/$$packagedir/ || : ) \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}.hxraw \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}.hxraw.pp \
 	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}.prep \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}Parser.pg \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}Hx.pgtemplate \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}Hx.pg \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}Embed.pg \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}-sorts.crs \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}Hx-sorts.crs \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}Parser.jj \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}Hx.jj \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}Embed.jj \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}Parser.java \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}Hx.java \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}Embed.java \
 	&& $(NOEXEC) $(MAKE) $(BUILD)/$$packagedir/$${NAME}Parser.class \
 	&& $(NOEXEC) $(MAKE) $(BUILD)/$$packagedir/$${NAME}Hx.class \
 	&& $(NOEXEC) $(MAKE) $(BUILD)/$$packagedir/$${NAME}Embed.class \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}.hxprepd \
-	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}.hxprepd.pp \
+	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}-sorts.crs \
+	&& $(NOEXEC) $(MAKE) $(TEMP)/$$packagedir/$${NAME}.crs \
 	&& $(NOEXEC) touch '$@'
 
 %.run : %.env
@@ -237,12 +223,6 @@ realclean::; find . -name '*.run' | xargs rm -f
 	&& $(NOEXEC) mv '$@.tmp' '$@'
 .SECONDARY: %Embed.pg
 
-# Extract sorts from template for use by GenerateCRS.
-%Hx-sorts.crs : %.prep
-	@$(ECHO) -e '\n>>> GENERATING META-SOURCE SORT DECLARATIONS $@.' && $(SH_EXTRA) \
-	&& $(NOEXEC) $(call EXTRACTONLY,METASORTS,$<) > '$@.tmp' \
-	&& $(NOEXEC) mv '$@.tmp' '$@'
-
 # Generate PG parser for straight terms.
 %Parser.pg : %.prep
 	@$(ECHO) -e '\n>>> GENERATING PLAIN TERM PARSER GENERATOR $@.' && $(SH_EXTRA) \
@@ -275,7 +255,7 @@ $(BUILD)/%.class: $(TEMP)/%.java
 	&& $(NOEXEC) cd $(TEMP) && $(NOEXEC) $(JAVAC) -cp ":$(CRSXJAR)" -d $(BUILD) $*.java
 
 # Parse HACS for Cook using the Prep-generated parser.
-%.hxprepd : %.env
+%.hxprep : %.env
 	@$(ECHO) -e '\n>>> PARSING CUSTOM HACS TO TERM $@.' && $(SH_EXTRA) \
 	&& eval $$($(NOEXEC) cat '$<') \
 	&& dir=$(dir $@) && package=$${MODULE%.*} && packagedir=$$(echo $$package | tr '.' '/') \
@@ -285,19 +265,29 @@ $(BUILD)/%.class: $(TEMP)/%.java
 		no-parse-verbose \
 		output='$@.tmp' simple-terms max-indent=10 width=255 \
 	&& $(NOEXEC) mv '$@.tmp' '$@'
-.SECONDARY: %.hxprepd
+.SECONDARY: %.hxprep
+
+# Process (pre-parsed) HACS with Cook to create rewrite rules!
+%.crs : %.hxprep
+	@$(ECHO) -e '\n>>> GENERATING REWRITER $@.' && $(SH_EXTRA) \
+	&& $(NOEXEC) $(CRSX) \
+		"grammar=('org.crsx.hacs.HxRaw';'net.sf.crsx.text.Text';)" \
+		rules=$(HACS)/org/crsx/hacs/Cook.crs wrapper=Cook \
+		input='$<' \
+		output='$@.tmp' sink=net.sf.crsx.text.TextSink \
+	&& $(NOEXEC) mv '$@.tmp' '$@'
 
 
 # Debugging helpers.
 
 %.crsp: %.crs
 	@$(ECHO) -e '\n>>> GENERATING PARSED CRSX FILE $@.' && $(SH_EXTRA) \
-	&& $(NOEXEC) parsers=$$(sed -n 's/^[^/]*CheckGrammar\[\(.*\)\]/\1/p' $<) \
-	&& $(NOEXEC) $(CRSX) grammar="($$parsers)" rules='$*.crs' dump-rules='$@.tmp' \
+	&& $(NOEXEC) parsers=$$(sed -n 's/^[$$]CheckGrammar\[\(.*\)\]/\1/p' $<) \
+	&& $(NOEXEC) $(CRSX) $${parsers:+"grammar=($$parsers)"} rules='$*.crs' dump-rules='$@.tmp' \
 	&& $(NOEXEC) mv '$@.tmp' '$@'
 
 %.pp: %
-	$(ECHO) -e '\n>>> PRETTY-PRINTING CRSX TERM FILE $@.' && $(SH_EXTRA) \
-	&& $(NOEXEC) parsers=$$(sed -n 's/^[^/]*CheckGrammar\[\(.*\)\]/\1;/p' $<) \
+	@$(ECHO) -e '\n>>> PRETTY-PRINTING CRSX TERM FILE $@.' && $(SH_EXTRA) \
+	&& $(NOEXEC) parsers=$$(sed -n 's/^[$$]CheckGrammar\[\(.*\)\]/\1;/p' $<) \
 	&& $(NOEXEC) $(CRSX) "grammar=($$parsers 'org.crsx.hacs.HxRaw'; 'net.sf.crsx.text.Text';)" input='$<' rules=$(HACS)/org/crsx/hacs/Cook.crs omit-properties output='$@.tmp' \
 	&& $(NOEXEC) mv '$@.tmp' '$@'

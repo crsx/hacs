@@ -1,5 +1,5 @@
 //// HxRaw.pg: GRAMMAR FOR .hx RAW HACS FILES.
-//// Copyright © 2012,2014 Kristoffer H. Rose <krisrose@rcsx.org>
+//// Copyright © 2012,2014 Kristoffer H. Rose <krisrose@crsx.org>
 
 class org.crsx.hacs.HxRaw :
 %%%HXNONTERMINALS%%%

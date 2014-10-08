@@ -1,13 +1,18 @@
 // Cook: RULES FOR GENERATING CRSX3 REWRITE SYSTEM FOR HACS (.hx) SPECIFICATION.
 // Copyright © 2012,2014 Kristoffer H. Rose <krisrose@crsx.org>
+//
+// Input: HACS (.hx) file parsed by user's meta-parser (combining *Hx.pg and *Embed.pg).
+// Output: Text with CRSX rules implementing the HACS (.hx) specification.
 
 Cook[(
 
-// Contents
-// 1. Setup and Top Level.
-// 2. Preprocessing.
-// 3. Build Sort Declarations.
-// 4. Extract Rules.
+// Contents:
+// 1. Setup and Top Level Assembly
+// 2. Preprocessing
+// /// 3. Collect Synthesized Attribute Dependencies (C-MakeSynthesizedDependMap)
+// 4. Expand Synthesis Rules (C-Unsynthesize)
+// 5. Convert recursive schemes with attributes to CRSX Text form (C-Crsxify)
+// 6. Miscellaneous
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -15,7 +20,7 @@ Cook[(
 
 // Sorts for input format.
 $CheckGrammar["org.crsx.hacs.HxRaw"];
-///$Use["org/crsx/hacs/Hx.crs"];
+$Use["org/crsx/hacs/Hx.crs"];
 // NOTE: uses HxRaw parser but only for terms covered by Hx.crs sorts.
 
 // Output format is text %n⟪...⟫.
@@ -24,20 +29,82 @@ $Use["net/sf/crsx/text/Text.crs"];
 
 // Standard functions.
 $Use["org/crsx/hacs/Prelude.crs"];
+$Use["org/crsx/hacs/Util.crs"];
 
 // Infer options.
 $Lax;
 
-// Main action.
+// Cook: MAIN ACTION.
 //
 // Expects input file with syntax-free ".hx" file (as parsed by a user meta-parser).
 // Emits a CRSX3 rewriter (.crs as text) for the user's semantic rules.
 
-Cook[HxModule] :: Text ;
-Cook[%rawHxModule⟦ module #HxModuleName# { #HxDeclarations# } ⟧]
+Cook[HxModule] :: Text;
+Cook[{#L}%rawHxModule⟦ module #HxModuleName# { #HxDeclarations# } ⟧]
 →
-Cook1[U-ResolveImports[#HxDeclarations#, #HxModuleName#], #HxModuleName#]
+Cook2[#HxModuleName#, U-ResolveImports[#HxDeclarations#, #HxModuleName#, ""]]
 ;
+
+// Cook2: Create map of all declarations.
+
+Cook2[$String<!--ModuleName-->, $List[HxDeclaration]] :: Text;
+-[Data[#Declarations]]:
+Cook2[#ModuleName, #Declarations]
+→
+Cook3[#ModuleName, #Declarations, {} U-MakeDeclarationMap[#Declarations, #ModuleName]]
+;
+
+// Cook3: Create dependency structure for synthesized attributes.
+
+Cook3[$String<!--ModuleName-->, $List[HxDeclaration], DeclarationMap]  :: Text ;
+Cook3[#ModuleName, #Declarations, #DM]
+→
+Cook4[#ModuleName, #DM, C-MakeSynthesizedDependMap[#DM]]
+;
+
+// Cook4: Convert synthesized attribute rules to regular attribute rules.
+
+Cook4[$String<!--ModuleName-->, DeclarationMap, Name2NamesMap<!--SynthesizedDependencyMap-->]  :: Text ;
+Cook4[#ModuleName, #DM, #SDM]
+→
+Cook5[#ModuleName, C-Unsynthesize[#DM, #SDM], #SDM]
+;
+
+// Cook5: Convert attribute rules to regular CRSX rules.
+
+Cook5[$String<!--ModuleName-->, DeclarationMap, Name2NamesMap<!--SynthesizedDependencyMap-->]  :: Text ;
+Cook5[#ModuleName, #DM, #SDM]
+→
+Cook1[#ModuleName, C-Crsxify[#DM]]
+;
+
+// Cook1: Assemble CRSX file.
+
+Cook1[$String<!--ModuleName-->, Text<!--CRSX-Rules-->]  :: Text ;
+Cook1[#ModuleName, #CrsxRules]
+→
+%n⟪// CRSX RULES FOR †«#ModuleName».
+
+†« U-LastName[#ModuleName] »[(
+
+// Input format.
+  $CheckGrammar["†« U-ClassName[#ModuleName] »Parser"];
+//$Use[]; ← should load sorts for user terms.
+
+// Output format may include Text.
+  $CheckGrammar["net.sf.crsx.text.Text"];
+  $Use["net/sf/crsx/text/Text.crs"];
+
+// Standard functions.
+  $Use["org/crsx/hacs/Prelude.crs"];
+
+// Infer options.
+  $Lax;
+
+« #CrsxRules »
+
+)] //†« U-LastName[#ModuleName] »
+⟫;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -45,77 +112,479 @@ Cook1[U-ResolveImports[#HxDeclarations#, #HxModuleName#], #HxModuleName#]
 //
 // Meta-parser output contains two macros:
 // * C-AttributeWrapperSorted[ "SORT", TERM, ( ATTRIBUTE1; ... ATTRIBUTEn; )]
-// * C-UnravelScope[ binder1 ... bindern . TERM ]
+// * C-UnravelScope_n[ binder1 ... bindern . TERM ]
+// (in both cases with n some number from 0-10).
 // The code here expands these macros into the proper corresponding Hx.crs terms.
 
 // Combine wrapped attributes into term.
 
-C-AttributeWrapperSorted[$String<!--SortName-->, HxTerm, HxOuterAttributes] :: HxTerm ;
+C-AttributeWrapperSorted[$String<!--SortName-->, HxTerm, $List[HxAttribute]] :: HxTerm ;
 
-C-AttributeWrapperSorted[#SortName, %rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #OuterAttributes]
+C-AttributeWrapperSorted[#HxConstructor1#, {#L}%rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #OuterAttributes]
 →
-%rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) %HxAttributes« Append[#HxAttributes#, #OuterAttributes] » ⟫
+{#L}%rawHxTerm⟪ #HxConstructor1# #HxConstructor# ( #HxScopes# ) %HxAttributes« Append[#HxAttributes#, #OuterAttributes] » ⟫
 ;
-C-AttributeWrapperSorted[#SortName, %rawHxTerm⟪ #HxConstructor1# #HxRepeat# #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #OuterAttributes]
+C-AttributeWrapperSorted[#SortName, {#L}%rawHxTerm⟪ #HxConstructor1# #HxRepeat# #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #OuterAttributes]
 →
-%rawHxTerm⟪ #HxConstructor1# #HxRepeat# #HxConstructor# ( #HxScopes# ) %HxAttributes« Append[#HxAttributes#, #OuterAttributes] » ⟫
+{#L}%rawHxTerm⟪ #HxConstructor1# #HxRepeat# #HxConstructor# ( #HxScopes# ) %HxAttributes« Append[#HxAttributes#, #OuterAttributes] » ⟫
 ;
-C-AttributeWrapperSorted[#SortName, %rawHxTerm⟪ #HxLiteral# #HxAttributes# ⟫, #OuterAttributes]
+C-AttributeWrapperSorted[#HxConstructor1#, {#L}%rawHxTerm⟪ #HxLiteral# #HxAttributes# ⟫, #OuterAttributes]
 →
-%rawHxTerm⟪ #HxLiteral# %HxAttributes« Append[#HxAttributes#, #OuterAttributes] » ⟫
+{#L}%rawHxTerm⟪ #HxConstructor1# #HxLiteral# %HxAttributes« Append[#HxAttributes#, #OuterAttributes] » ⟫
 ;
-C-AttributeWrapperSorted[#SortName, %rawHxTerm⟪ #HxConstructor1# #HxRepeat# #HxLiteral# #HxAttributes# ⟫, #OuterAttributes]
+C-AttributeWrapperSorted[#SortName, {#L}%rawHxTerm⟪ #HxConstructor1# #HxRepeat# #HxLiteral# #HxAttributes# ⟫, #OuterAttributes]
 →
-%rawHxTerm⟪ #HxConstructor1# #HxRepeat# #HxLiteral# %HxAttributes« Append[#HxAttributes#, #OuterAttributes] » ⟫
+{#L}%rawHxTerm⟪ #HxConstructor1# #HxRepeat# #HxLiteral# %HxAttributes« Append[#HxAttributes#, #OuterAttributes] » ⟫
 ;
-C-AttributeWrapperSorted[#SortName, %rawHxTerm⟪ v #HxAttributes# ⟫, #OuterAttributes]
+C-AttributeWrapperSorted[#HxConstructor1#, {#L}%rawHxTerm⟪ v #HxAttributes# ⟫, #OuterAttributes]
 →
-%rawHxTerm⟪ v %HxAttributes« Append[#HxAttributes#, #OuterAttributes] » ⟫
+{#L}%rawHxTerm⟪ #HxConstructor1# v %HxAttributes« Append[#HxAttributes#, #OuterAttributes] » ⟫
 ;
-C-AttributeWrapperSorted[#SortName, %rawHxTerm⟪ #HxConstructor1# #HxRepeat# v #HxAttributes# ⟫, #OuterAttributes]
+C-AttributeWrapperSorted[#SortName, {#L}%rawHxTerm⟪ #HxConstructor1# #HxRepeat# v #HxAttributes# ⟫, #OuterAttributes]
 →
-%rawHxTerm⟪ #HxConstructor1# #HxRepeat# v %HxAttributes« Append[#HxAttributes#, #OuterAttributes] » ⟫
+{#L}%rawHxTerm⟪ #HxConstructor1# #HxRepeat# v %HxAttributes« Append[#HxAttributes#, #OuterAttributes] » ⟫
 ;
-C-AttributeWrapperSorted[#SortName, %rawHxTerm⟪ #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫, #OuterAttributes]
+C-AttributeWrapperSorted[#HxConstructor1#, {#L}%rawHxTerm⟪ #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫, #OuterAttributes]
 →
-%rawHxTerm⟪ #HxMetaVariable# [ #HxTerms# ] %HxAttributes« Append[#HxAttributes#, #OuterAttributes] » ⟫
+{#L}%rawHxTerm⟪ #HxConstructor1# #HxMetaVariable# [ #HxTerms# ] %HxAttributes« Append[#HxAttributes#, #OuterAttributes] » ⟫
 ;
-C-AttributeWrapperSorted[#SortName, %rawHxTerm⟪ #HxConstructor1# #HxRepeat# #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫, #OuterAttributes]
+C-AttributeWrapperSorted[#SortName, {#L}%rawHxTerm⟪ #HxConstructor1# #HxRepeat# #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫, #OuterAttributes]
 →
-%rawHxTerm⟪ #HxConstructor1# #HxRepeat# #HxMetaVariable# [ #HxTerms# ] %HxAttributes« Append[#HxAttributes#, #OuterAttributes] » ⟫
+{#L}%rawHxTerm⟪ #HxConstructor1# #HxRepeat# #HxMetaVariable# [ #HxTerms# ] %HxAttributes« Append[#HxAttributes#, #OuterAttributes] » ⟫
 ;
-C-AttributeWrapperSorted[#SortName, %rawHxTerm⟪ special #HxConcreteText# #HxAttributes# ⟫, #OuterAttributes]
+C-AttributeWrapperSorted[#SortName, {#L}%rawHxTerm⟪ special #HxConcreteText# #HxAttributes# ⟫, #OuterAttributes]
 →
-%rawHxTerm⟪ special #HxConcreteText# %HxAttributes« Append[#HxAttributes#, #OuterAttributes] » ⟫
+{#L}%rawHxTerm⟪ special #HxConcreteText# %HxAttributes« Append[#HxAttributes#, #OuterAttributes] » ⟫
 ;
 
 // Unravel combined argument binders. Frees the variables!
 
+C-UnravelScope_0[HxTerm] :: HxScope ;
+C-UnravelScope_1[x1 :: HxTerm . HxTerm] :: HxScope ;
+C-UnravelScope_2[x1 :: HxTerm x2 :: HxTerm . HxTerm] :: HxScope ;
+C-UnravelScope_3[x1 :: HxTerm x2 :: HxTerm x3 :: HxTerm . HxTerm] :: HxScope ;
+C-UnravelScope_4[x1 :: HxTerm x2 :: HxTerm x3 :: HxTerm x4 :: HxTerm . HxTerm] :: HxScope ;
+C-UnravelScope_5[x1 :: HxTerm x2 :: HxTerm x3 :: HxTerm x4 :: HxTerm x5 :: HxTerm . HxTerm] :: HxScope ;
+C-UnravelScope_6[x1 :: HxTerm x2 :: HxTerm x3 :: HxTerm x4 :: HxTerm x5 :: HxTerm x6 :: HxTerm . HxTerm] :: HxScope ;
+C-UnravelScope_7[x1 :: HxTerm x2 :: HxTerm x3 :: HxTerm x4 :: HxTerm x5 :: HxTerm x6 :: HxTerm x7 :: HxTerm . HxTerm] :: HxScope ;
+C-UnravelScope_8[x1 :: HxTerm x2 :: HxTerm x3 :: HxTerm x4 :: HxTerm x5 :: HxTerm x6 :: HxTerm x7 :: HxTerm x8 :: HxTerm . HxTerm] :: HxScope ;
+C-UnravelScope_9[x1 :: HxTerm x2 :: HxTerm x3 :: HxTerm x4 :: HxTerm x5 :: HxTerm x6 :: HxTerm x7 :: HxTerm x8 :: HxTerm x9 :: HxTerm . HxTerm] :: HxScope ;
+C-UnravelScope_10[x1 :: HxTerm x2 :: HxTerm x3 :: HxTerm x4 :: HxTerm x5 :: HxTerm x6 :: HxTerm x7 :: HxTerm x8 :: HxTerm x9 :: HxTerm x10 :: HxTerm . HxTerm] :: HxScope ;
+
 C-UnravelScope_0[#] → Hx_Scope[(), #] ;
--[Fresh[x1]]: C-UnravelScope_1[x1.#[x1]] → Hx_Scope[(x1;), #[x1]] ;
--[Fresh[x1,x2]]: C-UnravelScope_2[x1 x2.#[x1,x2]] → Hx_Scope[(x1; x2;), #[x1,x2]] ;
--[Fresh[x1,x2,x3]]: C-UnravelScope_3[x1 x2 x3.#[x1,x2,x3]] → Hx_Scope[(x1; x2; x3;), #[x1,x2,x3]] ;
--[Fresh[x1,x2,x3,x4]]: C-UnravelScope_4[x1 x2 x3 x4.#[x1,x2,x3,x4]] → Hx_Scope[(x1; x2; x3; x4;), #[x1,x2,x3,x4]] ;
--[Fresh[x1,x2,x3,x4,x5]]: C-UnravelScope_5[x1 x2 x3 x4 x5.#[x1,x2,x3,x4,x5]] → Hx_Scope[(x1; x2; x3; x4; x5;), #[x1,x2,x3,x4,x5]] ;
--[Fresh[x1,x2,x3,x4,x5,x6]]: C-UnravelScope_5[x1 x2 x3 x4 x5 x6.#[x1,x2,x3,x4,x5,x6]] → Hx_Scope[(x1; x2; x3; x4; x5; x6;), #[x1,x2,x3,x4,x5,x6]] ;
--[Fresh[x1,x2,x3,x4,x5,x6,x7]]: C-UnravelScope_5[x1 x2 x3 x4 x5 x6 x7.#[x1,x2,x3,x4,x5,x6,x7]] → Hx_Scope[(x1; x2; x3; x4; x5; x6; x7;), #[x1,x2,x3,x4,x5,x6,x7]] ;
--[Fresh[x1,x2,x3,x4,x5,x6,x7,x8]]: C-UnravelScope_5[x1 x2 x3 x4 x5 x6 x7 x8.#[x1,x2,x3,x4,x5,x6,x7,x8]] → Hx_Scope[(x1; x2; x3; x4; x5; x6; x7; x8;), #[x1,x2,x3,x4,x5,x6,x7,x8]] ;
--[Fresh[x1,x2,x3,x4,x5,x6,x7,x8,x9]]: C-UnravelScope_5[x1 x2 x3 x4 x5 x6 x7 x8 x9.#[x1,x2,x3,x4,x5,x6,x7,x8,x9]] → Hx_Scope[(x1; x2; x3; x4; x5; x6; x7; x8; x9;), #[x1,x2,x3,x4,x5,x6,x7,x8,x9]] ;
--[Fresh[x1,x2,x3,x4,x5,x6,x7,x8,x9,x10]]: C-UnravelScope_5[x1 x2 x3 x4 x5 x6 x7 x8 x9 x10.#[x1,x2,x3,x4,x5,x6,x7,x8,x9,x10]] → Hx_Scope[(x1; x2; x3; x4; x5; x6; x7; x8; x9; x10;), #[x1,x2,x3,x4,x5,x6,x7,x8,x9,x10]] ;
+-[Fresh[x1]]: C-UnravelScope_1[x1 . #[x1]] → Hx_Scope[(x1;), #[x1]] ;
+-[Fresh[x1,x2]]: C-UnravelScope_2[x1 x2 . #[x1,x2]] → Hx_Scope[(x1; x2;), #[x1,x2]] ;
+-[Fresh[x1,x2,x3]]: C-UnravelScope_3[x1 x2 x3 . #[x1,x2,x3]] → Hx_Scope[(x1; x2; x3;), #[x1,x2,x3]] ;
+-[Fresh[x1,x2,x3,x4]]: C-UnravelScope_4[x1 x2 x3 x4 . #[x1,x2,x3,x4]] → Hx_Scope[(x1; x2; x3; x4;), #[x1,x2,x3,x4]] ;
+-[Fresh[x1,x2,x3,x4,x5]]: C-UnravelScope_5[x1 x2 x3 x4 x5 . #[x1,x2,x3,x4,x5]] → Hx_Scope[(x1; x2; x3; x4; x5;), #[x1,x2,x3,x4,x5]] ;
+-[Fresh[x1,x2,x3,x4,x5,x6]]: C-UnravelScope_6[x1 x2 x3 x4 x5 x6 . #[x1,x2,x3,x4,x5,x6]] → Hx_Scope[(x1; x2; x3; x4; x5; x6;), #[x1,x2,x3,x4,x5,x6]] ;
+-[Fresh[x1,x2,x3,x4,x5,x6,x7]]: C-UnravelScope_7[x1 x2 x3 x4 x5 x6 x7 . #[x1,x2,x3,x4,x5,x6,x7]] → Hx_Scope[(x1; x2; x3; x4; x5; x6; x7;), #[x1,x2,x3,x4,x5,x6,x7]] ;
+-[Fresh[x1,x2,x3,x4,x5,x6,x7,x8]]: C-UnravelScope_8[x1 x2 x3 x4 x5 x6 x7 x8 . #[x1,x2,x3,x4,x5,x6,x7,x8]] → Hx_Scope[(x1; x2; x3; x4; x5; x6; x7; x8;), #[x1,x2,x3,x4,x5,x6,x7,x8]] ;
+-[Fresh[x1,x2,x3,x4,x5,x6,x7,x8,x9]]: C-UnravelScope_9[x1 x2 x3 x4 x5 x6 x7 x8 x9 . #[x1,x2,x3,x4,x5,x6,x7,x8,x9]] → Hx_Scope[(x1; x2; x3; x4; x5; x6; x7; x8; x9;), #[x1,x2,x3,x4,x5,x6,x7,x8,x9]] ;
+-[Fresh[x1,x2,x3,x4,x5,x6,x7,x8,x9,x10]]: C-UnravelScope_10[x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 . #[x1,x2,x3,x4,x5,x6,x7,x8,x9,x10]] → Hx_Scope[(x1; x2; x3; x4; x5; x6; x7; x8; x9; x10;), #[x1,x2,x3,x4,x5,x6,x7,x8,x9,x10]] ;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 3. EXTRACT RULES
+// 3. COLLECT SYNTHESIZED ATTRIBUTE DEPENDENCIES
 
+// Map from attributes to the attributes they depend on.
+
+// DUMMY.
+C-MakeSynthesizedDependMap[DeclarationMap] :: Name2NamesMap ;
+C-MakeSynthesizedDependMap[{#DM}DM] → EmptyName2NamesMap ;
+
+/// // Generate attribute dependencies.
+/// 
+/// C-MakeSynthesizedDependMap[DeclarationMap] :: Name2NamesMap ;
+/// C-MakeSynthesizedDependMap[{#DM}DM] → {#DM} C-MakeSynthesizedDependMap1[NameSetList[{#DM} U-AllSortNames], EmptyName2NamesMap] ;
+/// 
+///     // Handle each sort name.
+/// 
+///     {$String : DeclarationMapEntry} C-MakeSynthesizedDependMap1[$List[$String], Name2NamesMap] :: Name2NamesMap ;
+///     {#DM} C-MakeSynthesizedDependMap1[(), #SDM] → Name2NamesClosure[#SDM] ;
+///     {#DM} C-MakeSynthesizedDependMap1[(#Sort; #Sorts), #SDM] → {#DM} C-MakeSynthesizedDependMap2[$[{#DM}Get[DeclarationMapEntry], #Sort, DME_NONE], #Sorts, #SDM] ;
+/// 
+///     // Handle the definition of the sort.
+/// 
+///     {$String : DeclarationMapEntry} C-MakeSynthesizedDependMap2[DeclarationMapEntry, $List[$String], Name2NamesMap] :: Name2NamesMap ;
+///     {#DM} C-MakeSynthesizedDependMap2[DME_SORT[#Defines, #Name, #Precs, #Wrapper, #IsMain], #Sorts, #SDM] → {#DM} C-MakeSynthesizedDependMap3[#Defines, #Name, #Sorts, #SDM] ;
+///     {#DM} C-MakeSynthesizedDependMap2[$[NotMatch,DME_SORT[#Defines, #Name, #Precs, #Wrapper, #IsMain], #_], #Sorts, #SDM] → {#DM} C-MakeSynthesizedDependMap1[#Sorts, #SDM] ;
+/// 
+///     // Handle all rules for the sort.
+/// 
+///     {$String : DeclarationMapEntry} C-MakeSynthesizedDependMap2[$List[Define], $String<!--SortName-->, $List[$String], Name2NamesMap] :: Name2NamesMap ;
+/// 
+///     {#DM} C-MakeSynthesizedDependMap3[(), #SortName, #Sorts, #SDM] → {#DM} C-MakeSynthesizedDependMap1[#Sorts, #SDM] ;
+/// 
+///     -[Fresh[dummy]]:
+///     {#DM} C-MakeSynthesizedDependMap3[(D_ABSTRACTION[a.#Define[a]]; #Defines), #SortName, #Sorts, #SDM]
+///     →
+///     {#DM} C-MakeSynthesizedDependMap3[(#Define[dummy]; #Defines), #SortName, #Sorts, #SDM]
+///     ;
+/// 
+///     {#DM} C-MakeSynthesizedDependMap3[(D_FORM[#Form, #Kind]; #Defines), #SortName, #Sorts, #SDM]
+///     →
+///     {#DM} C-MakeSynthesizedDependMap3[#Defines, #SortName, #Sorts, #SDM]
+///     ;
+/// 
+///     {#DM} C-MakeSynthesizedDependMap3[(D_SYNTHESIZES[#Name]; #Defines), #SortName, #Sorts, #SDM]
+///     →
+///     {#DM} C-MakeSynthesizedDependMap3[#Defines, #SortName, #Sorts, #SDM]
+///     ;
+/// 
+///     {#DM} C-MakeSynthesizedDependMap3[(D_NONE; #Defines), #SortName, #Sorts, #SDM]
+///     →
+///     {#DM} C-MakeSynthesizedDependMap3[#Defines, #SortName, #Sorts, #SDM]
+///     ;
+/// 
+///     {#DM} C-MakeSynthesizedDependMap3[(D_RULE[%rawHxRule⟪ #HxRulePrefix# #HxTopPattern# → #HxTopTerm# ⟫, #Name, #IsDataEquiv]; #Defines), #SortName, #Sorts, #SDM]
+///     →
+///     {#DM} C-MakeSynthesizedDependMap4[#HxTopPattern#, #HxTopTerm#, #Defines, #SortName, #Sorts, #SDM]
+///     ;
+/// 
+///     // Analyze rule.
+/// 
+///     {$String : DeclarationMapEntry} C-MakeSynthesizedDependMap4[HxTerm, HxTerm, $List[Define], $String<!--SortName-->, $List[$String], Name2NamesMap] :: Name2NamesMap ;
+///     {#DM} C-MakeSynthesizedDependMap4[#Pattern, Hx_TermNull, #Defines, #SortName, #Sorts, #SDM] → {#DM} C-SynthesizeAnalysis[#Pattern, #Defines, #SortName, #Sorts, #SDM] ;
+///     {#DM} C-MakeSynthesizedDependMap4[#Pattern, $[NotMatch,Hx_TermNull,#Contractum], #Defines, #SortName, #Sorts, #SDM] → {#DM} C-RewriteAnalysis[#Pattern, #Contractum, #Defines, #SortName, #Sorts, #SDM] ;
+/// 
+/// 	// Analyze a synthesis rule.
+/// 	{$String : DeclarationMapEntry} C-SynthesizeAnalysis[HxTerm, $List[Define], $String<!--SortName-->, $List[$String], Name2NamesMap] :: Name2NamesMap ;
+/// 	{#DM} C-SynthesizeAnalysis[#Term, #Defines, #SortName, #Sorts, #SDM]
+/// 	→
+/// 	{#DM} C-MakeSynthesizedDependMap3[#Defines, #SortName, #Sorts,
+/// 	  C-InsertSynthesizedDependencies[#SDM, C-AddTermInnerSynthesized[#Term, NoNames], C-AddTermTopSynthesized[#Term, NoNames]]]
+/// 	;
+/// 
+/// 	// Analyze a rewrite rule.
+/// 	{$String : DeclarationMapEntry} C-RewriteAnalysis[HxTerm, HxTerm, $List[Define], $String<!--SortName-->, $List[$String], Name2NamesMap] :: Name2NamesMap ;
+/// 	{#DM} C-RewriteAnalysis[#Pattern, #Contractum, #Defines, #SortName, #Sorts, #SDM]
+/// 	→
+/// 	{#DM} C-MakeSynthesizedDependMap3[#Defines, #SortName, #Sorts,
+/// 	  C-InsertSynthesizedDependencies[#SDM, C-AddTermSynthesized[#Pattern, NoNames], C-AddTermSynthesized[#Contractum, NoNames]]]
+/// 	;
+/// 
+/// 	C-InsertSynthesizedDependencies[Name2NamesMap, NameSet, NameSet] :: Name2NamesMap ;
+/// 	C-InsertSynthesizedDependencies[#SDM, #KeyNames, #NewMemberNames] → FoldNames[k ns . AddName2Names[ns, k, #NewMemberNames], #KeyNames, #SDM] ;
+
+// Helpers to skim top synthesized attributes off a term.
+
+C-AddTermTopSynthesized[HxTerm, NameSet] :: NameSet ;
+C-AddTermTopSynthesized[%rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #Names] → C-AddAttributeTopSynthesized[#HxAttributes#, #Names] ;
+C-AddTermTopSynthesized[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #Names] → C-AddAttributeTopSynthesized[#HxAttributes#, #Names] ;
+C-AddTermTopSynthesized[%rawHxTerm⟪ #HxLiteral# #HxAttributes# ⟫, #Names] → C-AddAttributeTopSynthesized[#HxAttributes#, #Names] ;
+C-AddTermTopSynthesized[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxLiteral# #HxAttributes# ⟫, #Names] → C-AddAttributeTopSynthesized[#HxAttributes#, #Names] ;
+C-AddTermTopSynthesized[%rawHxTerm⟪ variable #HxAttributes# ⟫, #Names] → C-AddAttributeTopSynthesized[#HxAttributes#, #Names] ;
+C-AddTermTopSynthesized[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# variable #HxAttributes# ⟫, #Names] → C-AddAttributeTopSynthesized[#HxAttributes#, #Names] ;
+C-AddTermTopSynthesized[%rawHxTerm⟪ #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫, #Names] → C-AddAttributeTopSynthesized[#HxAttributes#, #Names] ;
+C-AddTermTopSynthesized[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫, #Names] → C-AddAttributeTopSynthesized[#HxAttributes#, #Names] ;
+C-AddTermTopSynthesized[%rawHxTerm⟪ special #HxConcreteText# #HxAttributes# ⟫, #Names] → C-AddAttributeTopSynthesized[#HxAttributes#, #Names] ;
+C-AddTermTopSynthesized[Hx_TermNull, #Names] → #Names ;
+
+C-AddAttributeTopSynthesized[(), #Names] → #Names ;
+C-AddAttributeTopSynthesized[(%rawHxAttribute⟪ ↑ #HxAttributeName# #HxAttributeValue# ⟫; #Attributes), #Names] → AddName[C-AddAttributeTopSynthesized[#Attributes, #Names], #HxAttributeName#] ;
+C-AddAttributeTopSynthesized[(%rawHxAttribute⟪ ↓ #HxAttributeName# #HxAttributeValue# ⟫; #Attributes), #Names] → C-AddAttributeTopSynthesized[#Attributes, #Names] ;
+
+// Helpers to extract all inner synthesized attributes from a term.
+
+C-AddTermInnerSynthesized[HxTerm, NameSet] :: NameSet ;
+C-AddTermInnerSynthesized[%rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #Names] → Fold[s ns.C-AddScopeSynthesized[s, ns], #HxScopes#, #Names] ;
+C-AddTermInnerSynthesized[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #Names] → Fold[s ns.C-AddScopeSynthesized[s, ns], #HxScopes#, #Names] ;
+C-AddTermInnerSynthesized[%rawHxTerm⟪ #HxLiteral# #HxAttributes# ⟫, #Names] → #Names ;
+C-AddTermInnerSynthesized[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxLiteral# #HxAttributes# ⟫, #Names] → #Names ;
+C-AddTermInnerSynthesized[%rawHxTerm⟪ variable #HxAttributes# ⟫, #Names] → #Names ;
+C-AddTermInnerSynthesized[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# variable #HxAttributes# ⟫, #Names] → #Names ;
+C-AddTermInnerSynthesized[%rawHxTerm⟪ #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫, #Names] → Fold[t ns.C-AddTermSynthesized[t, ns], #HxTerms#, #Names] ;
+C-AddTermInnerSynthesized[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫, #Names] → Fold[t ns.C-AddTermSynthesized[t, ns], #HxTerms#, #Names] ;
+C-AddTermInnerSynthesized[%rawHxTerm⟪ special #HxConcreteText# #HxAttributes# ⟫, #Names] → #Names ;
+C-AddTermInnerSynthesized[Hx_TermNull, #Names] → #Names ;
+
+C-AddAttributeInnerSynthesized[$List[HxAttribute], NameSet] :: NameSet ;
+C-AddAttributeInnerSynthesized[(), #Names] → #Names ;
+C-AddAttributeInnerSynthesized[(%rawHxAttribute⟪ #HxAttributeKind# #HxAttributeName# ( #HxTerm# ) ⟫; #Attributes), #Names]
+→
+C-AddTermSynthesized[#HxTerm#, C-AddAttributeInnerSynthesized[#Attributes, #Names]]
+;
+C-AddAttributeInnerSynthesized[(%rawHxAttribute⟪ #HxAttributeKind# #HxAttributeName# { #HxTerm# } ⟫; #Attributes), #Names]
+→
+C-AddTermSynthesized[#HxTerm#, C-AddAttributeInnerSynthesized[#Attributes, #Names]]
+;
+C-AddAttributeInnerSynthesized[(%rawHxAttribute⟪ #HxAttributeKind# #HxAttributeName# { #HxTerm1# : #HxTerm2# } ⟫; #Attributes), #Names]
+→
+C-AddTermSynthesized[#HxTerm1#, C-AddTermSynthesized[#HxTerm2#, C-AddAttributeInnerSynthesized[#Attributes, #Names]]]
+;
+
+// Helpers to extract all synthetic attributes from a term.
+
+C-AddScopesSynthesized[$List[HxScope], NameSet] :: NameSet ;
+C-AddScopesSynthesized[#Scopes, #Names] → Fold[s ns.C-AddScopeSynthesized[s, ns], #Scopes, #Names] ;
+
+C-AddScopeSynthesized[HxScope, NameSet] :: NameSet ;
+C-AddScopeSynthesized[%rawHxScope⟪ [ #HxVariableList# ] #HxTerm# ⟫, #Names] → C-AddTermSynthesized[#HxTerm#, #Names] ;
+
+C-AddTermSynthesized[HxTerm, NameSet] :: NameSet ;
+C-AddTermSynthesized[%rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #Names] → C-AddScopesSynthesized[#HxScopes#, C-AddAttributeSynthesized[#HxAttributes#, #Names]] ;
+C-AddTermSynthesized[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #Names] → C-AddScopesSynthesized[#HxScopes#, C-AddAttributeSynthesized[#HxAttributes#, #Names]] ;
+C-AddTermSynthesized[%rawHxTerm⟪ #HxLiteral# #HxAttributes# ⟫, #Names] → C-AddAttributeSynthesized[#HxAttributes#, #Names] ;
+C-AddTermSynthesized[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxLiteral# #HxAttributes# ⟫, #Names] → C-AddAttributeSynthesized[#HxAttributes#, #Names] ;
+C-AddTermSynthesized[%rawHxTerm⟪ variable #HxAttributes# ⟫, #Names] → C-AddAttributeSynthesized[#HxAttributes#, #Names] ;
+C-AddTermSynthesized[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# variable #HxAttributes# ⟫, #Names] → C-AddAttributeSynthesized[#HxAttributes#, #Names] ;
+C-AddTermSynthesized[%rawHxTerm⟪ #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫, #Names] → Fold[t ns.C-AddTermSynthesized[t, ns], #HxTerms#, C-AddAttributeSynthesized[#HxAttributes#, #Names]] ;
+C-AddTermSynthesized[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫, #Names] → Fold[t ns.C-AddTermSynthesized[t, ns], #HxTerms#, C-AddAttributeSynthesized[#HxAttributes#, #Names]] ;
+C-AddTermSynthesized[%rawHxTerm⟪ special #HxConcreteText# #HxAttributes# ⟫, #Names] → C-AddAttributeSynthesized[#HxAttributes#, #Names] ;
+C-AddTermSynthesized[Hx_TermNull, #Names] → #Names ;
+
+C-AddAttributeSynthesized[HxAttributes, NameSet] :: NameSet ;
+C-AddAttributeSynthesized[#Attributes, #Names] → C-AddAttributeTopSynthesized[#Attributes, C-AddAttributeInnerSynthesized[#Attributes, #Names]] ;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// . 
+// 4. EXPAND SYNTHESIS RULES
+
+//
+//
+//
+
+C-Unsynthesize[DeclarationMap, Name2NamesMap<!--SynhesizedDependMap-->] :: DeclarationMap ;
+
+C-Unsynthesize[{#DM}DM, #SDM] → C-Unsynthesize1[NameSetList[{#DM}U-AllSortNames], {#DM}DM, #SDM, dm¹.dm¹] ;
+
+    // Fold updating of the DeclarationMap over each sort.
+
+    C-Unsynthesize1[$List[$String]<!--SortNames-->, DeclarationMap, Name2NamesMap<!--SynhesizedDependMap-->, dm¹::DeclarationMap.DeclarationMap] :: DeclarationMap ;
+    C-Unsynthesize1[(), #DM, #SDM, dm¹.#[dm¹]] → #[#DM] ;
+    C-Unsynthesize1[(#SortName; #SortNames), {#DM}DM, #SDM, dm¹.#[dm¹]]
+    →
+    C-Unsynthesize2[$[{#DM}Get[DeclarationMapEntry],#SortName,DME_NONE], #SortName, {#DM}DM, #SDM, dm¹.C-Unsynthesize1[#SortNames, dm¹, #SDM, dm2¹.#[dm2¹]]]
+    ;
+
+    // Process sort DeclarationMapEntries and skip (do not update) others.
+
+    C-Unsynthesize2[DeclarationMapEntry, $String<!--Sort-->, DeclarationMap, Name2NamesMap<!--SynhesizedDependMap-->, dm¹::DeclarationMap.DeclarationMap] :: DeclarationMap ;
+    C-Unsynthesize2[$[NotMatch,DME_SORT[#Defines, #Name, #Precs, #Wrapper, #IsMain], #_], #SortName, #DM, #SDM, dm¹.#[dm¹]] → #[#DM] ;
+    C-Unsynthesize2[DME_SORT[#Defines, #Name, #Precs, #Wrapper, #IsMain], #SortName, #DM, #SDM, dm¹.#[dm¹]]
+    →
+    C-Unsynthesize3[#Defines, #SortName, #DM, #SDM,  ds¹.U-ExtendDeclarationMap[#DM, #SortName, DME_SORT[ds¹, #Name, #Precs, #Wrapper, #IsMain], dm¹.#[dm¹]]]
+    ;
+
+    // Process one Define.
+
+    C-Unsynthesize3[$List[Define], $String<!--Sort-->, DeclarationMap, Name2NamesMap<!--SynhesizedDependMap-->, ds¹::$List[Define].DeclarationMap] :: DeclarationMap ;
+    C-Unsynthesize3[(), #SortName, #DM, #SDM, dm¹.#[dm¹]] → #[#DM] ;
+    -[Data[#Define,#Defines,#SortName,#DM,#SDM]]:
+    C-Unsynthesize3[(#Define; #Defines), #SortName, #DM, #SDM, dm¹.#[dm¹]]
+    →
+    C-Unsynthesize3[#Defines, #SortName, #DM, #SDM, dm¹.#[ Append[C-UnsynthesizeDefine[#Define, #SortName, #DM, #SDM], dm¹] ]]
+    ;
+
+    // Process the individual defininitions for the sort:
+
+    C-UnsynthesizeDefine[Define<!--Old-->, $String<!--Sort-->, DeclarationMap, Name2NamesMap<!--SynhesizedDependMap-->] :: $List[Define] ;
+
+    // - definitions under an abstraction are processed and then reabstracted;
+
+    C-UnsynthesizeDefine[D_ABSTRACTION[a.#Define[a]], #SortName, #DM, #SDM]
+    →
+    C-ReabstractDefine[a . C-UnsynthesizeDefine[#Define[a], #SortName, #DM, #SDM]]
+    ;
+	// Reabstract defines.
+	C-ReabstractDefine[a :: HxSortParam . $List[Define]] :: $List[Define] ;
+	C-ReabstractDefine[a . ()] → () ;
+	C-ReabstractDefine[a . (#Define[a]; #Defines[a])] → ( D_ABSTRACTION[a . #Define[a]] ; C-ReabstractDefine[a . #Defines[a]] ) ;
+
+    // - rules are analyzed (below);
+
+    C-UnsynthesizeDefine[D_RULE[%rawHxRule⟪ #HxRulePrefix# #HxTopPattern# → #HxTopTerm# ⟫, #SortName2, #IsDataEquiv], #SortName, #DM, #SDM]
+    →
+    C-UnsynthesizeDefine2[#HxRulePrefix#, #HxTopPattern#, #HxTopTerm#, #IsDataEquiv, #SortName, #DM, #SDM]
+    ;
+
+    // - other declarations are merely copied over.
+
+    C-UnsynthesizeDefine[D_FORM[#Form, #Kind], #SortName, #DM, #SDM] → (D_FORM[#Form, #Kind];) ;
+    C-UnsynthesizeDefine[D_SYNTHESIZES[#Name], #SortName, #DM, #SDM] → (D_SYNTHESIZES[#Name];) ;
+    C-UnsynthesizeDefine[D_NONE, #SortName, #DM, #SDM] → () ;
+
+    // Start analysis by keeping rewrite rules and pass synthesis rules:
+
+    C-UnsynthesizeDefine2[HxRulePrefix, HxTerm, HxTerm, Boolean<!--IsDataEquiv-->, $String<!--SortName-->, DeclarationMap, Name2NamesMap<!--SynhesizedDependMap-->] :: $List[Define] ;
+
+    C-UnsynthesizeDefine2[#RulePrefix, %rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) ↑ #HxAttributeName# ( #HxTerm# ) ⟫, Hx_TermNull, #IsDataEquiv, #SortName, #DM, #SDM]
+    →
+    C-UnsynthesizeDefine3[#HxConstructor#, #HxScopes#, #HxAttributeName#, #HxTerm#, #RulePrefix, C-AddScopesSynthesized[#HxScopes#, NoNames], #IsDataEquiv, #SortName, #DM, #SDM]
+    ;
+    C-UnsynthesizeDefine2[#RulePrefix, %rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( #HxScopes# ) ↑ #HxAttributeName# ( #HxTerm# ) ⟫, Hx_TermNull, #IsDataEquiv, #SortName, #DM, #SDM]
+    →
+    C-UnsynthesizeDefine3[#HxConstructor#, #HxScopes#, #HxAttributeName#, #HxTerm#, #RulePrefix, C-AddScopesSynthesized[#HxScopes#, NoNames], #IsDataEquiv, #SortName, #DM, #SDM]
+    ;
+    // TODO: Only handles SINGLE SYNTHESIZED VALUE ATTRIBUTE for now.
+
+    C-UnsynthesizeDefine2[#HxRulePrefix#, %rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, $[NotMatch,Hx_TermNull,#HxTopTerm#], #IsDataEquiv, #SortName, #DM, #SDM]
+    →
+    C-UnsynthesizeDefine4[#HxRulePrefix#, #HxConstructor#, #HxScopes#, #HxAttributes#, #HxTopTerm#, C-AddScopesSynthesized[#HxScopes#, NoNames], #IsDataEquiv, #SortName, #DM, #SDM]
+    ;
+    C-UnsynthesizeDefine2[#HxRulePrefix#, %rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, $[NotMatch,Hx_TermNull,#HxTopTerm#], #IsDataEquiv, #SortName, #DM, #SDM]
+    →
+    C-UnsynthesizeDefine4[#HxRulePrefix#, #HxConstructor#, #HxScopes#, #HxAttributes#, #HxTopTerm#, C-AddScopesSynthesized[#HxScopes#, NoNames], #IsDataEquiv, #SortName, #DM, #SDM]
+    ;
+
+    // SPLIT SYNTHESIS RULE INTO NEED GENERATION AND COLLECTION rules (if needed).
+
+    C-UnsynthesizeDefine3[$String<!--DataConstructor-->, $List[HxScope]<!--Subterms-->, $String<!--Attribute-->, HxTerm<!--NewValue-->, HxRulePrefix, NameSet<!--NeededSynthetic-->, Boolean<!--IsDataEquiv-->, $String<!--SortName-->, DeclarationMap, Name2NamesMap<!--SDM-->] :: $List[Define] ;
+
+    C-UnsynthesizeDefine3[#HxConstructor#, #HxScopes#, #HxAttributeName#, #HxTerm#, #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #DM, #SDM]
+    →
+    If[HasNames[#NeededSynthetic],
+      // Synthetic attribute propagation: first rule creates need, second collects results and generates attribute.
+      (
+        D_RULE[%rawHxRule⟪
+	  %HxConstructor« StringConcat["Need_", #HxAttributeName#] » ( #HxConstructor# ( %HxScopes« Map[s.C-UnsynthesizeScope[s, #NeededSynthetic, NoNames], #HxScopes#] » ) )
+	  →
+	  %HxConstructor« StringConcat["Collect_", #HxAttributeName#] » ( #HxConstructor# ( %HxScopes« Map[s.C-UnsynthesizeScope[s, NoNames, #NeededSynthetic], #HxScopes#] » ) )
+	⟫, #SortName, B_FALSE];
+	D_RULE[%rawHxRule⟪ #HxRulePrefix#
+	  %HxConstructor« StringConcat["Collect_", #HxAttributeName#] » ( #HxConstructor# ( #HxScopes# ) )
+	  →
+	  #HxConstructor# ( #HxScopes# ) ↑ #HxAttributeName# ( #HxTerm# )
+	⟫, #SortName, B_FALSE];
+      ),
+      // Simple synthetic attribute creation rule.
+      (
+        D_RULE[%rawHxRule⟪ #HxRulePrefix#
+	  %HxConstructor« StringConcat["Need_", #HxAttributeName#] » ( #HxConstructor# ( %HxScopes« Map[s.C-UnsynthesizeScope[s, NamesFrom[(#HxAttributeName#;)], NoNames], #HxScopes#] » ) )
+	  →
+	  #HxConstructor# ( #HxScopes# ) ↑ #HxAttributeName# ( #HxTerm# )
+	⟫, #SortName, B_FALSE];
+      )
+    ];
+
+    // SPLIT REGULAR RULE INTO NEED GENERATION AND REWRITE rules (if needed);
+
+    C-UnsynthesizeDefine4[HxRulePrefix, HxTerm<!--Pattern-->, HxTerm<!--Contractum-->, NameSet<!--SyntheticDependencies-->, Boolean<!--IsDataEquiv-->, $String<!--SortName-->, DeclarationMap, Name2NamesMap<!--SynhesizedDependMap-->] :: $List[Define] ;
+
+    C-UnsynthesizeDefine4[#HxRulePrefix#, #HxConstructor#, #HxScopes#, #HxAttributes#, #HxTopTerm#, #NeededSynthetic, #IsDataEquiv, #SortName, #DM, #SDM]
+    →
+    If[HasNames[#NeededSynthetic],
+      // Rewrite rule to first satisfy synthetic need.
+      (
+        D_RULE[%rawHxRule⟪
+	  #HxConstructor# ( %HxScopes« Map[s.C-UnsynthesizeScope[s, #NeededSynthetic, NoNames], #HxScopes#] » ) #HxAttributes#
+	  →
+	  %HxConstructor« StringConcat["Delayed_", #HxConstructor#] » ( %HxScopes« Map[s.C-UnsynthesizeScope[s, NoNames, #NeededSynthetic], #HxScopes#] » ) #HxAttributes#
+	⟫, #SortName, B_FALSE];
+        D_RULE[%rawHxRule⟪
+	  %HxConstructor« StringConcat["Delayed_", #HxConstructor#] » ( #HxScopes# ) #HxAttributes#
+	  →
+	  #HxTopTerm#
+	⟫, #SortName, B_FALSE];
+      ),
+      // Rule has no synthetic need.
+      ( D_RULE[%rawHxRule⟪ #HxRulePrefix# #HxConstructor# ( #HxScopes# ) #HxAttributes# → #HxTopTerm# ⟫, #SortName, #IsDataEquiv]; )
+    ];
+
+
+    // Make copy of term with modified synthetic attributes inside term.
+
+    C-UnsynthesizeScope[HxScope, NameSet<!--Attributes to remove-->, NameSet<!--Attributes to make needy-->] :: HxScope ;
+    C-UnsynthesizeScope[%rawHxScope⟪ [ #HxVariableList# ] #HxTerm# ⟫, #Remove, #Needy]
+    →
+    %rawHxScope⟪ [ #HxVariableList# ] %HxTerm« C-UnsynthesizeTerm[#HxTerm#, #Remove, #Needy] » ⟫
+    ;
+
+    C-UnsynthesizeTerm[HxTerm, NameSet<!--Attributes to remove-->, NameSet<!--Attributes to make needy-->] :: HxTerm ;
+
+    C-UnsynthesizeTerm[%rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #Remove, #Needy]
+    →
+    C-UnsynthesizeTerm2[#HxAttributes#,
+      as¹ . %rawHxTerm⟪ #HxConstructor# ( %HxScopes« Map[s.C-UnsynthesizeScope[s, #Remove, #Needy], #HxScopes#] » ) %HxAttributes«as¹» ⟫,
+      #Remove, #Needy]
+    ;
+
+    C-UnsynthesizeTerm[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #Remove, #Needy]
+    →
+    C-UnsynthesizeTerm2[#HxAttributes#,
+      as¹ . %rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( %HxScopes« Map[s.C-UnsynthesizeScope[s, #Remove, #Needy], #HxScopes#] » ) %HxAttributes«as¹» ⟫,
+      #Remove, #Needy]
+    ;
+
+    C-UnsynthesizeTerm[%rawHxTerm⟪ #HxLiteral# #HxAttributes# ⟫, #Remove, #Needy]
+    →
+    C-UnsynthesizeTerm2[#HxAttributes#, as¹ . %rawHxTerm⟪ #HxLiteral# %HxAttributes«as¹» ⟫, #Remove, #Needy]
+    ;
+
+    C-UnsynthesizeTerm[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxLiteral# #HxAttributes# ⟫, #Remove, #Needy]
+    →
+    C-UnsynthesizeTerm2[#HxAttributes#, as¹ . %rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxLiteral# %HxAttributes«as¹» ⟫, #Remove, #Needy]
+    ;
+
+    C-UnsynthesizeTerm[%rawHxTerm⟪ variable #HxAttributes# ⟫, #Remove, #Needy]
+    →
+    C-UnsynthesizeTerm2[#HxAttributes#, as¹ . %rawHxTerm⟪ variable %HxAttributes«as¹» ⟫, #Remove, #Needy]
+    ;
+
+    C-UnsynthesizeTerm[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# variable #HxAttributes# ⟫, #Remove, #Needy]
+    →
+    C-UnsynthesizeTerm2[#HxAttributes#, as¹ . %rawHxTerm⟪ #HxConstructor1# #HxRepeat1# variable %HxAttributes«as¹» ⟫, #Remove, #Needy]
+    ;
+
+    C-UnsynthesizeTerm[%rawHxTerm⟪ #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫, #Remove, #Needy]
+    →
+    C-UnsynthesizeTerm2[#HxAttributes#,
+      as¹ . %rawHxTerm⟪ #HxMetaVariable# [ %HxTerm« Map[t.C-UnsynthesizeTerm[t, #Remove, #Needy], #HxTerms#] » ] %HxAttributes«as¹» ⟫,
+      #Remove, #Needy]
+    ;
+
+    C-UnsynthesizeTerm[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫, #Remove, #Needy]
+    →
+    C-UnsynthesizeTerm2[#HxAttributes#,
+      as¹ . %rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxMetaVariable# [ %HxTerm« Map[t.C-UnsynthesizeTerm[t, #Remove, #Needy], #HxTerms#] » ] %HxAttributes«as¹» ⟫,
+      #Remove, #Needy]
+    ;
+
+    C-UnsynthesizeTerm[%rawHxTerm⟪ special #HxConcreteText# #HxAttributes# ⟫, #Remove, #Needy]
+    →
+    C-UnsynthesizeTerm2[#HxAttributes#, as¹ . %rawHxTerm⟪ special #HxConcreteText# %HxAttributes«as¹» ⟫, #Remove, #Needy]
+    ;
+
+    // Wrap with Need_* wrappers and clear out attribute list.
+
+    C-UnsynthesizeTerm[$List[HxAttributes], as¹::$List[HxAttributes] . HxTerm, NameSet<!--Attributes to remove-->, NameSet<!--Attributes to make needy-->] :: HxTerm ;
+
+    C-UnsynthesizeTerm2[(), as¹ . #[as¹], #Remove, #Needy] → #[()] ;
+
+    C-UnsynthesizeTerm2[(%rawHxAttribute⟪ ↑ #HxAttributeName# #HxAttributeValue# ⟫; #Attributes), as¹.#[as¹], #Remove, #Needy]
+    →
+    If[ContainsName[#Needy, #HxAttributeName#],
+      %rawHxTerm⟪ %HxConstructor« StringConcat["Need_", #HxAttributeName#] » ( %HxTerm« C-UnsynthesizeTerm2[#Attributes, as¹.#[as¹], #Remove, #Needy] » ) ⟫,
+      If[ContainsName[#Remove, #HxAttributeName#],
+        C-UnsynthesizeTerm2[#Attributes,  as¹.#[(%rawHxAttribute⟪ ↑ #HxAttributeName# #HxAttributeValue# ⟫; as¹)], #Remove, #Needy]
+        C-UnsynthesizeTerm2[#Attributes,  as¹.#[(%rawHxAttribute⟪ ↑ #HxAttributeName# #HxAttributeValue# ⟫; as¹)], #Remove, #Needy]
+    ]];
+    ;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// . 
+// 5. CONVERT RECURSIVE SCHEMES WITH ATTRIBUTES TO CRSX FORM
 
+//
+//
+//
+
+C-Crsxify[DeclarationMap] :: Text ;
+
+C-Crsxify[{#DM} DM]
+→ 
+%n⟪
+
+⟫;
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 6. MISCELLANEOUS
+
+//
+//
+//
 
 
 )] //Cook

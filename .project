@@ -3,6 +3,7 @@
 	<name>hacs</name>
 	<comment>JavaCC Nature</comment>
 	<projects>
+		<project>crsx</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
