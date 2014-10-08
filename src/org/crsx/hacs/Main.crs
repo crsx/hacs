@@ -1,0 +1,18 @@
+// Main.crs: MAIN PROGRAM FOR HACS GENERATION.
+// Copyright © 2014 Kristoffer H. Rose <krisrose@crsx.org>
+
+Main[(
+
+// Rules file syntax.
+$AddGrammar["org.crsx.hacs.HxRaw"];
+$AddGrammar["net.sf.crsx.text.Text"];
+
+// Sorts.
+$Use["org/crsx/hacs/Hx.crs"];
+$Use["net/sf/crsx/text/Text.crs"];
+
+// Modules.
+$Use["org/crsx/hacs/Prep.crs"];
+$Use["org/crsx/hacs/Cook.crs"];
+
+)] //Main
