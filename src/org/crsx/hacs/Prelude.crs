@@ -40,6 +40,14 @@ Boolean ::=( B_TRUE; B_FALSE; );
 If[B_TRUE,  #1, #2] → #1 ;
 If[B_FALSE, #1, #2] → #2 ;
 
+∀ a . IfThen[Boolean, ok :: Ok . $sort[a], ok :: Ok . $sort[a]] :: a ;
+IfThen[B_TRUE, ok.#1[ok], ok.#2[ok]] → #1[OK] ;
+IfThen[B_FALSE, ok.#1[ok], ok.#2[ok]] → #2[OK] ;
+
+Not[Boolean] :: Boolean ;
+Not[B_TRUE] → B_FALSE ;
+Not[B_FALSE] → B_TRUE ;
+
 And[Boolean, Boolean] :: Boolean ;
 And[B_TRUE, #] → # ;
 And[B_FALSE, #] → B_FALSE ;
@@ -60,12 +68,68 @@ Any[(B_FALSE; #s)] → All[#s] ;
 
 
 /////////////////////////////////////////////////////////////////////
+// 3. NUMERIC
+
+// For now just alias for system $Numeric.
+// SortAlias[Numeric, $Numeric];
+
+// Conversions.
+
+StringToNumeric[$String] :: $Numeric;
+-[Data[#]]: StringToNumeric[#] → $[Decimal, #] ;
+
+StringToNumericDefault[$String, $Numeric] :: $Numeric;
+-[Data[#]]: StringToNumericDefault[#, #default] → $[IfEmpty, #,  #default, $[Decimal, #]] ;
+
+NumericToString[$Numeric] :: $String;
+-[Data[#]]: NumericToString[#] → $[FormatNumber, #] ;
+
+StringToNumericWhen[Ok, $String] :: $Numeric;
+-[Data[#]]: StringToNumericWhen[OK, #] → $[Decimal, #] ;
+
+StringToNumericDefaultWhen[Ok, $String, $Numeric] :: $Numeric;
+-[Data[#]]: StringToNumericDefaultWhen[OK, #, #default] → $[IfEmpty, #,  #default, $[Decimal, #]] ;
+
+NumericToStringWhen[Ok, $Numeric] :: $String;
+-[Data[#]]: NumericToStringWhen[OK, #] → $[FormatNumber, #] ;
+
+// Comparisons.
+
+Less2[$Numeric, $Numeric] :: Boolean ;
+-[Data[#1,#2]]: Less2[#1, #2] → $[If, $[LessThan, #1, #2], B_TRUE, B_FALSE] ;
+
+Eq2[$Numeric, $Numeric] :: Boolean ;
+-[Data[#1,#2]]: Eq2[#1, #2] → $[If, $[Equal, $[Plus,#1,0], $[Plus,#2,0]], B_TRUE, B_FALSE] ;
+
+// Computations.
+
+Max2[$Numeric, $Numeric] :: $Numeric ;
+-[Data[#1,#2]]: Max2[#1, #2] → $[If, $[GreaterThan, #1, #2], #1, #2] ;
+
+Min2[$Numeric, $Numeric] :: $Numeric ;
+-[Data[#1,#2]]: Min2[#1, #2] → $[If, $[LessThan, #1, #2], #1, #2] ;
+
+Sum2[$Numeric, $Numeric] :: $Numeric ;
+-[Data[#1,#2]]: Sum2[#1, #2] → $[Plus, #1, #2] ;
+
+Neg[$Numeric] :: $Numeric ;
+-[Data[#]]: Neg[#] → $[Minus, 0, #] ;
+
+
+/////////////////////////////////////////////////////////////////////
 // 4. LIST
 
 // ∀ a . $List[a] ::= ( $Cons[a, $List[a]]; $Nil; );
-// $SortAlias[List, $List] ;
-//
+// ∀ a . $SortAlias[List[a], $List[a]] ;
 // Uses CRSX built-in lists directly. Note: CRSX has $Cons[a,b] == (a;b) and $Nil == ().
+
+Empty[$List[a]] :: Boolean ;
+Empty[()] → B_TRUE ;
+Empty[(#;##)] → B_FALSE ;
+
+Singleton[$List[a]] :: Boolean ;
+Singleton[()] → B_FALSE ;
+Singleton[(#;##)] → Empty[##] ;
 
 ∀ a b . IfEmpty[$List[a], b, b] :: b ;
 IfEmpty[(), #1, #2] → #1 ;
@@ -102,9 +166,28 @@ Concat[((#1; #s); #ss)] → (#1 ; Concat[(#s;#ss)]) ;
 Map[x.#[x], ()] → () ;
 Map[x.#[x], (#1; #s)] → (#[#1]; Map[x.#[x], #s]) ;
 
+∀ a b c . Map2[x::a y::b . $sort[c], $List[a], $List[b]] :: $List[c] ;
+Map2[x y.#[x,y], (), #ys] → () ;
+Map2[x y.#[x,y], #xs, ()] → () ;
+Map2[x y.#[x,y], (#x; #xs), (#y; #ys)] → (#[#x,#y]; Map2[x y.#[x,y], #xs, #ys]) ;
+
+∀ a b . MapIndex[x::a i::$Numeric . $sort[b], $List[a]] :: $List[b] ;
+MapIndex[x i.#[x,i], #list] → MapIndexFrom[x i.#[x,i], #list, 1] ;
+
+∀ a b . MapIndexFrom[x::a i::$Numeric . $sort[b], $List[a], $Numeric] :: $List[b] ;
+MapIndexFrom[x i.#[x,i], (), #i] → () ;
+-[Data[#i]]: MapIndexFrom[x i.#[x,i], (#1; #s), #i] → (#[#1,#i]; MapIndexFrom[x i.#[x,i], #s, $[Plus,#i,1]]) ;
+
 ∀ a b . MapWhen[ok::Ok x::a . $sort[b], $List[a]] :: $List[b] ;
 MapWhen[ok x.#[ok,x], ()] → () ;
 MapWhen[ok x.#[ok,x], (#1;#s)] → (#[OK,#1]; MapWhen[ok x.#[ok,x], #s]) ;
+
+∀ a b . MapIndexWhen[ok::Ok x::a i::$Numeric . $sort[b], $List[a]] :: $List[b] ;
+MapIndexWhen[ok x i.#[ok,x,i], #list] → MapIndexFromWhen[ok x i.#[ok,x,i], #list, 1] ;
+
+∀ a b . MapIndexFromWhen[ok::Ok x::a i::$Numeric . $sort[b], $List[a], $Numeric] :: $List[b] ;
+MapIndexFromWhen[ok x i.#[ok,x,i], (), #i] → () ;
+-[Data[#i]]: MapIndexFromWhen[ok x i.#[ok,x,i], (#1; #s), #i] → (#[OK,#1,#i]; MapIndexFromWhen[ok x i.#[ok,x,i], #s, $[Plus,#i,1]]) ;
 
 ∀ a b . Fold[x::a z::b.$sort[b], $List[a], b] :: b ;
 Fold[x z.#[x,z], (), #z] → #z ;
@@ -128,15 +211,20 @@ Fold2When[ok x y z.#[ok,x,y,z], (#x; #xs), (#y; #ys), #z] → #[OK, #x, #y, Fold
 Filter[n.#[n], ()] → () ;
 Filter[n.#[n], (#x; #xs)] → If[#[#x], (#x; Filter[n.#[n], #xs]), Filter[n.#[n], #xs]] ;
 
+∀ a . Filter2[Boolean, a, $List[a]] :: $List[a] ;
+Filter2[B_TRUE, #x, #xs] → (#x ; #xs) ;
+Filter2[B_FALSE, #x, #xs] → #xs ;
+
 ∀ a . FilterWhen[ok::Ok n::a.Boolean, $List[a]] :: $List[a] ;
 FilterWhen[ok n.#[ok,n], ()] → () ;
-FilterWhen[ok n.#[ok,n], (#x;#xs)] → If[#[OK,#x], (#x; FilterWhen[ok n.#[ok,n], #xs]), FilterWhen[ok n.#[ok,n], #xs]] ;
-
+FilterWhen[ok n.#[ok,n], (#x;#xs)] → Filter2[#[OK,#x], #x, FilterWhen[ok n.#[ok,n], #xs]] ;
 
 /////////////////////////////////////////////////////////////////////
 // 5. STRING
 
 // Note: Uses the internal $String - use Text for all user textual data.
+
+// Conversions.
 
 Stringify[$String] :: $String ;
 -[Data[#]]: Stringify[#] → $[Escape,#] ;
@@ -144,11 +232,27 @@ Stringify[$String] :: $String ;
 UnString[$String] :: $String ;
 -[Data[#]]: UnString[#] → $[Rescape, #] ;
 
-SameString[$String, $String] :: Boolean ;
--[Data[#1,#2]]: SameString[#1,#2] → $[If, $[Equal,#1,#2], B_TRUE, B_FALSE] ;
-
 Trim[$String] :: $String ;
 -[Data[#]]: Trim[#] → $[Trim, #] ;
+
+// Tests.
+
+SameString[$String, $String] :: Boolean ;
+-[Data[#1,#2]]: SameString[#1,#2] → $[If, $[Equal, $[:,#1,""], $[:,#2,""]], B_TRUE, B_FALSE] ;
+
+StringContainsWhen[Ok, $String, $String] :: Boolean ;
+-[Data[#,#sub]]: StringContainsWhen[OK, #, #sub] → $[If, $[Contains, #, #sub], B_TRUE, B_FALSE] ;
+
+StringStartsWithWhen[Ok, $String, $String] :: Boolean ;
+-[Data[#,#sub]]: StringStartsWithWhen[OK, #, #sub] → $[If, $[StartsWith, #, #sub], B_TRUE, B_FALSE] ;
+
+StringEndsWithWhen[Ok, $String, $String] :: Boolean ;
+-[Data[#,#sub]]: StringEndsWithWhen[OK, #, #sub] → $[If, $[EndsWith, #, #sub], B_TRUE, B_FALSE] ;
+
+StringEmpty[$String] :: Boolean ;
+-[Data[#]]: StringEmpty[#] → $[IfEmpty ,#, B_TRUE, B_FALSE] ;
+
+// Concatenation.
 
 StringConcat[$String, $String] :: $String;
 -[Data[#1,#2]]: StringConcat[#1, #2] → $[:,#1,#2] ;
@@ -168,7 +272,7 @@ StringJoin[(), #sep] → "" ;
 
 StringJoin1[$List[$String], $String, $String] :: $String;
 StringJoin1[(), #sep, #result] → #result ;
--[Data[#1,#sep,#result]]: StringJoin1[(#1;#s), #sep, #result] → $[:,#result,#sep,#1] ;
+-[Data[#1,#sep,#result]]: StringJoin1[(#1;#s), #sep, #result] → StringJoin1[#s, #sep, $[:,#result,#sep,#1]] ;
 
 ∀ a b . WrappedStringJoin[$List[$String], $String, $String, $String] :: $String;
 -[Discard[#open,#sep,#close]]: WrappedStringJoin[(), #open, #sep, #close] → "" ;
@@ -290,6 +394,24 @@ MapNamesWhen[ok x.#[ok,x], #NameSet] → MapWhen[ok x.#[ok,x], NameSetList[#Name
 FilterNamesWhen[ok::Ok n::$String.Boolean, NameSet] :: NameSet ;
 FilterNamesWhen[ok n.#[ok,n], #NameSet] → NAME_SET[FoldWhen[ok n ns.If[#[ok,n], StringConcat3When[ok, ns, n, ";"], ns], NameSetList[#NameSet], ";"]] ;
 
+NamesFrom[$List[$String]] :: NameSet ;
+NamesFrom[()] → NoNames ;
+NamesFrom[(#1; #s)] → AddName[NamesFrom[#s], #1] ;
+
+/////////////////////////////////////////////////////////////////////
+// . MAP FROM NAME TO NAME
+
+{$String : $String}
+NameMap ::=( N2N; );
+
+EmptyNameMap :: NameMap ;
+EmptyNameMap → {} N2N ;
+
+SetName[NameMap, $String, $String] :: NameMap ;
+-[Data[#Key,#Value]]: SetName[{#N2N}N2N, #Key, #Value] → {#N2N; #Key : #Value} N2N ;
+
+LookupName[NameMap, $String] :: $String ;
+-[Data[#Key]]: LookupName[{#N2N}N2N, #Key] → $[{#N2N}Get, #Key, ""] ;
 
 /////////////////////////////////////////////////////////////////////
 // 7. MAP FROM NAME TO NAMES
@@ -321,13 +443,19 @@ RemoveName2Name[Name2NamesMap, $String<!--Key-->, $String<!--Member-->] :: Name2
     {$String : NameSet} RemoveName2Name1[NameSet, $String<!--Key-->, $String<!--Member-->] :: Name2NamesMap;
     {#N2Ns} RemoveName2Name1[#OldMembers, #Key, #Member] → SetName2Names[{#N2Ns}N2Ns, #Key, RemoveName[#OldMembers, #Member]] ;
 
+LookupName2Names[Name2NamesMap, $String<!--Key-->] :: NameSet ;
+-[Data[#Key]]: LookupName2Names[{#N2Ns}N2Ns, #Key] → $[{#N2Ns}Get[NameSet], #Key, NoNames] ;
+
+CheckName2[Name2NamesMap, $String<!--Key-->] :: Boolean;
+-[Data[#Key]]: CheckName2[{#N2Ns}N2Ns, #Key] → $[{#N2Ns}IfDef, #Key, B_TRUE, B_FALSE] ;
+
 CheckName2Name[Name2NamesMap, $String<!--Key-->, $String<!--Member-->] :: Boolean;
 -[Data[#Key,#Member]]: CheckName2Name[{#N2Ns}N2Ns, #Key, #Member] → ContainsName[$[{#N2Ns}Get[NameSet], #Key, NoNames], #Member] ;
 
 // Build transitive closure.
 
 Name2NamesClosure[Name2NamesMap] :: Name2NamesMap ;
-Name2NamesClosure[{#N2Ns}N2Ns] → {#N2Ns} Name2NamesClosure2[$[{#N2Ns}Keys], B_FALSE] ;
+Name2NamesClosure[{#N2Ns}N2Ns] → {#N2Ns} Name2NamesClosure2[$[{#N2Ns}Keys[$String]], B_FALSE] ;
 
     {$String : NameSet} Name2NamesClosure2[$List[$String]<!--Keys-->, Boolean<!--Modified-->] :: Name2NamesMap ;
     {#N2Ns} Name2NamesClosure2[(), B_FALSE] → {#N2Ns} N2Ns ;
@@ -360,12 +488,12 @@ Name2NamesClosure[{#N2Ns}N2Ns] → {#N2Ns} Name2NamesClosure2[$[{#N2Ns}Keys], B_
 // 8. TEXT
 
 TextJoin[$List[Text], Text] :: Text;
--[Discard[#sep]]: TextJoin[()     , #sep] → %n⟪⟫ ;
--               : TextJoin[(#1;#s), #sep] → %n⟪« #1 »« TextJoin1[#s, #sep] »⟫ ;
+TextJoin[(), #sep] → %n⟪⟫ ;
+TextJoin[(#1;#s), #sep] → %n⟪« #1 »« TextJoin1[#s, #sep] »⟫ ;
 
 TextJoin1[$List[Text], Text] :: Text;
--[Discard[#sep]]: TextJoin1[()     , #sep] → %n⟪⟫ ;
--[Copy[#sep]]   : TextJoin1[(#1;#s), #sep] → %n⟪« #sep »« #1 »« TextJoin1[#s, #sep] »⟫ ;
+TextJoin1[(), #sep] → %n⟪⟫ ;
+TextJoin1[(#1;#s), #sep] → %n⟪« #sep »« #1 »« TextJoin1[#s, #sep] »⟫ ;
 
 WrappedTextJoin[$List[Text], Text, Text, Text] :: Text;
 -[Discard[#open,#sep,#close]]:
@@ -438,7 +566,10 @@ NumberToText[$Numeric] :: Text;
 -[Data[#text]]: AsTextLiteralWhen[OK, #text] → %n⟪†« #text »⟫ ;
 
 TextConcat[Text, Text] :: Text;
-TextConcat[#text1, #text2] → %n⟪« #text1 »« #text2 »⟫ ;
+TextConcat[#1, #2] → %n⟪« #1 »« #2 »⟫ ;
+
+TextConcat3[Text, Text, Text] :: Text;
+TextConcat3[#1, #2, #3] → %n⟪« #1 »« #2 »« #3 »⟫ ;
 
 ∀ a . MapTextConcat[x::a.Text, $List[a]] :: Text;
 MapTextConcat[x.#[x], ()] → %n⟪⟫ ;
@@ -470,10 +601,11 @@ MapTextWrap[x.#[x], (#1;#s), #Left, #Sep, #Right] → %n⟪« #Left »« #[#1] �
     -[Data[#loc,#mess]]: {#L}Special_error-2[#loc, #mess] → $[Error,$[:,"Error@",#loc,": ",#mess]] ; 
 
 ∀ a . {$String : $StringEntry}Special_message[Text] :: a;
--[Data[#text]]: {#L}Special_message[#text] → Special_message-2[ TextToString[#text]] ; 
+-[Data[#text]]: {#L}Special_message[#text] → Special_message-2[TextToString[#text]] ; 
     ∀ a . Special_message-2[$String] :: a;
     -[Data[#mess]]: {#L}Special_message-2[#mess] → $[Echo,#mess] ; 
 
+{$String : $StringEntrySort} Location ::=( LOC; );
 
 /////////////////////////////////////////////////////////////////////
 

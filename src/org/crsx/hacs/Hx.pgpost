@@ -191,7 +191,15 @@ token HX_CC_SKIP (HX_CC) ::= \u1 .
 
 <HxPPConcreteSpace> (HX_PP) ::= HX_PP_CONCRETE_SPACE$ .
 <HxPPConcreteWord> (HX_PP) ::= HX_PP_CONCRETE_WORD$ .
-<HxPPUnconcrete> (HX_PP) ::= HX_PP_UNCONCRETE$$:unwrap:{%%%PREFIX%%%HxScopeSortPrecRepeat} .
+<HxPPUnconcrete> (HX_PP) ::= HX_PP_UNCONCRETE$$:unwrap:{%%%PREFIX%%%HxScopeSortPrec} .
+
+// Standard parser additional top symbol for use from within PP.
+<HxScopeSortPrec> ::=
+  <HxScopeSort>:#S
+  ( {ScopeSortPrecBind}:hx HX_BINDS {{#S}} <HxVariable>!!!
+  | {ScopeSortPrec}:hx {{#S}} <HxFormPrec>
+  )
+.
 
 token HX_PP_CONCRETE_SPACE (HX_PP) ::= [' ',\t\r\n,\ub6]+ . // no comments but include special spacing marks
 token HX_PP_CONCRETE_WORD (HX_PP) ::= ~[' ',\t\r\n\ub6\u27e6\u27e7\u27e8\u27e9]+ .

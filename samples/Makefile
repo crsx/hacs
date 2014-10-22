@@ -8,7 +8,7 @@ CRSXROOT = $(abspath ../../crsx)
 HACS = ../src
 TEMP = ../temp
 BUILD = ../build
-include ../Hacs.mk
+include $(HACS)/Hacs.mk
 
 
 # STANDARD TARGETS.

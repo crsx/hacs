@@ -1,7 +1,10 @@
-// Hx.crs: BASIC ("SYNTAX-FREE") SORTS FOR HACS (.hx) SPECIFICATIONS.
+// Hx.crs: SORTS FOR HACS (.hx) SPECIFICATIONS.
 // Copyright © 2012,2014 Kristoffer H. Rose <krisrose@crsx.org>
 
 Hx[(
+
+// Has "raw" HACS terms as shared between Prep and Cook processing.
+// Must be kept consistent with HxRaw.pg generated from Hx.pgpre, Hx.pgpost, HxRaw.pgtemplate, Hx.pgnames.
 
 // Contents:
 // 1. Structure.
@@ -9,6 +12,7 @@ Hx[(
 // 3. Sort Declarations.
 // 4. Rules.
 // 5. Terms.
+
 
 // Grammar for translating syntax (in this document) to terms: %raw...⟪...⟫.
 $CheckGrammar["org.crsx.hacs.HxRaw"];
@@ -20,8 +24,6 @@ $Use["net/sf/crsx/text/Text.crs"];
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 1. STRUCTURE
-//
-// Shared between Prep and Cook processing.
 
 {$String : $StringEntrySort}
 HxModule ::=(
@@ -43,10 +45,16 @@ HxDeclaration ::=(
  %rawHxDeclaration⟪ token %HxTokenName«$String» | %HxRegExp«$List[HxRegExpChoice]» ; ⟫;
  %rawHxDeclaration⟪ fragment %HxTokenName«$String» | %HxRegExp«$List[HxRegExpChoice]» ; ⟫;
  %rawHxDeclaration⟪ attribute %HxAttributeKind«HxAttributeKind» %HxAttributeName«$String» %HxAttributeForm«HxAttributeForm» ; ⟫;
- %rawHxDeclaration⟪ sort %HxSortName«$String» %HxRepeat«HxRepeat» %HxSortAbstraction«HxSortAbstraction» ; ⟫;
+ %rawHxDeclaration⟪ %HxMainKind«HxMainKind» sort %HxSortName«$String» %HxRepeat«HxRepeat» %HxSortAbstraction«HxSortAbstraction» ; ⟫;
  %rawHxDeclaration⟪ %HxSortAlternatives«$List[HxSortAlternative]» ; ⟫;
  %rawHxDeclaration⟪ rule %HxRule«HxRule» ; ⟫;
  %rawHxDeclaration⟪ { %HxDeclarations«$List[HxDeclaration]» } ⟫;
+);
+
+{$String : $StringEntrySort}
+HxMainKind ::=(
+ %rawHxMainKind⟪ main ⟫;
+ %rawHxMainKind⟪ ⟫;
 );
 
 {$String : $StringEntrySort}
@@ -58,8 +66,6 @@ HxAttributeKind ::=(
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 2. TOKEN DECLARATIONS
-//
-// For Prep processing but always present.
 
 // HxRegExp == $List[HxRegExpChoice];
 
@@ -97,17 +103,15 @@ HxRegExpSimple ::=(
 
 {$String : $StringEntrySort}
 HxRegExpClass ::=(
- Hx-RegExpClassNot[HxRegExpClass];
- Hx-RegExpClassChar[$String, HxRegExpClass];
- Hx-RegExpClassRange[$String, $String, HxRegExpClass];
- Hx-RegExpClassDone;
+ Hx_RegExpClassNot[HxRegExpClass];
+ Hx_RegExpClassChar[$String, HxRegExpClass];
+ Hx_RegExpClassRange[$String, $String, HxRegExpClass];
+ Hx_RegExpClassDone;
 );
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 3. SORT DECLARATIONS
-//
-// For Prep processing but always present.
 
 {$String : $StringEntrySort}
 HxSortAbstraction ::=(
@@ -135,7 +139,8 @@ HxForm ::=(
 
 {$String : $StringEntrySort}
 HxScopeSort ::=(
- %rawHxBindersScopeSort⟪ [ %HxSort«HxSort» binds %HxVariable«$String» ] %HxBindersScopeSort« HxScopeSort » ⟫;
+ Hx_binds[HxSort, HxTerm<!--Variable-->, HxScopeSort];
+ ///%rawHxBindersScopeSort⟪ [ %HxSort«HxSort» binds %HxVariable«HxTerm» ] %HxBindersScopeSort«HxScopeSort» ⟫;
  %rawHxScopeSort⟪ %HxSort«HxSort» %HxRepeat«HxRepeat» [ %HxSubstituteSorts«$List[HxSubstituteSort]» ] ⟫;
 );
 
@@ -148,21 +153,30 @@ HxSort ::=(
 
 {$String : $StringEntrySort}
 HxSubstituteSort ::=(
- %rawHxSubstituteSort⟪ %HxVariable«$String» as %HxSort«HxSort» ⟫;
- %rawHxSubstituteSort⟪ %HxVariable«$String» ⟫;
+ Hx_SubstituteNoSort[HxTerm<!--Variable-->];
+ Hx_SubstituteSort[HxTerm<!--Variable-->, HxSort];
+ ///%rawHxSubstituteSort⟪ %HxVariable«HxTerm» as %HxSort«HxSort» ⟫;
+ ///%rawHxSubstituteSort⟪ %HxVariable«HxTerm» ⟫;
 );
+
 
 {$String : $StringEntrySort}
 HxParsedForm ::=(
- %rawHxPP⟪ %HxPPConcreteSpace«$String» %HxPP«HxParsedForm» ⟫;
- %rawHxPP⟪ %HxPPConcreteWord«$String» %HxPP«HxParsedForm» ⟫;
- %rawHxPP⟪ %HxPPUnconcrete«HxScopeSortPrecRepeat» %HxPP«HxParsedForm» ⟫;
- %rawHxPP⟪ ⟫;
+ Hx_ParsedFormSpace[$String, HxParsedForm];
+ Hx_ParsedFormWord[$String, HxParsedForm];
+ Hx_ParsedFormTerm[HxScopeSortPrec, HxParsedForm];
+ Hx_ParsedFormDone;
+ ///%rawHxPP⟪%HxPPConcreteSpace«$String»%HxPP«HxParsedForm» ⟫;
+ ///%rawHxPP⟪%HxPPConcreteWord«$String»%HxPP«HxParsedForm»⟫;
+ ///%rawHxPP⟪%HxPPUnconcrete«HxScopeSortPrec»%HxPP«HxParsedForm»⟫;
+ ///%rawHxPP⟪⟫;
 );
 
 {$String : $StringEntrySort}
-HxScopeSortPrecRepeat ::=(
- %rawHxScopeSortPrecRepeat⟪ %HxScopeSort«HxScopeSort» %HxFormPrec«$String» %HxRepeat«HxRepeat» ⟫;
+HxScopeSortPrec ::=(
+ Hx_ScopeSortPrecBind[HxScopeSort, HxTerm<!--Variable-->];
+ ///%rawHxScopeSortPrec⟪ %HxScopeSort«HxScopeSort» binds %HxVariable«HxTerm» ⟫;
+ %rawHxScopeSortPrec⟪ %HxScopeSort«HxScopeSort» %HxFormPrec«$String» ⟫;
 );
 
 {$String : $StringEntrySort}
@@ -172,11 +186,7 @@ HxAttributeForm ::=(
  %rawHxAttributeForm⟪ { %HxSort«HxSort» : %HxSort«HxSort» } ⟫;
 );
 
-{$String : $StringEntrySort}
-HxInheritedRef ::=(
- %rawHxInheritedRef⟪ ↓ %HxAttributeName«$String» ⟫;
-);
-
+// HxInheritedRefs ::= $List[$String]
 // HxSortNames == $List[HxSortName].
 
 
@@ -213,25 +223,32 @@ HxTerm ::=(
  %rawHxTerm⟪ %HxLiteral«$String» %HxAttributes«$List[HxAttribute]» ⟫;
  %rawHxTerm⟪ %HxConstructor«$String» %HxRepeat«HxRepeat» %HxLiteral«$String» %HxAttributes«$List[HxAttribute]» ⟫;
 
- %rawHxTerm⟪ %HxVariable«$String» %HxAttributes«$List[HxAttribute]» ⟫;
- %rawHxTerm⟪ %HxConstructor«$String» %HxRepeat«HxRepeat» %HxVariable«$String» %HxAttributes«$List[HxAttribute]» ⟫;
+ Hx_VariableUse[HxTerm<!--Variable-->, $List[HxAttribute]];
+ Hx_VariableUseSorted[$String, HxRepeat, HxTerm<!--Variable-->, $List[HxAttribute]];
+ ///%rawHxTerm⟪ %HxVariable«HxTerm» %HxAttributes«$List[HxAttribute]» ⟫;
+ ///%rawHxTerm⟪ %HxConstructor«$String» %HxRepeat«HxRepeat» %HxVariable«HxTerm» %HxAttributes«$List[HxAttribute]» ⟫;
 
  %rawHxTerm⟪ %HxMetaVariable«$String» [ %HxTerms«$List[HxTerm]» ] %HxAttributes«$List[HxAttribute]» ⟫;
  %rawHxTerm⟪ %HxConstructor«$String» %HxRepeat«HxRepeat» %HxMetaVariable«$String» [ %HxTerms«$List[HxTerm]» ] %HxAttributes«$List[HxAttribute]» ⟫;
  
- %rawHxTerm⟪ %HxVariable«$String» %HxConcreteText«Text» %HxAttributes«$List[HxAttribute]» ⟫;
+ Hx_Special[HxTerm<!--Variable-->, Text, $List[HxAttribute]] ;
+ Hx_Unparsed[$String<!--Unparsed-->, $List[HxAttribute]] ;
+ Hx_UnparsedSorted[$String<!--Sort-->, HxRepeat, $String<!--Unparsed-->, $List[HxAttribute]];
+ ///TODO: parsed form?
 
- Hx_TermNull; // Special value used for optional terms.
+ Hx_NullTerm; // Special value used for optional terms.
+ x; // Allow syntactic variables!
 );
 
 {$String : $StringEntrySort}
 HxScope ::=(
- %rawHxScope⟪ [ %HxVariableList«$List[HxTerm]» ] %HxTerm«HxTerm» ⟫;
+ %rawHxScope⟪ [ %HxVariableList«$List[HxTerm]» ] %HxTerm«HxTerm» ⟫ ;
 );
 
 {$String : $StringEntrySort}
 HxAttribute ::=(
  %rawHxAttribute⟪ %HxAttributeKind«HxAttributeKind» %HxAttributeName«$String» %HxAttributeValue«HxAttributeValue» ⟫;
+ %rawHxAttribute⟪ %HxAttributeKind«HxAttributeKind» %HxMetaVariable«$String» ⟫;
 );
 
 {$String : $StringEntrySort}
@@ -240,6 +257,7 @@ HxAttributeValue ::=(
  %rawHxAttributeValue⟪ { %HxTerm«HxTerm» } ⟫;
  %rawHxAttributeValue⟪ { %HxTerm«HxTerm» : %HxTerm«HxTerm» } ⟫;
  %rawHxAttributeValue⟪ { ¬ %HxTerm«HxTerm» } ⟫;
+ %rawHxAttributeValue⟪ { : %HxMetaVariable«$String» } ⟫;
 );
 
 

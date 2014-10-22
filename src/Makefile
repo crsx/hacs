@@ -1,40 +1,123 @@
 # Makefile for compiling hacs/src.
-
-
-# SETUP.
-
-#TODO: Eliminate this hard-coding once crsx package exists...
-CRSXROOT = $(abspath ../../../develop/crsx)
-HACS = .
-TEMP = ../temp
-BUILD = ../build
-include ../Hacs.mk
+#
+# Generate and install all HACS runtime artifacts.
+#
+# Usage:
+#   make
+#   make USR=/usr/local install
+#
+# Environment variables:
+# - USR - root of installation (/usr/local by default).
 
 
 # STANDARD TARGETS.
 
 .PHONY: all clean realclean install
-all::
-clean::; rm -f *.tmp *~ ./#* *.log *~
-realclean:: clean
-install::
+all ::
+clean ::; rm -f *.tmp *~ ./#* *.log *~
+realclean :: clean
+install ::
+
+
+# SETUP.
+
+DESTDIR = $(abspath .)
+USR = $(DESTDIR)/usr/local
+
+# Environment.
+include Env.mk
+
+# Hacs.mk setup
+HACSJAR = $(abspath .)
+HACSLIB = $(USR)/lib/hacs
+HACSBIN = $(USR)/bin
+HACSSHARE = $(USR)/share/hacs
+BUILD = $(abspath build)
+CRSXJAR = $(abspath ../lib/crsx.jar)
+include Hacs.mk
+#
+realclean ::
+	rm -fr build
+
+# Install setup.
+JAVAJARDIR = $(USR)/share/java
+
+
+# HACS MASTER FILE LIST
+
+# All CRSX rules of HACS.
+RULES = \
+	org/crsx/hacs/Prelude.crs \
+	org/crsx/hacs/Util.crs \
+	org/crsx/hacs/Prep.crs \
+	org/crsx/hacs/Cook.crs \
+	org/crsx/hacs/Main.crs \
+	org/crsx/hacs/MakeRun.crs
 
 
 # HACS BUILD DEPENDENCIES.
 
-# Get ball rolling...
-all:: $(BUILD)/org/crsx/hacs/HxRaw.class
+# Version.
 
-# Generic cleanup.
-clean::
-	@set -x && rm -fr $(BUILD)
+all :: $(BUILD)/org/crsx/hacs/VERSION
 
-# Raw parser for .hx files (as used by PrepPG).
-$(TEMP)/org/crsx/hacs/HxRaw.pgtemplate: $(HACS)/org/crsx/hacs/HxRaw.pgtemplate
-	@set -x && $(NOEXEC) mkdir -p $(dir $@) && $(NOEXEC) cp -f $< $@
-$(TEMP)/org/crsx/hacs/HxRaw.jj: $(TEMP)/org/crsx/hacs/HxRaw.pg
-$(TEMP)/org/crsx/hacs/HxRaw.java: $(TEMP)/org/crsx/hacs/HxRaw.jj
-$(BUILD)/org/crsx/hacs/HxRaw.class: $(TEMP)/org/crsx/hacs/HxRaw.java
+$(BUILD)/org/crsx/hacs/VERSION: ../VERSION
+	mkdir -p $(BUILD)/org/crsx/hacs
+	cp ../VERSION $(BUILD)/org/crsx/hacs
+
+# Hack to set HACSVERSION and HACSMAJORVERSION for this Makefile.
+$(eval HACS$(shell cat ../VERSION))
+$(eval HACSMAJOR$(basename $(shell cat ../VERSION)))
+
+# Jar has classes and resources...
+
+all :: $(BUILD)/share/java/hacs.jar
+install ::
+	cp hacs-$(HACSMAJORVERSION).jar $(JAVAJARDIR)
+	cd $(JAVAJARDIR) && $(NOEXEC) ln -s hacs-$(HACSMAJORVERSION).jar hacs.jar
+
+$(BUILD)/share/java/hacs.jar: \
+		$(BUILD)/org/crsx/hacs/HxRaw.class \
+		$(BUILD)/org/crsx/hacs/VERSION \
+
+	rm -f $(BUILD)/share/java/hacs-$(HACSMAJORVERSION).jar $(BUILD)/share/java/hacs.jar
+	mkdir -p $(BUILD)/org/crsx/hacs $(BUILD)/share/java/hacs.jar
+	cp $(RULES) $(BUILD)/org/crsx/hacs
+	cd $(BUILD) && classes=$$($(NOEXEC) find org -name '*.class') && $(NOEXEC) $(JAR) cf $(BUILD)/share/java/hacs-$(HACSMAJORVERSION).jar $(RULES) $$classes
+	cd $(BUILD)/share/java && $(NOEXEC) ln -s hacs-$(HACSMAJORVERSION).jar hacs.jar
+
+realclean ::
+	rm -f *.jar
+
+# HACS "raw" parser bootstrapping dependencies.
+
+$(BUILD)/org/crsx/hacs/HxRaw.pgtemplate: org/crsx/hacs/HxRaw.pgtemplate
+	mkdir -p $(BUILD)/org/crsx/hacs
+	cp org/crsx/hacs/HxRaw.pgtemplate $(BUILD)/org/crsx/hacs
+
+$(BUILD)/org/crsx/hacs/HxRaw.jj: $(BUILD)/org/crsx/hacs/HxRaw.pg
+$(BUILD)/org/crsx/hacs/HxRaw.java: $(BUILD)/org/crsx/hacs/HxRaw.jj
+$(BUILD)/org/crsx/hacs/HxRaw.class: $(BUILD)/org/crsx/hacs/HxRaw.java
+
+# Rulecompiler.
+
+all :: $(BUILD)/bin/crsxc
+install :: $(BUILD)/bin/crsxc
+	mkdir -p $(HACSBIN)
+	cp -a $(BUILD)/bin/crsxc $(HACSBIN)
+
+crsx-rulecompiler/net/sf/crsx/compiler/c/build/crsxc : $(CRSXJAR)
+	rm -fr crsx-rulecompiler
+	mkdir -p crsx-rulecompiler
+	cd crsx-rulecompiler && $(NOEXEC) $(JAR) xvf $(CRSXJAR) net/sf/crsx/compiler
+	$(MAKE) -C crsx-rulecompiler/net/sf/crsx/compiler/c
+
+$(BUILD)/bin/crsxc : crsx-rulecompiler/net/sf/crsx/compiler/c/build/crsxc
+	mkdir -p $(BUILD)/bin
+	cp -a crsx-rulecompiler/net/sf/crsx/compiler/c/build/crsxc $(BUILD)/bin/crsxc
+
+realclean ::
+	rm -fr crsx-rulecompiler
 
 
 ### # Distribution.

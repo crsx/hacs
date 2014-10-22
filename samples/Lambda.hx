@@ -3,26 +3,25 @@ module org.crsx.hacs.samples.Lambda {
 // Variables and type variables.
 
 token NAME | [a-z] [a-z0-9_]* ;
-sort V | symbol ⟦⟨NAME⟩⟧ ;
-sort TV | symbol ⟦⟨NAME⟩⟧ ;
 
 // Simple types.
 
 sort T
 | ⟦ ⟨T@2⟩ → ⟨T@1⟩ ⟧@1
-| ⟦ ⟨TV⟩ ⟧@2
+| symbol ⟦ ⟨NAME⟩ ⟧@2
 | sugar ⟦ (⟨T#⟩) ⟧@2 → T#
 ;
 
 // Lambda expressions.
 
 main sort E
-| ⟦ λ ⟨V binds x⟩ : ⟨T⟩ . ⟨E[x as E]@1⟩ ⟧@1
+| ⟦ λ ⟨NAME binds x⟩ : ⟨T⟩ . ⟨E[x as E]@1⟩ ⟧@1
 | ⟦ ⟨E@2⟩ $ ⟨E@1⟩ ⟧@1
 | ⟦ ⟨E@2⟩ ⟨E@3⟩ ⟧@2
-| ⟦ ⟨V⟩ ⟧@3
+| symbol ⟦ ⟨NAME⟩ ⟧@3
 | ⟦ "⟨NAME⟩" ⟧@3
 | sugar ⟦ ( ⟨E#⟩ ) ⟧@3 → E#
+| Explicit( E, [E binds x]E[x as E] )
 ;
 
 // Reduction rules.
@@ -33,7 +32,7 @@ main sort E
 // Type analysis.
 
 attribute ↑t(T);
-attribute ↓te{TV : T};
+attribute ↓te{T : T};
 
 sort E;
 | scheme ⟦ TE1 ⟨E⟩ ⟧ ↓te ;
@@ -45,7 +44,7 @@ sort E;
 | scheme TE2(E) ↓te ;
 TE2(⟦ λ x : ⟨T#tx⟩ . ⟨E#e[x]⟩ ⟧) → ⟦ λ x : ⟨T#tx⟩ . ⟨E TE2(E#e[x]) ↓te{x:#tx} ⟩ ⟧ ;
 TE2(⟦ ⟨E#f⟩ ⟨E#a⟩ ⟧) → ⟦ ⟨E TE2(E#f)⟩ ⟨E TE2(E#a)⟩ ⟧ ;
-TE2(⟦ x ⟧) ↓te{x : #t} → ⟦ x ⟧ ↑t(#tx) ;
+TE2(⟦ x ⟧) ↓te{x : #t} → ⟦ x ⟧ ↑t(#t) ;
 
 sort E;
 ⟦ λ x : ⟨T#tx⟩ . ⟨E#e[x] ↑t(#te)⟩ ⟧ ↑t(⟦ ⟨T#tx⟩ → ⟨T#te⟩ ⟧) ;
@@ -56,5 +55,8 @@ sort T;
 
 // Type unification: test that #1 and #2 unify, and then return #3.
 Unify(#1,#2,#3) → #3 ;
+
+sort E | scheme Main(E) ;
+Main(#) → # ;
 
 }

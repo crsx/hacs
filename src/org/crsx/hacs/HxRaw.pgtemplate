@@ -76,13 +76,15 @@ inject[<HxEmbedded>] ::=  '%<PRODUCTION_NAME>', '', '' .
 
 <HxTerms> ::= {$Cons} <HxTerm> (HX_COMMA <HxTerms> | {$Nil}) .
 
-<HxAttribute> ::= {Attribute}:hx <HxAttributeKind> <HxAttributeName> <HxAttributeValue> .
+<HxAttribute> ::= <HxAttributeKind>:#kind ( {Attribute}:hx {{#kind}} <HxAttributeName> <HxAttributeValue> | {MetaAttribute}:hx {{#kind}} <HxMetaVariable> ) .
 
 <HxAttributeValue> ::= 
   {AttributeValue}:hx HX_LPAREN <HxTerm> HX_RPAREN
-| HX_LBRACE ( <HxTerm>:# ( {AttributeKeyValue}:hx {{#}} HX_COLON <HxTerm> HX_RBRACE
-            | {AttributeKey}:hx {{#}} HX_RBRACE )
-            | {AttributeNotKey}:hx HX_NOT <HxTerm> HX_RBRACE )
+| HX_LBRACE
+    ( <HxTerm>:# ( {AttributeKeyValue}:hx {{#}} HX_COLON <HxTerm> | {AttributeKey}:hx {{#}} )
+    | {AttributeCatchAll}:hx HX_COLON <HxMetaVariable>
+    | {AttributeNotKey}:hx HX_NOT <HxTerm> )
+  HX_RBRACE
 .
 
 // Use of embedded concrete text.

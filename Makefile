@@ -15,8 +15,8 @@ all install ::
 	$(MAKE) -C doc $@
 
 clean realclean gitclean ::
-	$(MAKE) -C src     $@
-	$(MAKE) -C doc     $@
+	$(MAKE) -C src $@
+	$(MAKE) -C doc $@
 	$(MAKE) -C samples $@
 
 src/% build/% temp/% : all
@@ -27,5 +27,3 @@ samples/% : all
 
 doc/% : .
 	$(MAKE) -C doc ../$@
-
-### TODO: packaging and installation...

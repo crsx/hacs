@@ -123,16 +123,16 @@ $ ^textcolor{blue}{^texttt{./first.run --action=Compile \}}
 
 \begin{manual}[grammar structure]\label{man:structure}
   A \HAX compiler is specified as a single \emph{.hx} module file with the following structure:
-\begin{code}[commandchars=\\\{\}]
-module {\it\color{blue}modulename}
-\{
-  // {\it\color{blue}Lexical Analysis}
-  // {\it\color{blue}Syntax Analysis}
-  // {\it\color{blue}Semantic Analysis}
-  // {\it\color{blue}Code Generator}
-  // {\it\color{blue}Main}
-\}
-\end{code}
+\begin{hacs}[texcl]
+module //\text{\it\color{blue}modulename}
+{
+  //\text{\it\color{blue}Lexical Analysis}
+  //\text{\it\color{blue}Syntax Analysis}
+  //\text{\it\color{blue}Semantic Analysis}
+  //\text{\it\color{blue}Code Generator}
+  //\text{\it\color{blue}Main}
+}
+\end{hacs}
   the \emph{modulename} should be a string with a Java style fully qualified class name, where the
   last component is capitalized, like \verb|"net.sf.crsx.samples.gentle.First"| in the example
   above. The individual sections specify the compiler, and the possible contents is documented in
@@ -1275,11 +1275,11 @@ sort ThenB | ⟦ then ⟨B⟩ ⟧;
 Some additional examples. \emph{Note: still need to be worked through.}
 
 \begin{example}[\emph{crsx/samples/gentle/bool.hx}]\leavevmode
-\inputhacs{../samples/bool.hx}
+\inputhacs{../samples/Bool.hx}
 \end{example}
 
 \begin{example}[\emph{crsx/samples/gentle/deriv.hx}]\leavevmode
-\inputhacs{../samples/deriv.hx}
+\inputhacs{../samples/Deriv.hx}
 \end{example}
 
 

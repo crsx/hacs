@@ -3,12 +3,15 @@
 
 Main[(
 
+// Simple main rule system that establishes all needed parsers and sorts
+// and load all HACS modules.
+
 // Rules file syntax.
 $AddGrammar["org.crsx.hacs.HxRaw"];
 $AddGrammar["net.sf.crsx.text.Text"];
 
 // Sorts.
-$Use["org/crsx/hacs/Hx.crs"];
+$Use["org/crsx/hacs/HxRaw.crs"];
 $Use["net/sf/crsx/text/Text.crs"];
 
 // Modules.

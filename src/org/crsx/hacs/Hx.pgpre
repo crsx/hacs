@@ -21,12 +21,13 @@
 
 | HX_ATTRIBUTE:hx <HxAttributeKind> <HxAttributeName> <HxAttributeForm> HX_SEMI
 
-| {sort}:hx (HX_MAIN:hx|{no-main}:hx) HX_SORT <Store_HxSortName> <HxRepeat> <HxSortAbstraction> HX_SEMI
+| {sort}:hx <HxMainKind> HX_SORT <Store_HxSortName> <HxRepeat> <HxSortAbstraction> HX_SEMI
 | {anonymous}:hx <HxSortAlternatives> HX_SEMI
 | (HX_RULE)? {rule}:hx <HxRule> HX_SEMI
 | {nestedDeclarations}:hx HX_LBRACE <HxDeclarations> HX_RBRACE
 .
 
+<HxMainKind> ::= ( HX_MAIN:hx | {no-main}:hx ).
 <HxAttributeKind> ::= ( {AttributeKindUp}:hx HX_UP | {AttributeKindDown}:hx HX_DOWN ).
 
 
@@ -101,22 +102,14 @@
 
 <HxBindersScopeSorts> ::= {$Cons} <HxBindersScopeSort> (HX_COMMA <HxBindersScopeSorts> | {$Nil}) .
 
-<HxBindersScopeSort> ::=
-  HX_LBRACKET <HxBindersScopeSortInside>
-| {ScopeSort}:hx <HxSort> <HxRepeat> (HX_LBRACKET <HxSubstituteSorts> HX_RBRACKET | {$Nil})
-.
+<HxBindersScopeSort> ::= HX_LBRACKET <HxBindersScopeSortInside> | <HxScopeSort> .
+<HxBindersScopeSortInside> ::= <HxSort>:#Sort HX_BINDS:hx {{#Sort}} <HxVariable>!!! <HxBindersScopeSortInsideTail> .
+<HxBindersScopeSortInsideTail> ::= HX_COMMA <HxBindersScopeSortInside> | HX_RBRACKET <HxBindersScopeSort> .
 
-<HxBindersScopeSortInside> ::=
-  <HxSort>:#Sort HX_BINDS:hx {{#Sort}} <HxVariable>!!! <HxBindersScopeSortInsideTail>
-.
-
-<HxBindersScopeSortInsideTail> ::=
-  HX_COMMA <HxBindersScopeSortInside>
-| HX_RBRACKET <HxBindersScopeSort>
-.
+<HxScopeSort> ::= {ScopeSort}:hx <HxSort> <HxRepeat> (HX_LBRACKET <HxSubstituteSorts> HX_RBRACKET | {$Nil}) .
 
 <HxSubstituteSorts> ::= {$Cons} <HxSubstituteSort> ( HX_COMMA <HxSubstituteSorts> | {$Nil} ) | {$Nil}  . 
-<HxSubstituteSort> ::= <HxVariable>!!:#v ( {SubstituteSort}:hx {{#v}} HX_AS <HxSort> | {SubstituteNoSort}:hx {{#v}} ) .
+<HxSubstituteSort> ::= <HxVariable>!!!:#v ( {SubstituteSort}:hx {{#v}} HX_AS <HxSort> | {SubstituteNoSort}:hx {{#v}} ) .
 
 <HxSort> ::= {Sort}:hx <HxSimpleSort> <HxSimpleSorts> .
 
@@ -130,14 +123,6 @@
 <HxMetaVariables> ::= {$Cons} <HxMetaVariable> {$Nil} | {$Nil} .
 <HxSortParam> ::= <HxVariable>! .
 
-<HxScopeSortPrecRepeat> ::= {ScopeSortPrecRepeat}:hx <HxScopeSort> <HxFormPrec> <HxRepeat> .
-<HxScopeSort> ::=
-  <HxSort>:#Sort
-   ( HX_BINDS:hx {{#Sort}} <HxVariable>!!!
-   | {ScopeSort}:hx {{#Sort}} <HxRepeat> (HX_LBRACKET <HxSubstituteSorts> HX_RBRACKET | {$Nil})
-   )
-.
-
 <HxFormPrec> ::= ( HX_AT <HxNatural> | {"0"} ) .
 
 <HxInheritedRefs> ::=( {$Cons} <HxInheritedRef> <HxInheritedRefs> | {$Nil} ).
@@ -146,7 +131,7 @@
 
 //// RULES.
 
-<HxRule> ::= {Rule}:hx <HxRulePrefix> <HxTopPattern> ( HX_ARROW <HxTopTerm> | {TermNull}:hx ) .
+<HxRule> ::= {Rule}:hx <HxRulePrefix> <HxTopPattern> ( HX_ARROW <HxTopTerm> | {NullTerm}:hx ) .
 
 <HxRulePrefix> ::= {RulePrefix}:hx <HxRulePriority> ( HX_LBRACKET (<HxRuleOptions> | {$Nil}) HX_RBRACKET | {$Nil} ) .
 

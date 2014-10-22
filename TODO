@@ -1,3 +1,1 @@
-* User parser should omit 'scheme' syntax.
-* Introduce special 'semantic' data syntax omitted from user parser.
 * Lionel's lexical state syntax?

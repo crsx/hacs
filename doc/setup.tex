@@ -40,7 +40,7 @@
 \newtheorem{practice}[theorem]{Practice}
 \newtheorem{notation}[theorem]{Notation}
 \newtheorem{manual-body}[theorem]{Manual}
-\newenvironment{manual}{\footnotesize\begin{manual-body}}{\end{manual-body}}
+\newenvironment{manual}{\small\begin{manual-body}}{\end{manual-body}}
 \newtheorem{invariant}[theorem]{Invariant}
 \newtheorem{requirements}[theorem]{Requirements}
 \newtheorem{limitations}[theorem]{Limitations}
@@ -56,43 +56,75 @@
 \usepackage{fancyvrb}
 \CustomVerbatimEnvironment{code}{Verbatim}{tabsize=4,fontsize=\small,numberblanklines=false,xleftmargin=\parindent}
 \CustomVerbatimCommand{\inputcode}{VerbatimInput}{tabsize=4,fontsize=\footnotesize,numbers=left,numberblanklines=false,xleftmargin=\parindent}
-\DefineShortVerb{\"} % makes " work in verbatim even when \active
+%\DefineShortVerb{\"} % makes " work in verbatim even when \active
+
 
 %% New code listings...
 \usepackage{listings}
+\lstset{basicstyle=\ttfamily}
 
 %% HACS.
-\lstdefinelanguage{HACS}{basicstyle=\normalsize,%
+\def\Identifier#1{#1}
+\def\Keyword#1{\textsf{\bf\color{gray}#1}}
+
+\lstdefinelanguage{HACS}{basicstyle=\fontfamily{ccr}\selectfont,%
   extendedchars=true,inputencoding=utf8,sensitive,%
-  identifierstyle=\textit,%
-  string=[d]{"},morestring=[m]{'},upquote=true,stringstyle=\ttfamily,%showstringspaces=true,%
-  comment=[l]{//},morecomment=[s]{/*}{*/},commentstyle=\color{gray}\upshape,%
-  keywordstyle=\color{black}\bfseries,%
-  keywords={attribute,data,fragment,import,module,nested,property,rule,scheme,simplify,sort,space,static,sugar,symbol,tag,token},%
+  identifierstyle=\Identifier,%
+  string=[d]{"},morestring=[d]{'},upquote=true,showstringspaces=false,%
+  comment=[l]{//},morecomment=[s]{/*}{*/},commentstyle=\color{blue}\rm,%
+  keywordstyle=\Keyword,%
+  keywords={attribute,data,fragment,import,module,nested,property,rule,scheme,simplify,sort,%
+    space,static,sugar,symbol,tag,token,default,error,binds,as},%
   literate=%
     {⟦}{{\ensuremath{\llbracket}}}1 {⟧}{{\ensuremath{\rrbracket}}}1 {⟨}{{\ensuremath{\langle}}}1 {⟩}{{\ensuremath{\rangle}}}1 %
-    {→}{\ensuremath{\rightarrow}}2 {↑}{\ensuremath{\uparrow}}1 {↓}{\ensuremath{\downarrow}}1 {ε}{\ensuremath{\varepsilon}}1 %
-    {…}{\ensuremath{\dots}}2 {¬}{\ensuremath{\lnot}}1 {∧}{\ensuremath{\wedge}}2 {∨}{\ensuremath{\vee}}2 {¶}{\P}1 {↦}{\ensuremath{\mapsto}}2 %
+    {→}{{\ensuremath{\rightarrow}}}2 {↑}{{\ensuremath{\uparrow}}}1 {↓}{{\ensuremath{\downarrow}}}1 {¬}{{\ensuremath{\lnot}}}2 {¶}{{\P}}1 %
+    {ε}{{\ensuremath{\varepsilon}}}1 {…}{{\ensuremath{\dots}}}2 {∧}{{\ensuremath{\!\wedge}}}2 {∨}{{\ensuremath{\!\vee}}}2 {↦}{{\ensuremath{\mapsto}}}2 %
 }[comments,strings,keywords]
 %%
-\lstnewenvironment{hacs}[1][]{\lstset{language=HACS,basewidth={.55em,.4em},columns=flexible,#1}\upshape}{}
-\newcommand\inputhacs[2][]{\lstinputlisting[language=HACS,basewidth={.55em,.4em},columns=flexible,#1]{#2}}
+\lstnewenvironment{hacs}[1][]{\lstset{language=HACS,basewidth={.5em,.4em},columns=flexible,#1}\upshape}{}
+\newcommand\inputhacs[2][]{\lstinputlisting[language=HACS,basewidth={.55em,.45em},columns=flexible,#1]{#2}}
 \newcommand\hacsc{\lstinline[language=HACS]}
-%\lstMakeShortInline[language=HACS,columns=fullflexible]"
+\lstMakeShortInline[language=HACS,columns=fullflexible]"
 
-%% Tiger.
-\lstdefinelanguage{Tiger}{basicstyle=\normalsize,%
-  extendedchars=true,inputencoding=utf8,sensitive,%
-  identifierstyle=\textit,%
-  string=[d]{"},upquote=true,stringstyle=\ttfamily,showstringspaces=true,%
-  comment=[s]{/*}{*/},commentstyle=\color{grey}\rm,%
-  keywordstyle=\color{black}\bfseries,%
-  keywords={type,array,of,var,function,nil,let,in,end}%
-}[comments,strings,keywords]
-%%
-\lstnewenvironment{tiger}[1][]{\lstset{language=Tiger,basewidth={.5em,.4em},columns=flexible,#1}\upshape}{}
-\newcommand\inputtiger[2][]{\lstinputlisting[language=Tiger,basewidth={.5em,.4em},columns=flexible,#1]{#2}}
-\newcommand\tigerc{\lstinline[language=Tiger]}
+
+%%% \usepackage{listings}
+%%% 
+%%% %% HACS.
+%%% \lstdefinelanguage{HACS}{basicstyle=\rm,%
+%%%   numberstyle=\scriptsize,
+%%%   numbersep=7pt,
+%%%   numberblanklines=false,
+%%%   extendedchars=true,inputencoding=utf8,sensitive,%
+%%%   identifierstyle=\textit,%
+%%%   string=[d]{"},morestring=[m]{'},upquote=true,stringstyle=\ttfamily,%showstringspaces=true,%
+%%%   comment=[l]{//},morecomment=[s]{/*}{*/},commentstyle=\color{gray}\upshape,%
+%%%   keywordstyle=\color{black}\bfseries,%
+%%%   keywords={attribute,data,default,fragment,import,main,module,nested,property,rule,scheme,simplify,sort,space,static,sugar,symbol,tag,token},%
+%%%   ndkeywordstyle={\textup},%
+%%%   literate=%
+%%%     {⟦}{{\ensuremath{\llbracket}}}1 {⟧}{{\ensuremath{\rrbracket}}}1 {⟨}{{\ensuremath{\langle}}}1 {⟩}{{\ensuremath{\rangle}}}1 %
+%%%     {→}{\ensuremath{\rightarrow}}2 {↑}{\ensuremath{\uparrow}}1 {↓}{\ensuremath{\downarrow}}1 {ε}{\ensuremath{\varepsilon}}1 %
+%%%     {…}{\ensuremath{\dots}}2 {¬}{\ensuremath{\lnot}}1 {∧}{\ensuremath{\wedge}}2 {∨}{\ensuremath{\vee}}2 {¶}{\P}1 {↦}{\ensuremath{\mapsto}}2 %
+%%% }[comments,strings,keywords]
+%%% %%
+%%% \lstnewenvironment{hacs}[1][]{\lstset{language=HACS,basewidth={.55em,.4em},columns=flexible,#1}\upshape}{}
+%%% \newcommand\inputhacs[2][]{\lstinputlisting[language=HACS,basewidth={.55em,.4em},columns=flexible,#1]{#2}}
+%%% \newcommand\hacsc{\lstinline[language=HACS]}
+%%% \lstMakeShortInline[language=HACS,columns=fullflexible]"
+%%% 
+%%% %% Tiger.
+%%% \lstdefinelanguage{Tiger}{basicstyle=\normalsize,%
+%%%   extendedchars=true,inputencoding=utf8,sensitive,%
+%%%   identifierstyle=\textit,%
+%%%   string=[d]{"},upquote=true,stringstyle=\ttfamily,showstringspaces=true,%
+%%%   comment=[s]{/*}{*/},commentstyle=\color{grey}\rm,%
+%%%   keywordstyle=\color{black}\bfseries,%
+%%%   keywords={type,array,of,var,function,nil,let,in,end}%
+%%% }[comments,strings,keywords]
+%%% %%
+%%% \lstnewenvironment{tiger}[1][]{\lstset{language=Tiger,basewidth={.5em,.4em},columns=flexible,#1}\upshape}{}
+%%% \newcommand\inputtiger[2][]{\lstinputlisting[language=Tiger,basewidth={.5em,.4em},columns=flexible,#1]{#2}}
+%%% \newcommand\tigerc{\lstinline[language=Tiger]}
 
 %% Identifiers
 \newcommand{\set}[1]{\textit{#1}}
