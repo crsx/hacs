@@ -96,8 +96,8 @@
 ).
 
 <HxForm> ::=
-  {FormConstruction}:hx <HxConstructor> ( HX_LPAREN (<HxBindersScopeSorts> | {$Nil}) HX_RPAREN | {$Nil} ) <HxInheritedRefs>
-| {FormParsed}:hx <HxParsedForm> <HxFormPrec> <HxInheritedRefs>
+  {FormParsed}:hx <HxParsedForm> <HxFormPrec> <HxInheritedRefs>
+| {FormConstruction}:hx <HxConstructor> ( HX_LPAREN (<HxBindersScopeSorts> | {$Nil}) HX_RPAREN | {$Nil} ) <HxInheritedRefs>
 .
 
 <HxBindersScopeSorts> ::= {$Cons} <HxBindersScopeSort> (HX_COMMA <HxBindersScopeSorts> | {$Nil}) .
@@ -137,7 +137,7 @@
 
 <HxRulePriority> ::=( HX_DEFAULT:hx | HX_PRIORITY:hx | {Normal}:hx ).
 
-<HxRuleOptions> ::= {$Cons} <HxString> ( HX_COMMA <HxRuleOptions> | {$Nil} ) .
+<HxRuleOptions> ::= {$Cons} <HxTopPattern> ( HX_COMMA <HxRuleOptions> | {$Nil} ) .
 
 
 //// SORT NAME STORE HACK.

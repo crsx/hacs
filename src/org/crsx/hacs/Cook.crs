@@ -55,11 +55,18 @@ Cook1[#ModuleName, #Declarations] → Cook2[#ModuleName, #Declarations, C-Unpars
 
 // Cook2: Normalize the declarations into a declarations map.
 Cook2[$String<!--ModuleName-->, $List[HxDeclaration], $List[HxDeclaration]] :: Text;
+-[Data[#Declarations]]:
 Cook2[#ModuleName, #OriginalDeclarations, #Declarations] → Cook3[#ModuleName, #OriginalDeclarations, {} U-MakeDeclarationMap[#Declarations, #ModuleName]] ;
 
 // Cook3: Replace rules depending on synthesized attributes to regular rules with attribute computation.
 Cook3[$String<!--ModuleName-->, $List[HxDeclaration], DeclarationMap]  :: Text ;
+-[Data[#DM]]:
 Cook3[#ModuleName, #OriginalDeclarations, #DM] → Cook4[#ModuleName, #OriginalDeclarations, U-MakeDM-ExtraInformation[#ModuleName, C-Unsynthesize[#ModuleName, #DM]]] ;
+
+/// // Cook3b: Trace...
+/// Cook3b[$String<!--ModuleName-->, $List[HxDeclaration], DeclarationMap]  :: Text ;
+/// -[Data[#DM]]:
+/// Cook3b[#ModuleName, #OriginalDeclarations, #DM] → Cook4[#ModuleName, #OriginalDeclarations, U-trace-DeclarationMap[#DM]] ;
 
 // Cook4: Assemble file.
 Cook4[$String<!--ModuleName-->, $List[HxDeclaration], DeclarationMap]  :: Text ;
@@ -68,10 +75,6 @@ Cook4[#ModuleName, #OriginalDeclarations, #DM]
 %n⟪// CRSX RULES FOR †«#ModuleName».
 
 †« U-LastName[#ModuleName] »[(
-
-// Input format.
-  $CheckGrammar["†« U-ClassName[#ModuleName] »Parser"];
-//$Use[]; ← should load sorts for user terms.
 
 // Print uses text.
   $CheckGrammar["net.sf.crsx.text.Text"];
@@ -84,7 +87,7 @@ Cook4[#ModuleName, #OriginalDeclarations, #DM]
   $Lax;
 
 /////////////////////////////////////////////////////////////////////////////
-// DECLARATIONS.
+// DECLARATIONS AND OUTPUT.
 
 « C-Print[#OriginalDeclarations, #ModuleName, "", #DM] »
 
@@ -94,7 +97,8 @@ Cook4[#ModuleName, #OriginalDeclarations, #DM]
 « C-Crsxify[#DM] »
 
 )] //†« U-LastName[#ModuleName] »
-⟫;
+⟫
+;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -355,7 +359,9 @@ C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllN
     C-Unsynthesize1[(), #ModuleName, #DM, dm¹.#[dm¹]] → #[#DM] ;
     C-Unsynthesize1[(#Name; #Names), #ModuleName, {#DM}DM, dm¹.#[dm¹]]
     →
+    /// $[Trace,#Name,
     C-Unsynthesize2[$[{#DM}Get[DeclarationMapEntry],#Name,DME_NONE], #Name, #ModuleName, {#DM}DM, dm¹.C-Unsynthesize1[#Names, #ModuleName, dm¹, dm2¹.#[dm2¹]]]
+    /// ]
     ;
 
     // Process sort and attribute DeclarationMapEntries.
@@ -363,17 +369,19 @@ C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllN
     C-Unsynthesize2[DeclarationMapEntry, $String<!--Sort-->, $String<!--ModuleName-->, DeclarationMap, dm¹::DeclarationMap.DeclarationMap] :: DeclarationMap ;
     C-Unsynthesize2[DME_SORT[#Defines, #Name, #Precs, #Wrapper, #IsMain], #SortName, #ModuleName, #DM, dm¹.#[dm¹]]
     →
-    C-UnsynthesizeSortEntry[#Defines, #SortName, #ModuleName, #DM, ds¹.U-ExtendDeclarationMap[#DM, #SortName, DME_SORT[ds¹, #Name, #Precs, #Wrapper, #IsMain], dm¹.#[dm¹]]]
+    /// $[Trace, $[:,"SORT ",#Name,"=",$[Show,#Defines]],
+    C-UnsynthesizeSortEntry[#Defines, #SortName, #ModuleName, #DM, ok ds¹.U-then-ExtendDeclarationMap[ok, #DM, #SortName, DME_SORT[ds¹, #Name, #Precs, #Wrapper, #IsMain], dm¹.#[dm¹]]]
+    /// ]
     ;
     C-Unsynthesize2[$[NotMatch,DME_SORT[#_Defines2, #_Name2, #_Precs2, #_Wrapper2, #_IsMain2], #_], #Name, #ModuleName, #DM, dm¹.#[dm¹]] → #[#DM] ;
 
     // Process all Defines of each sort, aggregating the replacement Defines.
 
-    C-UnsynthesizeSortEntry[$List[Define], $String<!--Sort-->, $String<!--ModuleName-->, DeclarationMap, ds¹ :: $List[Define] . DeclarationMap] :: DeclarationMap ;
-    C-UnsynthesizeSortEntry[(), #SortName, #ModuleName, #DM, ds¹.#[ds¹]] → #[()] ;
-    C-UnsynthesizeSortEntry[(#Define; #Defines), #SortName, #ModuleName, #DM, ds¹.#[ds¹]]
+    C-UnsynthesizeSortEntry[$List[Define], $String<!--Sort-->, $String<!--ModuleName-->, DeclarationMap, ok :: Ok ds¹ :: $List[Define] . DeclarationMap] :: DeclarationMap ;
+    C-UnsynthesizeSortEntry[(), #SortName, #ModuleName, #DM, ok ds¹.#[ok,ds¹]] → #[OK,()] ;
+    C-UnsynthesizeSortEntry[(#Define; #Defines), #SortName, #ModuleName, #DM, ok ds¹.#[ok,ds¹]]
     →
-    C-UnsynthesizeSortEntry[#Defines, #SortName, #ModuleName, #DM, ds¹.#[ Append[C-UnsynthesizeDefine[#Define, #SortName, #ModuleName, #DM], ds¹] ]]
+    C-UnsynthesizeSortEntry[#Defines, #SortName, #ModuleName, #DM, ok ds¹.#[ok, Append[C-UnsynthesizeDefine[#Define, #SortName, #ModuleName, #DM], ds¹] ]]
     ;
 
     // Process the individual definitions for the sort:
@@ -402,6 +410,7 @@ C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllN
 
     C-UnsynthesizeDefine[D_SYNTHESIZES[#AttributeName], #HxSortName#, #ModuleName, #DM]
     →
+    /// $[Trace, $[:,"Synthesize ",#AttributeName],
     (
       D_SYNTHESIZES[#AttributeName];
       D_FORM[%rawHxForm⟪ %HxConstructor« U-QN[#ModuleName, #HxSortName#, StringConcat["Need_", #AttributeName]] » ( #HxSortName# ) ⟫,
@@ -409,6 +418,7 @@ C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllN
       D_FORM[%rawHxForm⟪ %HxConstructor« U-QN[#ModuleName, #HxSortName#, StringConcat["Collect_", #AttributeName]] » ( #HxSortName# ) ⟫,
         FK_SCHEME[U-QN[#ModuleName, #HxSortName#, StringConcat["Collect_", #AttributeName]]]];
     )
+    /// ]   
     ;
 
     // - other declarations are merely copied over.
@@ -458,7 +468,7 @@ C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllN
 	D_RULE[{#L}%rawHxRule⟪ #HxRulePrefix#
 	  %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Collect_", #HxAttributeName#]] » ( #HxConstructor# ( #HxScopes# ) )
 	  →
-	  #HxConstructor# ( #HxScopes# ) ↑ #HxAttributeName# ( #HxTerm# )
+	  #HxConstructor# ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, #NeededSynthetic, NoNames, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}C-GetConstructorScopeSorts[#HxConstructor#]] » ) ↑ #HxAttributeName# ( #HxTerm# )
 	⟫, #SortName, B_FALSE];
       ),
       // Simple synthetic attribute creation rule.
@@ -693,17 +703,24 @@ C-CrsxifyDefine[D_NONE, #Sort, #SortPrefix, #DM]
 C-CrsxifyRule[HxRulePrefix, HxTerm, HxTerm, $String<!--Sort-->, DeclarationMap] :: Text ;
 C-CrsxifyRule[#RulePrefix, #TopPattern, #TopTerm, #Sort, {#DM}DM]
 →
-C-CrsxifyRule2[#RulePrefix, #TopPattern, #TopTerm, #Sort, {#DM}DM, {#DM}C-ExtendSortMap[#TopTerm, #Sort, {#DM}C-ExtendSortMap[#TopPattern, #Sort, C-EmptySortMap]]]
+C-CrsxifyRule1[#RulePrefix, #TopPattern, #TopTerm, #Sort, {#DM}DM, {#DM}C-ExtendSortMap[#TopPattern, #Sort, C-EmptySortMap]]
 ;
-    C-CrsxifyRule2[HxRulePrefix, HxTerm, HxTerm, $String<!--Sort-->, DeclarationMap, SortMap] :: Text ;
-    C-CrsxifyRule2[#RulePrefix, #TopPattern, #TopTerm, #Sort, {#DM}DM, {#SM}SM[#fvs, #mvs]]
+    C-CrsxifyRule1[HxRulePrefix, HxTerm, HxTerm, $String<!--Sort-->, DeclarationMap, SortMap<!--OnlyPattern-->] :: Text ;
+    C-CrsxifyRule1[#RulePrefix, #TopPattern, #TopTerm, #Sort, {#DM}DM, #SM1]
     →
-%n⟪« C-CrsxifyRulePrefix[#RulePrefix, #Sort, {#DM}DM, {#SM}SM[#fvs, #mvs]] »⟦«
-  C-CrsxifyTerm[#TopPattern, {#DM}U-GetFunctionInherited[U-TermTopConstructor[#TopPattern]], {#DM}DM, {#SM}SM[#fvs, #mvs]]
+    C-CrsxifyRule2[#RulePrefix, #TopPattern, #TopTerm, #Sort, {#DM}DM, #SM1, {#DM}C-ExtendSortMap[#TopTerm, #Sort, #SM1]]
+    ;
+
+    C-CrsxifyRule2[HxRulePrefix, HxTerm, HxTerm, $String<!--Sort-->, DeclarationMap, SortMap<!--OnlyPattern-->, SortMap<!--Rule-->] :: Text ;
+    C-CrsxifyRule2[#RulePrefix, #TopPattern, #TopTerm, #Sort, {#DM}DM, #SM1, #SM2]
+    →
+%n⟪« C-CrsxifyRulePrefix[#RulePrefix, #Sort, {#DM}DM, #SM1, #SM2] »
+⟦«
+  C-CrsxifyTerm[#TopPattern, {#DM}U-GetFunctionInherited[U-TermTopConstructor[#TopPattern]], {#DM}DM, #SM1]
 »⟧
 →
 ⟦«
-  C-CrsxifyTerm[#TopTerm, {#DM}U-GetFunctionInherited[U-TermTopConstructor[#TopPattern]], {#DM}DM, {#SM}SM[#fvs, #mvs]]
+  C-CrsxifyTerm[#TopTerm, {#DM}U-GetFunctionInherited[U-TermTopConstructor[#TopPattern]], {#DM}DM, #SM2]
 »⟧
 ;
 ⟫
@@ -711,18 +728,76 @@ C-CrsxifyRule2[#RulePrefix, #TopPattern, #TopTerm, #Sort, {#DM}DM, {#DM}C-Extend
 
 // Convert rule prefix.
 
-C-CrsxifyRulePrefix[HxRulePrefix, $String<!--Sort-->, DeclarationMap, SortMap] :: Text ;
-C-CrsxifyRulePrefix[#RulePrefix, #Sort, #DM, #SM]
+C-CrsxifyRulePrefix[HxRulePrefix, $String<!--Sort-->, DeclarationMap, SortMap<!--OnlyPattern-->, SortMap<!--Rule-->] :: Text ;
+C-CrsxifyRulePrefix[{#L}%rawHxRulePrefix⟪ #HxRulePriority# [ #HxRuleOptions# ] ⟫, #Sort, #DM, #SM1, #SM2]
 →
-%n⟪↲
-- : ⟫
+%n⟪↲« {#L}C-CrsxifyRuleName[#HxRulePriority#, #HxRuleOptions#] »«
+  WrappedTextJoin[Append[C-CrsxifyRulePriority[#HxRulePriority#], C-CrsxifyRuleOptions[#HxRuleOptions#, #DM, #SM1, #SM2, ss¹.ss¹]], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]
+»:⟫
 ;
-// TODO.
+
+{$String : $StringEntrySort} C-CrsxifyRuleName[HxRulePriority, $List[$String]] :: Text ;
+{#L}
+C-CrsxifyRuleName[#RulePriority, #RuleOptions]
+→
+%n⟪- ⟫
+;
+
+C-CrsxifyRulePriority[HxRulePriority] :: $List[Text] ;
+C-CrsxifyRulePriority[%rawHxRulePriority⟪ priority ⟫] → (%n⟪Priority⟫;) ;
+C-CrsxifyRulePriority[%rawHxRulePriority⟪ default ⟫] → (%n⟪Fallback⟫;) ;
+C-CrsxifyRulePriority[%rawHxRulePriority⟪ ⟫] → () ;
+
+C-CrsxifyRuleOptions[$List[$String], DeclarationMap, SortMap<!--OnlyPattern-->, SortMap<!--Rule-->, ss¹::$List[Text].$List[Text]] :: $List[Text] ;
+C-CrsxifyRuleOptions[(), #DM, #SM1, #SM2, ss¹.#[ss¹]] → #[C-CrsxifyRuleVars[#DM, #SM1, #SM2]] ;
+C-CrsxifyRuleOptions[(#option; #options), #DM, #SM1, #SM2, ss¹.#[ss¹]]
+→
+C-CrsxifyRuleOptions[#options, #DM, #SM1, #SM2, ss¹.#[Append[C-CrsxifyRuleOption[#option, #DM], ss¹]]]
+;
+
+C-CrsxifyRuleOption[$String, DeclarationMap] :: $List[Text] ;
+-[Data[#option]]:
+C-CrsxifyRuleOption[#option, #DM]
+→
+()
+;
+// TODO: Options!
+
+C-CrsxifyRuleVars[DeclarationMap, SortMap<!--OnlyPattern-->, SortMap<!--Rule-->] :: $List[Text] ;
+C-CrsxifyRuleVars[#DM, #SM1, #SM2]
+→
+C-CrsxifyRuleVars1[#DM, #SM2, C-SortMap-GetFreeVariables[#SM1], C-SortMap-GetFreeVariables[#SM2]]
+;
+
+    C-CrsxifyRuleVars1[DeclarationMap, SortMap<!--Rule-->, $List[HxTerm]<!--OnlyPattern-->, $List[HxTerm]<!--Rule-->] :: $List[Text] ;
+    C-CrsxifyRuleVars1[#DM, #SM, #vs1, #vs2]
+    →
+    If[Empty[#vs1], C-CrsxifyRuleVars2[#DM, #SM, #vs1, #vs2],
+      ( WrappedTextJoin[MapWhen[ok v.%n⟪«v»::†« C-SortMap-then-GetFreeVariableSort[ok, #SM, v] »⟫, #vs1], %n⟪Free[⟫, %n⟪,⟫, %n⟪]⟫]; C-CrsxifyRuleVars2[#DM, #SM, #vs1, #vs2] )
+    ];
+
+    C-CrsxifyRuleVars2[DeclarationMap, SortMap<!--Rule-->, $List[HxTerm]<!--OnlyPattern-->, $List[HxTerm]<!--Rule-->] :: $List[Text] ;
+    C-CrsxifyRuleVars2[#DM, #SM, #vs1, #vs2]
+    →
+    C-CrsxifyRuleVars3[#DM, #SM, FilterWhen[ok v . Not[C-then-VariablesContain[ok, #vs1, v]], #vs2]]
+    ;
+
+    C-CrsxifyRuleVars3[DeclarationMap, SortMap<!--Rule-->, $List[HxTerm]<!--OnlyContractum-->] :: $List[Text] ;
+    C-CrsxifyRuleVars3[#DM, #SM, #vs]
+    →
+    If[Empty[#vs], (),
+      ( WrappedTextJoin[MapWhen[ok v.%n⟪«v»::†« C-SortMap-then-GetFreeVariableSort[ok, #SM, v] »⟫, #vs], %n⟪Fresh[⟫, %n⟪,⟫, %n⟪]⟫]; )
+    ];
+
+    ;
 
 // Convert a scope.
 
 C-CrsxifyScope[HxScope, NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
-C-CrsxifyScope[%rawHxScope⟪ [ #HxVariableList# ] #HxTerm# ⟫, #TopInherited, #DM, #SM] → %n⟪ « WrappedTextJoin[Map[v.%n⟨‹v›⟩, #HxVariableList#], %n⟨⟩, %n⟨ ⟩, %n⟨ . ⟩] »« C-CrsxifyTerm[#HxTerm#, #TopInherited, #DM, #SM] »⟫ ;
+C-CrsxifyScope[%rawHxScope⟪ [ #HxVariableList# ] #HxTerm# ⟫, #TopInherited, #DM, #SM]
+→
+%n⟪ « WrappedTextJoin[Map[v.%n⟨‹v›⟩, #HxVariableList#], %n⟨⟩, %n⟨ ⟩, %n⟨ . ⟩] »« C-CrsxifyTerm[#HxTerm#, #TopInherited, #DM, #SM] »⟫
+;
 
 // Convert a term, optionally with environment-capturing meta-variable.
 
@@ -1090,12 +1165,12 @@ C-AddAttributeTopInherited[(%rawHxAttribute⟪ ↓ #HxAttributeName# #HxAttribut
 
 {$String<!--SortName--> : DeclarationMapEntry} C-GetConstructorScopeSorts2[DeclarationMapEntry, $String, $String] :: $List[HxScopeSort] ;
 {#DM} C-GetConstructorScopeSorts2[DME_SORT[#Defines, #Name, #Precs, #Wrapper, #IsMain], #Sort, #Constructor] → {#DM} C-GetConstructorScopeSorts3[OK, #Defines, #Constructor] ;
-{#DM} C-GetConstructorScopeSorts2[DME_NONE, #Sort, #Constructor] → $[Error,$[:,"Missing internal definition of sort: ",#Sort,"\n",$[Show,{#DM}DM]]] ;
+{#DM} C-GetConstructorScopeSorts2[DME_NONE, #Sort, #Constructor] → $[Error,$[:,"Missing internal definition of sort '",#Sort,"' for constructor '",#Constructor,"'.\n"]] ;
 
 {$String<!--SortName--> : DeclarationMapEntry} C-GetConstructorScopeSorts3[Ok, $List[Define], $String] :: $List[HxScopeSort] ;
 {#DM} C-GetConstructorScopeSorts3[OK, (D_FORM[Hx_FormConstruction[#Constructor1, #ScopeSorts1, #InheritedRefs1], #FormKind]; #Defines), #Constructor] → IfThen[SameString[U-Local[#Constructor1], U-Local[#Constructor]], ok.#ScopeSorts1, ok.{#DM}C-GetConstructorScopeSorts3[ok, #Defines, #Constructor]] ;
 {#DM} C-GetConstructorScopeSorts3[OK, ($[NotMatch,D_FORM[Hx_FormConstruction[#Constructor, #ScopeSorts, #InheritedRefs], #FormKind],#_]; #Defines), #Constructor] → {#DM} C-GetConstructorScopeSorts3[OK, #Defines, #Constructor] ;
-{#DM} C-GetConstructorScopeSorts3[OK, (), #Constructor] → $[Error,$[:,"Missing internal definition of constructor: ",#Constructor,"\n",$[Show,{#DM}DM]]] ;
+{#DM} C-GetConstructorScopeSorts3[OK, (), #Constructor] → $[Error,$[:,"Missing internal definition of constructor: ",#Constructor,"\n"]] ;
 
 // List of free variables + meta-application argument , with their sorts...
 
@@ -1105,15 +1180,29 @@ SortMap ::=( SM[$List[HxTerm], $List[$String]]; );
 C-EmptySortMap :: SortMap;
 C-EmptySortMap → {}SM[(),()] ;
 
+C-SortMap-GetMetaVariables[SortMap] :: $List[$String] ;
+C-SortMap-GetMetaVariables[{#SM}SM[#fvs, #mvs]] → #mvs ;
+
+C-SortMap-GetFreeVariables[SortMap] :: $List[HxTerm] ;
+C-SortMap-GetFreeVariables[{#SM}SM[#fvs, #mvs]] → #fvs ;
+
+C-SortMap-ContainsFreeVariable[SortMap, HxTerm] :: Boolean ;
+C-SortMap-ContainsFreeVariable[{#SM}SM[#fvs, #mvs], #fv] → C-then-VariablesContain[OK, #fvs, #fv] ;
+
+    C-then-VariablesContain[Ok, $List[HxTerm], HxTerm] :: Boolean ;
+    C-then-VariablesContain[OK, (), v2] → B_FALSE ;
+    C-then-VariablesContain[OK, (v1; #vs), v2] → $[If, $[SameVariable,v1,v2], B_TRUE, C-then-VariablesContain[OK, #vs, v2]] ;
+
 C-SortMap-GetMetaApplicationSubsorts[SortMap, $String<!--MetaVariable-->] :: $List[$String] ;
 C-SortMap-GetMetaApplicationSubsorts[{#SM}SM[#fvs, #mvs], #mv] → $[{#SM}Get[$List[$String]], #mv, ()] ;
 
-C-SortMap-GetFreeVariableSort[SortMap, HxTerm<!--Varible-->] :: $String ;
-C-SortMap-GetFreeVariableSort[{#SM}SM[#fvs, #mvs], v] → $[{#SM}Get[$String], v, ""] ;
+C-SortMap-then-GetFreeVariableSort[Ok, SortMap, HxTerm<!--Varible-->] :: $String ;
+C-SortMap-then-GetFreeVariableSort[OK, {#SM}SM[#fvs, #mvs], v] → $[{#SM}Get[$String], v, ""] ;
 
 // Accumulate sort map over term.
 
 {$String<!--SortName--> : DeclarationMapEntry; HxTerm : $String} C-ExtendSortMap[HxTerm, $String<!--Sort-->, SortMap] :: SortMap ;
+-[Data[#SM]]:
 {#DM} C-ExtendSortMap[#Term, #Sort, #SM] → {#DM} C-ExtendSortMap-Terms[(#Term;), (#Sort;), #SM] ;
 
 // Accumulate sort map over terms.
@@ -1123,15 +1212,20 @@ C-SortMap-GetFreeVariableSort[{#SM}SM[#fvs, #mvs], v] → $[{#SM}Get[$String], v
 {#DM} C-ExtendSortMap-Terms[(), (), #SM] → #SM ;
 
 -[Free[v::HxTerm]] :
-{#DM} C-ExtendSortMap-Terms[( %rawHxTerm⟪ v #HxAttributes# ⟫ ; #Terms), (#Sort; #Sorts), {#SM}SM[#fvs, #mvs]]
+{#DM} C-ExtendSortMap-Terms[( %rawHxTerm⟪ v #HxAttributes# ⟫ ; #Terms), (#Sort; #Sorts), #SM]
 →
-{#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, {#DM} C-ExtendSortMap-Attributes[#HxAttributes#, {#SM; v : #Sort}SM[(v; #fvs), #mvs]]]
+{#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, {#DM} C-ExtendSortMap-Attributes[#HxAttributes#, C-ExtendSortMap-AddVariable[#SM, v, #Sort, $[{#DM}IfDef[$String], v, B_FALSE, B_TRUE]]]]
 ;
 -[Free[v::HxTerm]] :
-{#DM} C-ExtendSortMap-Terms[( %rawHxTerm⟪ #HxConstructor1# #HxRepeat1# v #HxAttributes# ⟫ ; #Terms), (#Sort; #Sorts), {#SM}SM[#fvs, #mvs]]
+{#DM} C-ExtendSortMap-Terms[( %rawHxTerm⟪ #HxConstructor1# #HxRepeat1# v #HxAttributes# ⟫ ; #Terms), (#Sort; #Sorts), #SM]
 →
-{#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, {#DM} C-ExtendSortMap-Attributes[#HxAttributes#, {#SM; v : #Sort}SM[(v; #fvs), #mvs]]]
+{#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, {#DM} C-ExtendSortMap-Attributes[#HxAttributes#, C-ExtendSortMap-AddVariable[#SM, v, #Sort, $[{#DM}IfDef[$String], v, B_FALSE, B_TRUE]]]]
 ;
+
+    C-ExtendSortMap-AddVariable[SortMap, HxTerm, $String, Boolean<!--Include?-->] :: SortMap ;
+    C-ExtendSortMap-AddVariable[#SM, #v, #Sort, B_FALSE] → #SM ;
+    -[Free[v::HxTerm]]: C-ExtendSortMap-AddVariable[{#SM}SM[#fvs, #mvs], v, #Sort, B_TRUE] → {#SM; v : #Sort}SM[(v; #fvs), #mvs] ;
+
 {#DM} C-ExtendSortMap-Terms[( %rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫ ; #Terms), (#Sort; #Sorts), #SM]
 →
 {#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, {#DM} C-ExtendSortMap-Attributes[#HxAttributes#,
@@ -1168,6 +1262,7 @@ C-SortMap-GetFreeVariableSort[{#SM}SM[#fvs, #mvs], v] → $[{#SM}Get[$String], v
 // Accumulate sort map over scopes.
 
 {$String<!--SortName--> : DeclarationMapEntry; HxTerm : $String} C-ExtendSortMap-Scopes[$List[HxScope], $List[HxScopeSort], SortMap] :: SortMap ;
+{#DM} C-ExtendSortMap-Scopes[(), (), #SM] → #SM ;
 {#DM} C-ExtendSortMap-Scopes[( %rawHxScope⟪ [ #HxVariableList# ] #HxTerm# ⟫ ; #Scopes ), ( #ScopeSort ; #ScopeSorts ), #SM]
 →
 {#DM} C-ExtendSortMap-Scopes[#Scopes, #ScopeSorts,

@@ -13,9 +13,11 @@ $AddGrammar["net.sf.crsx.text.Text"];
 // Sorts.
 $Use["org/crsx/hacs/HxRaw.crs"];
 $Use["net/sf/crsx/text/Text.crs"];
+$Sortify;
 
 // Modules.
 $Use["org/crsx/hacs/Prep.crs"];
 $Use["org/crsx/hacs/Cook.crs"];
+$Use["org/crsx/hacs/MakeRun.crs"];
 
 )] //Main

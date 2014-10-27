@@ -1,46 +1,84 @@
 # Makefile for compiling hacs/src.
 #
-# Generate and install all HACS runtime artifacts.
+# Generate and/or install all HACS runtime artifacts.
 #
 # Usage:
 #   make
-#   make USR=/usr/local install
+#   make DESTDIR='' USR='/usr/local' install
 #
 # Environment variables:
-# - USR - root of installation (/usr/local by default).
+# - DESTDIR - root of installation (empty by default)
+# - USR - prefix of installation (/usr/local by default).
+#
+# - CRSXJAR - full path to CRSX jar (at least version 3.2).
+# - JAVACCJAR - full path to JavaCC jar (at least version 5.0).
+# - ICU4CLIB - full path to the libicudata.so binary library to use (at least version 42).
+#
+# Calls Env.mk to set defaults for all the variables there
 
 
 # STANDARD TARGETS.
 
-.PHONY: all clean realclean install
+.PHONY: all install install-support clean realclean gitclean
 all ::
+install ::
+install-support ::
 clean ::; rm -f *.tmp *~ ./#* *.log *~
 realclean :: clean
-install ::
+gitclean :: realclean
+	rm -fr $(shell cat .gitignore)
 
 
 # SETUP.
 
-DESTDIR = $(abspath .)
-USR = $(DESTDIR)/usr/local
+# External library setup.
+CRSXVERSION = 3.2
+CRSXJAR = $(abspath lib/crsx-$(CRSXVERSION).jar)
+JAVACCVERSION = 6.0
+JAVACCJAR = $(abspath lib/javacc-$(JAVACCVERSION).jar)
+ICU4CLIB = $(ICU4CDIR)/libicudata.so
 
-# Environment.
-include Env.mk
-
-# Hacs.mk setup
-HACSJAR = $(abspath .)
-HACSLIB = $(USR)/lib/hacs
-HACSBIN = $(USR)/bin
-HACSSHARE = $(USR)/share/hacs
+# HACS bootstrapping setup.
 BUILD = $(abspath build)
-CRSXJAR = $(abspath ../lib/crsx.jar)
+HACSJAR = $(abspath .)
 include Hacs.mk
-#
-realclean ::
-	rm -fr build
+
+realclean ::; rm -fr build
 
 # Install setup.
-JAVAJARDIR = $(USR)/share/java
+USR = /usr/local
+LIBDIR = $(USR)/lib/hacs
+BINDIR = $(USR)/bin
+DOCDIR = $(USR)/share/doc/hacs
+SHAREDIR = $(USR)/share/hacs
+SHAREJAVA = $(USR)/share/java
+
+realclean ::; rm -fr usr
+
+
+# DOWNLOAD.
+
+all :: $(CRSXJAR) $(JAVACCJAR) $(ICU4CLIB)
+
+$(CRSXJAR) :
+	wget "http://crsx.org/$(notdir $(CRSXJAR))"
+	mkdir -p $(dir $(CRSXJAR))
+	mv $(notdir $(CRSXJAR)) $(CRSXJAR)
+
+clean ::; rm -f crsx*.jar
+
+$(JAVACCJAR) :
+	rm -fr javacc*
+	wget "https://java.net/projects/javacc/downloads/download/$(basename $(notdir $(JAVACCJAR))).zip"
+	unzip $(basename $(notdir $(JAVACCJAR))).zip
+	mkdir -p $(dir $(CRSXJAR))
+	cp -a $(basename $(notdir $(JAVACCJAR)))/bin/lib/javacc.jar $(JAVACCJAR)
+
+clean ::; rm -fr javacc*
+
+$(ICU4CLIB) :
+	@echo "Cannot generate ICU libraries...make sure ICU4CLIB is set to a valid file!" >2
+	false
 
 
 # HACS MASTER FILE LIST
@@ -52,7 +90,12 @@ RULES = \
 	org/crsx/hacs/Prep.crs \
 	org/crsx/hacs/Cook.crs \
 	org/crsx/hacs/Main.crs \
-	org/crsx/hacs/MakeRun.crs
+	org/crsx/hacs/HxRaw.crs \
+	org/crsx/hacs/MakeRun.crs \
+	org/crsx/hacs/Hx.pgnames \
+	org/crsx/hacs/Hx.pgdecs \
+	org/crsx/hacs/Hx.pgpre \
+	org/crsx/hacs/Hx.pgpost \
 
 
 # HACS BUILD DEPENDENCIES.
@@ -72,19 +115,46 @@ $(eval HACSMAJOR$(basename $(shell cat ../VERSION)))
 # Jar has classes and resources...
 
 all :: $(BUILD)/share/java/hacs.jar
-install ::
-	cp hacs-$(HACSMAJORVERSION).jar $(JAVAJARDIR)
-	cd $(JAVAJARDIR) && $(NOEXEC) ln -s hacs-$(HACSMAJORVERSION).jar hacs.jar
+install :: $(BUILD)/share/java/hacs.jar
+	mkdir -p $(DESTDIR)$(SHAREJAVA)
+	cp $(BUILD)/share/java/hacs-$(HACSMAJORVERSION).jar $(DESTDIR)$(SHAREJAVA)
+	cd $(DESTDIR)$(SHAREJAVA) && $(NOEXEC) ln -s hacs-$(HACSMAJORVERSION).jar hacs.jar
 
 $(BUILD)/share/java/hacs.jar: \
 		$(BUILD)/org/crsx/hacs/HxRaw.class \
 		$(BUILD)/org/crsx/hacs/VERSION \
-
+		$(RULES)
 	rm -f $(BUILD)/share/java/hacs-$(HACSMAJORVERSION).jar $(BUILD)/share/java/hacs.jar
-	mkdir -p $(BUILD)/org/crsx/hacs $(BUILD)/share/java/hacs.jar
+	mkdir -p $(BUILD)/org/crsx/hacs $(BUILD)/share/java
 	cp $(RULES) $(BUILD)/org/crsx/hacs
-	cd $(BUILD) && classes=$$($(NOEXEC) find org -name '*.class') && $(NOEXEC) $(JAR) cf $(BUILD)/share/java/hacs-$(HACSMAJORVERSION).jar $(RULES) $$classes
+	cd $(BUILD) && classes=$$($(NOEXEC) find org -name '*.class') && $(NOEXEC) $(JAR) cf $(BUILD)/share/java/hacs-$(HACSMAJORVERSION).jar $(RULES) org/crsx/hacs/VERSION $$classes
 	cd $(BUILD)/share/java && $(NOEXEC) ln -s hacs-$(HACSMAJORVERSION).jar hacs.jar
+
+# Support jars.
+
+all :: $(BUILD)/share/java/crsx.jar
+install-support :: $(BUILD)/share/java/crsx.jar
+	mkdir -p $(DESTDIR)$(SHAREJAVA)
+	cp $(BUILD)/share/java/crsx-$(CRSXVERSION).jar $(DESTDIR)$(SHAREJAVA)
+	cd $(DESTDIR)$(SHAREJAVA) && $(NOEXEC) ln -s crsx-$(CRSXVERSION).jar crsx.jar
+
+$(BUILD)/share/java/crsx.jar: $(CRSXJAR)
+	rm -f $(BUILD)/share/java/crsx-$(CRSXVERSION).jar $(BUILD)/share/java/crsx.jar
+	mkdir -p $(BUILD)/share/java
+	cp $(CRSXJAR) $(BUILD)/share/java/crsx-$(CRSXVERSION).jar
+	cd $(BUILD)/share/java && $(NOEXEC) ln -s crsx-$(CRSXVERSION).jar crsx.jar
+
+all :: $(BUILD)/share/java/javacc.jar
+install-support :: $(BUILD)/share/java/javacc.jar
+	mkdir -p $(DESTDIR)$(SHAREJAVA)
+	cp $(BUILD)/share/java/javacc-$(JAVACCVERSION).jar $(DESTDIR)$(SHAREJAVA)
+	cd $(DESTDIR)$(SHAREJAVA) && $(NOEXEC) ln -s javacc-$(JAVACCVERSION).jar javacc.jar
+
+$(BUILD)/share/java/javacc.jar: $(JAVACCJAR)
+	rm -f $(BUILD)/share/java/javacc-$(JAVACCVERSION).jar $(BUILD)/share/java/javacc.jar
+	mkdir -p $(BUILD)/share/java
+	cp $(JAVACCJAR) $(BUILD)/share/java/javacc-$(JAVACCVERSION).jar
+	cd $(BUILD)/share/java && $(NOEXEC) ln -s javacc-$(JAVACCVERSION).jar javacc.jar
 
 realclean ::
 	rm -f *.jar
@@ -99,22 +169,53 @@ $(BUILD)/org/crsx/hacs/HxRaw.jj: $(BUILD)/org/crsx/hacs/HxRaw.pg
 $(BUILD)/org/crsx/hacs/HxRaw.java: $(BUILD)/org/crsx/hacs/HxRaw.jj
 $(BUILD)/org/crsx/hacs/HxRaw.class: $(BUILD)/org/crsx/hacs/HxRaw.java
 
+# HACS command.
+
+all :: $(BUILD)/share/hacs/Hacs.mk $(BUILD)/share/hacs/Env.mk $(BUILD)/bin/hacs
+install :: $(BUILD)/share/hacs/Hacs.mk $(BUILD)/share/hacs/Env.mk $(BUILD)/bin/hacs
+	mkdir -p $(DESTDIR)$(SHAREDIR)
+	cp $(BUILD)/share/hacs/Hacs.mk $(BUILD)/share/hacs/Env.mk $(DESTDIR)$(SHAREDIR)
+
+$(BUILD)/share/hacs/Hacs.mk $(BUILD)/share/hacs/Env.mk : Hacs.mk Env.mk
+	mkdir -p $(BUILD)/share/hacs
+	cp Hacs.mk Env.mk $(BUILD)/share/hacs
+
+$(BUILD)/bin/hacs: hacs.sh.template
+	mkdir -p $(BUILD)/bin
+	$(GNUSED) \
+		-e 's;%%%LIBDIR%%%;$(LIBDIR);' \
+		-e 's;%%%BINDIR%%%;$(BINDIR);' \
+		-e 's;%%%DOCDIR%%%;$(DOCDIR);' \
+		-e 's;%%%SHAREDIR%%%;$(SHAREDIR);' \
+		-e 's;%%%SHAREJAVA%%%;$(SHAREJAVA);' \
+		'$<' > '$@.tmp'
+	chmod +x '$@.tmp'
+	mv '$@.tmp' '$@'
+
+realclean::; @rm -f $(BUILD)/bin/hacs
+
 # Rulecompiler.
 
-all :: $(BUILD)/bin/crsxc
-install :: $(BUILD)/bin/crsxc
-	mkdir -p $(HACSBIN)
-	cp -a $(BUILD)/bin/crsxc $(HACSBIN)
+all :: $(BUILD)/lib/hacs/crsxc
+install :: $(BUILD)/lib/hacs/crsxc
+	mkdir -p $(DESTDIR)$(LIBDIR)
+	cp -a $(BUILD)/lib/hacs/crsxc $(DESTDIR)$(LIBDIR)
 
-crsx-rulecompiler/net/sf/crsx/compiler/c/build/crsxc : $(CRSXJAR)
-	rm -fr crsx-rulecompiler
-	mkdir -p crsx-rulecompiler
-	cd crsx-rulecompiler && $(NOEXEC) $(JAR) xvf $(CRSXJAR) net/sf/crsx/compiler
-	$(MAKE) -C crsx-rulecompiler/net/sf/crsx/compiler/c
+$(BUILD)/lib/hacs/crsxc :
+	mkdir -p $(BUILD)/lib/hacs
+	$(ECHO) -e "#!/bin/sh\necho 'Not Implemented'" > $@
+	chmod +x $@
 
-$(BUILD)/bin/crsxc : crsx-rulecompiler/net/sf/crsx/compiler/c/build/crsxc
-	mkdir -p $(BUILD)/bin
-	cp -a crsx-rulecompiler/net/sf/crsx/compiler/c/build/crsxc $(BUILD)/bin/crsxc
+### TODOL
+###$(BUILD)/lib/hacs/crsxc : crsx-rulecompiler/net/sf/crsx/compiler/c/build/crsxc
+###	mkdir -p $(BUILD)/lib/hacs
+###	cp -a crsx-rulecompiler/net/sf/crsx/compiler/c/build/crsxc $(BUILD)/lib/hacs/crsxc
+###
+###crsx-rulecompiler/net/sf/crsx/compiler/c/build/crsxc : $(CRSXJAR)
+###	rm -fr crsx-rulecompiler
+###	mkdir -p crsx-rulecompiler
+###	cd crsx-rulecompiler && $(NOEXEC) $(JAR) xf $(CRSXJAR) net/sf/crsx/compiler
+###	$(MAKE) -C crsx-rulecompiler/net/sf/crsx/compiler/c
 
 realclean ::
 	rm -fr crsx-rulecompiler

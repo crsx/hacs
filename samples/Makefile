@@ -4,11 +4,13 @@
 # SETUP.
 
 #TODO: Eliminate this hard-coding once crsx package exists...
-CRSXROOT = $(abspath ../../crsx)
-HACS = ../src
-TEMP = ../temp
-BUILD = ../build
-include $(HACS)/Hacs.mk
+
+
+HACSJAR = $(abspath ../src/build/share/java/hacs.jar)
+CRSXJAR = $(abspath ../src/build/share/java/crsx.jar)
+JAVACCJAR = $(abspath ../src/build/share/java/javacc.jar)
+BUILD = build
+include Hacs.mk
 
 
 # STANDARD TARGETS.
