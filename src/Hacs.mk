@@ -4,6 +4,8 @@
 # - HACSJAR - the jar archive or directory containing HACS shared resources.
 # - CRSXJAR - the jar archive containing the CRSX rewrite engine runtime.
 # - JAVACCJAR - the jar archive containing the JavaCC parser generator runtime.
+# - CRSXC - the compiled CRSX rulecompiler.
+
 # - BUILD - the root directory for intermediate generated files.
 
 
@@ -26,7 +28,6 @@ RUNJAVACC = $(JAVA) -cp "$(JAVACCJAR)" javacc
 # CRSX tool commands.
 RUNPG = $(JAVA) -ea -cp "$(BUILD):$(HACSJAR):$(CRSXJAR)" net.sf.crsx.pg.PG verbose=1 $(EXTRA)
 RUNCRSX = $(JAVA) -ea -cp "$(BUILD):$(HACSJAR):$(CRSXJAR)" -Dfile.encoding=UTF-8 -Xss20000K -Xmx2000m net.sf.crsx.run.Crsx allow-unnamed-rules allow-missing-cases sortify verbose=1 $(EXTRA)
-CRSXC = $(LIBDIR)/crsxc
 
 # Magic...
 NOEXEC = $(if $(findstring -n,$(MAKE)),$(ECHO))

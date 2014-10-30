@@ -1,5 +1,6 @@
 *~
 #*
+*.dr
 *.tmp
 *.log
 /build/

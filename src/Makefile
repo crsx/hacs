@@ -37,6 +37,7 @@ CRSXJAR = $(abspath ../lib/crsx-$(CRSXVERSION).jar)
 JAVACCVERSION = 6.0
 JAVACCJAR = $(abspath ../lib/javacc-$(JAVACCVERSION).jar)
 ICU4CLIB = $(ICU4CDIR)/libicudata.so
+CRSXC = $(BUILD)/lib/hacs/crsxc
 
 # HACS bootstrapping setup.
 BUILD = $(abspath ../build)
@@ -190,6 +191,11 @@ crsx-rulecompiler/net/sf/crsx/compiler/c/crsx_scan.o : $(CRSXJAR)
 	cd crsx-rulecompiler && $(NOEXEC) $(JAR) xf $(CRSXJAR) net/sf/crsx/compiler
 	$(MAKE) -C crsx-rulecompiler/net/sf/crsx/compiler/c crsx.h crsx.o crsx_scan.o build/crsxc 
 
+.PRECIOUS: crsx-rulecompiler/net/sf/crsx/compiler/c/build/crsxc \
+	crsx-rulecompiler/net/sf/crsx/compiler/c/crsx.h \
+	crsx-rulecompiler/net/sf/crsx/compiler/c/crsx.o \
+	crsx-rulecompiler/net/sf/crsx/compiler/c/crsx_scan.o
+
 gitclean ::
 	rm -fr crsx-rulecompiler
 
@@ -227,7 +233,9 @@ $(BUILD)/org/crsx/hacs/Main_sorts.c: $(BUILD)/org/crsx/hacs/Main.dr
 $(BUILD)/org/crsx/hacs/Main_rules.c: $(BUILD)/org/crsx/hacs/Main.dr
 $(BUILD)/org/crsx/hacs/Main_symbols.c: $(BUILD)/org/crsx/hacs/Main.dr
 
-$(BUILD)/org/crsx/hacs/Main.dr: $(BUILD)/org/crsx/hacs/Main.crs
+$(BUILD)/org/crsx/hacs/Main.dr: $(BUILD)/org/crsx/hacs/Main.crs $(BUILD)/lib/hacs/crsxc
+
+# $(BUILD)/share/hacs/crsx.h $(BUILD)/lib/hacs/crsx.o $(BUILD)/lib/hacs/crsx_scan.o
 
 # HACS user command.
 
