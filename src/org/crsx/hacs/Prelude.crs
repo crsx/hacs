@@ -209,7 +209,11 @@ Fold2When[ok x y z.#[ok,x,y,z], (#x; #xs), (#y; #ys), #z] → #[OK, #x, #y, Fold
 
 ∀ a . Filter[n::a.Boolean, $List[a]] :: $List[a] ;
 Filter[n.#[n], ()] → () ;
-Filter[n.#[n], (#x; #xs)] → If[#[#x], (#x; Filter[n.#[n], #xs]), Filter[n.#[n], #xs]] ;
+Filter[n.#[n], (#x; #xs)] → IfThen[#[#x], ok.(#x; ThenFilter[ok, n.#[n], #xs]), ok.ThenFilter[ok, n.#[n], #xs]] ;
+
+∀ a . ThenFilter[Ok, n::a.Boolean, $List[a]] :: $List[a] ;
+ThenFilter[OK, n.#[n], ()] → () ;
+ThenFilter[OK, n.#[n], (#x; #xs)] → IfThen[#[#x], ok.(#x; ThenFilter[ok, n.#[n], #xs]), ok.ThenFilter[ok, n.#[n], #xs]] ;
 
 ∀ a . Filter2[Boolean, a, $List[a]] :: $List[a] ;
 Filter2[B_TRUE, #x, #xs] → (#x ; #xs) ;
@@ -296,7 +300,7 @@ NoNames :: NameSet ;
 NoNames → NAME_SET[";"];
 
 HasNames[NameSet] :: Boolean ;
--[Data[#Names]]:
+-[Data[#]]:
 HasNames[NAME_SET[#]] → $[IfEmpty, #, B_FALSE, $[If, $[Equal,#,";"], B_FALSE, B_TRUE]] ;
 
 ContainsName[NameSet, $String] :: Boolean ;
@@ -304,7 +308,7 @@ ContainsName[NameSet, $String] :: Boolean ;
 ContainsName[NAME_SET[#], #Name] → $[If, $[Contains,#,$[:,";",#Name,";"]], B_TRUE, B_FALSE] ;
 
 ContainsNameWhen[Ok, NameSet, $String] :: Boolean ;
--[Data[#Names,#Name]]:
+-[Data[#,#Name]]:
 ContainsNameWhen[OK, NAME_SET[#], #Name] → $[If, $[Contains,#,$[:,";",#Name,";"]], B_TRUE, B_FALSE] ;
 
 ContainsNames[NameSet, NameSet] :: Boolean ;
@@ -332,14 +336,14 @@ AddName[#Names, $[FormatNumber, #Number]]
 ;
 
 FirstName[NameSet<!--old-->] :: $String<!--first Name-->;
--[Data[#Names]]:
+-[Data[#]]:
 FirstName[NAME_SET[#]]
 →
 $[BeforeFirst, $[AfterFirst, #, ";"], ";"]
 ;
 
 RemoveFirstName[NameSet<!--old-->] :: NameSet<!--all but first Name-->;
--[Data[#Names]]:
+-[Data[#]]:
 RemoveFirstName[NAME_SET[#]]
 →
 NAME_SET[$[FromFirst, $[AfterFirst, #, ";"], ";"]]
@@ -347,7 +351,7 @@ NAME_SET[$[FromFirst, $[AfterFirst, #, ";"], ";"]]
 
 RemoveName[NameSet<!--old-->, $String<!--bad Name-->] :: NameSet<!--clean-->;
 //
--[Data[#Names, #Name]]:
+-[Data[#, #Name]]:
 RemoveName[NAME_SET[#], #Name]
 →
 RemoveName1[#, $[:,";",#Name,";"]]
@@ -463,11 +467,11 @@ Name2NamesClosure[{#N2Ns}N2Ns] → {#N2Ns} Name2NamesClosure2[$[{#N2Ns}Keys[$Str
     {#N2Ns} Name2NamesClosure2[(#Key; #Keys), #Modified] → {#N2Ns} Name2NamesClosure3[$[{#N2Ns}Get[NameSet], #Key, NoNames], #Key, #Keys, #Modified] ;
 
     {$String : NameSet} Name2NamesClosure3[NameSet<!--Current-->, $String<!--Key-->, $List[$String]<!--Keys-->, Boolean<!--Modified-->] :: Name2NamesMap ;
-    {#N2Ns} Name2NamesClosure3[#CurrentMembers, #Key, #Keys, #Modified] → {#N2Ns} Name2NamesClosure4[NameSetList[#CurrentMembers], #CurrentMembers, #Key, #Keys, #Modified] ;
+    {#N2Ns} Name2NamesClosure3[#CurrentMembers, #Key, #Keys, #Modified] → {#N2Ns} Name2NamesClosure4[OK, NameSetList[#CurrentMembers], #CurrentMembers, #Key, #Keys, #Modified] ;
 
-    {$String : NameSet} Name2NamesClosure4[$List[$String]<!--UncheckedCurrent-->, NameSet<!--Current-->, $String<!--Key-->, $List[$String]<!--Keys-->, Boolean<!--Modified-->] :: Name2NamesMap ;
-    {#N2Ns} Name2NamesClosure4[(), #Current, #Key, #Keys, #Modified] → {#N2Ns} Name2NamesClosure2[#Keys, #Modified] ;
-    {#N2Ns} Name2NamesClosure4[(#cm; #cms), #Current, #Key, #Keys, #Modified] → {#N2Ns} Name2NamesClosure5[$[{#N2Ns}Get[NameSet], #cm, NoNames], #cm, #cms, #Current, #Key, #Keys, #Modified] ;
+    {$String : NameSet} Name2NamesClosure4[Ok, $List[$String]<!--UncheckedCurrent-->, NameSet<!--Current-->, $String<!--Key-->, $List[$String]<!--Keys-->, Boolean<!--Modified-->] :: Name2NamesMap ;
+    {#N2Ns} Name2NamesClosure4[OK, (), #Current, #Key, #Keys, #Modified] → {#N2Ns} Name2NamesClosure2[#Keys, #Modified] ;
+    {#N2Ns} Name2NamesClosure4[OK, (#cm; #cms), #Current, #Key, #Keys, #Modified] → {#N2Ns} Name2NamesClosure5[$[{#N2Ns}Get[NameSet], #cm, NoNames], #cm, #cms, #Current, #Key, #Keys, #Modified] ;
 
     {$String : NameSet} Name2NamesClosure5[NameSet<!--Derived-->, $String<!--Checking-->, $List[$String]<!--Unchecked-->, NameSet<!--Current-->, $String<!--Key-->, $List[$String]<!--Keys-->, Boolean<!--Modified-->] :: Name2NamesMap ;
     {#N2Ns} Name2NamesClosure5[#Derived, #cm, #cms, #Current, #Key, #Keys, #Modified] → {#N2Ns} Name2NamesClosure6[ExceptNames[#Current, #Derived], #Derived, #cm, #cms, #Current, #Key, #Keys, #Modified] ;
@@ -475,13 +479,13 @@ Name2NamesClosure[{#N2Ns}N2Ns] → {#N2Ns} Name2NamesClosure2[$[{#N2Ns}Keys[$Str
     {$String : NameSet} Name2NamesClosure6[NameSet<!--MissingDerived-->, NameSet<!--Derived-->, $String<!--Checking-->, $List[$String]<!--Unchecked-->, NameSet<!--Current-->, $String<!--Key-->, $List[$String]<!--Keys-->, Boolean<!--Modified-->] :: Name2NamesMap ;
     {#N2Ns} Name2NamesClosure6[#MissingDerived, #Derived, #cm, #cms, #Current, #Key, #Keys, #Modified]
     →
-    If[HasNames[#MissingDerived],
-      {#N2Ns} Name2NamesClosure7[#cm, UnionDisjointNames[#Derived, #MissingDerived], #cms, #Current,  #Key, #Keys], // extend derived set
-      {#N2Ns} Name2NamesClosure4[#cms, #Current, #Key, #Keys, #Modified]] // this set already complete
+    IfThen[HasNames[#MissingDerived],
+      ok.{#N2Ns} Name2NamesClosure7[ok, #cm, UnionDisjointNames[#Derived, #MissingDerived], #cms, #Current,  #Key, #Keys], // extend derived set
+      ok.{#N2Ns} Name2NamesClosure4[ok, #cms, #Current, #Key, #Keys, #Modified]] // this set already complete
     ;
 
-    {$String : NameSet} Name2NamesClosure7[$String<!--Checked-->, NameSet<!--Derived-->, $List[$String]<!--Unchecked-->, NameSet<!--Current-->, $String<!--Key-->, $List[$String]<!--Keys-->] :: Name2NamesMap ;
-    {#N2Ns} Name2NamesClosure7[#cm, #NewDerived, #cms, #Current,  #Key, #Keys] → {#N2Ns; #cm : #NewDerived} Name2NamesClosure4[#cms, #Current, #Key, #Keys, B_TRUE] ;
+    {$String : NameSet} Name2NamesClosure7[Ok, $String<!--Checked-->, NameSet<!--Derived-->, $List[$String]<!--Unchecked-->, NameSet<!--Current-->, $String<!--Key-->, $List[$String]<!--Keys-->] :: Name2NamesMap ;
+    {#N2Ns} Name2NamesClosure7[OK, #cm, #NewDerived, #cms, #Current,  #Key, #Keys] → {#N2Ns; #cm : #NewDerived} Name2NamesClosure4[OK, #cms, #Current, #Key, #Keys, B_TRUE] ;
 
 
 /////////////////////////////////////////////////////////////////////

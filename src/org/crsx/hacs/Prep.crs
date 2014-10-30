@@ -63,10 +63,11 @@ Prep1[#ModuleName, #Declarations, dm ds.#[dm,ds]]
 Prep2[DeclarationMap, $List[HxDeclaration], $String<!--ModuleName-->] :: Text ;
 Prep2[{#DM}DM, #Declarations, #ModuleName]
 →
-Prep3[{#DM}DM, #Declarations, #ModuleName, FilterNamesWhen[ok s.{#DM}P-then-SortHasUserHx[ok, s], {#DM}U-AllSortNames]]
+Prep3[{#DM}DM, #Declarations, #ModuleName, FilterNamesWhen[ok s.{#DM}U-then-SortHasUserHx[ok, s], {#DM}U-AllSortNames]]
 ;
 
 Prep3[DeclarationMap, $List[HxDeclaration], $String<!--ModuleName-->, NameSet<!--SortsWithUserConstructors-->] :: Text ;
+-[Data[#SortsWithUserConstructors]]:
 Prep3[{#DM}DM, #Declarations, #ModuleName, #SortsWithUserConstructors]
 →
 %n⟪/* PG Grammar for /***METAPG&EMBED: HACS module specialized for parsed***/ †« #ModuleName » terms /***EMBEDPG: (embedded terms)***/ */
@@ -194,7 +195,7 @@ net.sf.crsx.Sink s = null;⟧
 }
 %}
 
-« If[HasNames[#SortsWithUserConstructors], {#DM}P-Construction, %n⟨⟩] »
+« IfThen[HasNames[#SortsWithUserConstructors], ok.{#DM}P-then-Construction[ok], ok.%n⟨⟩] »
 <BracketedTerms> ::= ( HX_LBRACKET (<Terms> | {$Nil}) HX_RBRACKET | {$Nil} ) .
 <Terms> ::= {$Cons} <Term> (HX_COMMA <Terms> | {$Nil}) .
 
@@ -222,10 +223,10 @@ net.sf.crsx.Sink s = null;⟧
 ⟫
 ;
 
-{$String : DeclarationMapEntry} P-Construction :: Text ;
-{#DM}P-Construction
+{$String : DeclarationMapEntry} P-then-Construction[Ok] :: Text ;
+{#DM}P-then-Construction[OK]
 →
-%n⟪<Construction> ::= (⟦ « TextJoin[MapWhen[ok s.%n⟨<†‹ U-then-Local[ok,s] ›_Construction>⟩, FilterWhen[ok s. {#DM}P-then-SortHasUserHx[ok, s], NameSetList[{#DM}U-AllSortNames]]], %n⟨ | ⟩] »⟧ ).
+%n⟪<Construction> ::= (⟦ « TextJoin[MapWhen[ok s.%n⟨<†‹ U-then-Local[ok,s] ›_Construction>⟩, FilterWhen[ok s. {#DM}U-then-SortHasUserHx[ok, s], NameSetList[{#DM}U-AllSortNames]]], %n⟨ | ⟩] »⟧ ).
 ⟫;
 
 P-then-MetaSorts-ConstructionSortCaseText[Ok, $String<!--ModuleName-->, $String<!--Name-->, Text] :: Text ;
@@ -414,7 +415,6 @@ net.sf.crsx.Sink N_Attribute« AttributeKindCategory[#Kind] »_†«#Name»(net.
     AttributeKindIndicator[%rawHxAttributeKind⟪ ↑ ⟫] → %n⟪AttributeKindUp⟫ ;
     AttributeKindIndicator[%rawHxAttributeKind⟪ ↓ ⟫] → %n⟪AttributeKindDown⟫ ;
 
-
     P-MetaJJ-AttributeFormSyntax[$String<!--ModuleName-->, HxAttributeForm, $List[HxAttributeOption]] :: Text ;
     P-MetaJJ-AttributeFormSyntax[#ModuleName, %rawHxAttributeForm⟪ ( #HxSort# ) ⟫, #AttributeOptions]
     →
@@ -439,7 +439,9 @@ net.sf.crsx.Sink N_Attribute« AttributeKindCategory[#Kind] »_†«#Name»(net.
 	    JJ-Token["HX_COLON"];
 	    JJ-Nonterminal[%n⟨sink⟩, U-SortName[#HxSort2#], %n⟨env⟩];
 	)]]
-    »⟧|⟦«
+    »⟧ |⟦«
+        JJ-Token["HX_NOT"] » « JJ-Construction[%n⟨hx("AttributeNotKey")⟩, JJ-Nonterminal[%n⟨sink⟩, U-SortName[#HxSort1#], %n⟨env⟩]]
+    »⟧ |⟦«
         JJ-Token["HX_COLON"] » « JJ-Construction[%n⟨hx("AttributeCatchAll")⟩, JJ-Nonterminal[%n⟨sink⟩, "HxMetaVariable", %n⟨env⟩]]
     »⟧)« JJ-Token["HX_RBRACE"] »⟫
     ;
@@ -451,7 +453,7 @@ net.sf.crsx.Sink N_Attribute« AttributeKindCategory[#Kind] »_†«#Name»(net.
 %n⟪« {#DM} P-Production-Defines[#ModuleName, #Defines, #SortName, 0, ()] »
 /***METAPG:
 %{
-« {#DM} P-MetaJJ-Production-Defines[#ModuleName, #Defines, #SortName, P-DefinesHaveHx[#Defines]] »
+« {#DM} P-MetaJJ-Production-Defines[#ModuleName, #Defines, #SortName, {#DM}U-then-SortHasUserHx[OK, #SortName]] »
 %}
 ***/⟫
 ;
@@ -535,55 +537,7 @@ $[If, $[NumericEqual,#Prec1,#Prec],
 ⟫]
 ;
 
-// Test if a sort has user HACS terms.
-
-{$String : DeclarationMapEntry} P-then-SortHasUserHx[Ok, $String<!--SortName-->] :: Boolean ;
-{#DM} P-then-SortHasUserHx[OK, #SortName] → {#DM} P-SortHasUserHx[#SortName] ;
-
-{$String : DeclarationMapEntry} P-SortHasUserHx[$String<!--SortName-->] :: Boolean ;
--[Data[#SortName]]: {#DM} P-SortHasUserHx[#SortName] → P-SortHasUserHx1[$[{#DM}Get[DeclarationMapEntry], #SortName, DME_NONE]] ;
-
-    P-SortHasUserHx1[DeclarationMapEntry] :: Boolean ;
-    P-SortHasUserHx1[DME_SORT[#Defines, #SortName, #Precs, #Wrapper, #IsMain]] → P-DefinesHaveHx[#Defines] ;
-    P-SortHasUserHx1[$[NotMatch,DME_SORT[#Defines, #SortName, #Precs, #Wrapper, #IsMain],#_]] → B_FALSE ;
-
-P-DefinesHaveHx[$List[Define]] :: Boolean;
-
--[Fresh[dummy::HxSortParam]]:
-P-DefinesHaveHx[(D_ABSTRACTION[a.#Define1[a]]; #Defines)]
-→
-P-DefinesHaveHx[(#Define1[dummy]; #Defines)]
-;
-
-P-DefinesHaveHx[(D_RULE[#Rule, #RuleSort, #IsData]; #Defines)]
-→
-P-DefinesHaveHx[#Defines]
-;
-
-P-DefinesHaveHx[(D_FORM[Hx_FormConstruction[#1, #2, #3], #Kind1]; #Defines)]
-→
-B_TRUE
-;
-
-P-DefinesHaveHx[(D_FORM[$[NotMatch,Hx_FormConstruction[#1, #2, #3], #_], #Kind1]; #Defines)]
-→
-P-DefinesHaveHx[#Defines]
-;
-
-P-DefinesHaveHx[(D_SYNTHESIZES[#AttributeName1]; #Defines)]
-→
-P-DefinesHaveHx[#Defines]
-;
-
-P-DefinesHaveHx[(D_NONE; #Defines)]
-→
-P-DefinesHaveHx[#Defines]
-;
-
-P-DefinesHaveHx[()]
-→
-B_FALSE
-;
+// Production definitions for MetaJJ.
 
 {$String<!--SortName--> : DeclarationMapEntry} P-MetaJJ-Production-Defines[$String<!--ModuleName-->, $List[Define], $String<!--SortName-->, Boolean<!--HasHxConstructors-->] :: Text;
 
@@ -604,7 +558,7 @@ net.sf.crsx.Sink N_†« U-Local[#SortName] »(net.sf.crsx.Sink sink, net.sf.crs
     | « JJ-Nonterminal[%n⟨sink⟩, "PresortedParsed", %n⟨env⟩] »
     | "†« U-Local[#SortName] »"
       ( « JJ-Nonterminal[%n⟨sink⟩, "PresortedVariable", %n⟨env⟩] »
-« If[HasNames[FilterNamesWhen[ok s.{#DM}P-then-SortHasUserHx[ok, s], {#DM}U-AllSortNames]], TextConcat3[%n⟨| ⟩, JJ-Nonterminal[%n⟨sink⟩, "Construction", %n⟨env⟩], %n⟨
+« If[HasNames[FilterNamesWhen[ok s.{#DM}U-then-SortHasUserHx[ok, s], {#DM}U-AllSortNames]], TextConcat3[%n⟨| ⟩, JJ-Nonterminal[%n⟨sink⟩, "Construction", %n⟨env⟩], %n⟨
 | ⟩], %n⟨⟩] »« JJ-Nonterminal[%n⟨sink⟩, "PresortedMetaApplication", %n⟨env⟩] »
       |  « JJ-Nonterminal[%n⟨sink⟩, "PresortedParsed", %n⟨env⟩] »
     ))
@@ -815,7 +769,7 @@ CONSUMPTION_SORT ::=( C_BUFFER[$String<!--SortName-->, $Numeric<!--precedence-->
     -[Data[#Sort]]:
     P-isLeftRecursive1[#SortName, #Prec, PFK[Hx_ParsedFormTerm[Hx_ScopeSortPrec[#Sort1, #Prec1], #ParsedForm1], #Kind]]
     →
-    $[If, $[NumericEqual,#Prec,StringToNumericDefault[#Prec1,0]], P-isLeftRecursive1[#SortName, #Sort1], B_FALSE]
+    $[If, $[NumericEqual,#Prec,StringToNumericDefault[#Prec1,0]], P-isLeftRecursive2[#SortName, #Sort1], B_FALSE]
     ;
 
     P-isLeftRecursive1[#SortName, #Prec, PFK[Hx_ParsedFormDone, #Kind]]
@@ -823,9 +777,9 @@ CONSUMPTION_SORT ::=( C_BUFFER[$String<!--SortName-->, $Numeric<!--precedence-->
     B_FALSE
     ;
 
-    P-isLeftRecursive1[$String, HxScopeSort] :: Boolean;
+    P-isLeftRecursive2[$String, HxScopeSort] :: Boolean;
 
-    P-isLeftRecursive1[#SortName,
+    P-isLeftRecursive2[#SortName,
       Hx_ScopeSort[
 	Hx_Sort[Hx_SortName[#SortName1, #_1], $Nil],
 	Hx_RepeatSingle,
@@ -835,7 +789,7 @@ CONSUMPTION_SORT ::=( C_BUFFER[$String<!--SortName-->, $Numeric<!--precedence-->
     ;
 
     -[Data[#Kind]]:
-    P-isLeftRecursive1[#SortName, $[NotMatch,
+    P-isLeftRecursive2[#SortName, $[NotMatch,
       Hx_ScopeSort[
 	Hx_Sort[Hx_SortName[#SortName1, #_1], $Nil],
 	Hx_RepeatSingle,

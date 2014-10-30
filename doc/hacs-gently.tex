@@ -65,30 +65,26 @@ that stage of the compiler. Specifically, \HAX supports the following notations:
 
 \end{description}
 
-
-
-
-In this section we make sure you have a functional \HAX installation on your computer.
+Next we make sure you have a functional \HAX installation on your computer.
 
 \begin{requirements}
   To run the \HAX examples here you need a *nix system (including a shell and the usual utilities)
-  with these common programs: a Java development environment (at
-  least Java~1.6~SE SDK, with "java" and "javac" commands); a C99 compiler with the \emph{icu}
-  libraries; the \emph{flex} lexical generator; the "wget" internet retrieval and "unzip" unpacking
-  utility; and the GNU "make" command.  In addition, the setup process needs internet access to retrieve
-  the JavaCC parser generator~\cite{javacc}.
+  with these common programs: a Java development environment (at least Java~1.6~SE SDK, with "java"
+  and "javac" commands); a standard *nix development setup including GNU Make and a C99 compiler
+  with access to the \emph{icu} libraries In addition, the setup process needs internet access to
+  retrieve the \CRSX base system~\cite{crsx} and JavaCC parser generator~\cite{javacc}.
 \end{requirements}
 
 \begin{commands}\label{com:all}
-  Retrieve the \emph{hacs.zip} archive, extract it to a new directory, and intialize the "Makefile",
-  for example with the following commands:\footnote{User input is \textcolor{blue}{blue}.}
+  Retrieve the \emph{hacs-0.9.zip} archive, extract it to a new directory, and intialize the
+  "Makefile", for example with the following commands:\footnote{User input is
+    \textcolor{blue}{blue}.}
   %%
 \begin{code}[commandchars=\^\{\}]
 $ ^textcolor{blue}{^texttt{mkdir myfirst}}
 $ ^textcolor{blue}{^texttt{cd myfirst}}
-$ ^textcolor{blue}{^texttt{wget http://krisrose.net/hacs.zip}}
+$ ^textcolor{blue}{^texttt{wget http://crsx.org/hacs.zip}}
 $ ^textcolor{blue}{^texttt{unzip hacs.zip}}
-$ ^textcolor{blue}{^texttt{cp Makefile-hacs-template Makefile}}
 \end{code}
   %%
   Now check that all the commands defined in the "SETUP" section near the top of you freshly copied
@@ -98,6 +94,10 @@ $ ^textcolor{blue}{^texttt{cp Makefile-hacs-template Makefile}}
     not a stable capability yet.}
   %% 
 \begin{code}[commandchars=\^\{\}]
+
+$ ^textcolor{blue}{^texttt{make first.run}}
+$ ^textcolor{blue}{^texttt{make first.run}}
+$ ^textcolor{blue}{^texttt{make first.run}}
 $ ^textcolor{blue}{^texttt{make first.run}}
 ...
 $ ^textcolor{blue}{^texttt{./first.run --action=Compile \}}

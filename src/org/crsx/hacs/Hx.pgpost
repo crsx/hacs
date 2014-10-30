@@ -64,12 +64,7 @@ token HX_DOWN ::= \u2193 . // ↓
 token HX_NOT ::= \u00ac . // ¬
 token HX_AT ::= "@" .
 
-token HX_DOTTEDNAME ::= ( (HX_LOWER | HX_DIGIT)+ HX_DOT )+ HX_UPPER (HX_UPPER | HX_LOWER | HX_DIGIT)* .
-
-// Common categories...TODO: should be Unicode once we allow large lexers...
-token fragment HX_DIGIT ::= [0-9] .
-token fragment HX_LOWER ::= [a-z] .
-token fragment HX_UPPER ::= [A-Z] .
+token HX_DOTTEDNAME ::= ( [a-z] [A-Za-z0-9_$]* HX_DOT )+ [A-Z] [A-Za-z0-9_$]* .
 
 // Normal keywords.
 token HX_MODULE ::= "module" .
@@ -99,16 +94,12 @@ token HX_NESTED (HX_RE) ::= "nested" .
 
 // Regular Expression specific tokens.
 token HX_FRAGMENT_REF (HX_RE) ::= \u27e8 HX_RE_NAME \u27e9 .
-token HX_RE_NAME (HX_RE) ::= HX_UPPER (HX_UPPER | HX_LOWER | HX_DIGIT | [_$] )* .
+token HX_RE_NAME (HX_RE) ::= [A-Z] [A-Za-z0-9_$]* .
 token HX_RE_WORD (HX_RE) ::= ~['⟨','⟩','⟦','⟧','(',')','[',']','.','*','+','?',';','"',"'",',',':','«','»',' ',\t,\\,\n]+ .
 
 // The basic identifier forms.
-token HX_META ::= HX_HASH (HX_NAME | HX_STRING)? (HX_HASH HX_NAME)* HX_SUFFIX* .
-token HX_VAR ::= HX_LOWER HX_NAME? HX_SUFFIX* .
-
-token fragment HX_HASH ::= "#" .
-token fragment HX_SUFFIX ::= "_" HX_NAME? | "_"? HX_NATURAL HX_NAME? .
-token fragment HX_NAME ::= (HX_LOWER | HX_UPPER | [$])+ .
+token HX_META ::= ['#'] [A-Za-z0-9_$]* .
+token HX_VAR ::= [a-z] [A-Za-z0-9_$]* .
 
 // Constant values.
 <HxLiteral> ::= ( <HxString> | <HxNumber> ).
@@ -116,7 +107,7 @@ token fragment HX_NAME ::= (HX_LOWER | HX_UPPER | [$])+ .
 // Numbers.
 <HxNumber> ::= ( <HxNatural> | HX_UNNATURAL$ ).
 <HxNatural> ::= HX_NATURAL$ .
-token HX_NATURAL ::= HX_DIGIT+ .
+token HX_NATURAL ::= [0-9]+ .
 token fragment HX_INTEGER ::= [-+]* HX_NATURAL .
 token HX_UNNATURAL ::= (HX_INTEGER? "." HX_NATURAL) ( [Ee] HX_INTEGER )? | HX_INTEGER [Ee] HX_INTEGER .
 

@@ -4,17 +4,17 @@
 #
 # Usage:
 #   make
-#   make DESTDIR='' USR='/usr/local' install
+#   make DESTDIR="" prefix="/usr/local" install
 #
 # Environment variables:
 # - DESTDIR - root of installation (empty by default)
-# - USR - prefix of installation (/usr/local by default).
+# - prefix - prefix of installation (/usr/local by default).
 #
 # - CRSXJAR - full path to CRSX jar (at least version 3.2).
 # - JAVACCJAR - full path to JavaCC jar (at least version 5.0).
 # - ICU4CLIB - full path to the libicudata.so binary library to use (at least version 42).
 #
-# Calls Env.mk to set defaults for all the variables there
+# Bootstrap by using Hacs.mk with HACSJAR set to the current directory.
 
 
 # STANDARD TARGETS.
@@ -33,30 +33,28 @@ gitclean :: realclean
 
 # External library setup.
 CRSXVERSION = 3.2
-CRSXJAR = $(abspath lib/crsx-$(CRSXVERSION).jar)
+CRSXJAR = $(abspath ../lib/crsx-$(CRSXVERSION).jar)
 JAVACCVERSION = 6.0
-JAVACCJAR = $(abspath lib/javacc-$(JAVACCVERSION).jar)
+JAVACCJAR = $(abspath ../lib/javacc-$(JAVACCVERSION).jar)
 ICU4CLIB = $(ICU4CDIR)/libicudata.so
 
 # HACS bootstrapping setup.
-BUILD = $(abspath build)
+BUILD = $(abspath ../build)
 HACSJAR = $(abspath .)
 include Hacs.mk
 
-realclean ::; rm -fr build
+realclean ::; rm -fr $(BUILD)
 
 # Install setup.
-USR = /usr/local
-LIBDIR = $(USR)/lib/hacs
-BINDIR = $(USR)/bin
-DOCDIR = $(USR)/share/doc/hacs
-SHAREDIR = $(USR)/share/hacs
-SHAREJAVA = $(USR)/share/java
-
-realclean ::; rm -fr usr
+prefix = /usr/local
+LIBDIR = $(prefix)/lib/hacs
+BINDIR = $(prefix)/bin
+DOCDIR = $(prefix)/share/doc/hacs
+SHAREDIR = $(prefix)/share/hacs
+SHAREJAVA = $(prefix)/share/java
 
 
-# DOWNLOAD.
+# DOWNLOAD STUFF.
 
 all :: $(CRSXJAR) $(JAVACCJAR) $(ICU4CLIB)
 
@@ -156,8 +154,44 @@ $(BUILD)/share/java/javacc.jar: $(JAVACCJAR)
 	cp $(JAVACCJAR) $(BUILD)/share/java/javacc-$(JAVACCVERSION).jar
 	cd $(BUILD)/share/java && $(NOEXEC) ln -s javacc-$(JAVACCVERSION).jar javacc.jar
 
-realclean ::
-	rm -f *.jar
+# CRSX rulecompiler (crsxc).
+
+all :: $(BUILD)/lib/hacs/crsxc $(BUILD)/share/hacs/crsx.h $(BUILD)/lib/hacs/crsx.o $(BUILD)/lib/hacs/crsx_scan.o
+install :: $(BUILD)/lib/hacs/crsxc $(BUILD)/share/hacs/crsx.h $(BUILD)/lib/hacs/crsx.o $(BUILD)/lib/hacs/crsx_scan.o
+	mkdir -p $(DESTDIR)$(LIBDIR)
+	mkdir -p $(DESTDIR)$(SHAREDIR)
+	cp -a $(BUILD)/lib/hacs/crsxc $(DESTDIR)$(LIBDIR)
+	cp -a $(BUILD)/share/hacs/crsx.h $(DESTDIR)$(SHAREDIR)
+	cp -a $(BUILD)/lib/hacs/crsx.o $(DESTDIR)$(LIBDIR)
+	cp -a $(BUILD)/lib/hacs/crsx_scan.o $(DESTDIR)$(LIBDIR)
+
+$(BUILD)/lib/hacs/crsxc : crsx-rulecompiler/net/sf/crsx/compiler/c/build/crsxc
+	mkdir -p $(BUILD)/lib/hacs
+	cp -a crsx-rulecompiler/net/sf/crsx/compiler/c/build/crsxc $(BUILD)/lib/hacs/
+
+$(BUILD)/share/hacs/crsx.h : crsx-rulecompiler/net/sf/crsx/compiler/c/crsx.h
+	mkdir -p $(BUILD)/share/hacs
+	cp -a crsx-rulecompiler/net/sf/crsx/compiler/c/crsx.h $(BUILD)/share/hacs/
+
+$(BUILD)/lib/hacs/crsx.o : crsx-rulecompiler/net/sf/crsx/compiler/c/crsx.o
+	mkdir -p $(BUILD)/lib/hacs
+	cp -a crsx-rulecompiler/net/sf/crsx/compiler/c/crsx.o $(BUILD)/lib/hacs/
+
+$(BUILD)/lib/hacs/crsx_scan.o : crsx-rulecompiler/net/sf/crsx/compiler/c/crsx_scan.o
+	mkdir -p $(BUILD)/lib/hacs
+	cp -a crsx-rulecompiler/net/sf/crsx/compiler/c/crsx_scan.o $(BUILD)/lib/hacs/
+
+crsx-rulecompiler/net/sf/crsx/compiler/c/build/crsxc \
+crsx-rulecompiler/net/sf/crsx/compiler/c/crsx.h \
+crsx-rulecompiler/net/sf/crsx/compiler/c/crsx.o \
+crsx-rulecompiler/net/sf/crsx/compiler/c/crsx_scan.o : $(CRSXJAR)
+	rm -fr crsx-rulecompiler
+	mkdir -p crsx-rulecompiler
+	cd crsx-rulecompiler && $(NOEXEC) $(JAR) xf $(CRSXJAR) net/sf/crsx/compiler
+	$(MAKE) -C crsx-rulecompiler/net/sf/crsx/compiler/c crsx.h crsx.o crsx_scan.o build/crsxc 
+
+gitclean ::
+	rm -fr crsx-rulecompiler
 
 # HACS "raw" parser bootstrapping dependencies.
 
@@ -169,12 +203,39 @@ $(BUILD)/org/crsx/hacs/HxRaw.jj: $(BUILD)/org/crsx/hacs/HxRaw.pg
 $(BUILD)/org/crsx/hacs/HxRaw.java: $(BUILD)/org/crsx/hacs/HxRaw.jj
 $(BUILD)/org/crsx/hacs/HxRaw.class: $(BUILD)/org/crsx/hacs/HxRaw.java
 
-# HACS command.
+# HACS main rewriter.
+
+all :: $(BUILD)/lib/hacs/MainRewriter
+install :: $(BUILD)/lib/hacs/MainRewriter
+	mkdir -p $(DESTDIR)$(LIBDIR)
+	cp -a $(BUILD)/lib/hacs/MainRewriter $(DESTDIR)$(LIBDIR)
+
+$(BUILD)/lib/hacs/MainRewriter : $(BUILD)/org/crsx/hacs/MainRewriter
+	mkdir -p $(BUILD)/lib/hacs
+	cp $(BUILD)/org/crsx/hacs/MainRewriter $(BUILD)/lib/hacs
+
+$(BUILD)/org/crsx/hacs/MainRewriter: $(addprefix $(BUILD)/org/crsx/hacs/Main, .o _sorts.o _rules.o _symbols.o)
+
+$(BUILD)/org/crsx/hacs/Main.o: $(BUILD)/org/crsx/hacs/Main.c $(BUILD)/org/crsx/hacs/Main.h $(BUILD)/share/hacs/crsx.h
+$(BUILD)/org/crsx/hacs/Main_sorts.o: $(BUILD)/org/crsx/hacs/Main_sorts.c $(BUILD)/org/crsx/hacs/Main.h $(BUILD)/share/hacs/crsx.h
+$(BUILD)/org/crsx/hacs/Main_rules.o: $(BUILD)/org/crsx/hacs/Main_rules.c $(BUILD)/org/crsx/hacs/Main.h $(BUILD)/share/hacs/crsx.h
+$(BUILD)/org/crsx/hacs/Main_symbols.o: $(BUILD)/org/crsx/hacs/Main_symbols.c $(BUILD)/org/crsx/hacs/Main.h $(BUILD)/share/hacs/crsx.h
+
+$(BUILD)/org/crsx/hacs/Main.h: $(BUILD)/org/crsx/hacs/Main.dr
+$(BUILD)/org/crsx/hacs/Main.c: $(BUILD)/org/crsx/hacs/Main.dr
+$(BUILD)/org/crsx/hacs/Main_sorts.c: $(BUILD)/org/crsx/hacs/Main.dr
+$(BUILD)/org/crsx/hacs/Main_rules.c: $(BUILD)/org/crsx/hacs/Main.dr
+$(BUILD)/org/crsx/hacs/Main_symbols.c: $(BUILD)/org/crsx/hacs/Main.dr
+
+$(BUILD)/org/crsx/hacs/Main.dr: $(BUILD)/org/crsx/hacs/Main.crs
+
+# HACS user command.
 
 all :: $(BUILD)/share/hacs/Hacs.mk $(BUILD)/share/hacs/Env.mk $(BUILD)/bin/hacs
 install :: $(BUILD)/share/hacs/Hacs.mk $(BUILD)/share/hacs/Env.mk $(BUILD)/bin/hacs
-	mkdir -p $(DESTDIR)$(SHAREDIR)
+	mkdir -p $(DESTDIR)$(SHAREDIR) $(DESTDIR)$(BINDIR)
 	cp $(BUILD)/share/hacs/Hacs.mk $(BUILD)/share/hacs/Env.mk $(DESTDIR)$(SHAREDIR)
+	cp -a $(BUILD)/bin/hacs $(DESTDIR)$(BINDIR)
 
 $(BUILD)/share/hacs/Hacs.mk $(BUILD)/share/hacs/Env.mk : Hacs.mk Env.mk
 	mkdir -p $(BUILD)/share/hacs
@@ -192,87 +253,6 @@ $(BUILD)/bin/hacs: hacs.sh.template
 	chmod +x '$@.tmp'
 	mv '$@.tmp' '$@'
 
-realclean::; @rm -f $(BUILD)/bin/hacs
-
-# Rulecompiler.
-
-all :: $(BUILD)/lib/hacs/crsxc
-install :: $(BUILD)/lib/hacs/crsxc
-	mkdir -p $(DESTDIR)$(LIBDIR)
-	cp -a $(BUILD)/lib/hacs/crsxc $(DESTDIR)$(LIBDIR)
-
-$(BUILD)/lib/hacs/crsxc :
-	mkdir -p $(BUILD)/lib/hacs
-	$(ECHO) -e "#!/bin/sh\necho 'Not Implemented'" > $@
-	chmod +x $@
-
-### TODOL
-###$(BUILD)/lib/hacs/crsxc : crsx-rulecompiler/net/sf/crsx/compiler/c/build/crsxc
-###	mkdir -p $(BUILD)/lib/hacs
-###	cp -a crsx-rulecompiler/net/sf/crsx/compiler/c/build/crsxc $(BUILD)/lib/hacs/crsxc
-###
-###crsx-rulecompiler/net/sf/crsx/compiler/c/build/crsxc : $(CRSXJAR)
-###	rm -fr crsx-rulecompiler
-###	mkdir -p crsx-rulecompiler
-###	cd crsx-rulecompiler && $(NOEXEC) $(JAR) xf $(CRSXJAR) net/sf/crsx/compiler
-###	$(MAKE) -C crsx-rulecompiler/net/sf/crsx/compiler/c
-
-realclean ::
-	rm -fr crsx-rulecompiler
-
-
-### # Distribution.
-### TOPFILES = 00README-hacs Makefile-hacs-template first.hx doc/hacs-gently.pdf
-### HACSSOURCES = Makefile Makefile-hx crsx.jar Prepmain.c run-hacs.sh
-### HACSGENERATED = Prep.h Prep_sorts.c Prep_rules.c Prep_symbols.c
-### 
-### hacs.zip: $(TOPFILES)
-### 	@rm -fr hacs.zip tmp
-### 	$(MAKE) -C $(BUILD) clean $(HACSSOURCES) $(HACSGENERATED)
-### 	mkdir -p tmp/hacs
-### 	cp -vp $(TOPFILES) tmp/
-### 	d="`pwd`" && cd $(HACS) && cp -vp $(HACSSOURCES) $(HACSGENERATED) $$d/tmp/hacs/
-### 	d="`pwd`" && cd tmp && zip -r $$d/hacs.zip .
-### 	rm -fr tmp
-### 
-### # HACS Prep utility dependencies.
-### Prepmain.o: Prepmain.c Prep.h crsx.h
-### Prepmain: Prepmain.o Prep_sorts.o Prep_rules.o Prep_symbols.o crsx.o crsx_scan.o
-### #	$(CC) -o Prepmain Prepmain.o Prep_sorts.o Prep_rules.o Prep_symbols.o crsx.o crsx_scan.o -licuuc -licudata -licui18n -licuio
-### clean::; rm -f Prep_* Prep.*
-### realclean::; rm -fr Prepmain tmp
-
-### # Distribution.
-### TOPFILES = 00README-hacs Makefile-hx Makefile-hacs-template
-### HACSSOURCES = Makefile crsx.jar Prepmain.c run-hacs.sh
-### HACSGENERATED = Prep.h Prep_sorts.c Prep_rules.c Prep_symbols.c
-### 
-### hacs.zip: $(TOPFILES)
-### 	@rm -fr hacs.zip tmp
-### 	$(MAKE) -C $(BUILD) clean $(HACSSOURCES) $(HACSGENERATED)
-### 	mkdir -p tmp/hacs
-### 	cp -vp $(TOPFILES) tmp/
-### 	d="`pwd`" && cd $(HACS) && cp -vp $(HACSSOURCES) $(HACSGENERATED) $$d/tmp/hacs/
-### 	d="`pwd`" && cd tmp && zip -r $$d/hacs.zip .
-### 	rm -fr tmp
-### 
-### # HACS Prep utility dependencies.
-### Prepmain.o: Prepmain.c Prep.h crsx.h
-### Prepmain: Prepmain.o Prep_sorts.o Prep_rules.o Prep_symbols.o crsx.o crsx_scan.o
-### #	$(CC) -o Prepmain Prepmain.o Prep_sorts.o Prep_rules.o Prep_symbols.o crsx.o crsx_scan.o -licuuc -licudata -licui18n -licuio
-### clean::; rm -f Prep_* Prep.*
-### realclean::; rm -fr Prepmain tmp
-### 
-### # Final build location.
-### BUILDROOT = build
-### BUILDPACK = $(BUILDROOT)/org/crsx/hacs
-### $(BUILDPACK):; mkdir -p $(BUILDPACK)
-### realclean::; rm -fr $(BUILDROOT)
-### 
-### # Where the primary source files are.
-### HACSSRC = src
-### HACSSRCPACK = $(HACSSRC)/org/crsx/hacs
-### clean::; rm -f $(HACSSRCPACK)
 
 
 ### # ===========

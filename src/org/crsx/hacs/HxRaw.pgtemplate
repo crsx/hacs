@@ -22,7 +22,7 @@ static String hx(String s) {return "Hx_"+s;} // prefix for constructors
 token HX_EMBEDDED (*) ::= '«' (~['«','»'])* '»' .
 
 // Meta-variables #SortN# can be used in hx syntax. 
-meta[<HxSortParam>] ::=  '#<PRODUCTION_NAME>' ( (HX_DIGIT)* | '_' (HX_DIGIT | HX_UPPER | HX_LOWER)* ) '#' , '⦃', '⦄', '∥' .
+meta[<HxSortParam>] ::=  '#<PRODUCTION_NAME>' ( [0-9]* | '_' [A-Za-z0-9]* ) '#' , '⦃', '⦄', '∥' .
 inject[<HxEmbedded>] ::=  '%<PRODUCTION_NAME>', '', '' .
 
 
@@ -81,7 +81,7 @@ inject[<HxEmbedded>] ::=  '%<PRODUCTION_NAME>', '', '' .
 <HxAttributeValue> ::= 
   {AttributeValue}:hx HX_LPAREN <HxTerm> HX_RPAREN
 | HX_LBRACE
-    ( <HxTerm>:# ( {AttributeKeyValue}:hx {{#}} HX_COLON <HxTerm> | {AttributeKey}:hx {{#}} )
+    ( ( <HxTerm>:# ( {AttributeKeyValue}:hx {{#}} HX_COLON <HxTerm> | {AttributeKey}:hx {{#}} ) )
     | {AttributeCatchAll}:hx HX_COLON <HxMetaVariable>
     | {AttributeNotKey}:hx HX_NOT <HxTerm> )
   HX_RBRACE
@@ -100,4 +100,4 @@ inject[<HxEmbedded>] ::=  '%<PRODUCTION_NAME>', '', '' .
 
 // Unconstrainedconstructors.
 
-token HX_CONSTRUCTOR ::= (HX_UPPER | [$]) HX_NAME? HX_SUFFIX* .
+token HX_CONSTRUCTOR ::= [A-Z$] [A-Za-z0-9_$]* .

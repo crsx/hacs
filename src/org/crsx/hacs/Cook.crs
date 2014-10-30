@@ -408,18 +408,32 @@ C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllN
 
     // - synthetic attribute association encoded with need/collect construction;
 
-    C-UnsynthesizeDefine[D_SYNTHESIZES[#AttributeName], #HxSortName#, #ModuleName, #DM]
+    C-UnsynthesizeDefine[D_SYNTHESIZES[#HxAttributeName#], #HxSortName#, #ModuleName, #DM]
     →
-    /// $[Trace, $[:,"Synthesize ",#AttributeName],
     (
-      D_SYNTHESIZES[#AttributeName];
-      D_FORM[%rawHxForm⟪ %HxConstructor« U-QN[#ModuleName, #HxSortName#, StringConcat["Need_", #AttributeName]] » ( #HxSortName# ) ⟫,
-        FK_SCHEME[U-QN[#ModuleName, #HxSortName#, StringConcat["Need_", #AttributeName]]]];
-      D_FORM[%rawHxForm⟪ %HxConstructor« U-QN[#ModuleName, #HxSortName#, StringConcat["Collect_", #AttributeName]] » ( #HxSortName# ) ⟫,
-        FK_SCHEME[U-QN[#ModuleName, #HxSortName#, StringConcat["Collect_", #AttributeName]]]];
+      D_SYNTHESIZES[#HxAttributeName#];
+
+      D_FORM[%rawHxForm⟪ %HxConstructor« U-QN[#ModuleName, #HxSortName#, StringConcat["Need_", #HxAttributeName#]] » ( #HxSortName# ) ⟫,
+        FK_SCHEME[U-QN[#ModuleName, #HxSortName#, StringConcat["Need_", #HxAttributeName#]]]];
+
+      D_FORM[%rawHxForm⟪ %HxConstructor« U-QN[#ModuleName, #HxSortName#, StringConcat["Collect_", #HxAttributeName#]] » ( #HxSortName# ) ⟫,
+        FK_SCHEME[U-QN[#ModuleName, #HxSortName#, StringConcat["Collect_", #HxAttributeName#]]]];
+
+      D_RULE[%rawHxRule⟪
+        %HxConstructor« U-QN[#ModuleName, #HxSortName#, StringConcat["Need_", #HxAttributeName#]] »
+	( # ↑ #HxAttributeName# %HxAttributeValue« C-AttributeValuePattern[#HxAttributeName#, #DM] » )
+	→ # ⟫, #HxSortName#, B_FALSE];
     )
-    /// ]   
     ;
+
+	C-AttributeValuePattern[$String<!--AttributeName-->, DeclarationMap] :: HxAttributeValue ;
+	C-AttributeValuePattern[#AttributeName, {#DM}DM] → C-AttributeValuePattern1[{#DM}U-GetAttributeForm[#AttributeName], #AttributeName] ;
+
+	C-AttributeValuePattern1[HxAttributeForm, $String<!--AttributeName-->] :: HxAttributeValue ;
+	C-AttributeValuePattern1[%rawHxAttributeForm⟪ ( #HxSort# ) ⟫, #AttributeName] → %rawHxAttributeValue⟪( %HxMetaVariable«$[:,"#",#AttributeName]» )⟫ ;
+	C-AttributeValuePattern1[%rawHxAttributeForm⟪ { #HxSort# } ⟫, #AttributeName] → %rawHxAttributeValue⟪{ %HxMetaVariable«$[:,"#",#AttributeName]» }⟫ ;
+	C-AttributeValuePattern1[%rawHxAttributeForm⟪ { #HxSort1# : #HxSort2# } ⟫, #AttributeName] → %rawHxAttributeValue⟪{: %HxMetaVariable«$[:,"#",#AttributeName]» }⟫ ;
+	C-AttributeValuePattern1[Hx_NoAttributeForm, #AttributeName] → %rawHxAttributeValue⟪( %HxMetaVariable«$[:,"#",#AttributeName]» )⟫ ;
 
     // - other declarations are merely copied over.
 
@@ -491,6 +505,8 @@ C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllN
     If[HasNames[#Needy],
       // Rewrite rule to first satisfy synthetic need.
       (
+        D_FORM[%rawHxForm⟪ %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Delayed_", U-Local[#HxConstructor#]]] » ( %HxSortName« #SortName » ) ⟫,
+          FK_SCHEME[U-QN[#ModuleName, #SortName, StringConcat["Delayed_", U-Local[#HxConstructor#]]]]];
         D_RULE[{#L}%rawHxRule⟪
 	  #HxConstructor# ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, #Needy, NoNames, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}C-GetConstructorScopeSorts[#HxConstructor#]] » ) #HxAttributes#
 	  →
@@ -805,7 +821,7 @@ C-CrsxifyTerm[HxTerm, NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Te
 
 C-CrsxifyTerm[%rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #TopInherited, {#DM}DM, #SM]
 →
-%n⟪ « C-CrsxifyAttributes[#HxAttributes#, {#DM}U-GetFunctionInherited[#HxConstructor#],#TopInherited, {#DM}DM, #SM] »« C-CrsxifyConstructor[#HxConstructor#] »⟦« WrappedTextJoin[Map[s.C-CrsxifyScope[s, #TopInherited, {#DM}DM, #SM], #HxScopes#], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩] »⟧ ⟫
+%n⟪ « C-CrsxifyAttributes[#HxAttributes#, {#DM}U-GetFunctionInherited[#HxConstructor#], #TopInherited, {#DM}DM, #SM] »« C-CrsxifyConstructor[#HxConstructor#] »⟦« WrappedTextJoin[Map[s.C-CrsxifyScope[s, #TopInherited, {#DM}DM, #SM], #HxScopes#], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩] »⟧ ⟫
 ;
 C-CrsxifyTerm[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #TopInherited, {#DM}DM, #SM]
 →
@@ -846,7 +862,7 @@ C-CrsxifyAttributes[$List[HxAttribute], NameSet<!--ThisInherited-->, NameSet<!--
 
 C-CrsxifyAttributes[#Attributes, #ThisInherited, #TopInherited, #DM, #SM]
 →
-If[And[Empty[#Attributes], Not[HasNames[#TopInherited]]],
+If[All[(Empty[#Attributes]; Not[HasNames[#ThisInherited]]; Not[HasNames[#TopInherited]];)],
   %n⟪⟫,
   %n⟪{ ⟦« {} C-CrsxifyAttributes2[#Attributes, NameSetList[#ThisInherited], #TopInherited, #DM, #SM] » ⟧} ⟫]
 ;
@@ -871,8 +887,11 @@ If[And[Empty[#Attributes], Not[HasNames[#TopInherited]]],
 
     // Emit collection of chosen attributes.
     {$String : $List[HxAttributeValue]} C-CrsxifyAttributes5[$List[$String], $String, NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
-    {#AI; #a : #avs} C-CrsxifyAttributes5[(#a; #as), #sep, #TopInherited, #DM, #SM] → %n⟪†« #sep »« C-CrsxifyAttribute[#a, #avs, #TopInherited, #DM, #SM] » « {#AI} C-CrsxifyAttributes5[#as, "; ", #TopInherited, #DM, #SM] »⟫ ;
-    {} C-CrsxifyAttributes5[(), #sep, #TopInherited, #DM, #SM] → %n⟪⟫ ;
+    {#AI} C-CrsxifyAttributes5[(#a; #as), #sep, #TopInherited, #DM, #SM] → {#AI} C-CrsxifyAttributes6[$[{#AI}Get[$List[HxAttributeValue]], #a], #a, #as, #sep, #TopInherited, #DM, #SM] ;
+    {#AI} C-CrsxifyAttributes5[(), #sep, #TopInherited, #DM, #SM] → %n⟪⟫ ;
+
+    {$String : $List[HxAttributeValue]} C-CrsxifyAttributes6[$List[HxAttributeValue], $String, $List[$String], $String, NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
+    {#AI} C-CrsxifyAttributes6[#avs, #a, #as, #sep, #TopInherited, #DM, #SM] → %n⟪†« #sep »« C-CrsxifyAttribute[#a, #avs, #TopInherited, #DM, #SM] » « {#AI} C-CrsxifyAttributes5[#as, "; ", #TopInherited, #DM, #SM] »⟫ ;
 
     //
     C-CrsxifyAttribute[$String<!--Name-->, $List[HxAttributeValue], NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
@@ -930,7 +949,7 @@ C-CrsxifyMetaApplication[$String<!--MetaVariable-->, $List[HxTerm], NameSet<!--T
 C-CrsxifyMetaApplication[#MetaVariable, #Terms, #TopInherited, #DM, #SM] → %n⟪« C-CrsxifyMetaVariable[#MetaVariable] »« WrappedTextJoin[Map[t.C-CrsxifyTerm[t, #TopInherited, #DM, #SM], #Terms], %n⟨[⟩,  %n⟨, ⟩,  %n⟨]⟩] »⟫ ;
 
 C-CrsxifySpecial[HxTerm, Text] :: Text ;
--[Free[special::HxTerm]]: C-CrsxifySpecial[special, #text] → %n⟪ Special_«special»[« #text »] ⟫ ;
+-[Free[special::HxTerm]]: C-CrsxifySpecial[special, #text] → %n⟪ Special_«special»[« C-Text-open »« #text »« C-Text-close »] ⟫ ;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -939,16 +958,39 @@ C-CrsxifySpecial[HxTerm, Text] :: Text ;
 // C-Print all declarations.
 
 C-Print[$List[HxDeclaration], $String<!--ModuleName-->, $String<!--LastSort-->, DeclarationMap] :: Text ;
-C-Print[%rawHxDeclarations⟪ module #HxModuleName2# { #HxDeclarations2# } ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM] → %n⟪« C-Print[#HxDeclarations2#, #ModuleName, "", #DM] »« C-Print[#HxDeclarations#, #ModuleName, #LastSort, #DM] »⟫ ;
-C-Print[%rawHxDeclarations⟪ space #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM] → C-Print[#HxDeclarations#, #ModuleName, #LastSort, #DM] ;
-C-Print[%rawHxDeclarations⟪ token #HxTokenName# | #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM] → C-Print[#HxDeclarations#, #ModuleName, #LastSort, #DM] ;
-C-Print[%rawHxDeclarations⟪ fragment #HxTokenName# | #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM] → C-Print[#HxDeclarations#, #ModuleName, #LastSort, #DM] ;
-C-Print[%rawHxDeclarations⟪ attribute #HxAttributeKind# #HxAttributeName# #HxAttributeForm# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM] → C-Print[#HxDeclarations#, #ModuleName, #LastSort, #DM] ;
-C-Print[%rawHxDeclarations⟪ #HxMainKind# sort #HxSortName# #HxRepeat# #HxSortAbstraction# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM] → %n⟪« C-Print-Abstraction[#HxSortAbstraction#, #ModuleName, #HxSortName#, #DM] »« C-Print[#HxDeclarations#, #ModuleName, #HxSortName#, #DM] »⟫ ;
-C-Print[%rawHxDeclarations⟪ #HxSortAlternatives# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM] → %n⟪« C-Print-Alternatives[#HxSortAlternatives#, #ModuleName, #LastSort, #DM] »« C-Print[#HxDeclarations#, #ModuleName, #LastSort, #DM] »⟫ ;
-C-Print[%rawHxDeclarations⟪ rule #HxRule# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM] → C-Print[#HxDeclarations#, #ModuleName, #LastSort, #DM] ;
-C-Print[%rawHxDeclarations⟪ { #HxDeclarations1# } #HxDeclarations2# ⟫, #ModuleName, #LastSort, #DM] → %n⟪« C-Print[#HxDeclarations1#, #ModuleName, #LastSort, #DM] »« C-Print[#HxDeclarations2#, #ModuleName, #LastSort, #DM] »⟫ ;
-C-Print[%rawHxDeclarations⟪ ⟫, #ModuleName, #LastSort, #DM] → %n⟪⟫ ;
+
+C-Print[#Declarations, #ModuleName, #LastSort, {#DM}DM]
+→
+%n⟪« TextJoin[MapNames[s.C-Print-Sort[#ModuleName, s], {#DM}U-AllSortNames], %n⟨⟩] »« C-Print-Declarations[#Declarations, #ModuleName, #LastSort, {#DM}DM] »⟫
+;
+
+C-Print-Sort[$String<!--ModuleName-->, $String<!--Sort-->] :: Text ;
+C-Print-Sort[#ModuleName, #Sort]
+→
+%n⟪↲
+'$Print-†«#Sort»' [$†«#Sort»] :: Text ;
+'$Print-†«#Sort»' [#] → '$Print2-†«#Sort»' [#, 0] ;
+⟫;
+
+C-Print-Declarations[$List[HxDeclaration], $String<!--ModuleName-->, $String<!--LastSort-->, DeclarationMap] :: Text ;
+C-Print-Declarations[%rawHxDeclarations⟪ module #HxModuleName2# { #HxDeclarations2# } ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM] → %n⟪« C-Print-Declarations[#HxDeclarations2#, #ModuleName, "", #DM] »« C-Print-Declarations[#HxDeclarations#, #ModuleName, #LastSort, #DM] »⟫ ;
+C-Print-Declarations[%rawHxDeclarations⟪ space #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM] → C-Print-Declarations[#HxDeclarations#, #ModuleName, #LastSort, #DM] ;
+C-Print-Declarations[%rawHxDeclarations⟪ token #HxTokenName# | #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM] → %n⟪« C-Print-Token[#ModuleName, #HxTokenName#, #DM] »« C-Print-Declarations[#HxDeclarations#, #ModuleName, "", #DM] »⟫ ;
+C-Print-Declarations[%rawHxDeclarations⟪ fragment #HxTokenName# | #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM] → C-Print-Declarations[#HxDeclarations#, #ModuleName, #LastSort, #DM] ;
+C-Print-Declarations[%rawHxDeclarations⟪ attribute #HxAttributeKind# #HxAttributeName# #HxAttributeForm# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM] → C-Print-Declarations[#HxDeclarations#, #ModuleName, #LastSort, #DM] ;
+C-Print-Declarations[%rawHxDeclarations⟪ #HxMainKind# sort #HxSortName# #HxRepeat# #HxSortAbstraction# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM] → %n⟪« C-Print-Abstraction[#HxSortAbstraction#, #ModuleName, #HxSortName#, #DM] »« C-Print-Declarations[#HxDeclarations#, #ModuleName, #HxSortName#, #DM] »⟫ ;
+C-Print-Declarations[%rawHxDeclarations⟪ #HxSortAlternatives# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM] → %n⟪« C-Print-Alternatives[#HxSortAlternatives#, #ModuleName, #LastSort, #DM] »« C-Print-Declarations[#HxDeclarations#, #ModuleName, #LastSort, #DM] »⟫ ;
+C-Print-Declarations[%rawHxDeclarations⟪ rule #HxRule# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM] → C-Print-Declarations[#HxDeclarations#, #ModuleName, #LastSort, #DM] ;
+C-Print-Declarations[%rawHxDeclarations⟪ { #HxDeclarations1# } #HxDeclarations2# ⟫, #ModuleName, #LastSort, #DM] → %n⟪« C-Print-Declarations[#HxDeclarations1#, #ModuleName, #LastSort, #DM] »« C-Print-Declarations[#HxDeclarations2#, #ModuleName, #LastSort, #DM] »⟫ ;
+C-Print-Declarations[%rawHxDeclarations⟪ ⟫, #ModuleName, #LastSort, #DM] → %n⟪⟫ ;
+
+// Print a token.
+
+C-Print-Token[$String<!--ModuleName-->, $String<!--TokenName-->, DeclarationMap] :: Text ;
+C-Print-Token[#ModuleName, #TokenName, #DM]
+→
+%n⟪'$Print2-†«U-LastName[#ModuleName]»$†«#TokenName»' [#, #prec] → « C-Text-open »« C-Text-unopen »StringToText[#]« C-Text-unclose »« C-Text-close » ;
+⟫;
 
 // Print a sort abstraction.
 
@@ -960,12 +1002,35 @@ C-Print-Abstraction[%rawHxSortAbstraction⟪ #HxSortAlternatives# ⟫, #ModuleNa
 
 C-Print-Alternatives[$List[HxSortAlternative], $String<!--ModuleName-->, $String<!--Sort-->, DeclarationMap] :: Text ;
 C-Print-Alternatives[( {#L}%rawHxSortAlternative⟪ | data #HxForm# ⟫ ; #Rest ), #ModuleName, #Sort, #DM] → %n⟪« C-Print-Form[#HxForm#, #ModuleName, #Sort, #DM] »« C-Print-Alternatives[#Rest, #ModuleName, #Sort, #DM] »⟫ ;
-C-Print-Alternatives[( {#L}%rawHxSortAlternative⟪ | scheme #HxForm# ⟫ ; #Rest ), #ModuleName, #Sort, #DM] → %n⟪« C-Action-Form[#HxForm#, #ModuleName, #Sort, #DM] »« C-Print-Alternatives[#Rest, #ModuleName, #Sort, #DM] »⟫ ;
+C-Print-Alternatives[( {#L}%rawHxSortAlternative⟪ | symbol #HxForm# ⟫ ; #Rest ), #ModuleName, #Sort, #DM] → %n⟪« C-Print-SymbolForm[#HxForm#, #ModuleName, #Sort, #DM] »« C-Print-Alternatives[#Rest, #ModuleName, #Sort, #DM] »⟫ ;
+C-Print-Alternatives[( {#L}%rawHxSortAlternative⟪ | scheme #HxForm# ⟫ ; #Rest ), #ModuleName, #Sort, #DM] → %n⟪« C-Scheme-Form[#HxForm#, #ModuleName, #Sort, #DM] »« C-Print-Alternatives[#Rest, #ModuleName, #Sort, #DM] »⟫ ;
 C-Print-Alternatives[( {#L}%rawHxSortAlternative⟪ | ↑ #HxAttributeName# ⟫ ; #Rest ), #ModuleName, #Sort, #DM] → C-Print-Alternatives[#Rest, #ModuleName, #Sort, #DM] ;
-C-Print-Alternatives[( {#L}%rawHxSortAlternative⟪ | symbol #HxForm# ⟫ ; #Rest ), #ModuleName, #Sort, #DM] → C-Print-Alternatives[#Rest, #ModuleName, #Sort, #DM] ;
 C-Print-Alternatives[( {#L}%rawHxSortAlternative⟪ | static symbol #HxForm# ⟫ ; #Rest ), #ModuleName, #Sort, #DM] → C-Print-Alternatives[#Rest, #ModuleName, #Sort, #DM] ;
 C-Print-Alternatives[( {#L}%rawHxSortAlternative⟪ | sugar #HxForm# → #HxTerm# ⟫ ; #Rest ), #ModuleName, #Sort, #DM] → C-Print-Alternatives[#Rest, #ModuleName, #Sort, #DM] ;
 C-Print-Alternatives[(), #ModuleName, #Sort, #DM] → %n⟪⟫ ;
+
+// Special case for symbol.
+
+C-Print-SymbolForm[HxForm, $String<!--ModuleName-->, $String<!--Sort-->, DeclarationMap] :: Text ;
+C-Print-SymbolForm[%rawHxForm⟪ #HxParsedForm# #HxFormPrec# #HxInheritedRefs# ⟫, #ModuleName, #Sort, #DM]
+→
+C-Print-SymbolForm2[#HxParsedForm#, #ModuleName, #Sort, #DM]
+;
+///TODO: use Prec...
+///C-Print-SymbolForm[%rawHxForm⟪ #HxConstructor# ( #HxBindersScopeSorts# ) #HxInheritedRefs# ⟫, #ModuleName, #Sort, {#DM}DM]
+
+C-Print-SymbolForm2[HxParsedForm, $String<!--ModuleName-->, $String<!--Sort-->, DeclarationMap] :: Text ;
+
+C-Print-SymbolForm2[Hx_ParsedFormSpace[#ConcreteSpace, #HxPP], #ModuleName, #Sort, #DM] → C-Print-SymbolForm2[#HxPP, #ModuleName, #Sort, #DM] ;
+
+C-Print-SymbolForm2[Hx_ParsedFormWord[#ConcreteWord, #HxPP], #ModuleName, #Sort, #DM] → $[Error, $[:,"Keywords not permitted in symbol production."]] ;
+
+-[Fresh[x::Text]]:
+C-Print-SymbolForm2[Hx_ParsedFormTerm[#ScopeSortPrec, #HxPP], #ModuleName, #Sort, #DM]
+→
+%n⟪-[Free[«x»]]: '$Print2-†«U-LastName[#ModuleName]»$†«#Sort»' [«x», #prec] → « C-Text-open »« C-Text-unopen »« x »« C-Text-unclose »« C-Text-close » ;
+⟫;
+// TODO: make sure variable name falls within lexical space for token.
 
 // Print for a single form.
 
@@ -975,10 +1040,10 @@ C-Print-Form[%rawHxForm⟪ #HxConstructor# ( #HxBindersScopeSorts# ) #HxInherite
 →
 %n⟪↲
 « WrappedTextJoin[Map[v.%n⟨‹v›::Text⟩,$[FreeVariables,#HxBindersScopeSorts#]], %n⟨-[Fresh[⟩, %n⟨,⟩, %n⟨]] :⟩] »
-'$Print-†«U-LastName[#ModuleName]»$†«#Sort»' [ '†«#HxConstructor#»' « WrappedTextJoin[MapIndexWhen[ok bs i.C-ScopeSort-WrapPattern[bs, #ModuleName, t.t, s.%n⟨#†‹ NumericToStringWhen[ok, i] ›⟩], #HxBindersScopeSorts#], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩] », #prec ]
+'$Print2-†«U-LastName[#ModuleName]»$†«#Sort»' [ '†«#HxConstructor#»' « WrappedTextJoin[MapIndexWhen[ok bs i.C-ScopeSort-WrapPattern[bs, #ModuleName, t.t, s.%n⟨#†‹ NumericToStringWhen[ok, i] ›⟩], #HxBindersScopeSorts#], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩] », #prec ]
 →
-« C-Text-open » '†«#HxConstructor#»' «
-  WrappedTextJoin[MapIndexWhen[ok ss i . %n⟨‹ C-Text-unopen › '$Print-†‹U-LastName[#ModuleName]›$†‹ U-ScopeSortTopSort[ss] ›' [ ‹ C-ScopeSort-WrapPattern[ss, #ModuleName, t.C-PrintWrap[#ModuleName, #Sort, t, 0], s.C-HashWhen[ok,i]] ›,0] ‹ C-Text-unclose ›⟩, #HxBindersScopeSorts#], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]
+« C-Text-open »'†«#HxConstructor#»' «
+  WrappedTextJoin[MapIndexWhen[ok ss i . %n⟨‹ C-Text-unopen › '$Print2-†‹U-LastName[#ModuleName]›$†‹ U-ScopeSortTopSort[ss] ›' [ ‹ C-ScopeSort-WrapPattern[ss, #ModuleName, t.C-PrintWrap[#ModuleName, #Sort, t, 0], s.C-HashWhen[ok,i]] ›,0] ‹ C-Text-unclose ›⟩, #HxBindersScopeSorts#], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]
 »« C-Text-close »
 ;
 ⟫;
@@ -986,20 +1051,21 @@ C-Print-Form[%rawHxForm⟪ #HxConstructor# ( #HxBindersScopeSorts# ) #HxInherite
     C-HashWhen[Ok, $Numeric] :: Text ;
     C-HashWhen[OK, #i] → %n⟨#†‹ NumericToString[#i] ›⟩ ;
     C-PrintWrap[$String<!--ModuleName-->, $String<!--SortName-->, Text, $Numeric] :: Text ;
-    C-PrintWrap[#ModuleName, #SortName, #Text, #Prec] → %n⟨'$Print-†‹U-LastName[#ModuleName]›$†‹#SortName›' [‹#Text›, †‹NumericToString[#Prec]›]⟩ ;
+    C-PrintWrap[#ModuleName, #SortName, #Text, #Prec] → %n⟨'$Print2-†‹U-LastName[#ModuleName]›$†‹#SortName›' [‹#Text›, †‹NumericToString[#Prec]›]⟩ ;
 
 C-Print-Form[%rawHxForm⟪ #HxParsedForm# #HxFormPrec# #HxInheritedRefs# ⟫, #ModuleName, #Sort, #DM]
 →
 %n⟪↲
 -[Data[#prec]« WrappedTextJoin[Map[v.%n⟨‹v›::Text⟩,$[FreeVariables,#HxParsedForm#]], %n⟨,Fresh[⟩, %n⟨,⟩, %n⟨]⟩] »] :
-'$Print-†‹U-LastName[#ModuleName]›$†«#Sort»' [ '†« U-QN[#ModuleName, #Sort, U-ParsedFormTag[#HxParsedForm#]] »' « WrappedTextJoin[MapIndexWhen[ok bs i.C-ScopeSort-WrapPattern[bs, #ModuleName, t.t, s.%n⟨#†‹ NumericToStringWhen[ok, i] ›⟩], C-ParsedForm-ScopeSorts[#HxParsedForm#]], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩] », #prec ]
+'$Print2-†‹U-LastName[#ModuleName]›$†«#Sort»' [ '†« U-QN[#ModuleName, #Sort, U-ParsedFormTag[#HxParsedForm#]] »' « WrappedTextJoin[MapIndexWhen[ok bs i.C-ScopeSort-WrapPattern[bs, #ModuleName, t.t, s.%n⟨#†‹ NumericToStringWhen[ok, i] ›⟩], C-ParsedForm-ScopeSorts[#HxParsedForm#]], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩] », #prec ]
 →
-If[LessThan[#prec, †«NumericToString[StringToNumericDefault[#HxFormPrec#,0]]»],⟦
+$[If, $[LessThan, #prec, †«NumericToString[StringToNumericDefault[#HxFormPrec#,0]]»],⟦
 « C-Text-open »(« C-ParsedForm-Text[#HxParsedForm#, #ModuleName, ok s p i t .%n⟨‹ C-PrintWrap[#ModuleName, s, t, p] ›⟩, ok s p i .%n⟨‹ C-HashWhen[ok, i] ›⟩] »)« C-Text-close »,
 « C-Text-open »« C-ParsedForm-Text[#HxParsedForm#, #ModuleName, ok s p i t .%n⟨‹ C-PrintWrap[#ModuleName, s, t, p] ›⟩, ok s p i .%n⟨‹ C-HashWhen[ok, i] ›⟩] »« C-Text-close »⟧
 ]
 ;
 ⟫;
+/// TODO: Avoid hard-coding () sugar...
 
 C-Text-open :: Text ;
 C-Text-open → %n⟨†« "%n⟪" »⟩ ;
@@ -1039,20 +1105,20 @@ C-ParsedForm-TextFrom[Hx_ParsedFormWord[#ConcreteWord, #HxPP], #ModuleName,ok s 
 C-ParsedForm-TextFrom[Hx_ParsedFormTerm[%rawHxScopeSortPrec⟪ #HxScopeSort# binds v ⟫, #HxPP], #ModuleName, ok s p i t.#1[ok,s,p,i,t], ok s p i.#2[ok,s,p,i], #i] → %n⟪« C-Text-unopen » « v » « C-Text-unclose »« C-ParsedForm-TextFrom[#HxPP, #ModuleName, ok s p i t.#1[ok,s,p,i,t], ok s p i.#2[ok,s,p,i], #i] »⟫ ;
 C-ParsedForm-TextFrom[Hx_ParsedFormDone, #ModuleName, ok s p i t.#1[ok,s,p,i,t], ok s p i.#2[ok,s,p,i], #i] → %n⟪⟫ ;
 
-C-Action-Form[HxForm, $String<!--ModuleName-->, $String<!--Sort-->, DeclarationMap] :: Text ;
+C-Scheme-Form[HxForm, $String<!--ModuleName-->, $String<!--Sort-->, DeclarationMap] :: Text ;
 
-C-Action-Form[%rawHxForm⟪ #HxConstructor# ( #HxBindersScopeSorts# ) #HxInheritedRefs# ⟫, #ModuleName, #Sort, {#DM}DM]
+C-Scheme-Form[%rawHxForm⟪ #HxConstructor# ( #HxBindersScopeSorts# ) #HxInheritedRefs# ⟫, #ModuleName, #Sort, {#DM}DM]
 →
 %n⟪↲
-'$Action-†« U-QN[#ModuleName, #Sort, #HxConstructor#] »' « WrappedTextJoin[MapIndexWhen[ok bs i.C-ScopeSort-WrapPattern[bs, #ModuleName, t.t, s.%n⟨#†‹ NumericToStringWhen[ok, i] ›⟩], #HxBindersScopeSorts#], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩] »
+'$Print-†«#HxConstructor#»' « WrappedTextJoin[MapIndexWhen[ok bs i.C-ScopeSort-WrapPattern[bs, #ModuleName, t.t, s.%n⟨#†‹ NumericToStringWhen[ok, i] ›⟩], #HxBindersScopeSorts#], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩] »
 →
-'$Print-†‹U-LastName[#ModuleName]›$†‹#Sort›' [⟦
+'$Print2-†‹U-LastName[#ModuleName]›$†‹#Sort›' [⟦
 '†« U-QN[#ModuleName, #Sort, #HxConstructor#] »' « WrappedTextJoin[MapIndexWhen[ok bs i.C-ScopeSort-WrapPattern[bs, #ModuleName, t.t, s.C-HashWhen[ok, i]], #HxBindersScopeSorts#], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩] »,
 0]⟧
 ;
 ⟫;
 
-C-Action-Form[%rawHxForm⟪ #HxParsedForm# #HxFormPrec# #HxInheritedRefs# ⟫, #ModuleName, #Sort, #DM]
+C-Scheme-Form[%rawHxForm⟪ #HxParsedForm# #HxFormPrec# #HxInheritedRefs# ⟫, #ModuleName, #Sort, #DM]
 →
 %n⟪⟫
 ;

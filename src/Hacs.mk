@@ -245,6 +245,47 @@ $(BUILD)/%.class: $(BUILD)/%.java
 		) $(LOG)
 
 
+# GENERATING BINARY.
+
+# Dispatchify.
+%.dr: %.crs
+	$(RUNCRSX) rules='$<' sortify dispatchify reify=$@ simple-terms omit-linear-variables canonical-variables
+
+# Generate C files.
+%.h: %.dr
+	$(CRSXC) wrapper=ComputeHeader HEADERS="crsx.h" input=$< output=$@
+
+%_sorts.c: %.dr
+	$(CRSXC) wrapper=ComputeSorts HEADERS="$*.h" input=$< output=$@
+
+%_rules.c: %.dr
+	$(CRSXC) wrapper=ComputeRules HEADERS="$*.h" input=$< output=$@
+
+%.rawsymlist: %.dr
+	$(CRSXC) wrapper=ComputeSymbols input=$< output=$@.tmp
+	sed 's/ {/\n{/g' $@.tmp | sed -n '/^[{]/p' >$@
+
+%_symbols.c: %.rawsymlist
+	LC_ALL=C sort -bu $< | sed -n '/./p' > $@.tmp
+	@(echo '/* $*ing symbols. */'; \
+	  echo '#include "$*.h"'; \
+	  echo "size_t symbolDescriptorCount = $$(wc -l <$@.tmp);"; \
+	  echo 'struct _SymbolDescriptor symbolDescriptorTable[] = {';\
+	  cat $@.tmp;\
+	  echo '{NULL, NULL}};') > $@
+
+# Load compiled files.
+%.o: %.c
+	$(CC) -I$(SHAREDIR) $(CFLAGS) -c $<
+
+%Rewriter: %.o %_sorts.o %_rules.o %_symbols.o
+	$(CC) -o $*main $*main.o $*_sorts.o $*_rules.o $*_symbols.o $(LIBDIR)/crsx.o $(LIBDIR)/crsx_scan.o -licuuc -licudata -licui18n -licuio
+
+
+
+
+
+
 # Debugging helpers.
 
 %.crsp: %.crs
