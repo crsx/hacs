@@ -110,8 +110,7 @@ computer.\footnote{\HAX is still a β release so please report any problems with
 \begin{code}[commandchars=\^\{\}]
 $ ^textcolor{blue}{^texttt{wget http://crsx.org/hacs-0.9.zip}}
 $ ^textcolor{blue}{^texttt{unzip hacs-0.9.zip}}
-$ ^textcolor{blue}{^texttt{cd hacs}}
-$ ^textcolor{blue}{^texttt{make prefix=$HOME/.hacs install-support install}}
+$ ^textcolor{blue}{^texttt{make -C hacs prefix=$HOME/.hacs install install-support}}
 \end{code}
   %%
   These commands will need Internet access, using the wget command to retrieve utility

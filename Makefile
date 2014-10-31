@@ -9,14 +9,9 @@ gitclean :: realclean
 
 # Targets propagate to subdirectories...
 
-all install ::
+all install clean realclean gitclean ::
 	$(MAKE) -C src -I $(abspath src) $@
 	$(MAKE) -C doc -I $(abspath src) $@
-
-clean realclean gitclean ::
-	$(MAKE) -C src -I $(abspath src) $@
-	$(MAKE) -C doc -I $(abspath src) $@
-	$(MAKE) -C samples -I $(abspath src) $@
 
 src/% :
 	$(MAKE) -C src -I $(abspath src) ../$@
@@ -31,13 +26,12 @@ doc/% :
 
 $(eval HACSMAJOR$(basename $(shell cat VERSION)))
 
-HACSTOP = README.md VERSION LICENSE doc build
-
-hacs.zip :
+hacs.zip : all $(shell cat ziplist)
 	$(MAKE) all
 	$(MAKE) clean
-	rm -f hacs-$(HACSMAJORVERSION).zip hacs.zip
-	cd .. && zip -r hacs/hacs-$(HACSMAJORVERSION).zip $(addprefix hacs/,$(HACSTOP)) -x crsxc hacs/src hacs/doc hacs/LICENSE hacs/ -x crsxc '*.o' '*.dr' '*.symlist' '*.zip'
-	ln -s hacs-$(HACSMAJORVERSION).zip hacs.zip
+	rm -f *.zip
+	touch build/org/crsx/hacs/Main.dr.gz
+	cd .. && zip -r hacs/hacs-$(HACSMAJORVERSION).zip $(addprefix hacs/,$(shell cat ziplist))
+	ln -fs hacs-$(HACSMAJORVERSION).zip hacs.zip
 
 realclean ::; rm -f *.zip

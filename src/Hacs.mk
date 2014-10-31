@@ -15,7 +15,7 @@
 all::
 clean::; @rm -f *.tmp *~ ./#* *.log *~
 realclean:: clean
-install::
+install:: all
 
 # Common commands.
 include Env.mk
@@ -136,12 +136,17 @@ realclean::; @rm -f *.run
 # Process (pre-raw-parsed) HACS with Prep to create all files needed by Cook system.
 %.prep : %.hxraw
 	@$(ECHO) -e 'HACS: Generating parser generator base $@...' $(OUT) && $(SH_EXTRA) \
-	&&	($(NOEXEC) $(RUNCRSX) \
+	&&	( if [ -x "$(LIBDIR)/MainRewriter" ]; then \
+		    $(LIBDIR)/MainRewriter wrapper=Prep input='$<' output='$@.tmp' \
+		    && $(NOEXEC) mv '$@.tmp' '$@' ; \
+		  else \
+		    $(NOEXEC) $(RUNCRSX) \
 			"grammar=('org.crsx.hacs.HxRaw';'net.sf.crsx.text.Text';)" \
 			rules=org/crsx/hacs/Main.crs wrapper=Prep \
 			input='$<' \
 			output='$@.tmp' sink=net.sf.crsx.text.TextSink \
-		&& $(NOEXEC) mv '$@.tmp' '$@' \
+		    && $(NOEXEC) mv '$@.tmp' '$@' ; \
+		  fi \
 		) $(LOG)
 .SECONDARY: %.prep
 
@@ -237,33 +242,50 @@ $(BUILD)/%.class: $(BUILD)/%.java
 # Process (pre-parsed) HACS with Cook to create rewrite rules!
 %Rewriter.crs : %.hxprep
 	@$(ECHO) -e 'HACS: Generating rewriter $@...' $(OUT) && $(SH_EXTRA) \
-	&&	( $(NOEXEC) $(RUNCRSX) \
+	&&	( if [ -x "$(LIBDIR)/MainRewriter" ]; then \
+		    $(LIBDIR)/MainRewriter wrapper=Cook input='$<' output='$@.tmp' \
+		    && $(NOEXEC) mv '$@.tmp' '$@' ; \
+		  else \
+		    $(NOEXEC) $(RUNCRSX) \
 			"grammar=('org.crsx.hacs.HxRaw';'net.sf.crsx.text.Text';)" \
-			rules=org/crsx/hacs/Main.crs wrapper=Cook trace-dm \
+			rules=org/crsx/hacs/Main.crs wrapper=Prep \
 			input='$<' \
 			output='$@.tmp' sink=net.sf.crsx.text.TextSink \
-		&& $(NOEXEC) mv '$@.tmp' '$@' \
+		    && $(NOEXEC) mv '$@.tmp' '$@' ; \
+		  fi \
 		) $(LOG)
 
+ifndef FROMZIP
 
 # GENERATING BINARY.
 
 # Dispatchify.
-%.dr: %.crs
-	$(RUNCRSX) rules='$<' sortify dispatchify reify=$@ simple-terms omit-linear-variables canonical-variables
+
+%.dr.gz: %.crs
+	$(RUNCRSX) rules='$<' sortify dispatchify reify=$*.dr simple-terms omit-linear-variables canonical-variables
+	@gzip <$*.dr >$@
 
 # Generate C files.
-%.h: %.dr
-	$(CRSXC) wrapper=ComputeHeader HEADERS="crsx.h" input=$< output=$@
 
-%_sorts.c: %.dr
-	$(CRSXC) wrapper=ComputeSorts HEADERS="$*.h" input=$< output=$@
+%.h: %.dr.gz
+	@gunzip <$< >$*.dr
+	$(CRSXC) wrapper=ComputeHeader HEADERS="crsx.h" input=$*.dr output=$@
+	@rm -f $*.dr
 
-%_rules.c: %.dr
-	$(CRSXC) wrapper=ComputeRules HEADERS="$*.h" input=$< output=$@
+%_sorts.c: %.dr.gz
+	@gunzip <$< >$*.dr
+	$(CRSXC) wrapper=ComputeSorts HEADERS="$*.h" input=$*.dr output=$@
+	@rm -f $*.dr
 
-%.rawsymlist: %.dr
-	$(CRSXC) wrapper=ComputeSymbols input=$< output=$@.tmp
+%_rules.c: %.dr.gz
+	@gunzip <$< >$*.dr
+	$(CRSXC) wrapper=ComputeRules HEADERS="$*.h" input=$*.dr output=$@
+	@rm -f $*.dr
+
+%.rawsymlist: %.dr.gz
+	@gunzip <$< >$*.dr
+	$(CRSXC) wrapper=ComputeSymbols input=$*.dr output=$@.tmp
+	@rm -f $*.dr
 	sed 's/ {/\n{/g' $@.tmp | sed -n '/^[{]/p' >$@
 
 %_symbols.c: %.rawsymlist
@@ -275,7 +297,10 @@ $(BUILD)/%.class: $(BUILD)/%.java
 	  cat $@.tmp;\
 	  echo '{NULL, NULL}};') > $@
 
+endif
+
 # Load compiled files.
+
 %.o: %.c
 	cd $(dir $<) && $(NOEXEC) $(CC) -std=c99 -DOMIT_TIMESPEC -DGENERIC_LOADER -I$(SHAREDIR) -I$(BUILD)/share/hacs $(CFLAGS) -c $(notdir $<)
 

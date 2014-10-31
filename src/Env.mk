@@ -53,7 +53,7 @@ RSYNC = rsync
 # COMPILATION SETUP.
 
 # C flags.
-CLANGFLAGS= -Wno-gnu-variable-sized-type-not-at-end
+#CLANGFLAGS= -Wno-gnu-variable-sized-type-not-at-end
 CFLAGS= -I/usr/include/$(shell uname -m)-linux-gnu $(C99FLAG) $(CLANGFLAGS)
 CCFLAGS+=-g -Wall
 UNAME_S=$(shell uname -s)

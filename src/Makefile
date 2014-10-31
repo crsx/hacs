@@ -117,7 +117,7 @@ all :: $(BUILD)/share/java/hacs.jar
 install ::
 	@mkdir -p $(DESTDIR)$(SHAREJAVA)
 	cp $(BUILD)/share/java/hacs-$(HACSMAJORVERSION).jar $(DESTDIR)$(SHAREJAVA)
-	cd $(DESTDIR)$(SHAREJAVA) && $(NOEXEC) ln -s hacs-$(HACSMAJORVERSION).jar hacs.jar
+	cd $(DESTDIR)$(SHAREJAVA) && $(NOEXEC) ln -fs hacs-$(HACSMAJORVERSION).jar hacs.jar
 
 $(BUILD)/share/java/hacs.jar: \
 		$(BUILD)/org/crsx/hacs/HxRaw.class \
@@ -127,7 +127,7 @@ $(BUILD)/share/java/hacs.jar: \
 	@mkdir -p $(BUILD)/org/crsx/hacs $(BUILD)/share/java
 	cp $(RULES) $(BUILD)/org/crsx/hacs
 	cd $(BUILD) && classes=$$($(NOEXEC) find org -name '*.class') && $(NOEXEC) $(JAR) cf $(BUILD)/share/java/hacs-$(HACSMAJORVERSION).jar $(RULES) org/crsx/hacs/VERSION $$classes
-	cd $(BUILD)/share/java && $(NOEXEC) ln -s hacs-$(HACSMAJORVERSION).jar hacs.jar
+	cd $(BUILD)/share/java && $(NOEXEC) ln -fs hacs-$(HACSMAJORVERSION).jar hacs.jar
 
 # Support jars.
 
@@ -135,25 +135,25 @@ all :: $(BUILD)/share/java/crsx.jar
 install-support :: $(BUILD)/share/java/crsx.jar
 	@mkdir -p $(DESTDIR)$(SHAREJAVA)
 	cp $(BUILD)/share/java/crsx-$(CRSXVERSION).jar $(DESTDIR)$(SHAREJAVA)
-	cd $(DESTDIR)$(SHAREJAVA) && $(NOEXEC) ln -s crsx-$(CRSXVERSION).jar crsx.jar
+	cd $(DESTDIR)$(SHAREJAVA) && $(NOEXEC) ln -fs crsx-$(CRSXVERSION).jar crsx.jar
 
 $(BUILD)/share/java/crsx.jar: $(CRSXJAR)
 	rm -f $(BUILD)/share/java/crsx-$(CRSXVERSION).jar $(BUILD)/share/java/crsx.jar
 	@mkdir -p $(BUILD)/share/java
 	cp $(CRSXJAR) $(BUILD)/share/java/crsx-$(CRSXVERSION).jar
-	cd $(BUILD)/share/java && $(NOEXEC) ln -s crsx-$(CRSXVERSION).jar crsx.jar
+	cd $(BUILD)/share/java && $(NOEXEC) ln -fs crsx-$(CRSXVERSION).jar crsx.jar
 
 all :: $(BUILD)/share/java/javacc.jar
 install-support :: $(BUILD)/share/java/javacc.jar
 	@mkdir -p $(DESTDIR)$(SHAREJAVA)
 	cp $(BUILD)/share/java/javacc-$(JAVACCVERSION).jar $(DESTDIR)$(SHAREJAVA)
-	cd $(DESTDIR)$(SHAREJAVA) && $(NOEXEC) ln -s javacc-$(JAVACCVERSION).jar javacc.jar
+	cd $(DESTDIR)$(SHAREJAVA) && $(NOEXEC) ln -fs javacc-$(JAVACCVERSION).jar javacc.jar
 
 $(BUILD)/share/java/javacc.jar: $(JAVACCJAR)
 	rm -f $(BUILD)/share/java/javacc-$(JAVACCVERSION).jar $(BUILD)/share/java/javacc.jar
 	@mkdir -p $(BUILD)/share/java
 	cp $(JAVACCJAR) $(BUILD)/share/java/javacc-$(JAVACCVERSION).jar
-	cd $(BUILD)/share/java && $(NOEXEC) ln -s javacc-$(JAVACCVERSION).jar javacc.jar
+	cd $(BUILD)/share/java && $(NOEXEC) ln -fs javacc-$(JAVACCVERSION).jar javacc.jar
 
 # CRSX rulecompiler (crsxc).
 
@@ -161,12 +161,11 @@ CRSXC_H = crsx.h invariant.h linter.h prof.h
 CRSXC_C = crsx.c crsx_scan.l invariant.c linter.c prof.c
 CRSXC_O = crsx.o crsx_scan.o linter.o prof.o
 
-all :: $(BUILD)/lib/hacs/crsxc $(addprefix $(BUILD)/share/hacs/,$(CRSX_H))
+all :: $(BUILD)/lib/hacs/crsxc $(addprefix $(BUILD)/share/hacs/,$(CRSXC_H))
 install ::
 	@mkdir -p $(DESTDIR)$(LIBDIR) $(DESTDIR)$(SHAREDIR)
 	cp -a $(BUILD)/lib/hacs/crsxc $(DESTDIR)$(LIBDIR)
-	cp -a $(addprefix $(BUILD)/share/hacs/,$(CRSX_H)) $(DESTDIR)$(SHAREDIR)
-	cp -a $(addprefix $(BUILD)/lib/hacs/,$(CRSX_O)) $(DESTDIR)$(LIBDIR)
+	cp -a $(addprefix $(BUILD)/share/hacs/,$(CRSXC_H)) $(DESTDIR)$(SHAREDIR)
 
 $(BUILD)/lib/hacs/crsxc : crsx-rulecompiler/net/sf/crsx/compiler/c/build/crsxc
 	@mkdir -p $(BUILD)/lib/hacs
@@ -223,16 +222,21 @@ $(BUILD)/org/crsx/hacs/Main_symbols.o: $(BUILD)/org/crsx/hacs/Main_symbols.c $(B
 $(BUILD)/org/crsx/hacs/crsx.o : $(BUILD)/org/crsx/hacs/crsx.c $(BUILD)/share/hacs/crsx.h $(BUILD)/share/hacs/prof.h $(BUILD)/share/hacs/invariant.h
 $(BUILD)/org/crsx/hacs/crsx_scan.o : $(BUILD)/org/crsx/hacs/crsx_scan.c $(BUILD)/share/hacs/crsx.h
 $(BUILD)/org/crsx/hacs/linter.o : $(BUILD)/org/crsx/hacs/linter.c $(BUILD)/share/hacs/crsx.h
+$(BUILD)/org/crsx/hacs/prof.o : $(BUILD)/org/crsx/hacs/prof.c $(BUILD)/share/hacs/crsx.h
 
-$(BUILD)/org/crsx/hacs/Main.h: $(BUILD)/org/crsx/hacs/Main.dr
-$(BUILD)/org/crsx/hacs/Main_sorts.c: $(BUILD)/org/crsx/hacs/Main.dr
-$(BUILD)/org/crsx/hacs/Main_rules.c: $(BUILD)/org/crsx/hacs/Main.dr
-$(BUILD)/org/crsx/hacs/Main_symbols.c: $(BUILD)/org/crsx/hacs/Main.dr
+ifndef FROMZIP
+
+$(BUILD)/org/crsx/hacs/Main.h: $(BUILD)/org/crsx/hacs/Main.dr.gz
+$(BUILD)/org/crsx/hacs/Main_sorts.c: $(BUILD)/org/crsx/hacs/Main.dr.gz
+$(BUILD)/org/crsx/hacs/Main_rules.c: $(BUILD)/org/crsx/hacs/Main.dr.gz
+$(BUILD)/org/crsx/hacs/Main_symbols.c: $(BUILD)/org/crsx/hacs/Main.dr.gz
 
 $(BUILD)/org/crsx/hacs/Main.c: crsx-rulecompiler/net/sf/crsx/compiler/c/main.c
 	cp crsx-rulecompiler/net/sf/crsx/compiler/c/main.c $(BUILD)/org/crsx/hacs/Main.c
 
-$(BUILD)/org/crsx/hacs/Main.dr: $(BUILD)/org/crsx/hacs/Main.crs $(BUILD)/lib/hacs/crsxc
+$(BUILD)/org/crsx/hacs/Main.dr.gz: $(BUILD)/org/crsx/hacs/Main.crs $(BUILD)/lib/hacs/crsxc
+
+endif
 
 # HACS user command.
 
@@ -260,7 +264,7 @@ $(BUILD)/bin/hacs: hacs.sh.template
 
 # HACS documents.
 
-DOCUMENTS = README.md doc/hacs-gently.pdf
+DOCUMENTS = README.md doc/hacs.pdf
 SAMPLES = samples/First.hx
 
 all :: $(addprefix $(BUILD)/share/doc/hacs/,$(notdir $(DOCUMENTS))) $(addprefix $(BUILD)/share/doc/hacs/examples/,$(notdir $(SAMPLES)))
@@ -276,7 +280,7 @@ $(addprefix $(BUILD)/share/doc/hacs/examples/,$(notdir $(SAMPLES))) : $(addprefi
 install ::
 	@mkdir -p $(DESTDIR)$(DOCDIR)/examples
 	cp $(addprefix $(BUILD)/share/doc/hacs/,$(notdir $(DOCUMENTS))) $(DESTDIR)$(DOCDIR)
-	cp $(addprefix $(BUILD)/share/doc/hacs/examples/,$(notdir $(DOCUMENTS))) $(DESTDIR)$(DOCDIR)/examples
+	cp $(addprefix $(BUILD)/share/doc/hacs/examples/,$(notdir $(SAMPLES))) $(DESTDIR)$(DOCDIR)/examples
 
 
 
