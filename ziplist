@@ -123,7 +123,6 @@ build/org/crsx/hacs/linter.c
 build/org/crsx/hacs/prof.c
 build/share/doc/hacs/README.md
 build/share/doc/hacs/examples/First.hx
-build/share/doc/hacs/hacs.pdf
 build/share/hacs/Env.mk
 build/share/hacs/Hacs.mk
 build/share/hacs/crsx.h
@@ -133,7 +132,8 @@ build/share/hacs/prof.h
 build/share/java/crsx-3.2.jar
 build/share/java/hacs-0.9.jar
 build/share/java/javacc-6.0.jar
-doc/hacs-gently.pdf
+doc/Makefile
+doc/hacs.pdf
 lib/crsx-3.2.jar
 samples/Bool.hx
 samples/Deriv.hx

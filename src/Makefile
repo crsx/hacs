@@ -126,6 +126,7 @@ $(BUILD)/share/java/hacs.jar: \
 	rm -f $(BUILD)/share/java/hacs-$(HACSMAJORVERSION).jar $(BUILD)/share/java/hacs.jar
 	@mkdir -p $(BUILD)/org/crsx/hacs $(BUILD)/share/java
 	cp $(RULES) $(BUILD)/org/crsx/hacs
+	for java in $$(find $(BUILD)/org -name '*.java'); do $(NOEXEC) rm -f $${java%.java}.class; $(NOEXEC) $(MAKE) $${java%.java}.class; done
 	cd $(BUILD) && classes=$$($(NOEXEC) find org -name '*.class') && $(NOEXEC) $(JAR) cf $(BUILD)/share/java/hacs-$(HACSMAJORVERSION).jar $(RULES) org/crsx/hacs/VERSION $$classes
 	cd $(BUILD)/share/java && $(NOEXEC) ln -fs hacs-$(HACSMAJORVERSION).jar hacs.jar
 
@@ -264,7 +265,7 @@ $(BUILD)/bin/hacs: hacs.sh.template
 
 # HACS documents.
 
-DOCUMENTS = README.md doc/hacs.pdf
+DOCUMENTS = README.md
 SAMPLES = samples/First.hx
 
 all :: $(addprefix $(BUILD)/share/doc/hacs/,$(notdir $(DOCUMENTS))) $(addprefix $(BUILD)/share/doc/hacs/examples/,$(notdir $(SAMPLES)))
@@ -281,9 +282,6 @@ install ::
 	@mkdir -p $(DESTDIR)$(DOCDIR)/examples
 	cp $(addprefix $(BUILD)/share/doc/hacs/,$(notdir $(DOCUMENTS))) $(DESTDIR)$(DOCDIR)
 	cp $(addprefix $(BUILD)/share/doc/hacs/examples/,$(notdir $(SAMPLES))) $(DESTDIR)$(DOCDIR)/examples
-
-
-
 
 
 

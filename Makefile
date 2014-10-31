@@ -1,8 +1,9 @@
 # Main -*-Makefile-*- for Building HACS distribution.
 
-.PHONY: all install clean realclean gitclean
+.PHONY: all install install-support clean realclean gitclean
 all ::
 install ::
+install-support ::
 clean :: ; rm -f *.tmp *~ ./#* *.log *~
 realclean :: clean
 gitclean :: realclean
@@ -12,6 +13,9 @@ gitclean :: realclean
 all install clean realclean gitclean ::
 	$(MAKE) -C src -I $(abspath src) $@
 	$(MAKE) -C doc -I $(abspath src) $@
+
+install-support ::
+	$(MAKE) -C src -I $(abspath src) $@
 
 src/% :
 	$(MAKE) -C src -I $(abspath src) ../$@

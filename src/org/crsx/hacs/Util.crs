@@ -909,7 +909,7 @@ U-MakeDM-ExtraInformation1[#ModuleName, {#DM}DM]
        "All$Attribute2ValueSort" : DME_N2N[#Attribute2ValueSort];
        "All$Sort2Synthesized" : DME_N2NM[#Sort2Synthesized];
        "All$Function2Inherited" : DME_N2NM[#Function2Inherited];
-       "All$Sort2UserConstructors" : DME_N2NM[ $[Trace, #Sort2UserConstructors ]]}
+       "All$Sort2UserConstructors" : DME_N2NM[#Sort2UserConstructors]}
     DM
     ;
 

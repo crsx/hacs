@@ -78,8 +78,7 @@ suitable for that stage of the compiler. Specifically, \HAX supports the followi
   explain lexical analysis in Section~\ref{sec:tokens}, syntax analysis in Section~\ref{sec:syntax},
   basic semantic sorts and recursive translation schemes in Section~\ref{sec:schemes}, bottom-up
   semantic analysis in Section~\ref{sec:collect}, general syntax-directed definitions in
-  Section~\ref{sec:sdd}, and higher-order abstract syntax in Section~\ref{sec:hoas}. In
-  Section~\ref{sec:example} we walk through the full annotated \emph{First.hx} example.
+  Section~\ref{sec:sdd}, and advanced features in Section~\ref{sec:advanced}.
   Appendix~\ref{app:manual} has a reference manual, %
   %%Appendix~\ref{app:bonus} has some bonus examples, %
   Appendix~\ref{app:errors} explains some cryptic error messages, and
@@ -466,6 +465,18 @@ Leftmost(⟦⟨Name#⟩⟧)  →  ⟦⟨Name#⟩⟧ ;
   no user syntax for types in our example!
 \end{commands}
 
+\begin{example}
+  The \emph{First.hx} example defines the "Compile" scheme as a top level function to be used from
+  the command line. This looks as follows:
+\begin{hacs}[xleftmargin=\parindent,numbers=right]
+sort A_Progr | scheme Compile(Stat);
+Compile(#stat) → ⟦ CG ICG TA ⟨Stat#1⟩ ⟧ ;
+\end{hacs}
+  (You will see later what the contraction here means.)  This is the reason for the
+  \verb|--scheme=Compile| option we invoked back in the getting started section.  Such wrapper raw
+  schemes must have a single argument.
+\end{example}
+
 
 \section{Collecting Information}
 \label{sec:collect}
@@ -817,21 +828,140 @@ SeA (⟦ ⟧) → ⟦ ⟧;
 \end{example}
 
 
+\section{Advanced Features}
+\label{sec:advanced}
 
+After the analysis we are ready for generating code.
 
+\begin{figure}[p]\small
+\begin{hacs}[numbers=right]
+/* 6. INTERMEDIATE CODE GENERATION. */
 
+token T | T ('_' ⟨INT⟩)? ; // temporary
 
+// Concrete syntax & abstract syntax sorts.
 
-\section{Higher-Order Abstract Syntax}
-\label{sec:hoas}
+sort I_Progr | ⟦⟨I_Instr⟩ ⟨I_Progr⟩⟧ | ⟦⟧ ;
 
+sort I_Instr | ⟦⟨Tmp⟩ = ⟨I_Arg⟩ + ⟨I_Arg⟩; ¶⟧
+             | ⟦⟨Tmp⟩ = ⟨I_Arg⟩ * ⟨I_Arg⟩; ¶⟧
+             | ⟦⟨Tmp⟩ = ⟨I_Arg⟩; ¶⟧
+             | ⟦⟨Name⟩ = ⟨Tmp⟩; ¶⟧ ;
 
+sort I_Arg | ⟦⟨Name⟩⟧
+           | ⟦⟨FLOAT⟩⟧
+           | ⟦⟨INT⟩⟧
+           | ⟦⟨Tmp⟩⟧ ;
 
+sort Tmp | symbol ⟦ ⟨T⟩ ⟧ ;
 
-\section{A Complete Example}
-\label{sec:example}
+// Translation scheme.
 
+attribute ↓tmpType{Tmp:Type} ;
 
+sort I_Progr ;
+
+| scheme ⟦ ICG ⟨Stat⟩ ⟧ ↓tmpType ;
+⟦ ICG id := ⟨Exp#2 ↑HasType(#t2)⟩; ⟧
+  → ⟦ { ⟨I_Progr ⟦ICGExp T ⟨Exp#2⟩⟧ ↓tmpType{T:#t2}⟩ } id = T; ⟧ ;
+⟦ ICG { } ⟧ → ⟦ ⟧;
+⟦ ICG { ⟨Stat#s⟩ ⟨Stats#ss⟩ } ⟧ → ⟦ { ICG ⟨Stat#s⟩ } ICG { ⟨Stats#ss⟩ } ⟧ ;
+
+| scheme ⟦ ICGExp ⟨Tmp⟩ ⟨Exp⟩ ⟧ ;
+
+⟦ ICGExp T ⟨INT#1⟩ ⟧ → ⟦ T = ⟨INT#1⟩; ⟧ ;
+⟦ ICGExp T ⟨FLOAT#1⟩ ⟧ → ⟦ T = ⟨FLOAT#1⟩; ⟧ ;
+⟦ ICGExp T id ⟧ → ⟦ T = id; ⟧ ;
+
+⟦ ICGExp T ⟨Exp#1⟩ + ⟨Exp#2⟩ ⟧
+  → ⟦ {ICGExp T_1 ⟨Exp#1⟩} {ICGExp T_2 ⟨Exp#2⟩} T = T_1 + T_2; ⟧ ;
+
+⟦ ICGExp T ⟨Exp#1⟩ * ⟨Exp#2⟩ ⟧
+  → ⟦ {ICGExp T_1 ⟨Exp#1⟩} {ICGExp T_2 ⟨Exp#2⟩} T = T_1 * T_2; ⟧ ;
+
+// Helper to flatten code sequence.
+| scheme ⟦ {⟨I_Progr⟩} ⟨I_Progr⟩ ⟧;
+⟦ {} ⟨I_Progr#3⟩ ⟧ → #3 ;
+⟦ {⟨I_Instr#1⟩ ⟨I_Progr#2⟩} ⟨I_Progr#3⟩ ⟧ → ⟦ ⟨I_Instr#1⟩ {⟨I_Progr#2⟩} ⟨I_Progr#3⟩ ⟧;
+\end{hacs}
+  \caption{Intermediate Code Generation.}
+  \label{fig:icgen}
+\end{figure}
+
+\begin{example}\label{ex:icgen}
+  %%
+  A further part of \emph{First.hx} is the translation from abstract syntax to the intermediate
+  representation, shown in Fig.~\ref{fig:icgen}. The fragment contains the usual components: a
+  syntax specification, rewrite schemes, and rewrite rules for the "ICG" scheme.
+
+  The code only uses two new features: "¶" markers in the syntax to indicate newlines, and rules
+  that introduce \emph{fresh} variables (of "Tmp" sort): when the replacement of a rule uses a
+  symbol, which was not in the pattern, then this corresponds to \emph{generating} a new globally
+  unique symbol. So each time the rule
+\begin{hacs}
+   ⟦ ICG id := ⟨Exp#2 ↑HasType(#t2)⟩; ⟧
+     → ⟦ { ⟨I_Progr ⟦ICGExp T ⟨Exp#2⟩⟧ ↓tmpType{T:#t2}⟩ } id = T; ⟧ ;
+\end{hacs}
+  is used, "T" denotes a new so-called ``fresh'' symbol.  When printed, the various incarnations of
+  "T" will be named "T_1", "T_86", \etc
+  %%
+\end{example}
+
+\begin{figure}[p]\small
+\begin{hacs}[numbers=right]
+/* 7. CODE GENERATOR. */
+
+sort A_Progr | ⟦ ⟨A_Instr⟩ ⟨A_Progr⟩ ⟧ | ⟦⟧ ;
+
+sort A_Instr | ⟦ LDF ⟨Tmp⟩, ⟨A_Arg⟩ ¶⟧
+             | ⟦ STF ⟨Name⟩, ⟨Tmp⟩ ¶⟧
+             | ⟦ ADDF ⟨A_Arg⟩, ⟨A_Arg⟩, ⟨A_Arg⟩ ¶⟧
+             | ⟦ MULF ⟨A_Arg⟩, ⟨A_Arg⟩, ⟨A_Arg⟩ ¶⟧ ;
+
+sort A_Arg | ⟦ #⟨FLOAT⟩ ⟧ | ⟦ #⟨INT⟩ ⟧ | ⟦ ⟨Name⟩ ⟧ | ⟦ ⟨Tmp⟩ ⟧ ;
+
+sort A_Progr | scheme ⟦ CG ⟨I_Progr⟩ ⟧ ;
+
+⟦ CG ⟧ → ⟦⟧ ;
+
+⟦ CG T = ⟨I_Arg#1⟩ + ⟨I_Arg#2⟩ ; ⟨I_Progr#⟩ ⟧
+  → ⟦ ADDF T, [⟨I_Arg#1⟩], [⟨I_Arg#2⟩] CG ⟨I_Progr#⟩ ⟧ ;
+
+⟦ CG T = ⟨I_Arg#1⟩ * ⟨I_Arg#2⟩ ; ⟨I_Progr#⟩ ⟧
+  → ⟦ MULF T, [⟨I_Arg#1⟩], [⟨I_Arg#2⟩] CG ⟨I_Progr#⟩ ⟧ ;
+  
+⟦ CG T = ⟨I_Arg#1⟩ ; ⟨I_Progr#⟩ ⟧
+  → ⟦ LDF T, [⟨I_Arg#1⟩] CG ⟨I_Progr#⟩ ⟧ ;
+
+⟦ CG name = T ; ⟨I_Progr#⟩ ⟧
+  → ⟦ STF name, T CG ⟨I_Progr#⟩ ⟧ ;
+
+sort A_Arg | scheme ⟦ [⟨I_Arg⟩] ⟧ ;
+⟦ [T] ⟧ → ⟦ T ⟧ ;
+⟦ [name] ⟧ → ⟦ name ⟧ ;
+⟦ [⟨FLOAT#1⟩] ⟧ → ⟦ #⟨FLOAT#1⟩ ⟧ ;
+⟦ [⟨INT#1⟩] ⟧ → ⟦ #⟨INT#1⟩ ⟧ ;
+\end{hacs}
+  \caption{Code Generation.}
+  \label{fig:cgen}
+\end{figure}
+
+\begin{example}\label{ex:cgen}
+  The seventh part of \emph{First.hx} is the final translation "CG" from the intermediate
+  representation to assembly code. This uses no new features, and is shown in Fig.~\ref{fig:cgen},
+  however, it is still worth a sanity check, walking through the "CG" scheme and checking that all
+  syntactic cases are covered.
+\end{example}
+
+\begin{remark}[concrete \emph{vs.} raw syntax]
+  In the presentation we have chosen to use \emph{concrete syntax} even for semantic
+  operations. This has the advantage of allowing direct invocation of even complex structured
+  calculations from the command line but it does ``pollute'' the syntax of the defined language.
+  (Production versions of \HAX (not yet released) will have the option of generating parsers that
+  ignore concrete syntax of schemes when running the compiler.) It is sometimes practical to define
+  ``bridge schemes'' that make schemes available both in syntax and raw; we give an example of this
+  in the following section.
+\end{remark}
 
 
 \appendix\small
@@ -1344,177 +1474,6 @@ is not.
 
 
 \bibliography{crs}
-
-
-
-
-
-
-
-
-
-
-
-\section{Intermediate and Code Generation}
-
-After the analysis we are ready for generating code.
-
-\begin{figure}[p]\small
-\begin{code}[xleftmargin=1.66em,numbers=right]
-/* 6. INTERMEDIATE CODE GENERATION. */
-
-token T | T ('_' ⟨INT⟩)? ; // temporary
-
-// Concrete syntax & abstract syntax sorts.
-
-sort I_Progr | ⟦⟨I_Instr⟩ ⟨I_Progr⟩⟧ | ⟦⟧ ;
-
-sort I_Instr | ⟦⟨Tmp⟩ = ⟨I_Arg⟩ + ⟨I_Arg⟩; ¶⟧
-             | ⟦⟨Tmp⟩ = ⟨I_Arg⟩ * ⟨I_Arg⟩; ¶⟧
-             | ⟦⟨Tmp⟩ = ⟨I_Arg⟩; ¶⟧
-             | ⟦⟨Name⟩ = ⟨Tmp⟩; ¶⟧ ;
-
-sort I_Arg | ⟦⟨Name⟩⟧
-           | ⟦⟨FLOAT⟩⟧
-           | ⟦⟨INT⟩⟧
-           | ⟦⟨Tmp⟩⟧ ;
-
-sort Tmp | symbol ⟦ ⟨T⟩ ⟧ ;
-
-// Translation scheme.
-
-attribute ↓TmpType{Tmp:Type} ;
-
-sort I_Progr ;
-
-| scheme ⟦ ICG ⟨Stat⟩ ⟧ ↓TmpType ;
-⟦ ICG id := ⟨Exp#2 ↑HasType(#t2)⟩; ⟧
-  → ⟦ { ⟨I_Progr ⟦ICGExp T ⟨Exp#2⟩⟧ ↓TmpType{T:#t2}⟩ } id = T; ⟧ ;
-⟦ ICG { } ⟧ → ⟦ ⟧;
-⟦ ICG { ⟨Stat#s⟩ ⟨Stats#ss⟩ } ⟧ → ⟦ { ICG ⟨Stat#s⟩ } ICG { ⟨Stats#ss⟩ } ⟧ ;
-
-| scheme ⟦ ICGExp ⟨Tmp⟩ ⟨Exp⟩ ⟧ ;
-
-⟦ ICGExp T ⟨INT#1⟩ ⟧ → ⟦ T = ⟨INT#1⟩; ⟧ ;
-⟦ ICGExp T ⟨FLOAT#1⟩ ⟧ → ⟦ T = ⟨FLOAT#1⟩; ⟧ ;
-⟦ ICGExp T id ⟧ → ⟦ T = id; ⟧ ;
-
-⟦ ICGExp T ⟨Exp#1⟩ + ⟨Exp#2⟩ ⟧
-  → ⟦ {ICGExp T_1 ⟨Exp#1⟩} {ICGExp T_2 ⟨Exp#2⟩} T = T_1 + T_2; ⟧ ;
-
-⟦ ICGExp T ⟨Exp#1⟩ * ⟨Exp#2⟩ ⟧
-  → ⟦ {ICGExp T_1 ⟨Exp#1⟩} {ICGExp T_2 ⟨Exp#2⟩} T = T_1 * T_2; ⟧ ;
-
-// Helper to flatten code sequence.
-| scheme ⟦ {⟨I_Progr⟩} ⟨I_Progr⟩ ⟧;
-⟦ {} ⟨I_Progr#3⟩ ⟧ → #3 ;
-⟦ {⟨I_Instr#1⟩ ⟨I_Progr#2⟩} ⟨I_Progr#3⟩ ⟧ → ⟦ ⟨I_Instr#1⟩ {⟨I_Progr#2⟩} ⟨I_Progr#3⟩ ⟧;
-\end{code}
-  \caption{Intermediate Code Generation.}
-  \label{fig:icgen}
-\end{figure}
-
-\begin{example}\label{ex:icgen}
-  %%
-  The sixth part of \emph{First.hx} is the translation from abstract syntax to the intermediate
-  representation, shown in Fig.~\ref{fig:icgen}. The fragment contains the usual components: a
-  syntax specification, rewrite schemes, and rewrite rules for the "ICG" scheme.
-
-  The code only uses two new features: "¶" markers in the syntax to indicate newlines, and rules
-  that introduce \emph{fresh} variables (of "Tmp" sort): when the replacement of a rule uses a
-  symbol, which was not in the pattern, then this corresponds to \emph{generating} a new globally
-  unique symbol. So each time the rule
-\begin{code}
-⟦ ICG id := ⟨Exp#2 ↑HasType(#t2)⟩; ⟧
-  → ⟦ { ⟨I_Progr ⟦ICGExp T ⟨Exp#2⟩⟧ ↓TmpType{T:#t2}⟩ } id = T; ⟧ ;
-\end{code}
-  is used, "T" denotes a new so-called ``fresh'' symbol.  When printed, the various incarnations of
-  "T" will be named "T_1", "T_86", \etc
-  %%
-\end{example}
-
-\begin{figure}[p]\small
-\begin{code}[xleftmargin=1.66em,numbers=right]
-/* 7. CODE GENERATOR. */
-
-sort A_Progr | ⟦ ⟨A_Instr⟩ ⟨A_Progr⟩ ⟧ | ⟦⟧ ;
-
-sort A_Instr | ⟦ LDF ⟨Tmp⟩, ⟨A_Arg⟩ ¶⟧
-             | ⟦ STF ⟨Name⟩, ⟨Tmp⟩ ¶⟧
-             | ⟦ ADDF ⟨A_Arg⟩, ⟨A_Arg⟩, ⟨A_Arg⟩ ¶⟧
-             | ⟦ MULF ⟨A_Arg⟩, ⟨A_Arg⟩, ⟨A_Arg⟩ ¶⟧ ;
-
-sort A_Arg | ⟦ #⟨FLOAT⟩ ⟧ | ⟦ #⟨INT⟩ ⟧ | ⟦ ⟨Name⟩ ⟧ | ⟦ ⟨Tmp⟩ ⟧ ;
-
-sort A_Progr | scheme ⟦ CG ⟨I_Progr⟩ ⟧ ;
-
-⟦ CG ⟧ → ⟦⟧ ;
-
-⟦ CG T = ⟨I_Arg#1⟩ + ⟨I_Arg#2⟩ ; ⟨I_Progr#⟩ ⟧
-  → ⟦ ADDF T, [⟨I_Arg#1⟩], [⟨I_Arg#2⟩] CG ⟨I_Progr#⟩ ⟧ ;
-
-⟦ CG T = ⟨I_Arg#1⟩ * ⟨I_Arg#2⟩ ; ⟨I_Progr#⟩ ⟧
-  → ⟦ MULF T, [⟨I_Arg#1⟩], [⟨I_Arg#2⟩] CG ⟨I_Progr#⟩ ⟧ ;
-  
-⟦ CG T = ⟨I_Arg#1⟩ ; ⟨I_Progr#⟩ ⟧
-  → ⟦ LDF T, [⟨I_Arg#1⟩] CG ⟨I_Progr#⟩ ⟧ ;
-
-⟦ CG name = T ; ⟨I_Progr#⟩ ⟧
-  → ⟦ STF name, T CG ⟨I_Progr#⟩ ⟧ ;
-
-sort A_Arg | scheme ⟦ [⟨I_Arg⟩] ⟧ ;
-⟦ [T] ⟧ → ⟦ T ⟧ ;
-⟦ [name] ⟧ → ⟦ name ⟧ ;
-⟦ [⟨FLOAT#1⟩] ⟧ → ⟦ #⟨FLOAT#1⟩ ⟧ ;
-⟦ [⟨INT#1⟩] ⟧ → ⟦ #⟨INT#1⟩ ⟧ ;
-\end{code}
-  \caption{Code Generation.}
-  \label{fig:cgen}
-\end{figure}
-
-\begin{example}\label{ex:cgen}
-  The seventh part of \emph{First.hx} is the final translation "CG" from the intermediate
-  representation to assembly code. This uses no new features, and is shown in Fig.~\ref{fig:cgen},
-  however, it is still worth a sanity check, walking through the "CG" scheme and checking that all
-  syntactic cases are covered.
-\end{example}
-
-\begin{remark}[concrete \emph{vs.} raw syntax]
-  In the presentation we have chosen to use \emph{concrete syntax} even for semantic
-  operations. This has the advantage of allowing direct invocation of even complex structured
-  calculations from the command line but it does ``pollute'' the syntax of the defined language.
-  (Production versions of \HAX (not yet released) will have the option of generating parsers that
-  ignore concrete syntax of schemes when running the compiler.) It is sometimes practical to define
-  ``bridge schemes'' that make schemes available both in syntax and raw; we give an example of this
-  in the following section.
-\end{remark}
-
-
-\section{Main}
-
-Finally, we put everything together.
-
-\begin{example}
-  The eighth and last fragment of \emph{First.hx} is the main compilation function, which pulls
-  together the three stages defined in previous sections.
-\begin{code}[xleftmargin=1.66em,numbers=right]
-/* 8. MAIN. */
-
-sort A_Progr | scheme ⟦ Compile ⟨Stat⟩ ⟧ ;
-⟦ Compile ⟨Stat#1⟩ ⟧ → ⟦ CG ICG TA ⟨Stat#1⟩ ⟧ ;
-\end{code}
-  It is also possible to define wrapper schemes that can be invoked with an option, this is useful
-  when the input term is read from a file where it is not obvious to include the compiler
-  instructions.
-\begin{code}[xleftmargin=1.66em,numbers=right,firstnumber=last]
-| scheme Compile(Stat);
-Compile(#stat) → ⟦ Compile ⟨Stat#stat⟩ ⟧ ;
-\end{code}
-  This is the "--action" we invoked back in Com.~\ref{com:all}.  Such wrapper raw schemes must have
-  a single argument.
-\end{example}
-
-
 
 
 \end{document}
