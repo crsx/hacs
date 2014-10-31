@@ -114,7 +114,7 @@ $(eval HACSMAJOR$(basename $(shell cat ../VERSION)))
 # Jar has classes and resources...
 
 all :: $(BUILD)/share/java/hacs.jar
-install :: $(BUILD)/share/java/hacs.jar
+install ::
 	@mkdir -p $(DESTDIR)$(SHAREJAVA)
 	cp $(BUILD)/share/java/hacs-$(HACSMAJORVERSION).jar $(DESTDIR)$(SHAREJAVA)
 	cd $(DESTDIR)$(SHAREJAVA) && $(NOEXEC) ln -s hacs-$(HACSMAJORVERSION).jar hacs.jar
@@ -165,8 +165,8 @@ all :: $(BUILD)/lib/hacs/crsxc $(addprefix $(BUILD)/share/hacs/,$(CRSX_H))
 install ::
 	@mkdir -p $(DESTDIR)$(LIBDIR) $(DESTDIR)$(SHAREDIR)
 	cp -a $(BUILD)/lib/hacs/crsxc $(DESTDIR)$(LIBDIR)
-	for f in $(addprefix $(BUILD)/share/hacs/,$(CRSX_H)); do cp -a $$f $(DESTDIR)$(SHAREDIR); done
-	for f in $(addprefix $(BUILD)/lib/hacs/,$(CRSX_O)); do cp -a $$f $(DESTDIR)$(LIBDIR); done
+	cp -a $(addprefix $(BUILD)/share/hacs/,$(CRSX_H)) $(DESTDIR)$(SHAREDIR)
+	cp -a $(addprefix $(BUILD)/lib/hacs/,$(CRSX_O)) $(DESTDIR)$(LIBDIR)
 
 $(BUILD)/lib/hacs/crsxc : crsx-rulecompiler/net/sf/crsx/compiler/c/build/crsxc
 	@mkdir -p $(BUILD)/lib/hacs
@@ -205,7 +205,7 @@ $(BUILD)/org/crsx/hacs/HxRaw.class: $(BUILD)/org/crsx/hacs/HxRaw.java
 # HACS main rewriter.
 
 all :: $(BUILD)/lib/hacs/MainRewriter
-install :: $(BUILD)/lib/hacs/MainRewriter
+install ::
 	@mkdir -p $(DESTDIR)$(LIBDIR)
 	cp -a $(BUILD)/lib/hacs/MainRewriter $(DESTDIR)$(LIBDIR)
 
@@ -237,7 +237,7 @@ $(BUILD)/org/crsx/hacs/Main.dr: $(BUILD)/org/crsx/hacs/Main.crs $(BUILD)/lib/hac
 # HACS user command.
 
 all :: $(BUILD)/share/hacs/Hacs.mk $(BUILD)/share/hacs/Env.mk $(BUILD)/bin/hacs
-install :: $(BUILD)/share/hacs/Hacs.mk $(BUILD)/share/hacs/Env.mk $(BUILD)/bin/hacs
+install ::
 	@mkdir -p $(DESTDIR)$(SHAREDIR) $(DESTDIR)$(BINDIR)
 	cp $(BUILD)/share/hacs/Hacs.mk $(BUILD)/share/hacs/Env.mk $(DESTDIR)$(SHAREDIR)
 	cp -a $(BUILD)/bin/hacs $(DESTDIR)$(BINDIR)
@@ -257,6 +257,30 @@ $(BUILD)/bin/hacs: hacs.sh.template
 		'$<' > '$@.tmp'
 	chmod +x '$@.tmp'
 	mv '$@.tmp' '$@'
+
+# HACS documents.
+
+DOCUMENTS = README.md doc/hacs-gently.pdf
+SAMPLES = samples/First.hx
+
+all :: $(addprefix $(BUILD)/share/doc/hacs/,$(notdir $(DOCUMENTS))) $(addprefix $(BUILD)/share/doc/hacs/examples/,$(notdir $(SAMPLES)))
+
+$(addprefix $(BUILD)/share/doc/hacs/,$(notdir $(DOCUMENTS))) : $(addprefix ../,$(DOCUMENTS))
+	@mkdir -p $(BUILD)/share/doc/hacs/examples
+	cp $(addprefix ../,$(DOCUMENTS)) $(BUILD)/share/doc/hacs
+
+$(addprefix $(BUILD)/share/doc/hacs/examples/,$(notdir $(SAMPLES))) : $(addprefix ../,$(SAMPLES))
+	@mkdir -p $(BUILD)/share/doc/hacs/examples
+	cp $(addprefix ../,$(SAMPLES)) $(BUILD)/share/doc/hacs/examples
+
+install ::
+	@mkdir -p $(DESTDIR)$(DOCDIR)/examples
+	cp $(addprefix $(BUILD)/share/doc/hacs/,$(notdir $(DOCUMENTS))) $(DESTDIR)$(DOCDIR)
+	cp $(addprefix $(BUILD)/share/doc/hacs/examples/,$(notdir $(DOCUMENTS))) $(DESTDIR)$(DOCDIR)/examples
+
+
+
+
 
 
 

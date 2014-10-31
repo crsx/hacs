@@ -277,7 +277,7 @@ $(BUILD)/%.class: $(BUILD)/%.java
 
 # Load compiled files.
 %.o: %.c
-	cd $(dir $<) && $(NOEXEC) $(CC) -std=c99 -DOMIT_TIMESPEC -I$(SHAREDIR) -I$(BUILD)/share/hacs $(CFLAGS) -c $(notdir $<)
+	cd $(dir $<) && $(NOEXEC) $(CC) -std=c99 -DOMIT_TIMESPEC -DGENERIC_LOADER -I$(SHAREDIR) -I$(BUILD)/share/hacs $(CFLAGS) -c $(notdir $<)
 
 %Rewriter: %.o %_sorts.o %_rules.o %_symbols.o
 	cd $(dir $<) && $(NOEXEC) $(CC) -std=c99 -o $(notdir $*)Rewriter $(notdir $*).o $(notdir $*)_sorts.o $(notdir $*)_rules.o $(notdir $*)_symbols.o crsx.o crsx_scan.o linter.o prof.o -licuuc -licudata -licui18n -licuio

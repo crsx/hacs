@@ -23,7 +23,7 @@
 \newcommand{\eg}{\textit{e.g.}\xspace}
 \newcommand{\etc}{\textit{etc.}\xspace}
 \newcommand{\aka}{\textit{aka.}\xspace}
-\newcommand{\TBD}[1][]{\textit{To Be Done…#1}\marginpar{\bf TBD}}
+\newcommand{\TBD}[1][]{\textit{To Be Done…#1}\marginpar{\bf\color{red} TBD}}
 
 %% Misc.
 \def\Bigstrut{\ensuremath{\vphantom{\Bigm|}}}
@@ -39,8 +39,8 @@
 \newtheorem{example}[theorem]{Example}
 \newtheorem{practice}[theorem]{Practice}
 \newtheorem{notation}[theorem]{Notation}
-\newtheorem{manual-body}[theorem]{Manual}
-\newenvironment{manual}{\small\begin{manual-body}}{\end{manual-body}}
+\newtheorem{manual}[theorem]{Manual}
+%\newenvironment{manual}{\small\begin{manual-body}}{\end{manual-body}}
 \newtheorem{invariant}[theorem]{Invariant}
 \newtheorem{requirements}[theorem]{Requirements}
 \newtheorem{limitations}[theorem]{Limitations}
@@ -65,7 +65,7 @@
 
 %% HACS.
 \def\Identifier#1{#1}
-\def\Keyword#1{\textsf{\bf\color{gray}#1}}
+\def\Keyword#1{\textsf{\color{gray}#1}}
 
 \lstdefinelanguage{HACS}{basicstyle=\fontfamily{ccr}\selectfont,%
   extendedchars=true,inputencoding=utf8,sensitive,%
@@ -73,7 +73,7 @@
   string=[d]{"},morestring=[d]{'},upquote=true,showstringspaces=false,%
   comment=[l]{//},morecomment=[s]{/*}{*/},commentstyle=\color{blue}\rm,%
   keywordstyle=\Keyword,%
-  keywords={attribute,data,fragment,import,module,nested,property,rule,scheme,simplify,sort,%
+  keywords={attribute,data,fragment,import,main,module,nested,property,rule,scheme,simplify,sort,%
     space,static,sugar,symbol,tag,token,default,error,binds,as},%
   literate=%
     {⟦}{{\ensuremath{\llbracket}}}1 {⟧}{{\ensuremath{\rrbracket}}}1 {⟨}{{\ensuremath{\langle}}}1 {⟩}{{\ensuremath{\rangle}}}1 %
@@ -81,8 +81,8 @@
     {ε}{{\ensuremath{\varepsilon}}}1 {…}{{\ensuremath{\dots}}}2 {∧}{{\ensuremath{\!\wedge}}}2 {∨}{{\ensuremath{\!\vee}}}2 {↦}{{\ensuremath{\mapsto}}}2 %
 }[comments,strings,keywords]
 %%
-\lstnewenvironment{hacs}[1][]{\lstset{language=HACS,basewidth={.5em,.4em},columns=flexible,#1}\upshape}{}
-\newcommand\inputhacs[2][]{\lstinputlisting[language=HACS,basewidth={.55em,.45em},columns=flexible,#1]{#2}}
+\lstnewenvironment{hacs}[1][]{\lstset{language=HACS,basewidth={.53em,.43em},columns=flexible,numberstyle=\scriptsize,numberblanklines=false,firstnumber=auto,xrightmargin=1pc,#1}\upshape}{}
+\newcommand\inputhacs[2][]{\lstinputlisting[language=HACS,basewidth={.53em,.43em},columns=flexible,numberstyle=\scriptstyle,numberblanklines=false,xrightmargin=1pc,#1]{#2}}
 \newcommand\hacsc{\lstinline[language=HACS]}
 \lstMakeShortInline[language=HACS,columns=fullflexible]"
 
