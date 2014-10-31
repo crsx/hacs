@@ -268,7 +268,7 @@ $(BUILD)/%.class: $(BUILD)/%.java
 
 %_symbols.c: %.rawsymlist
 	LC_ALL=C sort -bu $< | sed -n '/./p' > $@.tmp
-	@(echo '/* $*ing symbols. */'; \
+	@(echo '/* $* symbols. */'; \
 	  echo '#include "$*.h"'; \
 	  echo "size_t symbolDescriptorCount = $$(wc -l <$@.tmp);"; \
 	  echo 'struct _SymbolDescriptor symbolDescriptorTable[] = {';\
@@ -277,14 +277,15 @@ $(BUILD)/%.class: $(BUILD)/%.java
 
 # Load compiled files.
 %.o: %.c
-	$(CC) -I$(SHAREDIR) $(CFLAGS) -c $<
+	cd $(dir $<) && $(NOEXEC) $(CC) -std=c99 -DOMIT_TIMESPEC -I$(SHAREDIR) -I$(BUILD)/share/hacs $(CFLAGS) -c $(notdir $<)
 
 %Rewriter: %.o %_sorts.o %_rules.o %_symbols.o
-	$(CC) -o $*main $*main.o $*_sorts.o $*_rules.o $*_symbols.o $(LIBDIR)/crsx.o $(LIBDIR)/crsx_scan.o -licuuc -licudata -licui18n -licuio
+	cd $(dir $<) && $(NOEXEC) $(CC) -std=c99 -o $(notdir $*)Rewriter $(notdir $*).o $(notdir $*)_sorts.o $(notdir $*)_rules.o $(notdir $*)_symbols.o crsx.o crsx_scan.o linter.o prof.o -licuuc -licudata -licui18n -licuio
 
-
-
-
+crsx.o crsx_scan.o:
+	@if [ -f $(LIBDIR)/crsx.o ]; then cp $(LIBDIR)/crsx.o $(LIBDIR)/crsx_scan.o .; \
+	elif [ -f $(BUILD)/lib/hacs/crsx.o ]; then cp $(BUILD)/lib/hacs/crsx.o $(BUILD)/lib/hacs/crsx_scan.o .; \
+	else false; fi
 
 
 # Debugging helpers.

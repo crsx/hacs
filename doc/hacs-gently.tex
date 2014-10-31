@@ -1,8 +1,8 @@
-%% hacs-gently.tex
+%% Introduction to HACS.
 %%
 \documentclass[11pt]{article} %style: font size.
 \input{setup}
-\def\version{\thanks{\textbf{UNFINISHED DRAFT---Feedback Appreciated}.}}
+\def\version{\thanks{For \HAX version 0.9 for use at NYU.}}
 
 %% Style.
 \usepackage[margin=1in]{geometry}
@@ -33,7 +33,7 @@
 
 \HAX abbreviates \emph{Higher-order Attribute Contraction Schemes}, which is a formal system for
 symbolic rewriting extended with programming idioms commonly used in compiler rewriting.  This
-introduction briefly outlines how \HAX is structured and how to run the \HAX system.
+introduction outlines how \HAX is structured and how to run the \HAX system.
 
 A compiler written in \HAX consists of a single program with a series of formal sections, each
 corresponding to a stage of the compiler.  Each section is written in a formal style suitable for
@@ -41,14 +41,20 @@ that stage of the compiler. Specifically, \HAX supports the following notations:
 %%
 \begin{description}
 
-\item[Regular Expressions.] Used to describe how an input text is partitioned into tokens. The
-  regular expresion notation of \HAX follows common
+\item[Regular Expressions.] Used to describe how an input text is partitioned into
+  \emph{tokens}. The regular expression notation of \HAX follows common
   conventions~\cite{Aho+:2006}. Section~\ref{sec:tokens} gives details of this notation.
 
 \item[Context Free Grammars.] \HAX uses a form of BNF~\cite{NaurEtal:cacm1960} with common
   extensions to describe context free grammars. \HAX includes simple mechanisms for automatic
-  resolution of operator precedence and directly recursive productions such that the transformation
-  from token stream to abstract syntax can be formalized.  Detailed are in Section~\ref{sec:syntax}.
+  resolution of operator precedence and productions using immediate recursion such that the
+  transformation from token stream to abstract syntax can be formalized.  Detailed in
+  Section~\ref{sec:syntax}.
+
+\item[Recursive Translation Schemes.] Simple translations in general, and code generation in
+  particular, are traditionally achieved by recursive translation from one abstract form to another.
+  \HAX includes special notations for defining such translations, as well as a mechanism for
+  defining auxiliary so-called ``semantic sorts,'' all detailed in Section~\ref{sec:schemes}.
 
 \item[Attribute Grammars.] Analyses can be described with attribute grammars in the style of
   \emph{Syntax-Directed Definitions}~\cite{Aho+:2006}, which describe how properties propagate
@@ -56,12 +62,6 @@ that stage of the compiler. Specifically, \HAX supports the following notations:
   rules work for synthesized attributes, Section~\ref{sec:inherited} how inherited atributes are
   described, and Section~\ref{sec:symbols} the special considerations needed when managing scoped
   symbols and binders.
-
-\item[Recursive Translation Schemes.] Code generation and other translations from one abstract form
-  to another is formalized in \HAX using a variant of \emph{Syntax-Directed
-    Translation}~\cite{Aho+:2006}, where the syntax of the source language is used to guide the
-  generation of expressions in the target language. \HAX specifically uses higher order rewriting
-  idioms to describe such translations as described in Section~\ref{sec:translation}.
 
 \end{description}
 
@@ -75,32 +75,37 @@ Next we make sure you have a functional \HAX installation on your computer.
   retrieve the \CRSX base system~\cite{crsx} and JavaCC parser generator~\cite{javacc}.
 \end{requirements}
 
-\begin{commands}\label{com:all}
-  Retrieve the \emph{hacs-0.9.zip} archive, extract it to a new directory, and intialize the
-  "Makefile", for example with the following commands:\footnote{User input is
-    \textcolor{blue}{blue}.}
+\begin{commands}[install \HAX]\label{com:all}
+  Retrieve the \emph{hacs-0.9.zip} archive, extract it to a new directory, and install it, for
+  example with the following commands:\footnote{User input is \textcolor{blue}{blue}.}
   %%
+\begin{code}[commandchars=\^\{\}]
+$ ^textcolor{blue}{^texttt{wget http://crsx.org/hacs-0.9.zip}}
+$ ^textcolor{blue}{^texttt{unzip hacs-0.9.zip}}
+$ ^textcolor{blue}{^texttt{cd hacs}}
+$ ^textcolor{blue}{^texttt{make prefix=$HOME/.hacs install-support install}}
+\end{code}
+  %%
+  These commands will need Internet access, using the wget command to retrieve utility
+  libraries.\footnote{Specifically, \HAX needs the \CRSX system and and JavaCC parser generator.}
+  You may change the \verb|prefix=| definition to store \HAX in a different location, if you wish;
+  if so the occurrences of \verb|$HOME/.hacs| in the text below should be changed.
+
+  The following command makes the main \emph{hacs} command available for use:
+\begin{code}[commandchars=\^\{\}]
+$ ^textcolor{blue}{^texttt{alias hacs=$HOME/.hacs/bin/hacs}}
+\end{code}
+  (It may be worth including this command in your setup, or including the \verb|$HOME/.hacs/bin|
+  directory in your \verb|$PATH|.)
+
+  Please check your new installation works with these commands:
 \begin{code}[commandchars=\^\{\}]
 $ ^textcolor{blue}{^texttt{mkdir myfirst}}
 $ ^textcolor{blue}{^texttt{cd myfirst}}
-$ ^textcolor{blue}{^texttt{wget http://crsx.org/hacs.zip}}
-$ ^textcolor{blue}{^texttt{unzip hacs.zip}}
-\end{code}
-  %%
-  Now check that all the commands defined in the "SETUP" section near the top of you freshly copied
-  "Makefile" are correct; if any need changing then uncomment the line and change it to reflect the
-  required commands on your system. Then check that it works with these command, which will need
-  Internet access the first time:\footnote{Note that the spacing of the output may vary---this is
-    not a stable capability yet.}
-  %% 
-\begin{code}[commandchars=\^\{\}]
-
-$ ^textcolor{blue}{^texttt{make first.run}}
-$ ^textcolor{blue}{^texttt{make first.run}}
-$ ^textcolor{blue}{^texttt{make first.run}}
-$ ^textcolor{blue}{^texttt{make first.run}}
+$ ^textcolor{blue}{^texttt{cp $HOME/.hacs/share/hacs/First.hx .}}
+$ ^textcolor{blue}{^texttt{hacs First.run}}
 ...
-$ ^textcolor{blue}{^texttt{./first.run --action=Compile \}}
+$ ^textcolor{blue}{^texttt{./First.run --scheme=Compile \}}
               ^textcolor{blue}{^texttt{--term="^{initial := 1; rate := 1.0; position := initial + rate * 60;^}"}}
   LDF T, #1
   STF name, T_51
@@ -747,6 +752,15 @@ sort Exp; ↑t;
 \end{manual}
 
 
+
+
+
+
+
+
+
+
+
 \section{Semantic Analysis II}
 \label{sec:analysis2}
 
@@ -928,6 +942,333 @@ sort Stat | scheme ⟦ TA ⟨Stat⟩ ⟧ ↓e ;
   The special term "error⟦…⟧" will print the error message embedded in "⟦…⟧", where one is permitted
   to embed "symbol"-declared variables in "⟨…⟩".
 \end{manual}
+
+
+
+
+
+\section{From SDD to \HAX}
+\label{sec:sdd2hacs}
+
+In terms of higher order rewriting, the above sections provide algebraic sorts, defined by the
+syntax productions---in terms of the dragon book, and thus our students, a mechanism for generating
+abstract syntax trees (ASTs).
+
+The next stage is to implement \emph{semantic} analyses: rules for enriching the AST with additional
+information that facilitates the subsequent transformation to an intermediate representation (IR).
+We use type analysis as an example.  Because type analysis uses the symbol table in a non-trivial
+way, the dragon book delays type analysis until later, however, in the class we use it as an early
+example of an analysis specified by a syntax-directed definition (SDD).
+
+\begin{figure}[h]
+  \begin{equation*}
+    \begin{array}{r@{\,}l|lr}
+      \hline
+      \hline
+      \multicolumn{2}{c|}{\textsc{Production}}  & \textsc{Semantic Rules} &\\
+      \hline\Bigstrut
+      S &→ \textbf{name} := E_1; S_2
+      & E_1.e = S.e; S_2.e = \op{Extend}(S.e, \textbf{name}.sym, E_1.t) &\thetag{S1}
+      \\[\jot]
+      &\mid \{~S_1~\}~S_2 & S_1.e = S.e; S_2.e = S.e &\thetag{S2}
+      \\[\jot]
+      &\mid ε & &\thetag{S3}
+      \\[\jot]
+      \hline\Bigstrut
+      E &→ E_1 + E_2 & E_1.e=E.e; E_2.e=E.e; E.t = \op{Unif}(E_1.t, E_2.t) &\thetag{E1}\\[\jot]
+      &\mid E_1 \ast E_2 & E_1.e=E.e; E_2.e=E.e; E.t = \op{Unif}(E_1.t, E_2.t) &\thetag{E2}\\[\jot]
+      &\mid \textbf{int} & E.t = \op{Int}&\thetag{E3}\\[\jot]
+      &\mid \textbf{float} & E.t = \op{Float}&\thetag{E4}\\[\jot]
+      &\mid \textbf{name} & E.t = \text{if}~\op{Defined}(E.e,\textbf{name}.sym)~\text{then}~\op{Lookup}(E.e,\textbf{name}.sym)&\thetag{E5}\\
+      && \qquad\quad\text{else} \op{TypeError}
+      \\[\jot]
+      \hline
+    \end{array}
+  \end{equation*}
+  \caption{SDD for type checking.}
+  \label{fig:sdd}
+\end{figure}
+
+\begin{figure}[t]\small
+\begin{hacs}[xleftmargin=1.5em,numbers=left,numberstyle=\scriptsize,texcl]
+// TYPE ANALYSIS
+
+sort Type  | Int | Float | TypeError
+           | scheme Unif(Type,Type) ;
+
+Unif(Int, Int) → Int;
+Unif(#t1, Float) → Float;
+Unif(Float, #t2) → Float;
+default Unif(#1,#2) → TypeError;
+
+attribute↑t(Type);  // synthesized expression type
+sort Exp | ↑t;
+
+⟦ (⟨Exp#1 ↑t(#t1)⟩ + ⟨Exp#2 ↑t(#t2)⟩) ⟧ ↑t(Unif(#t1,#t2));
+⟦ (⟨Exp#1 ↑t(#t1)⟩ * ⟨Exp#2 ↑t(#t2)⟩) ⟧ ↑t(Unif(#t1,#t2));
+⟦ ⟨INT#⟩ ⟧ ↑t(Int);
+⟦ ⟨FLOAT#⟩ ⟧ ↑t(Float);
+
+attribute↓e{Name:Type};  // inherited type environment
+
+sort Exp | scheme ⟦ TA ⟨Exp⟩ ⟧ ↓e ;  // propagates e over Exp
+
+⟦ TA id ⟧ ↓e{⟦id⟧ : #t} → ⟦ id ⟧ ↑t(#t);
+⟦ TA id ⟧ ↓e{¬⟦id⟧} → error⟦Undefined identifier ⟨id⟩⟧;
+
+⟦ TA ⟨INT#⟩ ⟧ → ⟦ ⟨INT#⟩ ⟧;
+⟦ TA ⟨FLOAT#⟩ ⟧ → ⟦ ⟨FLOAT#⟩ ⟧;
+⟦ TA (⟨Exp#1⟩ + ⟨Exp#2⟩) ⟧ → ⟦ (TA ⟨Exp#1⟩) + (TA ⟨Exp#2⟩) ⟧;
+⟦ TA (⟨Exp#1⟩ * ⟨Exp#2⟩) ⟧ → ⟦ (TA ⟨Exp#1⟩) * (TA ⟨Exp#2⟩) ⟧;
+
+sort Stat | scheme ⟦ TA { ⟨Stat⟩ } ⟧ ↓e ;  // propagates e over Stat
+
+⟦ TA { id := ⟨Exp#1⟩; ⟨Stat#2[⟦id⟧]⟩ } ⟧ → ⟦ TA2 { id := TA ⟨Exp#1⟩; ⟨Stat#2[⟦id⟧]⟩ } ⟧;
+{
+  | scheme ⟦ TA2 { ⟨Stat⟩ } ⟧ ↓e;
+  ⟦ TA2 { id := ⟨Exp#1 ↑t(#t1)⟩; ⟨Stat#2[⟦id⟧]⟩ } ⟧ →
+    ⟦ id := ⟨Exp#1⟩; ⟨Stat ⟦TA {⟨Stat#2[⟦id⟧]⟩}⟧ ↓e{⟦id⟧:#t1}⟩ ⟧;
+}
+
+⟦ TA { { ⟨Stat#1⟩ } ⟨Stat#2⟩ } ⟧ → ⟦ { TA { ⟨Stat#1⟩ } } TA { ⟨Stat#2⟩ } ⟧;
+
+⟦ TA { } ⟧ → ⟦ { } ⟧;
+\end{hacs}
+  \caption{\HAX code for type analysis.}
+  \label{fig:analysis-hacs}
+\end{figure}
+
+\begin{example}\label{ex:sdd}
+  %%
+  An SDD for a simple type analysis can be implemented with two attributes (and using the usual
+  convention that the SDD uses $E$ and $S$ where the \HAX grammar has "Exp" and "Stat"):
+  %%
+  \begin{itemize}
+
+  \item The inherited \emph{environment} attribute $e$, which is a map from variables to types on
+    both the statement and expression non-terminals $S$ and $E$.
+
+  \item The synthesized \emph{type} attribute $t$ on expressions $E$, which contains the type of the
+    expression.
+
+  \end{itemize}
+  %%
+  With those, the SDD can be expressed as shown in Figure~\ref{fig:sdd}, where we use the helpers
+  \op{Extend}, \op{Defined}, and \op{Lookup} to build an extended environment with an additional
+  type declaration, check for existence, and look one up, respectively, and \op{Unif} to find the
+  type of an arithmetic operation with operands of two specific types.
+  %% 
+\end{example}
+
+The SDD in Example~\ref{ex:sdd} is explained as a slightly more declarative version than the SDDs in
+the dragon book, where SDDs generally operate on the symbol table using side effects.  It is not
+hard to justify to students why it is worthwhile to strive for \emph{immutable} symbol tables and
+that this helps relaxing the evaluation order used to evaluate the attributes.
+
+\begin{example}\label{ex:analysis-hacs}
+  The full \HAX code of the type checker is shown in Figure~\ref{fig:analysis-hacs}.
+\end{example}
+
+The \HAX code for the SDD of the example reveals most of the remaining \HAX properties:
+
+\smallskip\noindent\textbf{Algebraic sorts} are available: the example defines the sort "Type" which contains our
+  possible types as well as a so-called \emph{scheme} which has associated signature as well as…
+
+\smallskip\noindent\textbf{Rewrite rules} can be given for schemes, here for example "Unif" in lines 6 through 9.  A
+  scheme can have a "default" rule used as a fall-back.  \emph{Meta-variables} in rewrite rules are
+  denoted by a starting~"#".
+
+\smallskip\noindent\textbf{Synthesized attributes} are declared with an "attribute↑" declaration followed by the
+  attribute name and sort of the attribute value to propagate in "()"s. Line 11 is an example of
+  this, declaring the attribute "t" of sort "Type", and line 12 then declares that "t" is available
+  on AST nodes of "Exp" sort.
+
+\smallskip\noindent\textbf{Synthesis propagation rules} are for synthesized attributes that depend exclusively on other
+  synthesized attributes (``S-attributed'') follow a specific scheme, illustrated by lines 14
+  through 17.  Note that with \HAX this can be the case for only \emph{some} of the productions, as
+  is the case here: the SDD productions \thetag{E1--E4} declare the $t$ attribute in a way that only
+  depends on subterm synthesized attributes.  The pattern of such S-attributed propagation rules is
+  as follows, illustrated by \thetag{E1}.  It appears like this in the SDD:
+  \begin{equation*}
+    \begin{array}{r@{\,}l|lr}
+      \hline\Bigstrut
+      E &→ E_1 + E_2 & E_1.e=E.e; E_2.e=E.e; E.t = \op{Unif}(E_1.t, E_2.t) \qquad&\thetag{E1}\\[\jot]
+      \hline
+    \end{array}
+  \end{equation*}
+  %%
+  Here is how we teach converting the local S-attributed propagation of $t$ to \HAX form.
+  %%
+  \begin{enumerate}
+
+  \item The first thing to do is copy the syntax production but omit any "@"-markings and add a
+    unique "#"$n$ disambiguation mark to each production.  Since \thetag{E1} is based on the
+    alternative
+\begin{hacs}
+sort Exp   | ⟦ ⟨Exp@1⟩ + ⟨Exp@2⟩ ⟧@1
+\end{hacs}
+    we start with 
+\begin{hacs}
+⟦ ⟨Exp#1⟩ + ⟨Exp#2⟩ ⟧
+\end{hacs}
+    where we have used the subscripts from \thetag{E1} as "#"-disambiguation marks.
+
+  \item Next add in \emph{synthesis patterns} for the attributes we are reading.  Each attribute
+    reference like $E_1.t$ becomes a pattern like "⟨Exp#1 ↑t(#t1)⟩", where the meta-variables like
+    "#t1" should each be unique.  For our example, this gives us
+\begin{hacs}
+⟦ ⟨Exp#1 ↑t(#t1)⟩ + ⟨Exp#2 ↑t(#t2)⟩ ⟧
+\end{hacs}
+    which sets up "#t1" and "#t2" as synonyms for $E_1.t$ and $E_2.t$, respectively.
+
+  \item Finally, add in the actual synthesized attribute, using the same kind of pattern at the
+    \emph{end} of the rule (and add a ";"), and we get
+\begin{hacs}
+⟦ ⟨Exp#1 ↑t(#t1)⟩ + ⟨Exp#2 ↑t(#t2)⟩ ⟧ ↑t(Unif(#t1,#t2)) ;
+\end{hacs}
+
+  \end{enumerate}
+  %%
+  Synthesis rules are not hard for the students to get right.  We make sure that the invariant is
+  clear: the purpose of synthesis rules is to make it possible to match on a synthesized attribute
+  for every subexpression of the appropriate sort.  We also make sure that at this point the
+  students take note of an rules that were \emph{not} S-attributed and are thus still left out.
+
+\smallskip\noindent\textbf{Inherited attributes} are specified with an "attribute↓" declaration. This is similar to
+  synthesized attributes except we also support \emph{maps} such as symbol tables (but the keys do
+  not have to be symbols). Value attributes are specified as for synthesized with an attribute name
+  followed by the sort in "()"s, and map attributes are specified with the name followed by a "{",
+    the key sort, a ":", the value sort, and a "}".  The $e$ attribute of the SDD is declared in
+  \HAX in line 19 in this way as a map from "Name" keys to "Type" values, thus capturing the type of
+  variables.
+
+\smallskip\noindent\textbf{Recursive schemes} are the final tool available. For our SDD we have to use recursive schemes
+  for any semantic rule that involves any inherited attributes.  The basic rules that we teach are
+  these:
+  %%
+  \begin{enumerate}
+
+  \item Every inherited attribute needs to be \emph{associated} to a recursive scheme, which will
+    then be responsible for propagating that inherited attribute.
+
+    In general a scheme is declared with a "scheme" declaration, like the one in line 21, which
+    otherwise looks like a syntax production alternative, and indeed \emph{defines new syntax}.
+    This has to be carefully explained to students: that we effectively extend the syntax of the
+    user language---after line 21, the expression \texttt{TA 2} is a legal expression in the
+    language, however, it is a fake expression that is used internally by the compiler.  (This also
+    has the advantage that one can more easily test internal schemes of the compiler by providing
+    input ``programs'' that contain the schemes.)
+
+    Line 21 also contains the association of the inherited "e" attribute to the "TA" "Exp" scheme:
+    the "↓e" suffix.  This implies that \emph{every application of the TA scheme will always
+      propagate the inherited e attribute from its context}.
+
+    Line 31 achieves the similar effect to the "TA" scheme for "Stat" nodes (the name can be the
+    same as there is no syntactic overlap between "Stat" and "Exp", a fact the students can
+    understand from the parser material already treated in depth at this point).  Only notice that
+    to avoid ambiguity, the "TA" scheme for the "Stat" sort includes "{}"s as part of the syntax.
+
+  \item \emph{Semantic rules with simple inheritance} then get translated to straight recursive traversal
+    rules.  An example of this is \thetag{E1}, where the environment $e$ is propagated straight to
+    the two components $E_1$ and $E_2$. Line 28 captures this; indeed all of \thetag{E1--E4} satisfy
+    this requirement, \thetag{E3--E4} trivially so, as captured by lines 26--29.  Conversely for 
+
+    We here have to explain carefully how we exploit the syntax mechanism, so for example in line 28
+    the left of the "→" is a \HAX pattern representation defining the application of "TA" to the
+    expression $E_1+E_2$, whereas the right of the "→" represents the "+"-"Exp" where the two
+    subexpressions are applications of "TA" to the sub-"Exp" that correspond to $E_1$ and $E_2$,
+    respectively (including the use of the syntactic sugar~"(…)").  The recursive scheme fully
+    represents the propagation of the inherited $e$ attribye in \thetag{E1}: the application of "TA"
+    on the left side of "→" captures an $e$ corresponding to $E.e$ in \thetag{E1}, and the two
+    recursive applications of "TA" on the right side of "→" conversely represent passing ``the $e$''
+    into the corresponding subexpression, corresponding to the two attribute definitions
+    $E_1.e=E.;E_2.e=E.e$.
+
+    Here we also explain that it is posible to ``expand'' patterns such as the ones used in Line 28,
+    which could have been written with nested references and literal syntax like this:
+\begin{hacs}
+⟦ TA ⟨Exp ⟦⟨Exp#1⟩ + ⟨Exp#2⟩⟧⟩ ⟧
+  → ⟦ ⟨Exp ⟦TA ⟨Exp#1⟩⟧⟩ + ⟨Exp ⟦TA ⟨Exp#2⟩⟧⟩ ⟧;
+\end{hacs}
+    avoiding any use of the "()" sugar.  It is sometimes a help for students to go through this a
+    few times when they have issues in the code.
+
+    Line 40 and 41 correspond in a similar simple way to the simple inheritance of \thetag{S2--S3}.
+
+  \item \emph{Semantic rules with synthetic depending on one inherited} are handled next.  They are
+    rules that synthesize some attributes depending only on other synthetic attributes (of subterms)
+    and, crucially, depend on \emph{one} inherited attribute.  An example in the example SDD is
+    \thetag{E5}, which defines the $t$ synthesized attribute in terms of the inherited $e$.  This is
+    represented by the rules in lines 23--24, which show how we define the "TA" scheme (since we are
+    using "e") for the "Name" case: we have to use a parsed "Name", "id", and then we have two
+    subcases, corresponding to the two cases of the \op{Defined} predicate from the SDD:
+    \begin{itemize}
+
+    \item the first case in line 23 captures that "e" has mapping from "⟦id⟧" (that is "id" parsed
+      as a "Name", the key sort) to some type, which is captured by "#t". The "TA" scheme then takes
+      care of the synthesis of "t" \emph{and} the propagation of "e" (which is trivial in this
+      case);
+
+    \item the second case in Line 24 captures when "e" does not have a mapping, which should result
+      in an error.
+
+    \end{itemize}
+    When this situation arises, which is common, then we get a \emph{scheme dependency}: synthesis
+    of the "t" attribute \emph{depends on} having finished the "TA" scheme for the appropriate
+    subterm.
+
+  \item Rules that \emph{extend the map attribute} require a bit more notation.  In our example,
+    this is just \thetag{S1}, which extends the $e$ attribute that is passed down to $S_2$ with one
+    more symbol to type mapping.  Specifically, we have to explain how to encode what we have
+    written as $\op{Extend}(N_1.a,k,v)$ in the SDD notation, assuming the $a$ inherited attribute is
+    associated with a scheme, say the "A" scheme for the "S" sort.  This is written as the special
+    reference 
+    \begin{center}
+      "⟨S ⟦A ⟨N#1⟩⟧ ↓a{k:v}⟩".
+    \end{center}
+    We dissect this with the students:
+    \begin{itemize}
+    \item The outermost "⟨S…⟩" just establishes that this is an "S"-unit in the context (which we
+      assume to be parsed syntax).
+    \item The actual unit is computed by the "A" scheme on $N_1$, which we refer to by convention as
+      "⟨N#1⟩", so the whole invokation is "⟦A ⟨N#1⟩⟧". If we were not using a changed $e$ that would
+      be all, but we are modifying the "e" attribute sent in, by adding a map, which is indicated by
+      adding "↓a{k:v}" for whatever "k" and "v" are.
+    \end{itemize}
+    However, \thetag{S1} has one more special feature, which is the next point invesitigated.
+
+  \item Rules that \emph{have left-to-right attribute dependencies} require that helper schemes are
+    introduced.  This is similar to the way one reasons about how to execute operational semantic
+    inference systems ``from left to right:'' the intermediate state where only part of the
+    attributes (premises for inference system) are instantiated needs to be captured.
+
+    For rule \thetag{S1} this is present in that the extension of the inherited $S_2.e$ depends on
+    the synthesized $E_1.t$, which in \HAX depends on having computed "TA" on the "Exp"
+    corresponding to $E_1$ because "t" depends on "TA".
+
+    This justifies the final block, lines 33--38, which consists of a ``splitting'' rule, line 33,
+    that does nothing but invoke "TA" on the expression \emph{as well} as a new helper scheme,
+    "TA2", invoked on the entire statement \emph{with} the nested "TA" inside.  "TA2" is then
+    declared in line 35 (in the same sort and also propagating "e"). Line 36 has the "TA2" pattern,
+    which now can safely require a synthesized "t" attribute on the embedded expression, captured by
+    "#t1" in the pattern corresponding to $E_1.t$ in \thetag{S1}. Line 37 has the result of "TA2"
+    which is a statement where we recurse the "TA" scheme into the $S_2$ substatement with an
+    extended environment, written as discussed above.
+
+  \end{enumerate}
+
+Throughout this some of the details of the \HAX syntax matters, for example that the last "sort"
+declaration is remembered as ``the current sort,'' which is what permits rules and some declarations
+to ``know'' what sort they are applied to.
+
+We also have to communicate some of the general properties of rewriting: that there is no predefined
+strategy, so rules have to be explicitly mutually exclusive (with "default" rule as the exception).
+
+Finally, it has been very helpful to work in a strongly (many-)sorted algebraic system, as it is
+often possible when students have a problem to break their rules and declarations down to check
+consistency.
+
+
 
 
 \section{Intermediate and Code Generation}

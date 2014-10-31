@@ -752,7 +752,7 @@ CONSUMPTION_SORT ::=( C_BUFFER[$String<!--SortName-->, $Numeric<!--precedence-->
     // HAND-CODED HACK to recognize and strip left recursive production (because HxRaw.pg cannot match parsed forms...).
 
     P-isLeftRecursive[$String, $Numeric, PFK_SORT] :: Boolean;
-    P-isLeftRecursive[#SortName, #Prec,#PFK] → P-isLeftRecursive1[#SortName, #Prec,#PFK] ;
+    P-isLeftRecursive[#SortName, #Prec,#PFK] → P-isLeftRecursive1[#SortName, #Prec, #PFK] ;
 
     P-isLeftRecursive1[$String, $Numeric, PFK_SORT] :: Boolean;
 
@@ -769,8 +769,10 @@ CONSUMPTION_SORT ::=( C_BUFFER[$String<!--SortName-->, $Numeric<!--precedence-->
     -[Data[#Sort]]:
     P-isLeftRecursive1[#SortName, #Prec, PFK[Hx_ParsedFormTerm[Hx_ScopeSortPrec[#Sort1, #Prec1], #ParsedForm1], #Kind]]
     →
-    $[If, $[NumericEqual,#Prec,StringToNumericDefault[#Prec1,0]], P-isLeftRecursive2[#SortName, #Sort1], B_FALSE]
+    P-isLeftRecursive1b[#SortName, #Prec, #Sort1, StringToNumericDefault[#Prec1, 0]]
     ;
+        P-isLeftRecursive1b[$String<!--SortName-->, $Numeric, HxScopeSort, $Numeric] :: Boolean ;
+	-[Data[#Prec,#Prec1]]: P-isLeftRecursive1b[#SortName, #Prec, #Sort1, #Prec1] → $[If, $[NumericEqual,#Prec,#Prec1], P-isLeftRecursive2[#SortName, #Sort1], B_FALSE] ;
 
     P-isLeftRecursive1[#SortName, #Prec, PFK[Hx_ParsedFormDone, #Kind]]
     →

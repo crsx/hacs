@@ -31,7 +31,7 @@ doc/% :
 
 $(eval HACSMAJOR$(basename $(shell cat VERSION)))
 
-HACSTOP = README.md VERSION LICENSE src doc samples
+HACSTOP = README.md VERSION LICENSE doc build
 
 hacs.zip :
 	$(MAKE) all

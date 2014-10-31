@@ -1271,12 +1271,6 @@ U-SortName[HxSort] :: $String;
 
 // STRING CONVERSION HELPERS.
 
-U-trace-DeclarationMap[DeclarationMap] :: DeclarationMap ;
-U-trace-DeclarationMap[#DM] → $[IfDef, "trace-dm", U-trace-DeclarationMap1[U-DeclarationMapString[#DM], #DM], #DM] ;
-
-U-trace-DeclarationMap1[$String, DeclarationMap] :: DeclarationMap ;
--[Data[#mess]]: U-trace-DeclarationMap1[#mess, #DM] → $[Echo, #mess, #DM] ;
-
 U-DeclarationMapString[DeclarationMap] :: $String ;
 U-DeclarationMapString[{#DM}DM] → StringConcat[StringJoin[MapWhen[ok k.{#DM}U-DeclarationMapString1[ok, k], $[{#DM}Keys[$String]]], ""], "\n"] ;
 

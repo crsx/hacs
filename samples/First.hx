@@ -1,7 +1,6 @@
-// $Id: first.hx,v 1.16 2014/01/06 03:11:28 krisrose Exp $
 // First HACS sample compiler (inspired by Dragonbook Fig.7).
 //
-module "net.sf.crsx.samples.gentle.First" {
+module org.crsx.hacs.samples.First {
 
 
 /* 1. LEXICAL ANALYSIS. */
@@ -28,7 +27,8 @@ sort Exp   | ⟦ ⟨Exp@1⟩ + ⟨Exp@2⟩ ⟧@1            // addition
 
 sort Name  | symbol ⟦ ⟨Id⟩ ⟧ ;                  // assigned symbols
 
-main sort Stat  | ⟦ ⟨Name⟩ := ⟨Exp⟩ ; ⟧		// assignment statement (with newline)
+main
+sort Stat  | ⟦ ⟨Name⟩ := ⟨Exp⟩ ; ⟧		// assignment statement (with newline)
            | ⟦ { ⟨Stat*⟩ } ⟧                    // block statement
            ;
 

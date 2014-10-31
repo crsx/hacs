@@ -61,7 +61,7 @@ all :: $(CRSXJAR) $(JAVACCJAR) $(ICU4CLIB)
 
 $(CRSXJAR) :
 	wget "http://crsx.org/$(notdir $(CRSXJAR))"
-	mkdir -p $(dir $(CRSXJAR))
+	@mkdir -p $(dir $(CRSXJAR))
 	mv $(notdir $(CRSXJAR)) $(CRSXJAR)
 
 clean ::; rm -f crsx*.jar
@@ -70,7 +70,7 @@ $(JAVACCJAR) :
 	rm -fr javacc*
 	wget "https://java.net/projects/javacc/downloads/download/$(basename $(notdir $(JAVACCJAR))).zip"
 	unzip $(basename $(notdir $(JAVACCJAR))).zip
-	mkdir -p $(dir $(CRSXJAR))
+	@mkdir -p $(dir $(CRSXJAR))
 	cp -a $(basename $(notdir $(JAVACCJAR)))/bin/lib/javacc.jar $(JAVACCJAR)
 
 clean ::; rm -fr javacc*
@@ -104,7 +104,7 @@ RULES = \
 all :: $(BUILD)/org/crsx/hacs/VERSION
 
 $(BUILD)/org/crsx/hacs/VERSION: ../VERSION
-	mkdir -p $(BUILD)/org/crsx/hacs
+	@mkdir -p $(BUILD)/org/crsx/hacs
 	cp ../VERSION $(BUILD)/org/crsx/hacs
 
 # Hack to set HACSVERSION and HACSMAJORVERSION for this Makefile.
@@ -115,7 +115,7 @@ $(eval HACSMAJOR$(basename $(shell cat ../VERSION)))
 
 all :: $(BUILD)/share/java/hacs.jar
 install :: $(BUILD)/share/java/hacs.jar
-	mkdir -p $(DESTDIR)$(SHAREJAVA)
+	@mkdir -p $(DESTDIR)$(SHAREJAVA)
 	cp $(BUILD)/share/java/hacs-$(HACSMAJORVERSION).jar $(DESTDIR)$(SHAREJAVA)
 	cd $(DESTDIR)$(SHAREJAVA) && $(NOEXEC) ln -s hacs-$(HACSMAJORVERSION).jar hacs.jar
 
@@ -124,7 +124,7 @@ $(BUILD)/share/java/hacs.jar: \
 		$(BUILD)/org/crsx/hacs/VERSION \
 		$(RULES)
 	rm -f $(BUILD)/share/java/hacs-$(HACSMAJORVERSION).jar $(BUILD)/share/java/hacs.jar
-	mkdir -p $(BUILD)/org/crsx/hacs $(BUILD)/share/java
+	@mkdir -p $(BUILD)/org/crsx/hacs $(BUILD)/share/java
 	cp $(RULES) $(BUILD)/org/crsx/hacs
 	cd $(BUILD) && classes=$$($(NOEXEC) find org -name '*.class') && $(NOEXEC) $(JAR) cf $(BUILD)/share/java/hacs-$(HACSMAJORVERSION).jar $(RULES) org/crsx/hacs/VERSION $$classes
 	cd $(BUILD)/share/java && $(NOEXEC) ln -s hacs-$(HACSMAJORVERSION).jar hacs.jar
@@ -133,68 +133,61 @@ $(BUILD)/share/java/hacs.jar: \
 
 all :: $(BUILD)/share/java/crsx.jar
 install-support :: $(BUILD)/share/java/crsx.jar
-	mkdir -p $(DESTDIR)$(SHAREJAVA)
+	@mkdir -p $(DESTDIR)$(SHAREJAVA)
 	cp $(BUILD)/share/java/crsx-$(CRSXVERSION).jar $(DESTDIR)$(SHAREJAVA)
 	cd $(DESTDIR)$(SHAREJAVA) && $(NOEXEC) ln -s crsx-$(CRSXVERSION).jar crsx.jar
 
 $(BUILD)/share/java/crsx.jar: $(CRSXJAR)
 	rm -f $(BUILD)/share/java/crsx-$(CRSXVERSION).jar $(BUILD)/share/java/crsx.jar
-	mkdir -p $(BUILD)/share/java
+	@mkdir -p $(BUILD)/share/java
 	cp $(CRSXJAR) $(BUILD)/share/java/crsx-$(CRSXVERSION).jar
 	cd $(BUILD)/share/java && $(NOEXEC) ln -s crsx-$(CRSXVERSION).jar crsx.jar
 
 all :: $(BUILD)/share/java/javacc.jar
 install-support :: $(BUILD)/share/java/javacc.jar
-	mkdir -p $(DESTDIR)$(SHAREJAVA)
+	@mkdir -p $(DESTDIR)$(SHAREJAVA)
 	cp $(BUILD)/share/java/javacc-$(JAVACCVERSION).jar $(DESTDIR)$(SHAREJAVA)
 	cd $(DESTDIR)$(SHAREJAVA) && $(NOEXEC) ln -s javacc-$(JAVACCVERSION).jar javacc.jar
 
 $(BUILD)/share/java/javacc.jar: $(JAVACCJAR)
 	rm -f $(BUILD)/share/java/javacc-$(JAVACCVERSION).jar $(BUILD)/share/java/javacc.jar
-	mkdir -p $(BUILD)/share/java
+	@mkdir -p $(BUILD)/share/java
 	cp $(JAVACCJAR) $(BUILD)/share/java/javacc-$(JAVACCVERSION).jar
 	cd $(BUILD)/share/java && $(NOEXEC) ln -s javacc-$(JAVACCVERSION).jar javacc.jar
 
 # CRSX rulecompiler (crsxc).
 
-all :: $(BUILD)/lib/hacs/crsxc $(BUILD)/share/hacs/crsx.h $(BUILD)/lib/hacs/crsx.o $(BUILD)/lib/hacs/crsx_scan.o
-install :: $(BUILD)/lib/hacs/crsxc $(BUILD)/share/hacs/crsx.h $(BUILD)/lib/hacs/crsx.o $(BUILD)/lib/hacs/crsx_scan.o
-	mkdir -p $(DESTDIR)$(LIBDIR)
-	mkdir -p $(DESTDIR)$(SHAREDIR)
+CRSXC_H = crsx.h invariant.h linter.h prof.h
+CRSXC_C = crsx.c crsx_scan.l invariant.c linter.c prof.c
+CRSXC_O = crsx.o crsx_scan.o linter.o prof.o
+
+all :: $(BUILD)/lib/hacs/crsxc $(addprefix $(BUILD)/share/hacs/,$(CRSX_H))
+install ::
+	@mkdir -p $(DESTDIR)$(LIBDIR) $(DESTDIR)$(SHAREDIR)
 	cp -a $(BUILD)/lib/hacs/crsxc $(DESTDIR)$(LIBDIR)
-	cp -a $(BUILD)/share/hacs/crsx.h $(DESTDIR)$(SHAREDIR)
-	cp -a $(BUILD)/lib/hacs/crsx.o $(DESTDIR)$(LIBDIR)
-	cp -a $(BUILD)/lib/hacs/crsx_scan.o $(DESTDIR)$(LIBDIR)
+	for f in $(addprefix $(BUILD)/share/hacs/,$(CRSX_H)); do cp -a $$f $(DESTDIR)$(SHAREDIR); done
+	for f in $(addprefix $(BUILD)/lib/hacs/,$(CRSX_O)); do cp -a $$f $(DESTDIR)$(LIBDIR); done
 
 $(BUILD)/lib/hacs/crsxc : crsx-rulecompiler/net/sf/crsx/compiler/c/build/crsxc
-	mkdir -p $(BUILD)/lib/hacs
+	@mkdir -p $(BUILD)/lib/hacs
 	cp -a crsx-rulecompiler/net/sf/crsx/compiler/c/build/crsxc $(BUILD)/lib/hacs/
 
-$(BUILD)/share/hacs/crsx.h : crsx-rulecompiler/net/sf/crsx/compiler/c/crsx.h
-	mkdir -p $(BUILD)/share/hacs
-	cp -a crsx-rulecompiler/net/sf/crsx/compiler/c/crsx.h $(BUILD)/share/hacs/
+define FROM_RULECOMPILER
+$(2)/$(1) : crsx-rulecompiler/net/sf/crsx/compiler/c/$(1)
+	@mkdir -p $(2)
+	cp -a crsx-rulecompiler/net/sf/crsx/compiler/c/$(1) $(2)/
 
-$(BUILD)/lib/hacs/crsx.o : crsx-rulecompiler/net/sf/crsx/compiler/c/crsx.o
-	mkdir -p $(BUILD)/lib/hacs
-	cp -a crsx-rulecompiler/net/sf/crsx/compiler/c/crsx.o $(BUILD)/lib/hacs/
+crsx-rulecompiler/net/sf/crsx/compiler/c/$(1) : $(CRSXJAR) crsx-rulecompiler/net/sf/crsx/compiler/c/build/crsxc
+endef
 
-$(BUILD)/lib/hacs/crsx_scan.o : crsx-rulecompiler/net/sf/crsx/compiler/c/crsx_scan.o
-	mkdir -p $(BUILD)/lib/hacs
-	cp -a crsx-rulecompiler/net/sf/crsx/compiler/c/crsx_scan.o $(BUILD)/lib/hacs/
+$(foreach H,$(CRSXC_H), $(eval $(call FROM_RULECOMPILER,$(H),$(BUILD)/share/hacs)))
 
-crsx-rulecompiler/net/sf/crsx/compiler/c/build/crsxc \
-crsx-rulecompiler/net/sf/crsx/compiler/c/crsx.h \
-crsx-rulecompiler/net/sf/crsx/compiler/c/crsx.o \
-crsx-rulecompiler/net/sf/crsx/compiler/c/crsx_scan.o : $(CRSXJAR)
-	rm -fr crsx-rulecompiler
-	mkdir -p crsx-rulecompiler
+$(foreach C,$(CRSXC_C), $(eval $(call FROM_RULECOMPILER,$(C),$(BUILD)/org/crsx/hacs)))
+
+crsx-rulecompiler/net/sf/crsx/compiler/c/build/crsxc :
+	@mkdir -p crsx-rulecompiler
 	cd crsx-rulecompiler && $(NOEXEC) $(JAR) xf $(CRSXJAR) net/sf/crsx/compiler
-	$(MAKE) -C crsx-rulecompiler/net/sf/crsx/compiler/c crsx.h crsx.o crsx_scan.o build/crsxc 
-
-.PRECIOUS: crsx-rulecompiler/net/sf/crsx/compiler/c/build/crsxc \
-	crsx-rulecompiler/net/sf/crsx/compiler/c/crsx.h \
-	crsx-rulecompiler/net/sf/crsx/compiler/c/crsx.o \
-	crsx-rulecompiler/net/sf/crsx/compiler/c/crsx_scan.o
+	$(MAKE) -j3 -C crsx-rulecompiler/net/sf/crsx/compiler/c build/crsxc
 
 gitclean ::
 	rm -fr crsx-rulecompiler
@@ -202,7 +195,7 @@ gitclean ::
 # HACS "raw" parser bootstrapping dependencies.
 
 $(BUILD)/org/crsx/hacs/HxRaw.pgtemplate: org/crsx/hacs/HxRaw.pgtemplate
-	mkdir -p $(BUILD)/org/crsx/hacs
+	@mkdir -p $(BUILD)/org/crsx/hacs
 	cp org/crsx/hacs/HxRaw.pgtemplate $(BUILD)/org/crsx/hacs
 
 $(BUILD)/org/crsx/hacs/HxRaw.jj: $(BUILD)/org/crsx/hacs/HxRaw.pg
@@ -213,44 +206,48 @@ $(BUILD)/org/crsx/hacs/HxRaw.class: $(BUILD)/org/crsx/hacs/HxRaw.java
 
 all :: $(BUILD)/lib/hacs/MainRewriter
 install :: $(BUILD)/lib/hacs/MainRewriter
-	mkdir -p $(DESTDIR)$(LIBDIR)
+	@mkdir -p $(DESTDIR)$(LIBDIR)
 	cp -a $(BUILD)/lib/hacs/MainRewriter $(DESTDIR)$(LIBDIR)
 
 $(BUILD)/lib/hacs/MainRewriter : $(BUILD)/org/crsx/hacs/MainRewriter
-	mkdir -p $(BUILD)/lib/hacs
+	@mkdir -p $(BUILD)/lib/hacs
 	cp $(BUILD)/org/crsx/hacs/MainRewriter $(BUILD)/lib/hacs
 
-$(BUILD)/org/crsx/hacs/MainRewriter: $(addprefix $(BUILD)/org/crsx/hacs/Main, .o _sorts.o _rules.o _symbols.o)
+$(BUILD)/org/crsx/hacs/MainRewriter: $(addprefix $(BUILD)/org/crsx/hacs/Main, .o _sorts.o _rules.o _symbols.o) $(addprefix $(BUILD)/org/crsx/hacs/, crsx.o crsx_scan.o linter.o prof.o)
 
-$(BUILD)/org/crsx/hacs/Main.o: $(BUILD)/org/crsx/hacs/Main.c $(BUILD)/org/crsx/hacs/Main.h $(BUILD)/share/hacs/crsx.h
+$(BUILD)/org/crsx/hacs/Main.o: $(BUILD)/org/crsx/hacs/Main.c $(BUILD)/org/crsx/hacs/Main.h $(BUILD)/share/hacs/crsx.h $(BUILD)/share/hacs/linter.h
 $(BUILD)/org/crsx/hacs/Main_sorts.o: $(BUILD)/org/crsx/hacs/Main_sorts.c $(BUILD)/org/crsx/hacs/Main.h $(BUILD)/share/hacs/crsx.h
 $(BUILD)/org/crsx/hacs/Main_rules.o: $(BUILD)/org/crsx/hacs/Main_rules.c $(BUILD)/org/crsx/hacs/Main.h $(BUILD)/share/hacs/crsx.h
 $(BUILD)/org/crsx/hacs/Main_symbols.o: $(BUILD)/org/crsx/hacs/Main_symbols.c $(BUILD)/org/crsx/hacs/Main.h $(BUILD)/share/hacs/crsx.h
 
+$(BUILD)/org/crsx/hacs/crsx.o : $(BUILD)/org/crsx/hacs/crsx.c $(BUILD)/share/hacs/crsx.h $(BUILD)/share/hacs/prof.h $(BUILD)/share/hacs/invariant.h
+$(BUILD)/org/crsx/hacs/crsx_scan.o : $(BUILD)/org/crsx/hacs/crsx_scan.c $(BUILD)/share/hacs/crsx.h
+$(BUILD)/org/crsx/hacs/linter.o : $(BUILD)/org/crsx/hacs/linter.c $(BUILD)/share/hacs/crsx.h
+
 $(BUILD)/org/crsx/hacs/Main.h: $(BUILD)/org/crsx/hacs/Main.dr
-$(BUILD)/org/crsx/hacs/Main.c: $(BUILD)/org/crsx/hacs/Main.dr
 $(BUILD)/org/crsx/hacs/Main_sorts.c: $(BUILD)/org/crsx/hacs/Main.dr
 $(BUILD)/org/crsx/hacs/Main_rules.c: $(BUILD)/org/crsx/hacs/Main.dr
 $(BUILD)/org/crsx/hacs/Main_symbols.c: $(BUILD)/org/crsx/hacs/Main.dr
 
-$(BUILD)/org/crsx/hacs/Main.dr: $(BUILD)/org/crsx/hacs/Main.crs $(BUILD)/lib/hacs/crsxc
+$(BUILD)/org/crsx/hacs/Main.c: crsx-rulecompiler/net/sf/crsx/compiler/c/main.c
+	cp crsx-rulecompiler/net/sf/crsx/compiler/c/main.c $(BUILD)/org/crsx/hacs/Main.c
 
-# $(BUILD)/share/hacs/crsx.h $(BUILD)/lib/hacs/crsx.o $(BUILD)/lib/hacs/crsx_scan.o
+$(BUILD)/org/crsx/hacs/Main.dr: $(BUILD)/org/crsx/hacs/Main.crs $(BUILD)/lib/hacs/crsxc
 
 # HACS user command.
 
 all :: $(BUILD)/share/hacs/Hacs.mk $(BUILD)/share/hacs/Env.mk $(BUILD)/bin/hacs
 install :: $(BUILD)/share/hacs/Hacs.mk $(BUILD)/share/hacs/Env.mk $(BUILD)/bin/hacs
-	mkdir -p $(DESTDIR)$(SHAREDIR) $(DESTDIR)$(BINDIR)
+	@mkdir -p $(DESTDIR)$(SHAREDIR) $(DESTDIR)$(BINDIR)
 	cp $(BUILD)/share/hacs/Hacs.mk $(BUILD)/share/hacs/Env.mk $(DESTDIR)$(SHAREDIR)
 	cp -a $(BUILD)/bin/hacs $(DESTDIR)$(BINDIR)
 
 $(BUILD)/share/hacs/Hacs.mk $(BUILD)/share/hacs/Env.mk : Hacs.mk Env.mk
-	mkdir -p $(BUILD)/share/hacs
+	@mkdir -p $(BUILD)/share/hacs
 	cp Hacs.mk Env.mk $(BUILD)/share/hacs
 
 $(BUILD)/bin/hacs: hacs.sh.template
-	mkdir -p $(BUILD)/bin
+	@mkdir -p $(BUILD)/bin
 	$(GNUSED) \
 		-e 's;%%%LIBDIR%%%;$(LIBDIR);' \
 		-e 's;%%%BINDIR%%%;$(BINDIR);' \
