@@ -611,6 +611,8 @@ MapTextWrap[x.#[x], (#1;#s), #Left, #Sep, #Right] → %n⟪« #Left »« #[#1] �
 
 {$String : $StringEntrySort} Location ::=( LOC; );
 
+$StringEntrySort ::= ( STRING[$String]; );
+
 /////////////////////////////////////////////////////////////////////
 
 )] //Prelude

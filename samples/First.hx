@@ -106,12 +106,12 @@ sort Tmp | symbol ⟦ ⟨T⟩ ⟧ ;
 
 // Translation scheme.
 
-attribute ↓TmpType{Tmp:Type} ;
+attribute ↓tmpType{Tmp:Type} ;
 
 sort I_Progr ;
 
-| scheme ⟦ ICG ⟨Stat⟩ ⟧ ↓TmpType ;
-⟦ ICG id := ⟨Exp#2 ↑t(#t2)⟩; ⟧ → ⟦ { ⟨I_Progr ⟦ICGExp T ⟨Exp#2⟩⟧ ↓TmpType{⟦T⟧:#t2}⟩ } id = T; ⟧ ;
+| scheme ⟦ ICG ⟨Stat⟩ ⟧ ↓tmpType ;
+⟦ ICG id := ⟨Exp#2 ↑t(#t2)⟩; ⟧ → ⟦ { ⟨I_Progr ⟦ICGExp T ⟨Exp#2⟩⟧ ↓tmpType{⟦T⟧:#t2}⟩ } id = T; ⟧ ;
 ⟦ ICG { } ⟧ → ⟦ ⟧;
 ⟦ ICG { ⟨Stat#s⟩ ⟨Stat*#ss⟩ } ⟧ → ⟦ { ICG ⟨Stat#s⟩ } ICG { ⟨Stat*#ss⟩ } ⟧ ;
 

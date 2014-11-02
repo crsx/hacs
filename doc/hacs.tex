@@ -72,17 +72,20 @@ suitable for that stage of the compiler. Specifically, \HAX supports the followi
 
 \begin{plan}
   In the remainder of this document we introduce the most important features of the \HAX language by
-  explaining the relevant parts of the included \emph{First.hx} example, inspired by \cite[Figure
-  1.7]{Aho+:2006}, as well as several other minor examples. We first show in Section~\ref{sec:run}
-  how to install \HAX and run the example, before we go on to how to write specifications. We
-  explain lexical analysis in Section~\ref{sec:tokens}, syntax analysis in Section~\ref{sec:syntax},
-  basic semantic sorts and recursive translation schemes in Section~\ref{sec:schemes}, bottom-up
-  semantic analysis in Section~\ref{sec:collect}, general syntax-directed definitions in
-  Section~\ref{sec:sdd}, and advanced features in Section~\ref{sec:advanced}.
+  explaining the relevant parts of the included \emph{First.hx} example, inspired by
+  \cite[Figure~1.7]{Aho+:2006}, as well as several other minor examples. %
+  We first show in Section~\ref{sec:run} how to install \HAX and run the example, before we go on to
+  how to write specifications. %
+  We explain lexical analysis in Section~\ref{sec:tokens}, %
+  syntax analysis in Section~\ref{sec:syntax}, %
+  basic semantic sorts and recursive translation schemes in Section~\ref{sec:schemes}, %
+  bottom-up semantic analysis in Section~\ref{sec:collect}, %
+  general syntax-directed definitions in Section~\ref{sec:sdd}, %
+  and advanced features in Section~\ref{sec:advanced}. %
   Appendix~\ref{app:manual} has a reference manual, %
   %%Appendix~\ref{app:bonus} has some bonus examples, %
-  Appendix~\ref{app:errors} explains some cryptic error messages, and
-  Appendix~\ref{app:limits} lists some current limitations.
+  Appendix~\ref{app:errors} explains some cryptic error messages, %
+  and Appendix~\ref{app:limits} lists some current limitations.
 \end{plan}
 
 
@@ -130,7 +133,7 @@ $ ^textcolor{blue}{^texttt{alias hacs=$HOME/.hacs/bin/hacs}}
 $ ^textcolor{blue}{^texttt{mkdir myfirst}}
 $ ^textcolor{blue}{^texttt{cd myfirst}}
 $ ^textcolor{blue}{^texttt{cp $HOME/.hacs/share/doc/hacs/examples/First.hx .}}
-$ ^textcolor{blue}{^texttt{hacs First.run}}
+$ ^textcolor{blue}{^texttt{hacs First.hx}}
 ...
 $ ^textcolor{blue}{^texttt{./First.run --scheme=Compile \}}
               ^textcolor{blue}{^texttt{--term="^{initial := 1; rate := 1.0; position := initial + rate * 60;^}"}}

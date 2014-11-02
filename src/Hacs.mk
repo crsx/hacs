@@ -81,7 +81,7 @@ CATRESOURCE = $(if $(findstring .jar,$(HACSJAR)), $(NOEXEC) $(UNZIP) -p $(HACSJA
 	@$(ECHO) -e 'HACS: Generating environment declarations $@...' $(OUT) && $(SH_EXTRA) \
 	&&	( $(NOEXEC) $(RUNCRSX) \
 			"grammar=('org.crsx.hacs.HxRaw';'net.sf.crsx.text.Text';)" \
-			rules=org/crsx/hacs/Main.crs wrapper=P-PrintEnvironment \
+			rules=org/crsx/hacs/Prep.crs wrapper=P-PrintEnvironment \
 			input='$<' category=rawHxModule \
 			output='$@.tmp' sink=net.sf.crsx.text.TextSink \
 		&& mv '$@.tmp' '$@' \
@@ -108,7 +108,7 @@ clean::; @rm -f  *.env
 	&&	( $(shell $(NOEXEC) cat '$*.env') \
 		&& dir=$(dir $@) && package=$${MODULE%.*} && packagedir=$$(echo $$package | tr '.' '/') \
 		&& $(RUNCRSX) \
-			rules=org/crsx/hacs/Main.crs term=MakeRun "grammar=('net.sf.crsx.text.Text';)" \
+			rules=org/crsx/hacs/Prep.crs term=MakeRun "grammar=('net.sf.crsx.text.Text';)" \
 			$(shell $(NOEXEC) cat '$*.env') PACKAGE="$$package" PACKAGEDIR="$$packagedir" BUILD='$(BUILD)' \
 			HACS$$($(call CATRESOURCE,org/crsx/hacs/VERSION)) CRSXJAR='$(CRSXJAR)' HACSJAR='$(HACSJAR)' CRSXC='$(CRSXC)' \
 			LIBDIR='$(LIBDIR)' BINDIR='$(BINDIR)' DOCDIR='$(DOCDIR)' SHAREDIR='$(SHAREDIR)' SHAREJAVA='$(SHAREJAVA)' \
@@ -136,13 +136,13 @@ realclean::; @rm -f *.run
 # Process (pre-raw-parsed) HACS with Prep to create all files needed by Cook system.
 %.prep : %.hxraw
 	@$(ECHO) -e 'HACS: Generating parser generator base $@...' $(OUT) && $(SH_EXTRA) \
-	&&	( if [ -x "$(LIBDIR)/MainRewriter" ]; then \
-		    $(LIBDIR)/MainRewriter wrapper=Prep input='$<' output='$@.tmp' \
+	&&	( if [ -x "$(LIBDIR)/PrepRewriter" ]; then \
+		    $(LIBDIR)/PrepRewriter wrapper=Prep input='$<' output='$@.tmp' \
 		    && $(NOEXEC) mv '$@.tmp' '$@' ; \
 		  else \
 		    $(NOEXEC) $(RUNCRSX) \
 			"grammar=('org.crsx.hacs.HxRaw';'net.sf.crsx.text.Text';)" \
-			rules=org/crsx/hacs/Main.crs wrapper=Prep \
+			rules=org/crsx/hacs/Prep.crs wrapper=Prep \
 			input='$<' \
 			output='$@.tmp' sink=net.sf.crsx.text.TextSink \
 		    && $(NOEXEC) mv '$@.tmp' '$@' ; \
@@ -242,13 +242,13 @@ $(BUILD)/%.class: $(BUILD)/%.java
 # Process (pre-parsed) HACS with Cook to create rewrite rules!
 %Rewriter.crs : %.hxprep
 	@$(ECHO) -e 'HACS: Generating rewriter $@...' $(OUT) && $(SH_EXTRA) \
-	&&	( if [ -x "$(LIBDIR)/MainRewriter" ]; then \
-		    $(LIBDIR)/MainRewriter wrapper=Cook input='$<' output='$@.tmp' \
+	&&	( if [ -x "$(LIBDIR)/CookRewriter" ]; then \
+		    $(LIBDIR)/CookRewriter wrapper=Cook crsx-debug-steps input='$<' output='$@.tmp' \
 		    && $(NOEXEC) mv '$@.tmp' '$@' ; \
 		  else \
 		    $(NOEXEC) $(RUNCRSX) \
 			"grammar=('org.crsx.hacs.HxRaw';'net.sf.crsx.text.Text';)" \
-			rules=org/crsx/hacs/Main.crs wrapper=Prep \
+			rules=org/crsx/hacs/Cook.crs wrapper=Prep \
 			input='$<' \
 			output='$@.tmp' sink=net.sf.crsx.text.TextSink \
 		    && $(NOEXEC) mv '$@.tmp' '$@' ; \

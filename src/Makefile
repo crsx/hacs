@@ -12,7 +12,8 @@
 #
 # - CRSXJAR - full path to CRSX jar (at least version 3.2).
 # - JAVACCJAR - full path to JavaCC jar (at least version 5.0).
-# - ICU4CLIB - full path to the libicudata.so binary library to use (at least version 42).
+# - ICU4CINCLUDE - directory where the ICU unicode/ include directory is a subdirectory.
+# - ICU4CLIB - directory where ICU library binaries live.
 #
 # Bootstrap by using Hacs.mk with HACSJAR set to the current directory.
 
@@ -76,8 +77,9 @@ $(JAVACCJAR) :
 clean ::; rm -fr javacc*
 
 $(ICU4CLIB) :
-	@echo "Cannot generate ICU libraries...make sure ICU4CLIB is set to a valid file!" >2
+	@echo "Cannot generate ICU libraries...make sure ICU4CLIB is set to a valid file!" >&2
 	false
+	#wget "http://download.icu-project.org/files/icu4c/54.1/icu4c-54_1-RHEL6-x64.tgz"
 
 
 # HACS MASTER FILE LIST

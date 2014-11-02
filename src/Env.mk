@@ -53,11 +53,11 @@ RSYNC = rsync
 # COMPILATION SETUP.
 
 # C flags.
-#CLANGFLAGS= -Wno-gnu-variable-sized-type-not-at-end
-CFLAGS= -I/usr/include/$(shell uname -m)-linux-gnu $(C99FLAG) $(CLANGFLAGS)
+CFLAGS= -g -Wall -I/usr/include/$(shell uname -m)-linux-gnu $(C99FLAG) $(CLANGFLAGS)
 CCFLAGS+=-g -Wall
 UNAME_S=$(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
+CLANGFLAGS= -Wno-gnu-variable-sized-type-not-at-end
 CCFLAGS+=-Wno-gnu-variable-sized-type-not-at-end -Wbitwise-op-parentheses
 endif
 
