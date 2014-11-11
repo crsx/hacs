@@ -76,7 +76,9 @@ inject[<HxEmbedded>] ::=  '%<PRODUCTION_NAME>', '', '' .
 
 <HxTerms> ::= {$Cons} <HxTerm> (HX_COMMA <HxTerms> | {$Nil}) .
 
-<HxAttribute> ::= <HxAttributeKind>:#kind ( {Attribute}:hx {{#kind}} <HxAttributeName> <HxAttributeValue> | {MetaAttribute}:hx {{#kind}} <HxMetaVariable> ) .
+<HxAttribute> ::= <HxAttributeKind>:#kind (<HxSystemAttribute> | {Attribute}:hx {{#kind}} <HxAttributeName> <HxAttributeValue> | {MetaAttribute}:hx {{#kind}} <HxMetaVariable> ) .
+
+<HxSystemAttribute> ::= "$line":hx HX_LPAREN <HxTopPattern> HX_RPAREN | "$column":hx HX_LPAREN <HxTopPattern> HX_RPAREN | "$file":hx HX_LPAREN <HxTopPattern> HX_RPAREN .
 
 <HxAttributeValue> ::= 
   {AttributeValue}:hx HX_LPAREN <HxTerm> HX_RPAREN

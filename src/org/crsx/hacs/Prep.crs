@@ -75,7 +75,8 @@ Prep3[{#DM}DM, #Declarations, #ModuleName, #SortsWithUserConstructors]
 /* INTERFACE. */
 
 class †« U-ClassName[#ModuleName] »/***USERPG:Parser***//***METAPG:Hx***//***EMBEDPG:Embed***/ :⟦
-/***USERPG&EMBEDPG:<†« U-Local[{#DM}U-MainSymbol] »>« TextJoin[MapWhen[ok n.%n⟨,<†‹ U-then-Local[ok, n] ›>⟩, {#DM}U-NonMainSymbols], %n⟨⟩] » ***/
+/***USERPG:<†« U-Local[{#DM}U-MainSymbol] »>« TextJoin[MapWhen[ok n.%n⟨,<†‹ U-then-Local[ok, n] ›>⟩, {#DM}U-NonMainSyntacticSymbols], %n⟨⟩] » ***/
+/***EMBEDPG:<†« U-Local[{#DM}U-MainSymbol] »>« TextJoin[MapWhen[ok n.%n⟨,<†‹ U-then-Local[ok, n] ›>⟩, {#DM}U-NonMainSymbols], %n⟨⟩] » ***/
 /***METAPG:
 %%%HXNONTERMINALS%%%
 <HxTopTerm>, <HxTopPattern>, <HxAttributes>, <HxSortName>, <HxAttributeName>, <HxConstructor>,
@@ -202,6 +203,8 @@ net.sf.crsx.Sink s = null;⟧
 <Term> ::= <SortedTerm> | {VariableUse}:hx <HxVariable>!!! <HxAttributes> .
 
 <Attribute> ::= ⟦« {#DM} P-Meta-AttributeAlternatives[#ModuleName, NameSetList[{#DM} U-AllSynthesizedNames], NameSetList[{#DM}U-AllInheritedNames]] »⟧ .
+
+<SystemAttribute> ::= "$line":hx HX_LPAREN <HxTopPattern> HX_RPAREN | "$column":hx HX_LPAREN <HxTopPattern> HX_RPAREN | "$file":hx HX_LPAREN <HxTopPattern> HX_RPAREN .
 ***/
 
 /* USER GRAMMAR. */
@@ -239,10 +242,10 @@ P-then-MetaSorts-ConstructionSortCaseText[OK, #ModuleName, #Name, #rest]
 
 {$String : DeclarationMapEntry} P-Meta-AttributeAlternatives[$String, $List[$String], $List[$String]] :: Text ;
 
-{#DM} P-Meta-AttributeAlternatives[#ModuleName, (), ()] → %n⟪()⟫ ;
-{#DM} P-Meta-AttributeAlternatives[#ModuleName, (#s1; #ss), ()] → %n⟪ HX_UP:hx:#kind (⟦« {#DM} P-Meta-AttributeBodies[#ModuleName, (#s1; #ss)] » {MetaAttribute}:hx {{#kind}} <HxMetaVariable>⟧) ⟫ ;
-{#DM} P-Meta-AttributeAlternatives[#ModuleName, (), (#i1; #is)] → %n⟪ HX_DOWN:hx:#kind (⟦« {#DM} P-Meta-AttributeBodies[#ModuleName, (#i1; #is)] » {MetaAttribute}:hx {{#kind}} <HxMetaVariable>⟧) ⟫ ;
-{#DM} P-Meta-AttributeAlternatives[#ModuleName, (#s1; #ss), (#i1; #is)] → %n⟪ HX_UP:hx:#kind (⟦« {#DM} P-Meta-AttributeBodies[#ModuleName, (#s1; #ss)] » {MetaAttribute}:hx {{#kind}} <HxMetaVariable>⟧)
+{#DM} P-Meta-AttributeAlternatives[#ModuleName, (), ()] → %n⟪ HX_UP <SystemAttribute> ⟫ ;
+{#DM} P-Meta-AttributeAlternatives[#ModuleName, (#s1; #ss), ()] → %n⟪ HX_UP:hx:#kind (⟦<SystemAttribute>¶|« {#DM} P-Meta-AttributeBodies[#ModuleName, (#s1; #ss)] » {MetaAttribute}:hx {{#kind}} <HxMetaVariable>⟧) ⟫ ;
+{#DM} P-Meta-AttributeAlternatives[#ModuleName, (), (#i1; #is)] → %n⟪ HX_UP <SystemAttribute> ¶| HX_DOWN:hx:#kind (⟦« {#DM} P-Meta-AttributeBodies[#ModuleName, (#i1; #is)] » {MetaAttribute}:hx {{#kind}} <HxMetaVariable>⟧) ⟫ ;
+{#DM} P-Meta-AttributeAlternatives[#ModuleName, (#s1; #ss), (#i1; #is)] → %n⟪ HX_UP:hx:#kind (⟦<SystemAttribute>¶|« {#DM} P-Meta-AttributeBodies[#ModuleName, (#s1; #ss)] » {MetaAttribute}:hx {{#kind}} <HxMetaVariable>⟧)
  | HX_DOWN:hx:#kind (⟦« {#DM} P-Meta-AttributeBodies[#ModuleName, (#i1; #is)] » {MetaAttribute}:hx {{#kind}} <HxMetaVariable>⟧) ⟫ ;
 
 {$String : DeclarationMapEntry} P-Meta-AttributeBodies[$String, $List[$String]] :: Text ;
@@ -350,7 +353,7 @@ P-Production1[#ModuleName, DME_TOKEN[#SortName]]
 /* Productions for †«#SortName» token. */
 
 /***USERPG&EMBEDPG:
-<†« U-Local[#SortName] »> ::= ⟦/***EMBEDPG:‹ P-Embed-Head[B_TRUE, #ModuleName, #SortName, #SortName, B_FALSE, 0]›***/ (‹P-TokenNameText[#SortName]›$)⟧ .
+<†« U-Local[#SortName] »> ::= ⟦/***EMBEDPG:‹ P-Embed-Head[B_TRUE, B_TRUE, #ModuleName, #SortName, #SortName, B_FALSE, 0]›***/ (‹P-TokenNameText[#SortName]›$)⟧ .
 ***/
 /***EMBEDPG:
 « P-Embed-Tail[B_TRUE, #SortName, #SortName] »
@@ -467,7 +470,11 @@ PFK_SORT ::=( PFK[HxParsedForm, FormKind]; );
 
 {#DM} P-Production-Defines[#ModuleName, (), #SortName, #Prec, ()]
 →
-%n⟪⟫
+%n⟪/***EMBEDPG:
+/* Productions for †«#SortName» sort with (highest) precedence †«$[FormatNumber,#Prec]». */
+
+<«P-ProductionNameWithPrecText[#SortName,#Prec]»> ::= « P-Embed-Head[B_TRUE, B_FALSE, #ModuleName, #SortName, #SortName, B_FALSE, #Prec] » .
+« P-Embed-Tail[B_TRUE, #SortName, #SortName] »***/⟫
 ;
 
 {#DM} P-Production-Defines[#ModuleName, (), #SortName, #Prec, (#PFK1;#PFKs)]
@@ -688,20 +695,20 @@ N_†« U-Local[U-SortName[#HxSort#]] »(s, env)
 
 // Meta-definitions for sorts.
 
-P-Embed-Head[Boolean<!--Last?-->, $String<!--ModuleName-->, $String, $String, Boolean<!--LeftRecursive?-->, $Numeric<!--Prec-->] :: Text;
+P-Embed-Head[Boolean<!--Last?-->, Boolean<!--Followed?-->, $String<!--ModuleName-->, $String, $String, Boolean<!--LeftRecursive?-->, $Numeric<!--Prec-->] :: Text;
 
-P-Embed-Head[B_FALSE, #ModuleName, #SortName, #Name, #isLeftRecursive, #Prec] → %n⟪⟫ ;
+P-Embed-Head[B_FALSE, #followed, #ModuleName, #SortName, #Name, #isLeftRecursive, #Prec] → %n⟪⟫ ;
 
 -[Data[#SortName],Discard[#Prec]]:
-P-Embed-Head[B_TRUE, #ModuleName, #SortName, #Name, B_FALSE, #Prec] →
+P-Embed-Head[B_TRUE, #followed, #ModuleName, #SortName, #Name, B_FALSE, #Prec] →
  %n⟪
-meta_« P-TokenNameText[#Name] »$$:unwrap:{†« P-Meta-Prefix[#ModuleName] »SortedTerm} |
+meta_« P-TokenNameText[#Name] »$$:unwrap:{†« P-Meta-Prefix[#ModuleName] »SortedTerm}« If[#followed, %n⟨ |⟩, %n⟨⟩] »
 ⟫ ;
 
 -[Data[#SortName]]:
-P-Embed-Head[B_TRUE, #ModuleName, #SortName, #Name, B_TRUE, #Prec] →
+P-Embed-Head[B_TRUE, #followed, #ModuleName, #SortName, #Name, B_TRUE, #Prec] →
  %n⟪
-meta_« P-TokenNameText[#Name] »$$:unwrap:{†« P-Meta-Prefix[#ModuleName] »SortedTerm}:#1 <« P-ProductionNameWithPrecText[#SortName, #Prec] »LR #1> |
+meta_« P-TokenNameText[#Name] »$$:unwrap:{†« P-Meta-Prefix[#ModuleName] »SortedTerm}:#1 <« P-ProductionNameWithPrecText[#SortName, #Prec] »LR #1>« If[#followed, %n⟨ |⟩, %n⟨⟩] »
 ⟫ ;
 
 
@@ -841,7 +848,7 @@ IfEmpty[#LeftRecursivePFKs,
 /***USERPG&EMBEDPG:
 /* Handle left recursion. */
 <«P-ProductionNameWithPrecText[#SortName, #Prec]»LR #1> ::= ⟦
-/***EMBEDPG: « P-Embed-Head[#Last?, #ModuleName, #SortName, #SortName, B_FALSE, 0] »***/
+/***EMBEDPG: « P-Embed-Head[#Last?, B_TRUE, #ModuleName, #SortName, #SortName, B_FALSE, 0] »***/
 «in»
 | {{#1}}⟧
 . ***/
@@ -878,7 +885,7 @@ IfEmpty[#LeftRecursivePFKs,
   %n⟪
 /***USERPG&EMBEDPG:
 <«P-ProductionNameWithPrecText[#SortName,#Prec]»> ::= ⟦
-/***EMBEDPG: « P-Embed-Head[#Last?, #ModuleName, #SortName, #SortName, B_FALSE, 0] »***/
+/***EMBEDPG: « P-Embed-Head[#Last?, B_TRUE, #ModuleName, #SortName, #SortName, B_FALSE, 0] »***/
 «in»⟧ .
 ***/
 
@@ -1509,7 +1516,7 @@ P-InlineRegExpRangeChar[$String, $String<!--ModuleName-->, $String] :: Text;
 -[Data[#HxRegExpRangeStartChar#]]:
 P-InlineRegExpRangeChar[#HxRegExpRangeStartChar#, #ModuleName, #id]
 →
-$[If, $[Equal,#HxRegExpRangeStartChar#,"'"], %n⟪"'"⟫, %n⟪†« $[Escape,#HxRegExpRangeStartChar#] »⟫]
+$[If, $[Equal,#HxRegExpRangeStartChar#,"'"], %n⟪"'"⟫, %n⟪"†«#HxRegExpRangeStartChar#»"⟫]
 ;
 
 //

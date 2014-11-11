@@ -250,6 +250,9 @@ HxScope ::=(
 HxAttribute ::=(
  %rawHxAttribute⟪ %HxAttributeKind«HxAttributeKind» %HxAttributeName«$String» %HxAttributeValue«HxAttributeValue» ⟫;
  %rawHxAttribute⟪ %HxAttributeKind«HxAttributeKind» %HxMetaVariable«$String» ⟫;
+ %rawHxAttribute⟪ ↑ $line(%HxTopPattern«HxTerm») ⟫;
+ %rawHxAttribute⟪ ↑ $column(%HxTopPattern«HxTerm») ⟫;
+ %rawHxAttribute⟪ ↑ $file(%HxTopPattern«HxTerm») ⟫;
 );
 
 {$String : $StringEntrySort}

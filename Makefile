@@ -1,7 +1,9 @@
 # Main -*-Makefile-*- for Building HACS distribution.
 
-.PHONY: all install install-support clean realclean gitclean
+.PHONY: all all-full all-debug install install-support clean realclean gitclean
 all ::
+all-full ::
+all-debug ::
 install ::
 install-support ::
 clean :: ; rm -f *.tmp *~ ./#* *.log *~
@@ -11,14 +13,14 @@ gitclean :: realclean
 # Targets propagate to subdirectories...
 
 all install clean realclean gitclean ::
-	$(MAKE) -C src -I $(abspath src) $@
+	$(MAKE) -C src $@
 	$(MAKE) -C doc -I $(abspath src) $@
 
-install-support ::
-	$(MAKE) -C src -I $(abspath src) $@
+all-full all-debug install-support ::
+	$(MAKE) -C src $@
 
 src/% :
-	$(MAKE) -C src -I $(abspath src) ../$@
+	$(MAKE) -C src ../$@
 
 samples/% :
 	$(MAKE) -C samples -I $(abspath src) ../$@
@@ -30,11 +32,11 @@ doc/% :
 
 $(eval HACSMAJOR$(basename $(shell cat VERSION)))
 
-hacs.zip : all $(shell cat ziplist)
-	$(MAKE) all
+hacs.zip : all
+	$(MAKE) -C src all-full
+	$(MAKE) $(shell cat ziplist)
 	$(MAKE) clean
 	rm -f *.zip
-	touch build/org/crsx/hacs/Main.dr.gz
 	cd .. && zip -r hacs/hacs-$(HACSMAJORVERSION).zip $(addprefix hacs/,$(shell cat ziplist))
 	ln -fs hacs-$(HACSMAJORVERSION).zip hacs.zip
 

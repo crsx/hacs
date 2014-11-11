@@ -53,8 +53,8 @@ RSYNC = rsync
 # COMPILATION SETUP.
 
 # C flags.
-CFLAGS= -g -Wall -I/usr/include/$(shell uname -m)-linux-gnu $(C99FLAG) $(CLANGFLAGS)
-CCFLAGS+=-g -Wall
+CFLAGS= -g -Wall -I/usr/include/$(shell uname -m)-linux-gnu -I$(ICU4CINCLUDE) -L$(ICU4CDIR) $(C99FLAG) $(CLANGFLAGS)
+CCFLAGS+=-g -Wall  -I$(ICU4CINCLUDE) -L$(ICU4CDIR)
 UNAME_S=$(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
 CLANGFLAGS= -Wno-gnu-variable-sized-type-not-at-end
@@ -63,7 +63,6 @@ endif
 
 # icu4c libraries for UTF-8 support.
 ifndef ICU4CDIR
-ICU4CDIR = $(if $(wildcard /usr/lib*/libicu*.so),$(dir $(word 1,$(wildcard /usr/lib*/libicu*.so))),$(if $(wildcard /usr/lib*/*/libicu*.so),$(dir $(word 1,$(wildcard /usr/lib*/*/libicu*.so)))))
 ifeq ($(UNAME_S),Darwin)
 ICU4CDIR=/usr/local/opt/icu4c/lib
 endif

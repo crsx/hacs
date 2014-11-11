@@ -63,45 +63,43 @@ suitable for that stage of the compiler. Specifically, \HAX supports the followi
 \item[Attribute Grammars.] Analyses can be described with attribute grammars in the style of
   \emph{Syntax-Directed Definitions}~\cite{Aho+:2006}, originally introduced as \emph{attribute
     grammars}~\cite{Knuth:mst1968}, which describe how properties propagate through the abstract
-  syntax tree.  Section~\ref{sec:synthesized} details how the basic propagation rules work for
-  synthesized attributes, Section~\ref{sec:inherited} explains how inherited atributes are
-  described, and Section~\ref{sec:symbols} summarizes the special considerations needed when
-  managing scoped symbols and binders using \emph{higher-order abstract syntax}.
+  syntax tree.  Section~\ref{sec:collect} details how the basic propagation rules work for
+  synthesized attributes, Section~\ref{sec:sdd} explains how inherited atributes are described, and
+  Section~\ref{sec:advanced} summarizes the special considerations needed when managing scoped
+  symbols and binders using \emph{higher-order abstract syntax}.
 
 \end{description}
-
-\begin{plan}
-  In the remainder of this document we introduce the most important features of the \HAX language by
-  explaining the relevant parts of the included \emph{First.hx} example, inspired by
-  \cite[Figure~1.7]{Aho+:2006}, as well as several other minor examples. %
-  We first show in Section~\ref{sec:run} how to install \HAX and run the example, before we go on to
-  how to write specifications. %
-  We explain lexical analysis in Section~\ref{sec:tokens}, %
-  syntax analysis in Section~\ref{sec:syntax}, %
-  basic semantic sorts and recursive translation schemes in Section~\ref{sec:schemes}, %
-  bottom-up semantic analysis in Section~\ref{sec:collect}, %
-  general syntax-directed definitions in Section~\ref{sec:sdd}, %
-  and advanced features in Section~\ref{sec:advanced}. %
-  Appendix~\ref{app:manual} has a reference manual, %
-  %%Appendix~\ref{app:bonus} has some bonus examples, %
-  Appendix~\ref{app:errors} explains some cryptic error messages, %
-  and Appendix~\ref{app:limits} lists some current limitations.
-\end{plan}
+%%
+In the remainder of this document we introduce the most important features of the \HAX language by
+explaining the relevant parts of the included \emph{First.hx} example, inspired by
+\cite[Figure~1.7]{Aho+:2006}, as well as several other minor examples. %
+We first show in Section~\ref{sec:run} how to install \HAX and run the example, before we go on to
+how to write specifications. %
+We explain lexical analysis in Section~\ref{sec:tokens}, %
+syntax analysis in Section~\ref{sec:syntax}, %
+basic semantic sorts and recursive translation schemes in Section~\ref{sec:schemes}, %
+bottom-up semantic analysis in Section~\ref{sec:collect}, %
+general syntax-directed definitions in Section~\ref{sec:sdd}, %
+and advanced features in Section~\ref{sec:advanced}. %
+Appendix~\ref{app:manual} has a reference manual, %
+%% Appendix~\ref{app:bonus} has some bonus examples, %
+Appendix~\ref{app:errors} explains some cryptic error messages, %
+and Appendix~\ref{app:limits} lists some current limitations.
 
 
 \section{Getting Started}\label{sec:run}
 
 In this section we walk through the steps for getting a functional \HAX installation on your
 computer.\footnote{\HAX is still a β release so please report any problems with this procedure to
-  \emph{hacs@crsx.org}.}
+  \emph{hacs-bugs@crsx.org}.}
 
 \begin{requirements}
   To run the \HAX examples here you need a *nix system (including a shell and the usual utilities)
   with these common programs: a Java development environment (at least Java~1.6~SE SDK, with "java"
-  and "javac" commands); and a standard *nix development setup including GNU Make and a C99 compiler
-  with access to the \emph{icu} libraries.\footnote{See the included \emph{README} file for further
-    details.} In addition, the setup process needs internet access to retrieve the \CRSX base
-  system~\cite{crsx} and JavaCC parser generator~\cite{javacc}.
+  and "javac" commands); and a standard *nix development setup including GNU Make and a C99
+  compiler. In addition, the setup process needs internet access to retrieve the \CRSX base
+  system~\cite{crsx}, JavaCC parser generator~\cite{JavaCC}, and \emph{icu} Unicode C
+  libraries~\cite{ICU}.
 \end{requirements}
 
 \begin{commands}[install \HAX]\label{com:all}
@@ -306,58 +304,114 @@ concrete syntax details managed through annotations and ``syntactic sugar'' decl
   grammar. Our small example source language merely has blocks, assignment statements, and a few
   forms of expression, like so:
   %%
-\begin{hacs}[xleftmargin=\parindent,numbers=right]
+\begin{hacs}[xleftmargin=\parindent,xrightmargin=\parindent,numbers=right]
 // Main program construct.
-main sort Stat  | ⟦ ⟨Name⟩ := ⟨Exp⟩ ; ⟧  | ⟦ { ⟨Stats⟩ } ⟧ ;
-sort Stats      | ⟨Stat⟩ ⟨Stats⟩ | ;
+main sort Stat  | ⟦ ⟨Name⟩ := ⟨Exp⟩ ; ⟨Stats⟩ ⟧
+                | ⟦ { ⟨Stats⟩ } ⟨Stats⟩ ⟧
+                | ⟦⟧ ;
 
-sort Exp  | ⟦ ⟨Exp@1⟩ + ⟨Exp@2⟩ ⟧@1
-          | ⟦ ⟨Exp@2⟩ * ⟨Exp@3⟩ ⟧@2
-          | ⟦ ⟨INT⟩ ⟧@3
-          | ⟦ ⟨FLOAT⟩ ⟧@3
-          | ⟦ ⟨Name⟩ ⟧@3
-          | sugar ⟦ ( ⟨Exp#⟩ ) ⟧@3 → Exp# ;
+sort Exp  | ⟦ ⟨Exp⟩ + ⟨Exp@1⟩ ⟧
+          | ⟦ ⟨Exp@1⟩ * ⟨Exp@2⟩ ⟧@1
+          | ⟦ ⟨INT⟩ ⟧@2
+          | ⟦ ⟨FLOAT⟩ ⟧@2
+          | ⟦ ⟨Name⟩ ⟧@2
+          | sugar ⟦ ( ⟨Exp#⟩ ) ⟧@2 → Exp# ;
 
-sort Name | symbol ⟦ ⟨ID⟩ ⟧ ;
+sort Name | symbol ⟦⟨ID⟩⟧ ;
 \end{hacs}
   %%
-  The grammar structures the input as four sorts: "Stat" for statements, "Stats" for multiple
-  statements, "Exp" for expressions, and "Name" for names (which we shall need later for symbol
-  tables). \HAX grammars follow these conventions:
-  %%
-  \begin{itemize}
 
-  \item Each sort is defined by a "sort" declaration followed by a number of \emph{productions},
-    each introduced by a "|" (bar). (The first "|" corresponds to what is usually written ``::='' or
-    ``→'' in grammars.)
-
-  \item Concrete syntax is enclosed in "⟦…⟧" (``double'' or ``white'' brackets). Everything inside
-    double brackets should be seen as \emph{literal syntax}, even "\" (backslash), \emph{except} for
-    \HAX white space (corresponding to "[ \t\n\r]"), which is ignored, and references in "⟨…⟩"
-    (angle brackets), which are special.
-
-  \item References to \emph{nonterminals} (other productions) are wrapped in "⟨…⟩" (angle brackets).
-
-  \item \emph{Precedence} is indicated with "@"$n$, where higher numbers $n$ designate higher
-    (tighter) precedence.  Any reference in as well as the alternative itself may have a precedence
-    in this way; in the example we establish that "*" binds tighter than "+", and that both
-    operators are left recursive. Note that we specify the precedence of both the entire expression,
-    after the "⟦⟧"s, and of each component, inside the "⟨⟩". (In fact where the precedence is
-    omitted we could have written "@0".)
-
-  \item The special "sugar" declaration expresses that the concrete syntax can use parentheses to
-    raise the precedence of the enclosed expression to~3: it is the first example of a \emph{rewrite
-      rule} with a "→" that we see, where we remark that the expression is marked "#" so we can use
-    the "#" to indicate that it is extracted as the abstract result of concrete syntax with
-    parenthesis.  (In fact the general rule is that when an "→" is used then all sort specifiers
-    must be ``disambiguated'' with distinct markers like "#" or "#5" in this way.)
-
-  \item The "Name" sort is defined as a "symbol", which is only allowed because the underlying "Id"
-    token permits a trailing "_"$n$ (underscore and count); this permits the use as binders and
-    automatic symbol generation.
-
-  \end{itemize}
+  The grammar structures the input as three sorts: "Stat" for statements, "Exp" for expressions, and
+  "Name" for names (which we shall need later for symbol tables).
 \end{example}
+
+The example grammar above captures the \HAX version of several standard parsing notions:
+\begin{description}
+
+\item[Literal syntax] is indicated by the double ``syntax brackets,'' $⟦…⟧$.  Text inside $⟦…⟧$
+  consists of three things only: space, literal character ``words,'' and references to non-terminals
+  and predefined tokens inside (nested) $⟨…⟩$.  In this way, literal syntax is similar to macro
+  notation or ``quasi-quotation'' of other programming languages.
+
+\item[Syntactic sugar] is represented by the "sugar" part of the "Exp" sort declaration, which
+  states that the parser should accept an "Exp" in parenthesis, identified as "#", and replace it
+  with just that same "Exp", indicated by the "→ Exp#" part.  This avoids any need to think of
+  parentheses in the generated AST.
+
+\item[Precedence rules] are represented by the "@"-annotations, which assign precedence and
+  associativity to each operator. Thus the same "Exp" language would be recognized by
+  something like the following concrete \HAX specification (where we have also made the sugar
+  concrete):
+  %% 
+\begin{hacs}[xleftmargin=\parindent]
+sort Exp   | ⟦ ⟨Exp0⟩ ⟧ ;
+sort Exp0  | ⟦ ⟨Exp0⟩ + ⟨Exp1⟩ ⟧ | ⟦ ⟨Exp1⟩ ⟧ ;
+sort Exp1  | ⟦ ⟨Exp1⟩ * ⟨Exp2⟩ ⟧ | ⟦ ⟨Exp2⟩ ⟧ ;
+sort Exp2  | ⟦ ⟨Int⟩ ⟧ | ⟦ ⟨Float⟩ ⟧ | ⟦ ⟨Name⟩ ⟧ | ⟦ ( ⟨Exp⟩ ) ⟧ ;
+\end{hacs}%|
+  %%
+  Note that this grammar would generate a different result tree, where the nodes have the four
+  different sorts used instead of all being of the single "Exp" sort that the precedence
+  annotations make possible.  The transformed system also illustrates how \HAX deals with left
+  recursion with "@"-annotations: each becomes an instance of \emph{immediate left recursion},
+  which is eliminated automatically.
+
+\end{description}
+%%
+The precedence notation allows us to define one \emph{sort} per ``sort of abstract syntax tree
+node.''  This allows us to use a single kind of AST node to represent all the ``levels'' of
+expression, which helps the subsequent steps.
+
+The notation is admittedly dense: this is intentional, as we generalize this very same notation to
+serve all the formalisms of the following sections.
+Here are the formal rules:
+%% 
+\begin{itemize}
+
+\item Each sort is defined by a "sort" declaration followed by a number of \emph{productions},
+  each introduced by a "|" (bar). (The first "|" corresponds to what is usually written ``::='' or
+  ``→'' in grammars.)
+
+\item Concrete syntax is enclosed in "⟦…⟧" (``double'' or ``white'' brackets). Everything inside
+  double brackets should be seen as \emph{literal syntax}, even "\" (backslash), \emph{except} for
+  \HAX white space (corresponding to "[ \t\n\r]"), which is ignored, and references in "⟨…⟩" (angle
+  brackets), which are special.
+
+\item References to \emph{nonterminals} (other productions) are wrapped in "⟨…⟩" (angle brackets).
+
+\item \emph{Precedence} is indicated with "@"$n$, where higher numbers $n$ designate higher
+  (tighter) precedence. After every top-level "⟦⟧" and inside every "⟨⟩" there is a precedence,
+  which defaults to "@0".
+
+\item The special "sugar" declaration expresses that the concrete syntax can use parentheses to
+  raise the precedence of the enclosed expression to~3: it is the first example of a \emph{rewrite
+    rule} with a "→" that we see, where we remark that the expression is marked "#" so we can use the
+  "#" to indicate that it is extracted as the abstract result of concrete syntax with parenthesis.
+  (In fact the general rule is that when an "→" is used then all sort specifiers must be
+  ``disambiguated'' with distinct markers like "#" or "#5" in this way.)
+
+\item A sort can be defined with a single "symbol" case. If so, then the actual syntax must refer to
+  a single token, and that token must allow that a trailing "_"$n$ (underscore and count) is added
+  to any instance (this permits automatic symbol generation).
+
+\end{itemize}
+%%
+Of all these rules, the one thing that is unique to parsing is the precedence notation with "@".
+When specifying a grammar then \emph{every} subterm has a precedence, which determines how ambiguous
+terms should be parsed. So imagine that every "⟨⟩" contains a "@" marker, defaulting to "@0", and
+that every "⟦⟧" is terminated with a "@" marker, again defaulting to "@0".
+
+Notice that \HAX will do two things automatically:
+%%
+\begin{enumerate}
+\item Eliminate immediate left recursion, such as found in the example.
+\item Split the productions into subproductions according to the precedence assignments.
+\item Left factor the grammar, which means that productions within a sort may start with a common
+  prefix.
+\end{enumerate}
+%%
+However, this is \emph{not} reflected in the generated trees: they will follow the grammar as
+specified, so you do not need to be aware that this conversion happens.
 
 \begin{commands}
   %%
@@ -385,7 +439,7 @@ In this section we explain how basic algebraic structures and transformations ar
   used. For our toy language that just means the notion of a \emph{type} with the way that types are
   ``unified'' to construct new types.
   %%
-\begin{hacs}[xleftmargin=\parindent,numbers=right,texcl]
+\begin{hacs}[xleftmargin=\parindent,xrightmargin=\parindent,numbers=right]
 // Types to associate to AST nodes.
 sort Type | Int | Float ;
 
@@ -411,13 +465,15 @@ Unif(Float, #2) → Float;
 
   The rules above can, for example, be used to simplify a composite term as follows:
   %%
-\begin{hacs}[xleftmargin=\parindent]
+\begin{hacs}[xleftmargin=\parindent,xrightmargin=\parindent]
 Unif(Unif(Int, Float), Int) → Unif(Float, Int) → Float
 \end{hacs}
   %%
   Note how overlaps are allowed but please do verify determinacy, \ie, if a particular combination
-  of arguments can be subjected to two rules then theyshould give the same result!
-  %%
+  of arguments can be subjected to two rules then they should give the same result! In this example
+  i happens because the term "Unif(Float,Float)" can be rewritten by both the rule in line 7 and 8,
+  but it does not matter, because the result is the same.
+  %% 
 \end{example}
 
 \begin{example}[Syntactic scheme]\label{ex:leftmost}
@@ -426,7 +482,7 @@ Unif(Unif(Int, Float), Int) → Unif(Float, Int) → Float
   well.  Here is, for example, code to extract the leftmost leaf expression from an "Exp" tree from
   Example~\ref{ex:syntax}:
   %%
-\begin{hacs}[xleftmargin=\parindent,texcl]
+\begin{hacs}[xleftmargin=\parindent,xrightmargin=\parindent]
 sort Exp | scheme Leftmost(Exp) ;
 Leftmost(⟦⟨Exp#1⟩ + ⟨Exp#2⟩⟧)  →  Leftmost(Exp#1) ;
 Leftmost(⟦⟨Exp#2⟩ * ⟨Exp#3⟩⟧)  →  Leftmost(Exp#1) ;

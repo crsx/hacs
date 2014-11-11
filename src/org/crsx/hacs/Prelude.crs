@@ -299,6 +299,9 @@ NameSet ::=( NAME_SET[$String]; );
 NoNames :: NameSet ;
 NoNames → NAME_SET[";"];
 
+_NameSetString[NameSet] :: $String ;
+_NameSetString[NAME_SET[#]] → # ;
+
 HasNames[NameSet] :: Boolean ;
 -[Data[#]]:
 HasNames[NAME_SET[#]] → $[IfEmpty, #, B_FALSE, $[If, $[Equal,#,";"], B_FALSE, B_TRUE]] ;
@@ -319,14 +322,8 @@ All[MapWhen[ok n.ContainsNameWhen[ok, #Names, n], NameSetList[#SubNames]]]
 ;
 
 AddName[NameSet<!--old-->, $String<!--new Name-->] :: NameSet<!--combined-->;
--[Data[#Names, #Name],Copy[#Names,#Name]]:
-AddName[NAME_SET[#], #Name]
-→
-NAME_SET[
-  $[IfEmpty, #Name, #,
-  $[IfEmpty, #, $[:,";",#Name,";"],
-  $[If, $[Contains,#,$[:,";",#Name,";"]], #, $[:,#,#Name,";"]]]]]
-;
+-[Data[#Names, #Name],Share[#Names,#Name]]:
+AddName[NAME_SET[#], #Name] → NAME_SET[$[If, $[Contains,#,$[:,";",#Name,";"]], #, $[:,#,#Name,";"]]] ;
 
 AddNameNumber[NameSet, $Numeric] :: NameSet;
 -[Data[#Number]]:
@@ -387,7 +384,7 @@ NameSetList[NameSet] :: $List[$String] ;
 -[Data[#Names]]: NameSetList[#Names] → If[HasNames[#Names], NameSetList1[#Names], ()] ;
 
     NameSetList1[NameSet] :: $List[$String] ;
-    NameSetList1[NAME_SET[#Names]] → $[Split, $[Substring,#Names,1,$[Minus,$[Length,#Names],1]], ";"] ;
+    NameSetList1[NAME_SET[#]] → $[Split, $[Substring,#,1,$[Minus,$[Length,#],1]], ";"] ;
 
 ∀ a . MapNames[x::$String.$sort[a], NameSet] :: $List[a];
 MapNames[x.#[x], #NameSet] → Map[x.#[x], NameSetList[#NameSet]] ;
@@ -401,6 +398,16 @@ FilterNamesWhen[ok n.#[ok,n], #NameSet] → NAME_SET[FoldWhen[ok n ns.If[#[ok,n]
 NamesFrom[$List[$String]] :: NameSet ;
 NamesFrom[()] → NoNames ;
 NamesFrom[(#1; #s)] → AddName[NamesFrom[#s], #1] ;
+
+
+
+TraceAddName[$String, NameSet<!--old-->, $String<!--new Name-->] :: NameSet<!--combined-->;
+-[Data[#mess,#,#Name]]:
+TraceAddName[#mess, NAME_SET[#], #Name] → TraceNameSet[$[:,#mess,"="], $[Trace, $[:,#mess,"[",#,"]+",#Name], AddName[NAME_SET[#],#Name]]] ;
+
+TraceNameSet[$String, NameSet] :: NameSet ;
+-[Data[#mess,#]]:
+TraceNameSet[#mess, NAME_SET[#]] → $[Trace,$[:,#mess,"[",#,"]"], NAME_SET[#]] ;
 
 /////////////////////////////////////////////////////////////////////
 // . MAP FROM NAME TO NAME
@@ -612,6 +619,13 @@ MapTextWrap[x.#[x], (#1;#s), #Left, #Sep, #Right] → %n⟪« #Left »« #[#1] �
 {$String : $StringEntrySort} Location ::=( LOC; );
 
 $StringEntrySort ::= ( STRING[$String]; );
+
+∀ a . Trace[$String, $String, a] :: a;
+-[Data[#message]]: Trace[#head, #body, #] → $[Trace, $[:,#head,#body], #] ;
+
+∀ a . TraceWhen[Ok, $String, $String, a] :: a;
+-[Data[#message]]: TraceWhen[OK, #head, #body, #] → $[Trace, $[:,#head,#body], #] ;
+
 
 /////////////////////////////////////////////////////////////////////
 

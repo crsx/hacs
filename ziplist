@@ -141,7 +141,6 @@ samples/First.hx
 src/Env.mk
 src/Hacs.mk
 src/Makefile
-src/README
 src/TODO
 src/crsx-rulecompiler/net/sf/crsx/compiler/c/.cproject
 src/crsx-rulecompiler/net/sf/crsx/compiler/c/.project

@@ -1,0 +1,126 @@
+#!/bin/bash -f
+#
+# HACS executable.
+
+usage="Usage: $0 [--keep|--verbose] Module.hx"
+
+# Identify local relative installation, if any.
+bindir=$(dirname "$0")
+if [ -d "$bindir" -a -d "$bindir/../share/hacs" ]; then
+    prefix=$bindir/..
+    sharedir=$prefix/share/hacs
+    docdir=$prefix/share/doc/hacs
+    sharejava=$prefix/share/java
+    libdir=$prefix/lib/hacs
+else
+    # fall back to global installation.
+    bindir="%%%BINDIR%%%"
+    libdir="%%%LIBDIR%%%"
+    docdir="%%%DOCDIR%%%"
+    sharedir="%%%SHAREDIR%%%"
+    sharejava="%%%SHAREJAVA%%%"
+fi
+# environment overrides...
+bindir=$(realpath "${BINDIR:-$bindir}")
+libdir=$(realpath "${LIBDIR:-$libdir}")
+docdir=$(realpath "${DOCDIR:-$docdir}")
+sharedir=$(realpath "${SHAREDIR:-$sharedir}")
+sharejava=$(realpath "${SHAREJAVA:-$sharejava}")
+icu4cinclude=$(realpath "${ICU4CINCLUDE:-%%%ICU4CINCLUDE%%%}")
+icu4cdir=$(realpath "${ICU4CDIR:-%%%ICU4CDIR%%%}")
+
+# Options.
+build=$(realpath build)
+extra=""
+tee='&>>'
+keep=false
+quiet=false
+goal=
+
+for arg; do
+    case "$arg" in
+	-k|--keep) keep=true ;;
+	--goal=*) goal=${arg#*=} ;;
+	-v|--verbose) tee='|& tee -a ' ;;
+	--verbose=*) tee='|& tee -a ' extra="$extra ${arg#--}" ;;
+	-q|--quiet) quiet=true ;;
+	--interpret) interpret=true ;;
+	--*) extra="$extra ${arg#--}" ;;
+	*) file=$arg ;;
+    esac
+done
+
+# Extract HACS module argument.
+if [ ! -f "$file" ]; then
+    echo $usage
+    exit 1
+fi
+dirname=$(dirname $file)
+basename=$(basename $file .hx)
+
+# How to invoke Hacs.mk to generate individual HACS targets.
+function hacsmake () {
+    # Use Hacs.mk to generate target.
+    /usr/bin/make -f "$sharedir/Hacs.mk" -I "$sharedir" --no-print-directory \
+	HACSJAR="$sharejava/hacs.jar" CRSXJAR="$sharejava/crsx.jar" JAVACCJAR="$sharejava/javacc.jar" \
+	SHAREDIR="$sharedir" SHAREJAVA="$sharejava" LIBDIR="$libdir" BINDIR="$bindir" BUILD="$build" \
+   	ICU4CINCLUDE="$icu4cinclude" ICU4CDIR="$icu4cdir" \
+	EXTRA="$extra" INTERPRET="$interpret" \
+	LOG="$tee"$( if [ -z "$packagedir" ]; then echo "/dev/null"; else echo "$packagedir/$NAME.log"; fi ) \
+	OUT=$( if $quiet; then if [ -z "$packagedir" ]; then echo ">>/dev/null"; else echo ">>$packagedir/$NAME.log"; fi; fi ) \
+	"$@"
+    x=$?
+    if [ $x -ne 0 -o ! -f "$1" ]; then
+	echo "$0 aborted: could not hacsmake $1."
+	exit $(expr $x + 128)
+    fi
+}
+
+# Generate and load job properties.
+hacsmake $dirname/$basename.env
+. $dirname/$basename.env
+
+# Generate package directory for Java artifacts.
+package=${MODULE%.*}
+packagedir=$build/${package//.//}
+mkdir -p $packagedir
+
+# Seed package directory with HACS source...
+cp $NAME.hx $packagedir/
+
+if [ -n "$goal" ]; then
+    if [ $goal = ".env" -o $goal = ".run" ]; then
+	hacsmake $dirname/${NAME}${goal}
+    else
+	hacsmake $packagedir/${NAME}${goal}
+    fi
+    exit
+fi
+
+# Generate parser.
+if $keep; then
+    hacsmake $packagedir/$NAME.hxraw
+    hacsmake $packagedir/$NAME.prep
+    hacsmake $packagedir/${NAME}Hx.pgtemplate
+    hacsmake $packagedir/${NAME}Parser.pg
+    hacsmake $packagedir/${NAME}Hx.pg
+    hacsmake $packagedir/${NAME}Embed.pg
+    hacsmake $packagedir/${NAME}Parser.jj
+    hacsmake $packagedir/${NAME}Hx.jj
+    hacsmake $packagedir/${NAME}Embed.jj
+    hacsmake $packagedir/${NAME}Parser.java
+    hacsmake $packagedir/${NAME}Hx.java
+    hacsmake $packagedir/${NAME}Embed.java
+fi
+hacsmake $packagedir/${NAME}Parser.class
+hacsmake $packagedir/${NAME}Hx.class
+hacsmake $packagedir/${NAME}Embed.class
+
+# Rewriter.
+if $keep; then
+    hacsmake $packagedir/${NAME}.hxprep
+fi
+hacsmake $packagedir/${NAME}Rewriter.crs
+
+# Executable
+hacsmake $dirname/$NAME.run

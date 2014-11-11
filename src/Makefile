@@ -13,15 +13,16 @@
 # - CRSXJAR - full path to CRSX jar (at least version 3.2).
 # - JAVACCJAR - full path to JavaCC jar (at least version 5.0).
 # - ICU4CINCLUDE - directory where the ICU unicode/ include directory is a subdirectory.
-# - ICU4CLIB - directory where ICU library binaries live.
+# - ICU4CDIR - directory where ICU library binaries live.
 #
 # Bootstrap by using Hacs.mk with HACSJAR set to the current directory.
 
 
 # STANDARD TARGETS.
 
-.PHONY: all install install-support clean realclean gitclean
+.PHONY: all all-full install install-support clean realclean gitclean
 all ::
+all-full ::
 install ::
 install-support ::
 clean ::; rm -f *.tmp *~ ./#* *.log *~
@@ -33,12 +34,22 @@ gitclean :: realclean
 # SETUP.
 
 # External library setup.
+ifndef CRSXJAR
 CRSXVERSION = 3.2
 CRSXJAR = $(abspath ../lib/crsx-$(CRSXVERSION).jar)
+all :: $(CRSXJAR)
+endif
+ifndef JAVACCJAR
 JAVACCVERSION = 6.0
 JAVACCJAR = $(abspath ../lib/javacc-$(JAVACCVERSION).jar)
-ICU4CLIB = $(ICU4CDIR)/libicudata.so
-CRSXC = $(BUILD)/lib/hacs/crsxc
+all :: $(JAVACCJAR)
+endif
+ifndef ICU4CDIR
+ICU4CDIR = $(abspath ../lib/icu4c/lib)
+ICU4CINCLUDE = $(abspath ../lib/icu4c/include)
+all :: $(ICU4CDIR)/libicudata.so
+endif
+CRSXC = env LD_LIBRARY_PATH='$(ICU4CDIR):' $(BUILD)/lib/hacs/crsxc
 
 # HACS bootstrapping setup.
 BUILD = $(abspath ../build)
@@ -58,8 +69,9 @@ SHAREJAVA = $(prefix)/share/java
 
 # DOWNLOAD STUFF.
 
-all :: $(CRSXJAR) $(JAVACCJAR) $(ICU4CLIB)
+all ::
 
+# The CRSX platform.
 $(CRSXJAR) :
 	wget "http://crsx.org/$(notdir $(CRSXJAR))"
 	@mkdir -p $(dir $(CRSXJAR))
@@ -67,6 +79,7 @@ $(CRSXJAR) :
 
 clean ::; rm -f crsx*.jar
 
+# The JavaCC utility.
 $(JAVACCJAR) :
 	rm -fr javacc*
 	wget "https://java.net/projects/javacc/downloads/download/$(basename $(notdir $(JAVACCJAR))).zip"
@@ -76,11 +89,13 @@ $(JAVACCJAR) :
 
 clean ::; rm -fr javacc*
 
-$(ICU4CLIB) :
-	@echo "Cannot generate ICU libraries...make sure ICU4CLIB is set to a valid file!" >&2
-	false
-	#wget "http://download.icu-project.org/files/icu4c/54.1/icu4c-54_1-RHEL6-x64.tgz"
-
+# The ICU4C libraries (dependency uses one arbitrary library file).
+$(ICU4CDIR)/libicudata.so :
+	rm -fr usr ../lib/icu4c
+	wget "http://download.icu-project.org/files/icu4c/54.1/icu4c-54_1-RHEL6-x64.tgz"
+	tar xpzf icu4c-54_1-RHEL6-x64.tgz
+	mv usr/local ../lib/icu4c
+	rmdir usr
 
 # HACS MASTER FILE LIST
 
@@ -119,7 +134,7 @@ all :: $(BUILD)/share/java/hacs.jar
 install ::
 	@mkdir -p $(DESTDIR)$(SHAREJAVA)
 	cp $(BUILD)/share/java/hacs-$(HACSMAJORVERSION).jar $(DESTDIR)$(SHAREJAVA)
-	cd $(DESTDIR)$(SHAREJAVA) && $(NOEXEC) ln -fs hacs-$(HACSMAJORVERSION).jar hacs.jar
+	cd $(DESTDIR)$(SHAREJAVA) && $(X) ln -fs hacs-$(HACSMAJORVERSION).jar hacs.jar
 
 $(BUILD)/share/java/hacs.jar: \
 		$(BUILD)/org/crsx/hacs/HxRaw.class \
@@ -128,9 +143,9 @@ $(BUILD)/share/java/hacs.jar: \
 	rm -f $(BUILD)/share/java/hacs-$(HACSMAJORVERSION).jar $(BUILD)/share/java/hacs.jar
 	@mkdir -p $(BUILD)/org/crsx/hacs $(BUILD)/share/java
 	cp $(RULES) $(BUILD)/org/crsx/hacs
-	for java in $$(find $(BUILD)/org -name '*.java'); do $(NOEXEC) rm -f $${java%.java}.class; $(NOEXEC) $(MAKE) $${java%.java}.class; done
-	cd $(BUILD) && classes=$$($(NOEXEC) find org -name '*.class') && $(NOEXEC) $(JAR) cf $(BUILD)/share/java/hacs-$(HACSMAJORVERSION).jar $(RULES) org/crsx/hacs/VERSION $$classes
-	cd $(BUILD)/share/java && $(NOEXEC) ln -fs hacs-$(HACSMAJORVERSION).jar hacs.jar
+	for java in $$(find $(BUILD)/org -name '*.java'); do $(X) rm -f $${java%.java}.class; $(X) $(MAKE) $${java%.java}.class; done
+	cd $(BUILD) && classes=$$($(X) find org -name '*.class') && $(X) $(JAR) cf $(BUILD)/share/java/hacs-$(HACSMAJORVERSION).jar $(RULES) org/crsx/hacs/VERSION $$classes
+	cd $(BUILD)/share/java && $(X) ln -fs hacs-$(HACSMAJORVERSION).jar hacs.jar
 
 # Support jars.
 
@@ -138,25 +153,25 @@ all :: $(BUILD)/share/java/crsx.jar
 install-support :: $(BUILD)/share/java/crsx.jar
 	@mkdir -p $(DESTDIR)$(SHAREJAVA)
 	cp $(BUILD)/share/java/crsx-$(CRSXVERSION).jar $(DESTDIR)$(SHAREJAVA)
-	cd $(DESTDIR)$(SHAREJAVA) && $(NOEXEC) ln -fs crsx-$(CRSXVERSION).jar crsx.jar
+	cd $(DESTDIR)$(SHAREJAVA) && $(X) ln -fs crsx-$(CRSXVERSION).jar crsx.jar
 
 $(BUILD)/share/java/crsx.jar: $(CRSXJAR)
 	rm -f $(BUILD)/share/java/crsx-$(CRSXVERSION).jar $(BUILD)/share/java/crsx.jar
 	@mkdir -p $(BUILD)/share/java
 	cp $(CRSXJAR) $(BUILD)/share/java/crsx-$(CRSXVERSION).jar
-	cd $(BUILD)/share/java && $(NOEXEC) ln -fs crsx-$(CRSXVERSION).jar crsx.jar
+	cd $(BUILD)/share/java && $(X) ln -fs crsx-$(CRSXVERSION).jar crsx.jar
 
 all :: $(BUILD)/share/java/javacc.jar
 install-support :: $(BUILD)/share/java/javacc.jar
 	@mkdir -p $(DESTDIR)$(SHAREJAVA)
 	cp $(BUILD)/share/java/javacc-$(JAVACCVERSION).jar $(DESTDIR)$(SHAREJAVA)
-	cd $(DESTDIR)$(SHAREJAVA) && $(NOEXEC) ln -fs javacc-$(JAVACCVERSION).jar javacc.jar
+	cd $(DESTDIR)$(SHAREJAVA) && $(X) ln -fs javacc-$(JAVACCVERSION).jar javacc.jar
 
 $(BUILD)/share/java/javacc.jar: $(JAVACCJAR)
 	rm -f $(BUILD)/share/java/javacc-$(JAVACCVERSION).jar $(BUILD)/share/java/javacc.jar
 	@mkdir -p $(BUILD)/share/java
 	cp $(JAVACCJAR) $(BUILD)/share/java/javacc-$(JAVACCVERSION).jar
-	cd $(BUILD)/share/java && $(NOEXEC) ln -fs javacc-$(JAVACCVERSION).jar javacc.jar
+	cd $(BUILD)/share/java && $(X) ln -fs javacc-$(JAVACCVERSION).jar javacc.jar
 
 # CRSX rulecompiler (crsxc).
 
@@ -164,7 +179,7 @@ CRSXC_H = crsx.h invariant.h linter.h prof.h
 CRSXC_C = crsx.c crsx_scan.l invariant.c linter.c prof.c
 CRSXC_O = crsx.o crsx_scan.o linter.o prof.o
 
-all :: $(BUILD)/lib/hacs/crsxc $(addprefix $(BUILD)/share/hacs/,$(CRSXC_H))
+all-full :: $(BUILD)/lib/hacs/crsxc $(addprefix $(BUILD)/share/hacs/,$(CRSXC_H))
 install ::
 	@mkdir -p $(DESTDIR)$(LIBDIR) $(DESTDIR)$(SHAREDIR)
 	cp -a $(BUILD)/lib/hacs/crsxc $(DESTDIR)$(LIBDIR)
@@ -188,8 +203,8 @@ $(foreach C,$(CRSXC_C), $(eval $(call FROM_RULECOMPILER,$(C),$(BUILD)/org/crsx/h
 
 crsx-rulecompiler/net/sf/crsx/compiler/c/build/crsxc :
 	@mkdir -p crsx-rulecompiler
-	cd crsx-rulecompiler && $(NOEXEC) $(JAR) xf $(CRSXJAR) net/sf/crsx/compiler
-	$(MAKE) -j3 -C crsx-rulecompiler/net/sf/crsx/compiler/c build/crsxc
+	cd crsx-rulecompiler && $(X) $(JAR) xf $(CRSXJAR) net/sf/crsx/compiler
+	$(MAKE) -j3 ICU4CDIR=$(ICU4CDIR) ICU4CINCLUDE=$(ICU4CINCLUDE) -C crsx-rulecompiler/net/sf/crsx/compiler/c build/crsxc
 
 gitclean ::
 	rm -fr crsx-rulecompiler
@@ -206,7 +221,7 @@ $(BUILD)/org/crsx/hacs/HxRaw.class: $(BUILD)/org/crsx/hacs/HxRaw.java
 
 # HACS main rewriter.
 
-all :: $(BUILD)/lib/hacs/MainRewriter
+all-full :: $(BUILD)/lib/hacs/MainRewriter
 install ::
 	@mkdir -p $(DESTDIR)$(LIBDIR)
 	cp -a $(BUILD)/lib/hacs/MainRewriter $(DESTDIR)$(LIBDIR)
@@ -239,6 +254,8 @@ $(BUILD)/org/crsx/hacs/Main.c: crsx-rulecompiler/net/sf/crsx/compiler/c/main.c
 
 $(BUILD)/org/crsx/hacs/Main.dr.gz: $(BUILD)/org/crsx/hacs/Main.crs $(BUILD)/lib/hacs/crsxc
 
+all-debug :: $(BUILD)/org/crsx/hacs/Main.crsd
+
 endif
 
 # HACS user command.
@@ -261,6 +278,8 @@ $(BUILD)/bin/hacs: hacs.sh.template
 		-e 's;%%%DOCDIR%%%;$(DOCDIR);' \
 		-e 's;%%%SHAREDIR%%%;$(SHAREDIR);' \
 		-e 's;%%%SHAREJAVA%%%;$(SHAREJAVA);' \
+		-e 's;%%%ICU4CINCLUDE%%%;$(ICU4CINCLUDE);' \
+		-e 's;%%%ICU4CDIR%%%;$(ICU4CDIR);' \
 		'$<' > '$@.tmp'
 	chmod +x '$@.tmp'
 	mv '$@.tmp' '$@'
@@ -322,15 +341,15 @@ install ::
 ### 
 ### %.crsE: %.crs %.pg-installed
 ### 	@set -x \
-### 	&& $(NOEXEC) parser=$$(sed -n 's/^class \(.*\) :.*/\1/p' '$*.pg') \
-### 	&& $(NOEXEC) $(CRSX) grammar='("'$$parser'";"net.sf.crsx.text.Text";)' rules='$*.crs' dump-rules=$@.tmp \
-### 	&& $(NOEXEC) mv '$@.tmp' '$@'
+### 	&& $(X) parser=$$(sed -n 's/^class \(.*\) :.*/\1/p' '$*.pg') \
+### 	&& $(X) $(CRSX) grammar='("'$$parser'";"net.sf.crsx.text.Text";)' rules='$*.crs' dump-rules=$@.tmp \
+### 	&& $(X) mv '$@.tmp' '$@'
 ### 
 ### %.crsD: %.crs %.pg-installed
 ### 	@set -x \
-### 	&& $(NOEXEC) parser=$$(sed -n 's/^class \(.*\) :.*/\1/p' '$*.pg') \
-### 	&& $(NOEXEC) $(CRSX) grammar='("'$$parser'";"net.sf.crsx.text.Text";)' rules='$*.crs' sortify dispatchify dump-rules=$@.tmp \
-### 	&& $(NOEXEC) mv '$@.tmp' '$@'
+### 	&& $(X) parser=$$(sed -n 's/^class \(.*\) :.*/\1/p' '$*.pg') \
+### 	&& $(X) $(CRSX) grammar='("'$$parser'";"net.sf.crsx.text.Text";)' rules='$*.crs' sortify dispatchify dump-rules=$@.tmp \
+### 	&& $(X) mv '$@.tmp' '$@'
 ### 
 ### realclean::; rm -f *.crsE
 ### 
@@ -344,7 +363,7 @@ install ::
 ### # set them correctly in your local Makefile.
 ### 
 ### # So -n works...
-### NOEXEC = $(if,$(findstring -n,$(MAKE)),echo)
+### X = $(if,$(findstring -n,$(MAKE)),echo)
 ### SH_EXTRA = :
 ### 
 ### 
@@ -361,11 +380,11 @@ install ::
 ### #
 ### %.hxp : %.hx
 ### 	@/bin/echo -e '\n* Processing $<.' && $(SH_EXTRA) \
-### 	&& $(NOEXEC) $(CRSX) \
+### 	&& $(X) $(CRSX) \
 ### 		"grammar=('org.crsx.hacs.Raw';'net.sf.crsx.text.Text';)" \
 ### 		input='$<' category=rawModule \
 ### 		output='$@.tmp' simple-terms max-indent=10 width=255 \
-### 	&& $(NOEXEC) mv '$@.tmp' '$@'
+### 	&& $(X) mv '$@.tmp' '$@'
 ### 
 ### clean::; rm -f *.hxp
 ### 
@@ -378,13 +397,13 @@ install ::
 ### #
 ### %.pg-installed : %.pg $(JAVACCJAR)
 ### 	@/bin/echo -e '\n* Generating and Compiling JavaCC parser for $<.' && $(SH_EXTRA) \
-### 	&& $(NOEXEC) class=$$(sed -n 's/^class \(.*\)Parser :.*/\1/p' '$*.pg') \
-### 	&& $(NOEXEC) base=$$(echo $$class | sed 's:\.:/:g') \
-### 	&& $(NOEXEC) mkdir -p $(BUILD)/$$(dirname $$base) \
-### 	&& (test '$*.pg' -ot $(BUILD)/$${base}Parser.pg || $(NOEXEC) cp -v '$*.pg' $(BUILD)/$${base}Parser.pg) \
-### 	&& (test '$*.pg' -ot $(BUILD)/$${base}Parser.jj || $(NOEXEC) $(PG) '$*.pg' -source=$(BUILD)) \
-### 	&& (cd $(BUILD) && (test $${base}Parser.jj -ot $${base}Parser.java || $(NOEXEC) $(JAVACC) -OUTPUT_DIRECTORY=$$(dirname $$base) $${base}Parser.jj)) \
-### 	&& (cd $(BUILD) && (test $${base}Parser.java -ot $(BUILD)/$${base}Parser.class || $(NOEXEC) $(JAVAC) -cp '$(BUILD):$(CRSXJAR):$(JAVACCJAR)' -sourcepath $(BUILD) -d $(BUILD) $${base}Parser.java))
+### 	&& $(X) class=$$(sed -n 's/^class \(.*\)Parser :.*/\1/p' '$*.pg') \
+### 	&& $(X) base=$$(echo $$class | sed 's:\.:/:g') \
+### 	&& $(X) mkdir -p $(BUILD)/$$(dirname $$base) \
+### 	&& (test '$*.pg' -ot $(BUILD)/$${base}Parser.pg || $(X) cp -v '$*.pg' $(BUILD)/$${base}Parser.pg) \
+### 	&& (test '$*.pg' -ot $(BUILD)/$${base}Parser.jj || $(X) $(PG) '$*.pg' -source=$(BUILD)) \
+### 	&& (cd $(BUILD) && (test $${base}Parser.jj -ot $${base}Parser.java || $(X) $(JAVACC) -OUTPUT_DIRECTORY=$$(dirname $$base) $${base}Parser.jj)) \
+### 	&& (cd $(BUILD) && (test $${base}Parser.java -ot $(BUILD)/$${base}Parser.class || $(X) $(JAVAC) -cp '$(BUILD):$(CRSXJAR):$(JAVACCJAR)' -sourcepath $(BUILD) -d $(BUILD) $${base}Parser.java))
 ### 	@touch $@
 ### 
 ### realclean::; rm -f *.pg *.pg-installed
@@ -398,11 +417,11 @@ install ::
 ### #
 ### %.crs-installed: %.crs %.pg-installed
 ### 	@/bin/echo -e '\n* Checking and installing generated $< rules.' && $(SH_EXTRA) \
-### 	&& $(NOEXEC) parser=$$(sed -n 's/^class \(.*\) :.*/\1/p' '$*.pg') \
-### 	&& $(NOEXEC) class=$$(sed -n 's/^class \(.*\)Parser :.*/\1/p' '$*.pg') \
-### 	&& $(NOEXEC) base=$$(echo $$class | sed 's:\.:/:g') \
-### 	&& $(NOEXEC) $(CRSX) grammar='("'$$parser'";"net.sf.crsx.text.Text";)' rules='$*.crs' \
-### 	&& (test '$*.crs' -ot $(BUILD)/$${base}Rules.crs || $(NOEXEC) cp -v '$*.crs' $(BUILD)/$${base}Rules.crs)
+### 	&& $(X) parser=$$(sed -n 's/^class \(.*\) :.*/\1/p' '$*.pg') \
+### 	&& $(X) class=$$(sed -n 's/^class \(.*\)Parser :.*/\1/p' '$*.pg') \
+### 	&& $(X) base=$$(echo $$class | sed 's:\.:/:g') \
+### 	&& $(X) $(CRSX) grammar='("'$$parser'";"net.sf.crsx.text.Text";)' rules='$*.crs' \
+### 	&& (test '$*.crs' -ot $(BUILD)/$${base}Rules.crs || $(X) cp -v '$*.crs' $(BUILD)/$${base}Rules.crs)
 ### 	@touch $@
 ### 
 ### realclean::; rm -f *.crs *.crs-installed
@@ -452,15 +471,15 @@ install ::
 ### #
 ### %.run-c: %.crs-compiled %.pg-installed
 ### 	@/bin/echo -e '\n* Generating custom compilation script $@.' && $(SH_EXTRA) \
-### 	&& $(NOEXEC) class=$$(sed -n 's/^class \(.*\)Parser :.*/\1/p' '$*.pg') \
-### 	&& $(NOEXEC) prefix=$$(sed -n 's/^prefix //p' '$*.pg') \
-### 	&& $(NOEXEC) base=$$(echo $$class | sed -e 's:\.:/:g') \
+### 	&& $(X) class=$$(sed -n 's/^class \(.*\)Parser :.*/\1/p' '$*.pg') \
+### 	&& $(X) prefix=$$(sed -n 's/^prefix //p' '$*.pg') \
+### 	&& $(X) base=$$(echo $$class | sed -e 's:\.:/:g') \
 ### 	&& (echo exec env "JAVA='$(JAVA)'" "JAVAC='$(JAVAC)'" "CRSXJAR='$(CRSXJAR)'" \
 ### 			"HACSBUILD='$(BUILD)'" "HACSPARSERCLASS='$${class}Parser'" "HACSRULES='$(BUILD)/$${base}Rules.crs'" \
 ### 			"HACSPREFIX='$$prefix'" \
 ### 			'$(ROOT)/run-hacs.sh' '"$$@"' > '$@.tmp') \
-### 	&& $(NOEXEC) mv '$@.tmp' '$@' \
-### 	&& $(NOEXEC) chmod +x $@
+### 	&& $(X) mv '$@.tmp' '$@' \
+### 	&& $(X) chmod +x $@
 ### 
 ### 
 ### # ====================
@@ -470,34 +489,34 @@ install ::
 ### # (1a, using interpreter)
 ### %.pg-ref : %.hx
 ### 	@set -x \
-### 	&& $(NOEXEC) $(CRSX) \
+### 	&& $(X) $(CRSX) \
 ### 		"grammar=('org.crsx.hacs.bootstrap.Raw';'net.sf.crsx.text.Text';)" \
 ### 		rules=org/crsx/hacs/PrepPG.crs wrapper=PG \
 ### 		input='$<' category=rawModule \
 ### 		output='$@.tmp' sink=net.sf.crsx.text.TextSink \
-### 	&& $(NOEXEC) mv '$@.tmp' '$@'
+### 	&& $(X) mv '$@.tmp' '$@'
 ### 
 ### # (2a, using interpreter)
 ### %.crs-ref : %.hx
 ### 	@set -x \
-### 	&& $(NOEXEC) $(CRSX) \
+### 	&& $(X) $(CRSX) \
 ### 		"grammar=('org.crsx.hacs.bootstrap.Raw';'net.sf.crsx.text.Text';)" \
 ### 		rules=org/crsx/hacs/PrepCRS.crs wrapper=CRS \
 ### 		input='$<' category=rawModule \
 ### 		output='$@.tmp' sink=net.sf.crsx.text.TextSink \
-### 	&& $(NOEXEC) mv '$@.tmp' '$@'
+### 	&& $(X) mv '$@.tmp' '$@'
 ### 
 ### # (3, using interpreter)
 ### %.run: %.crs-installed %.pg-installed
 ### 	@/bin/echo -e '\n* Generating custom compilation script $@.' && $(SH_EXTRA) \
-### 	&& $(NOEXEC) class=$$(sed -n 's/^class \(.*\)Parser :.*/\1/p' '$*.pg') \
-### 	&& $(NOEXEC) prefix=$$(sed -n 's/^prefix //p' '$*.pg') \
-### 	&& $(NOEXEC) base=$$(echo $$class | sed -e 's:\.:/:g') \
+### 	&& $(X) class=$$(sed -n 's/^class \(.*\)Parser :.*/\1/p' '$*.pg') \
+### 	&& $(X) prefix=$$(sed -n 's/^prefix //p' '$*.pg') \
+### 	&& $(X) base=$$(echo $$class | sed -e 's:\.:/:g') \
 ### 	&& (echo exec env "JAVA='$(JAVA)'" "JAVAC='$(JAVAC)'" "CRSXJAR='$(CRSXJAR)'" \
 ### 			"HACSBUILD='$(BUILD)'" "HACSPARSERCLASS='$${class}Parser'" "HACSRULES='$(BUILD)/$${base}Rules.crs'" \
 ### 			"HACSPREFIX='$$prefix'" \
 ### 			'$(ROOT)/run-hacs.sh' '"$$@"' > '$@.tmp') \
-### 	&& $(NOEXEC) mv '$@.tmp' '$@' \
-### 	&& $(NOEXEC) chmod +x $@
+### 	&& $(X) mv '$@.tmp' '$@' \
+### 	&& $(X) chmod +x $@
 ### 
 ### realclean::; rm -f *.crs-ref *.pg-ref *.run

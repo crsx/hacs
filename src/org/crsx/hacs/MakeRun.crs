@@ -50,11 +50,8 @@ HACSJAR='†« $[Get[$String], "HACSJAR", "hacs.jar"] »'
 CRSXC='†« $[Get[$String], "CRSXC", "crsxc"] »'
 
 # System directories.
-LIBDIR='†« $[Get[$String], "LIBDIR", "/usr/lib"] »'
-BINDIR='†« $[Get[$String], "BINDIR", "/usr/bin"] »'
-DOCDIR='†« $[Get[$String], "DOCDIR", "/usr/share/doc/hacs"] »'
-SHAREDIR='†« $[Get[$String], "SHAREDIR", "/usr/share/hacs"] »'
-SHAREJAVA='†« $[Get[$String], "SHAREJAVA", "/usr/share/java"] »'
+ICU4CINCLUDE='†« $[Get[$String], "ICU4CINCLUDE", "/usr/include"] »'
+ICU4CDIR='†« $[Get[$String], "ICU4CDIR", "/usr/lib"] »'
 
 # Used system commands.
 SHELL='†« $[Get[$String], "SHELL", "/bin/bash"] »'
@@ -97,16 +94,11 @@ if [ -z "$MODULE" -o -z "$NAME" -o -z "$SORT" -o -z "$SORTS" -o -z -"$SINKCLASS"
      -o -z "$EMBEDPARSERCLASS" -o -z -"$EMBEDPREFIX" -o -z "$PACKAGE" -o -z "$PACKAGEDIR" -o -z "$BUILD" ]; then
    fail=true; echo "${0}: Panic: incomplete HACS installation?" >&2; fi
 
-## Check environment.
-#if [ -z "$BINDIR" -o ! -d "$BINDIR" ]; then
-#   fail=true; echo "${0}: BINDIR directory does not point to a directory (with binary programs)." >&2; fi
-#if [ -z "$LIBDIR" -o ! -d "$LIBDIR" ]; then
-#   fail=true; echo "${0}: LIBDIR directory does not point to a directory (with architecture-dependent library files)." >&2; fi
-#if [ -z "$SHAREDIR" -o ! -d "$SHAREDIR" ]; then
-#   fail=true; echo "${0}: SHAREDIR directory does not point to a directory (with architecture-independent library files)." >&2; fi
-#if [ -z "$SHAREJAVA" -o ! -d "$SHAREJAVA" ]; then
-#   fail=true; echo "${0}: SHAREJAVA directory does not point to a directory (with Java archives)." >&2; fi
-
+# Check environment.
+if [ -z "$ICU4CDIR" -o ! -d "$ICU4CDIR" ]; then
+   fail=true; echo "${0}: ICU4CDIR directory does not point to a directory (presumably with icu4c libraries)." >&2; fi
+if [ -z "$ICU4CINCLUDE" -o ! -d "$ICU4CINCLUDE" ]; then
+   fail=true; echo "${0}: ICU4CINCLUDE directory does not point to a directory (with icu4c headers)." >&2; fi
 if [ -z "$JAVA" -o ! -x "$(which $JAVA)" ]; then
    fail=true; echo "${0}: JAVA parameter does not point to an executable (the Java interpreter)." >&2; fi
 if [ -z "$JAVAC" -o ! -x "$(which $JAVAC)" ]; then
