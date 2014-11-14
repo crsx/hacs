@@ -471,15 +471,15 @@ C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllN
       (
         D_RULE[{#L}%rawHxRule⟪
 	  %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Need_", #HxAttributeName#]]
-	  » ( #HxConstructor# ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, #NeededSynthetic, NoNames, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}C-GetConstructorScopeSorts[#HxConstructor#]] » ) )
+	  » ( #HxConstructor# ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, #NeededSynthetic, NoNames, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}C-GetConstructorScopeSorts[#HxConstructor#]] » ) ↑#synthesized )
 	  →
 	  %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Collect_", #HxAttributeName#]]
-	  » ( #HxConstructor# ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, NoNames, #NeededSynthetic, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}C-GetConstructorScopeSorts[#HxConstructor#]] » ) )
+	  » ( #HxConstructor# ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, NoNames, #NeededSynthetic, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}C-GetConstructorScopeSorts[#HxConstructor#]] » ) ↑#synthesized )
 	⟫, #SortName, B_FALSE];
 	D_RULE[{#L}%rawHxRule⟪ #HxRulePrefix#
-	  %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Collect_", #HxAttributeName#]] » ( #HxConstructor# ( #HxScopes# ) )
+	  %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Collect_", #HxAttributeName#]] » ( #HxConstructor# ( #HxScopes# ) ↑#synthesized )
 	  →
-	  #HxConstructor# ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, #NeededSynthetic, NoNames, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}C-GetConstructorScopeSorts[#HxConstructor#]] » ) ↑ #HxAttributeName# ( #HxTerm# )
+	  #HxConstructor# ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, #NeededSynthetic, NoNames, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}C-GetConstructorScopeSorts[#HxConstructor#]] » ) ↑#synthesized ↑ #HxAttributeName# ( #HxTerm# )
 	⟫, #SortName, B_FALSE];
       ),
       // Simple synthetic attribute creation rule.
@@ -727,7 +727,7 @@ C-CrsxifyRule1[#RulePrefix, #TopPattern, #TopTerm, #Sort, {#DM}DM, {#DM}C-Extend
     C-CrsxifyRule2[HxRulePrefix, HxTerm, HxTerm, $String<!--Sort-->, DeclarationMap, SortMap<!--OnlyPattern-->, SortMap<!--Rule-->] :: Text ;
     C-CrsxifyRule2[#RulePrefix, #TopPattern, #TopTerm, #Sort, {#DM}DM, #SM1, #SM2]
     →
-%n⟪« C-CrsxifyRulePrefix[#RulePrefix, #Sort, {#DM}DM, #SM1, #SM2] »
+%n⟪« C-CrsxifyRulePrefix[#RulePrefix, #Sort, {#DM}DM, #SM1, #SM2, #TopPattern, #TopTerm] »
 ⟦«
   C-CrsxifyTerm[#TopPattern, {#DM}U-GetFunctionInherited[U-TermTopConstructor[#TopPattern]], {#DM}DM, #SM1]
 »⟧
@@ -741,11 +741,11 @@ C-CrsxifyRule1[#RulePrefix, #TopPattern, #TopTerm, #Sort, {#DM}DM, {#DM}C-Extend
 
 // Convert rule prefix.
 
-C-CrsxifyRulePrefix[HxRulePrefix, $String<!--Sort-->, DeclarationMap, SortMap<!--OnlyPattern-->, SortMap<!--Rule-->] :: Text ;
-C-CrsxifyRulePrefix[{#L}%rawHxRulePrefix⟪ #HxRulePriority# [ #HxRuleOptions# ] ⟫, #Sort, #DM, #SM1, #SM2]
+C-CrsxifyRulePrefix[HxRulePrefix, $String<!--Sort-->, DeclarationMap, SortMap<!--OnlyPattern-->, SortMap<!--Rule-->, HxTerm<!--Pattern-->, HxTerm<!--Contractum-->] :: Text ;
+C-CrsxifyRulePrefix[{#L}%rawHxRulePrefix⟪ #HxRulePriority# [ #HxRuleOptions# ] ⟫, #Sort, #DM, #SM1, #SM2, #Pattern, #Contractum]
 →
 %n⟪¶« {#L}C-CrsxifyRuleName[#HxRulePriority#, #HxRuleOptions#] »«
-  WrappedTextJoin[Append[C-CrsxifyRulePriority[#HxRulePriority#], C-CrsxifyRuleOptions[#HxRuleOptions#, #DM, #SM1, #SM2, ss¹.ss¹]], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]
+  WrappedTextJoin[Append[C-CrsxifyRulePriority[#HxRulePriority#], C-CrsxifyRuleOptions[#HxRuleOptions#, #DM, #SM1, #SM2, #Pattern, #Contractum, ss¹.ss¹]], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]
 »:⟫
 ;
 
@@ -761,11 +761,11 @@ C-CrsxifyRulePriority[%rawHxRulePriority⟪ priority ⟫] → (%n⟪Priority⟫;
 C-CrsxifyRulePriority[%rawHxRulePriority⟪ default ⟫] → (%n⟪Fallback⟫;) ;
 C-CrsxifyRulePriority[%rawHxRulePriority⟪ ⟫] → () ;
 
-C-CrsxifyRuleOptions[$List[$String], DeclarationMap, SortMap<!--OnlyPattern-->, SortMap<!--Rule-->, ss¹::$List[Text].$List[Text]] :: $List[Text] ;
-C-CrsxifyRuleOptions[(), #DM, #SM1, #SM2, ss¹.#[ss¹]] → #[C-CrsxifyRuleVars[#DM, #SM1, #SM2]] ;
-C-CrsxifyRuleOptions[(#option; #options), #DM, #SM1, #SM2, ss¹.#[ss¹]]
+C-CrsxifyRuleOptions[$List[$String], DeclarationMap, SortMap<!--OnlyPattern-->, SortMap<!--Rule-->, HxTerm<!--Pattern-->, HxTerm<!--Contractum-->, ss¹::$List[Text].$List[Text]] :: $List[Text] ;
+C-CrsxifyRuleOptions[(), #DM, #SM1, #SM2, #Pattern, #Contractum, ss¹.#[ss¹]] → #[C-CrsxifyRuleVars[#DM, #SM1, #SM2, #Pattern, #Contractum]] ;
+C-CrsxifyRuleOptions[(#option; #options), #DM, #SM1, #SM2, #Pattern, #Contractum, ss¹.#[ss¹]]
 →
-C-CrsxifyRuleOptions[#options, #DM, #SM1, #SM2, ss¹.#[Append[C-CrsxifyRuleOption[#option, #DM], ss¹]]]
+C-CrsxifyRuleOptions[#options, #DM, #SM1, #SM2, #Pattern, #Contractum, ss¹.#[Append[C-CrsxifyRuleOption[#option, #DM], ss¹]]]
 ;
 
 C-CrsxifyRuleOption[$String, DeclarationMap] :: $List[Text] ;
@@ -776,11 +776,23 @@ C-CrsxifyRuleOption[#option, #DM]
 ;
 // TODO: Options!
 
-C-CrsxifyRuleVars[DeclarationMap, SortMap<!--OnlyPattern-->, SortMap<!--Rule-->] :: $List[Text] ;
-C-CrsxifyRuleVars[#DM, #SM1, #SM2]
+C-CrsxifyRuleVars[DeclarationMap, SortMap<!--OnlyPattern-->, SortMap<!--Rule-->, HxTerm<!--Pattern-->, HxTerm<!--Cotnractum-->] :: $List[Text] ;
+C-CrsxifyRuleVars[#DM, #SM1, #SM2, #Pattern, #Contractum]
 →
-C-CrsxifyRuleVars1[#DM, #SM2, C-SortMap-GetFreeVariables[#SM1], C-SortMap-GetFreeVariables[#SM2]]
+C-CrsxifyRuleVars0[#DM, #SM1, #SM2, $[FreeVariables,#Pattern], $[FreeVariables,#Contractum]]
 ;
+    C-CrsxifyRuleVars0[DeclarationMap, SortMap<!--OnlyPattern-->, SortMap<!--Rule-->, $List[HxTerm]<!--PatternFree-->, $List[HxTerm]<!--ContractumFree-->] :: $List[Text] ;
+    C-CrsxifyRuleVars0[#DM, #SM1, #SM2, #PatternFree, #ContractumFree]
+    →
+    C-CrsxifyRuleVars1[#DM, #SM2, #PatternFree, C-VariablesExcept[#ContractumFree, #PatternFree]]
+    ;
+	    C-VariablesExcept[$List[HxTerm], $List[HxTerm]] :: $List[HxTerm] ;
+	    C-VariablesExcept[(), #ys] → () ;
+	    -[Free[x::HxTerm]]: C-VariablesExcept[(x; #xs), #ys] → If[C-ContainsVariable[#ys, x], C-VariablesExcept[#xs, #ys], (x; C-VariablesExcept[#xs, #ys])] ;
+
+	    C-ContainsVariable[$List[HxTerm], HxTerm] :: Boolean ;
+	    -[Free[x::HxTerm,y::HxTerm]]: C-ContainsVariable[(x; #xs), y] → $[If, $[SameVariable,x,y], B_TRUE, C-ContainsVariable[#xs, y]] ;
+	    -[Free[y::HxTerm]]: C-ContainsVariable[(), y] → B_FALSE ;
 
     C-CrsxifyRuleVars1[DeclarationMap, SortMap<!--Rule-->, $List[HxTerm]<!--OnlyPattern-->, $List[HxTerm]<!--Rule-->] :: $List[Text] ;
     C-CrsxifyRuleVars1[#DM, #SM, #vs1, #vs2]
@@ -859,46 +871,69 @@ C-CrsxifyAttributes[$List[HxAttribute], NameSet<!--ThisInherited-->, NameSet<!--
 
 C-CrsxifyAttributes[#Attributes, #ThisInherited, #TopInherited, #DM, #SM]
 →
-If[All[(Empty[#Attributes]; Not[HasNames[#ThisInherited]]; Not[HasNames[#TopInherited]];)],
+If[And[Empty[#Attributes], Not[HasNames[UnionNames[#ThisInherited, #TopInherited]]]],
   %n⟪⟫,
-  %n⟪{ ⟦« {} C-CrsxifyAttributes2[#Attributes, NameSetList[#ThisInherited], #TopInherited, #DM, #SM] » ⟧} ⟫]
+  %n⟪{ ⟦« {} C-CrsxifyAttributes2[#Attributes, NameSetList[#ThisInherited], #TopInherited, #DM, #SM, ""] » ⟧} ⟫]
 ;
 
+    AttributeDescriptor ::=( A_DESCRIPTOR[$List[HxAttributeValue], $List[HxTerm]]; );
+    C-AD-EmptyDescriptor :: AttributeDescriptor;
+    C-AD-EmptyDescriptor → A_DESCRIPTOR[(), ()] ;
+    C-AD-AddAttributeValue[AttributeDescriptor, HxAttributeValue] :: AttributeDescriptor ;
+    C-AD-AddAttributeValue[A_DESCRIPTOR[#values, #terms], #value] → A_DESCRIPTOR[(#value; #values), #terms] ;
+    C-AD-AddAttributeTerm[AttributeDescriptor, HxTerm] :: AttributeDescriptor ;
+    C-AD-AddAttributeTerm[A_DESCRIPTOR[#values, #terms], #term] → A_DESCRIPTOR[#values, (#term; #terms)] ;
+
     // Populate attribute index.
-    {$String : $List[HxAttributeValue]} C-CrsxifyAttributes2[$List[HxAttribute], $List[$String]<!--AttributeNames-->, NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
-    {#AI} C-CrsxifyAttributes2[#Attributes, (#a; #as), #TopInherited, #DM, #SM] → {#AI; #a : ()} C-CrsxifyAttributes2[#Attributes, #as, #TopInherited, #DM, #SM] ;
-    {#AI} C-CrsxifyAttributes2[#Attributes, (), #TopInherited, #DM, #SM] → {#AI} C-CrsxifyAttributes3[#Attributes, #TopInherited, #DM, #SM] ;
+    {$String : AttributeDescriptor} C-CrsxifyAttributes2[$List[HxAttribute], $List[$String]<!--AttributeNames-->, NameSet<!--TopInherited-->, DeclarationMap, SortMap, $String<!--sep-->] :: Text ;
+    {#AI} C-CrsxifyAttributes2[#Attributes, (#a; #as), #TopInherited, #DM, #SM, #sep] → {#AI; #a : C-AD-EmptyDescriptor} C-CrsxifyAttributes2[#Attributes, #as, #TopInherited, #DM, #SM, #sep] ;
+    {#AI} C-CrsxifyAttributes2[#Attributes, (), #TopInherited, #DM, #SM, #sep] → {#AI} C-CrsxifyAttributes3[#Attributes, #TopInherited, #DM, #SM, #sep] ;
 
     // Register all pattern constraints of/contractum contributions to each attribute.
+    {$String : AttributeDescriptor} C-CrsxifyAttributes3[$List[HxAttribute], NameSet<!--TopInherited-->, DeclarationMap, SortMap, $String<!--sep-->] :: Text ;
     //
-    {$String : $List[HxAttributeValue]} C-CrsxifyAttributes3[$List[HxAttribute], NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
-    //
-    {#AI} C-CrsxifyAttributes3[(%rawHxAttribute⟪ #HxAttributeKind# #HxAttributeName# #HxAttributeValue# ⟫; #Attributes), #TopInherited, #DM, #SM]
+    {#AI} C-CrsxifyAttributes3[(%rawHxAttribute⟪ #HxAttributeKind# #HxAttributeName# #HxAttributeValue# ⟫; #Attributes), #TopInherited, #DM, #SM, #sep]
     →
-    {#AI} C-CrsxifyAttributes4[#HxAttributeName#, Append[$[{#AI}Get[$List[HxAttributeValue]],#HxAttributeName#,()], (#HxAttributeValue#;)], #Attributes, #TopInherited, #DM, #SM]
+    {#AI} C-CrsxifyAttributes4[#HxAttributeName#, C-AD-AddAttributeValue[$[{#AI}Get[AttributeDescriptor], #HxAttributeName#, C-AD-EmptyDescriptor], #HxAttributeValue#], #Attributes, #TopInherited, #DM, #SM, #sep]
     ;
-        {$String : $List[HxAttributeValue]} C-CrsxifyAttributes4[$String<!--Name-->, $List[HxAttributeValue]<!--NewValue-->, $List[HxAttribute]<!--Rest-->, NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
-        {#AI} C-CrsxifyAttributes4[#Name, #NewList, #Attributes, #TopInherited, #DM, #SM] → {#AI; #Name : #NewList} C-CrsxifyAttributes3[#Attributes, #TopInherited, #DM, #SM] ;
+    // 
+    {#AI} C-CrsxifyAttributes3[(%rawHxAttribute⟪ #HxAttributeKind# #HxMetaVariable# ⟫; #Attributes), #TopInherited, #DM, #SM, #sep]
+    →
+    %n⟪†«#HxMetaVariable#»« {#AI} C-CrsxifyAttributes3[#Attributes, #TopInherited, #DM, #SM, "; "] »⟫
+    ;
     //
-    {#AI} C-CrsxifyAttributes3[(), #TopInherited, #DM, #SM] → {#AI} C-CrsxifyAttributes5[$[{#AI}Keys[$String]], "", #TopInherited, #DM, #SM] ;
+    {#AI} C-CrsxifyAttributes3[(), #TopInherited, #DM, #SM, #sep] → {#AI} C-CrsxifyAttributes5[NameSetList[NamesFrom[$[{#AI}Keys[$String]]]], #sep, #TopInherited, #DM, #SM] ;
+
+    //
+    {$String : AttributeDescriptor} C-CrsxifyAttributes4[$String<!--Name-->, AttributeDescriptor<!--NewDescriptor-->, $List[HxAttribute]<!--Rest-->, NameSet<!--TopInherited-->, DeclarationMap, SortMap, $String<!--sep-->] :: Text ;
+    -[Data[#NewDescriptor]]: {#AI} C-CrsxifyAttributes4[#Name, #NewDescriptor, #Attributes, #TopInherited, #DM, #SM, #sep] → {#AI; #Name : #NewDescriptor} C-CrsxifyAttributes3[#Attributes, #TopInherited, #DM, #SM, #sep] ;
 
     // Emit collection of chosen attributes.
-    {$String : $List[HxAttributeValue]} C-CrsxifyAttributes5[$List[$String], $String, NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
-    {#AI} C-CrsxifyAttributes5[(#a; #as), #sep, #TopInherited, #DM, #SM] → {#AI} C-CrsxifyAttributes6[$[{#AI}Get[$List[HxAttributeValue]], #a], #a, #as, #sep, #TopInherited, #DM, #SM] ;
+    {$String : AttributeDescriptor} C-CrsxifyAttributes5[$List[$String], $String, NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
+    {#AI} C-CrsxifyAttributes5[(#a; #as), #sep, #TopInherited, #DM, #SM] → {#AI} C-CrsxifyAttributes6[$[{#AI}Get[AttributeDescriptor], #a], #a, #as, #sep, #TopInherited, #DM, #SM] ;
     {#AI} C-CrsxifyAttributes5[(), #sep, #TopInherited, #DM, #SM] → %n⟪⟫ ;
 
-    {$String : $List[HxAttributeValue]} C-CrsxifyAttributes6[$List[HxAttributeValue], $String, $List[$String], $String, NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
-    {#AI} C-CrsxifyAttributes6[#avs, #a, #as, #sep, #TopInherited, #DM, #SM] → %n⟪†« #sep »« C-CrsxifyAttribute[#a, #avs, #TopInherited, #DM, #SM] » « {#AI} C-CrsxifyAttributes5[#as, "; ", #TopInherited, #DM, #SM] »⟫ ;
+    //
+    {$String : AttributeDescriptor} C-CrsxifyAttributes6[AttributeDescriptor, $String, $List[$String], $String, NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
+    {#AI} C-CrsxifyAttributes6[A_DESCRIPTOR[#avs, #ats], #a, #as, #sep, #TopInherited, #DM, #SM] → %n⟪†« #sep »« C-CrsxifyAttribute[#a, #avs, #ats, #TopInherited, #DM, #SM] » « {#AI} C-CrsxifyAttributes5[#as, "; ", #TopInherited, #DM, #SM] »⟫ ;
 
     //
-    C-CrsxifyAttribute[$String<!--Name-->, $List[HxAttributeValue], NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
-    C-CrsxifyAttribute[#a, #avs, #TopInherited, {#DM}DM, #SM] → %n⟪"†« #a »" : « If[{#DM}U-IsInheritedMapAttribute[#a], C-CrsxifyAttributeMap[#a, #avs, #TopInherited, {#DM}DM, #SM], C-CrsxifyAttributeSimple[#a, #avs, #TopInherited, {#DM}DM, #SM]] »⟫ ;
+    C-CrsxifyAttribute[$String<!--Name-->, $List[HxAttributeValue], $List[HxTerm], NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
+    C-CrsxifyAttribute[#a, #avs, #ats, #TopInherited, {#DM}DM, #SM]
+    →
+    %n⟪"†« #a »" : «
+      If[{#DM}U-IsMapAttribute[#a],
+        C-CrsxifyAttributeMap[#a, #avs, #TopInherited, {#DM}DM, #SM],
+        C-CrsxifyAttributeSimple[#a, #avs, #TopInherited, {#DM}DM, #SM] ]
+    »⟫ ;
+    // TODO: handle catch-all attribute
 
     //
     C-CrsxifyAttributeSimple[$String<!--Name-->, $List[HxAttributeValue], NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
     C-CrsxifyAttributeSimple[#a, (), #TopInherited, #DM, #SM] → If[ContainsName[#TopInherited, #a], %n⟪A_†«#a»[#_†«#a»]⟫, %n⟪A_†«#a»[A_†«#a»_null]⟫] ;
     C-CrsxifyAttributeSimple[#a, (#av;), #TopInherited, #DM, #SM] → %n⟪A_†«#a»[« C-CrsxifyAttributeSimpleValue[#av, #TopInherited, #DM, #SM] »]⟫ ;
     C-CrsxifyAttributeSimple[#a, (#av1;#av2;#avs), #TopInherited, #DM, #SM] → $[Error, $[:,"cannot have more than one pattern/value set for simple attribute ",#a]] ;
+    // TODO: process system attributes in #ats.
 
     //
     C-CrsxifyAttributeMap[$String<!--Name-->, $List[HxAttributeValue], NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
@@ -989,7 +1024,12 @@ C-Print-Declarations[%rawHxDeclarations⟪ ⟫, #ModuleName, #LastSort, #DM] →
 C-Print-Token[$String<!--ModuleName-->, $String<!--TokenName-->, DeclarationMap] :: Text ;
 C-Print-Token[#ModuleName, #TokenName, #DM]
 →
-%n⟪'$Print2-†«U-LastName[#ModuleName]»$†«#TokenName»' [#, #prec] → « C-Text-open »« C-Text-unopen »StringToText[#]« C-Text-unclose »« C-Text-close » ;
+%n⟪¶
+'$Print-†«U-LastName[#ModuleName]»$†«#TokenName»' [†«U-LastName[#ModuleName]»$†«#TokenName»] :: Text ;
+'$Print-†«U-LastName[#ModuleName]»$†«#TokenName»' [#] → '$Print2-†«U-LastName[#ModuleName]»$†«#TokenName»' [#, 0] ;
+
+'$Print2-†«U-LastName[#ModuleName]»$†«#TokenName»' [†«U-LastName[#ModuleName]»$†«#TokenName», $Numeric] :: Text ;
+'$Print2-†«U-LastName[#ModuleName]»$†«#TokenName»' [#, #prec] → « C-Text-open »« C-Text-unopen »StringToText[#]« C-Text-unclose »« C-Text-close » ;
 ⟫;
 
 // Print a sort abstraction.
@@ -1028,7 +1068,7 @@ C-Print-SymbolForm2[Hx_ParsedFormWord[#ConcreteWord, #HxPP], #ModuleName, #Sort,
 -[Fresh[x::Text]]:
 C-Print-SymbolForm2[Hx_ParsedFormTerm[#ScopeSortPrec, #HxPP], #ModuleName, #Sort, #DM]
 →
-%n⟪-[Free[«x»]]: '$Print2-†«U-LastName[#ModuleName]»$†«#Sort»' [«x», #prec] → « C-Text-open »« C-Text-unopen »« x »« C-Text-unclose »« C-Text-close » ;
+%n⟪-[Free[«x»]]: '$Print2-†«U-LastName[#ModuleName]»$†«#Sort»' [«x», #prec] → « C-Text-open »« C-Text-dagger »« C-Text-unopen »$[Symbol,« x »]« C-Text-unclose »« C-Text-close » ;
 ⟫;
 // TODO: make sure variable name falls within lexical space for token.
 
@@ -1059,7 +1099,7 @@ C-Print-Form[%rawHxForm⟪ #HxParsedForm# #HxFormPrec# #HxInheritedRefs# ⟫, #M
 -[Data[#prec]« WrappedTextJoin[Map[v.%n⟨‹v›::Text⟩,$[FreeVariables,#HxParsedForm#]], %n⟨,Fresh[⟩, %n⟨,⟩, %n⟨]⟩] »] :
 '$Print2-†‹U-LastName[#ModuleName]›$†«#Sort»' [ '†« U-QN[#ModuleName, #Sort, U-ParsedFormTag[#HxParsedForm#]] »' « WrappedTextJoin[MapIndexWhen[ok bs i.C-ScopeSort-WrapPattern[bs, #ModuleName, t.t, s.%n⟨#†‹ NumericToStringWhen[ok, i] ›⟩], C-ParsedForm-ScopeSorts[#HxParsedForm#]], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩] », #prec ]
 →
-$[If, $[LessThan, #prec, †«NumericToString[StringToNumericDefault[#HxFormPrec#,0]]»],⟦
+$[If, $[GreaterThan, #prec, †«NumericToString[StringToNumericDefault[#HxFormPrec#,0]]»],⟦
 « C-Text-open »(« C-ParsedForm-Text[#HxParsedForm#, #ModuleName, ok s p i t .%n⟨‹ C-PrintWrap[#ModuleName, s, t, p] ›⟩, ok s p i .%n⟨‹ C-HashWhen[ok, i] ›⟩] »)« C-Text-close »,
 « C-Text-open »« C-ParsedForm-Text[#HxParsedForm#, #ModuleName, ok s p i t .%n⟨‹ C-PrintWrap[#ModuleName, s, t, p] ›⟩, ok s p i .%n⟨‹ C-HashWhen[ok, i] ›⟩] »« C-Text-close »⟧
 ]
@@ -1076,6 +1116,8 @@ C-Text-unopen :: Text ;
 C-Text-unopen → %n⟪†«"\u2039"»⟫ ;
 C-Text-unclose :: Text ;
 C-Text-unclose → %n⟪†«"\u203a"»⟫ ;
+
+C-Text-dagger → %n⟪†«"\u2020"»⟫ ;
 
 // Helper to create scope pattern fragment.
 
@@ -1094,7 +1136,7 @@ C-ParsedForm-Text[HxParsedForm, $String, ok :: Ok s :: $String<!--Sort--> p :: $
 C-ParsedForm-Text[#ParsedForm, #ModuleName, ok s p i t.#1[ok,s,p,i,t], ok s p i.#2[ok,s,p,i]] → C-ParsedForm-TextFrom[#ParsedForm, #ModuleName, ok s p i t.#1[ok,s,p,i,t], ok s p i.#2[ok,s,p,i], 1] ;
 
 C-ParsedForm-TextFrom[HxParsedForm, $String, ok :: Ok s :: $String<!--Sort--> p :: $Numeric i :: $Numeric t :: Text . Text, ok :: Ok s :: $String<!--Sort--> p :: $Numeric i :: $Numeric . Text, $Numeric] :: Text;
-C-ParsedForm-TextFrom[Hx_ParsedFormSpace[#ConcreteSpace, #HxPP], #ModuleName, ok s p i t.#1[ok,s,p,i,t], ok s p i.#2[ok,s,p,i], #i] → %n⟪ « C-ParsedForm-TextFrom[#HxPP, #ModuleName, ok s p i t.#1[ok,s,p,i,t], ok s p i.#2[ok,s,p,i], #i] »⟫ ;
+C-ParsedForm-TextFrom[Hx_ParsedFormSpace[#ConcreteSpace, #HxPP], #ModuleName, ok s p i t.#1[ok,s,p,i,t], ok s p i.#2[ok,s,p,i], #i] → %n⟪†«$[Replace,#ConcreteSpace,"¶","\n"]»« C-ParsedForm-TextFrom[#HxPP, #ModuleName, ok s p i t.#1[ok,s,p,i,t], ok s p i.#2[ok,s,p,i], #i] »⟫ ;
 C-ParsedForm-TextFrom[Hx_ParsedFormWord[#ConcreteWord, #HxPP], #ModuleName,ok s p i t.#1[ok,s,p,i,t], ok s p i.#2[ok,s,p,i], #i] → %n⟪†«#ConcreteWord»« C-ParsedForm-TextFrom[#HxPP, #ModuleName, ok s p i t.#1[ok,s,p,i,t], ok s p i.#2[ok,s,p,i], #i] »⟫ ;
 
 -[Data[#i]]: C-ParsedForm-TextFrom[Hx_ParsedFormTerm[%rawHxScopeSortPrec⟪ #HxScopeSort# #HxFormPrec# ⟫, #HxPP], #ModuleName, ok s p i t.#1[ok,s,p,i,t], ok s p i.#2[ok,s,p,i], #i]
@@ -1263,7 +1305,7 @@ C-SortMap-GetMetaApplicationSubsorts[SortMap, $String<!--MetaVariable-->] :: $Li
 C-SortMap-GetMetaApplicationSubsorts[{#SM}SM[#fvs, #mvs], #mv] → $[{#SM}Get[$List[$String]], #mv, ()] ;
 
 C-SortMap-then-GetFreeVariableSort[Ok, SortMap, HxTerm<!--Varible-->] :: $String ;
-C-SortMap-then-GetFreeVariableSort[OK, {#SM}SM[#fvs, #mvs], v] → $[{#SM}Get[$String], v, ""] ;
+C-SortMap-then-GetFreeVariableSort[OK, {#SM}SM[#fvs, #mvs], v] → $[{#SM}Get[$String], v, "$Any"] ;
 
 // Accumulate sort map over term.
 
@@ -1289,8 +1331,8 @@ C-SortMap-then-GetFreeVariableSort[OK, {#SM}SM[#fvs, #mvs], v] → $[{#SM}Get[$S
 ;
 
     C-ExtendSortMap-AddVariable[SortMap, HxTerm, $String, Boolean<!--Include?-->] :: SortMap ;
-    C-ExtendSortMap-AddVariable[#SM, #v, #Sort, B_FALSE] → #SM ;
-    -[Free[v::HxTerm]]: C-ExtendSortMap-AddVariable[{#SM}SM[#fvs, #mvs], v, #Sort, B_TRUE] → {#SM; v : #Sort}SM[(v; #fvs), #mvs] ;
+    -[Data[#Sort]]: C-ExtendSortMap-AddVariable[#SM, #v, #Sort, B_FALSE] → #SM ;
+    -[Free[v::HxTerm],Data[#Sort]]: C-ExtendSortMap-AddVariable[{#SM}SM[#fvs, #mvs], v, #Sort, B_TRUE] → {#SM; v : #Sort}SM[(v; #fvs), #mvs] ;
 
 {#DM} C-ExtendSortMap-Terms[( %rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫ ; #Terms), (#Sort; #Sorts), #SM]
 →
@@ -1328,7 +1370,8 @@ C-SortMap-then-GetFreeVariableSort[OK, {#SM}SM[#fvs, #mvs], v] → $[{#SM}Get[$S
 // Accumulate sort map over scopes.
 
 {$String<!--SortName--> : DeclarationMapEntry; HxTerm : $String} C-ExtendSortMap-Scopes[$List[HxScope], $List[HxScopeSort], SortMap] :: SortMap ;
-{#DM} C-ExtendSortMap-Scopes[#, (), #SM] → #SM ;
+{#DM} C-ExtendSortMap-Scopes[(), #notempty, #SM] → #SM ;
+{#DM} C-ExtendSortMap-Scopes[( %rawHxScope⟪ [ #HxVariableList# ] #HxTerm# ⟫ ; #Scopes ), (), #SM] → #SM ;
 {#DM} C-ExtendSortMap-Scopes[( %rawHxScope⟪ [ #HxVariableList# ] #HxTerm# ⟫ ; #Scopes ), ( #ScopeSort ; #ScopeSorts ), #SM]
 →
 {#DM} C-ExtendSortMap-Scopes[#Scopes, #ScopeSorts,
@@ -1342,7 +1385,7 @@ C-SortMap-then-GetFreeVariableSort[OK, {#SM}SM[#fvs, #mvs], v] → $[{#SM}Get[$S
     ;
     {#DM} C-ExtendSortMap-Scopes2[(x; #xs), #Term, %rawHxBindersScopeSort⟪ [ #HxSort# binds y ] #HxBindersScopeSort# ⟫, #SM]
     →
-    {#DM; x : U-SortName[#HxSort#]} C-ExtendSortMap-Scopes2[#xs, #Term, #HxBindersScopeSort#, #SM]
+    C-ExtendSortMap-AddVariable[#SM, x, U-SortName[#HxSort#], B_TRUE]
     ;
 
 // Handle meta-applications: either they define the meta-application sort arguments in SM (in pattern) or use them (in contractions).

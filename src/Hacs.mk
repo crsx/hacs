@@ -84,13 +84,13 @@ CATRESOURCE = $(if $(findstring .jar,$(HACSJAR)), $(X) $(UNZIP) -p $(HACSJAR) $(
 # %.env: the internal setup for generated compiler
 %.env : %.hxraw
 	@$(ECHO) -e 'HACS: Generating environment declarations $@...' $(OUT) && $(SH_EXTRA) \
-	&&	( if [ -x "$(LIBDIR)/MainRewriter" -a -z "$(INTERPRET)" ]; then \
-		    $(X) LD_LIBRARY_PATH='$(ICU4CDIR)' $(LIBDIR)/MainRewriter wrapper=P-PrintEnvironment input='$<' output='$@.tmp' \
+	&&	( if [ -x "$(LIBDIR)/HacsRewriter" -a -z "$(INTERPRET)" ]; then \
+		    $(X) LD_LIBRARY_PATH='$(ICU4CDIR)' $(LIBDIR)/HacsRewriter wrapper=P-PrintEnvironment input='$<' output='$@.tmp' \
 		    && $(X) mv '$@.tmp' '$@' ; \
 		  else \
 		    $(X) $(RUNCRSX) \
 			"grammar=('org.crsx.hacs.HxRaw';'net.sf.crsx.text.Text';)" \
-			rules=org/crsx/hacs/Main.crs wrapper=P-PrintEnvironment \
+			rules=org/crsx/hacs/Prep.crs wrapper=P-PrintEnvironment \
 			input='$<' \
 			output='$@.tmp' sink=net.sf.crsx.text.TextSink \
 		    && mv '$@.tmp' '$@' ; \
@@ -104,8 +104,8 @@ clean::; @rm -f  *.env
 	@$(ECHO) -e 'HACS: Generating $@...' $(OUT) && $(SH_EXTRA) \
 	&&	( $(shell $(X) cat '$*.env') \
 		&& dir=$(dir $@) && package=$${MODULE%.*} && packagedir=$$(echo $$package | tr '.' '/') \
-		&& if [ -x "$(LIBDIR)/MainRewriter" -a -z "$(INTERPRET)" ]; then \
-		     $(X) LD_LIBRARY_PATH='$(ICU4CDIR)' $(LIBDIR)/MainRewriter term=MakeRun output='$@.tmp' \
+		&& if [ -x "$(LIBDIR)/HacsRewriter" -a -z "$(INTERPRET)" ]; then \
+		     $(X) LD_LIBRARY_PATH='$(ICU4CDIR)' $(LIBDIR)/HacsRewriter term=MakeRun output='$@.tmp' \
 		   	$(shell $(X) cat '$*.env') PACKAGE="$$package" PACKAGEDIR="$$packagedir" BUILD='$(BUILD)' \
 		   	HACS$$($(call CATRESOURCE,org/crsx/hacs/VERSION)) CRSXJAR='$(CRSXJAR)' HACSJAR='$(HACSJAR)' CRSXC='$(CRSXC)' \
 		   	ICU4CINCLUDE='$(ICU4CINCLUDE)' ICU4CDIR='$(ICU4CDIR)' \
@@ -154,13 +154,13 @@ realclean::; @rm -f *.run
 # Process (pre-raw-parsed) HACS with Prep to create all files needed by Cook system.
 %.prep : %.hxraw
 	@$(ECHO) -e 'HACS: Generating parser generator base $@...' $(OUT) && $(SH_EXTRA) \
-	&&	( if [ -x "$(LIBDIR)/MainRewriter" -a -z "$(INTERPRET)" ]; then \
-		    $(X) LD_LIBRARY_PATH='$(ICU4CDIR)' $(LIBDIR)/MainRewriter wrapper=Prep input='$<' output='$@.tmp' \
+	&&	( if [ -x "$(LIBDIR)/HacsRewriter" -a -z "$(INTERPRET)" ]; then \
+		    $(X) LD_LIBRARY_PATH='$(ICU4CDIR)' $(LIBDIR)/HacsRewriter wrapper=Prep input='$<' output='$@.tmp' \
 		    && $(X) mv '$@.tmp' '$@' ; \
 		  else \
 		    $(X) $(RUNCRSX) \
 			"grammar=('org.crsx.hacs.HxRaw';'net.sf.crsx.text.Text';)" \
-			rules=org/crsx/hacs/Main.crs wrapper=Prep \
+			rules=org/crsx/hacs/Prep.crs wrapper=Prep \
 			input='$<' \
 			output='$@.tmp' sink=net.sf.crsx.text.TextSink \
 		    && $(X) mv '$@.tmp' '$@' ; \
@@ -252,8 +252,8 @@ $(BUILD)/%.class: $(BUILD)/%.java
 # Process (pre-parsed) HACS with Cook to create rewrite rules!
 %Rewriter.crs : %.hxprep
 	@$(ECHO) -e 'HACS: Generating rewriter $@...' $(OUT) && $(SH_EXTRA) \
-	&&	( if [ -x "$(LIBDIR)/MainRewriter" -a -z "$(INTERPRET)" ]; then \
-		    $(X) LD_LIBRARY_PATH='$(ICU4CDIR)' $(LIBDIR)/MainRewriter crsx-debug-steps wrapper=Cook input='$<' output='$@.tmp' \
+	&&	( if [ -x "$(LIBDIR)/HacsRewriter" -a -z "$(INTERPRET)" ]; then \
+		    $(X) LD_LIBRARY_PATH='$(ICU4CDIR)' $(LIBDIR)/HacsRewriter crsx-debug-steps wrapper=Cook input='$<' output='$@.tmp' \
 		    && $(X) $(GNUSED) 's/222222222/9/g' '$@.tmp' >'$@' ; \
 		  else \
 		    $(X) $(RUNCRSX) \

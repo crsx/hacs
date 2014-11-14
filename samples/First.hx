@@ -3,24 +3,24 @@
 module org.crsx.hacs.samples.First {
 
 
-/* 1. LEXICAL ANALYSIS. */
+/* LEXICAL ANALYSIS. */
 
 space [ \t\n] ;                                 // white space convention
 
-token Int    | ⟨Digit⟩+ ;                       // tokens
-token Float  | ⟨Int⟩ "." ⟨Int⟩ ;
-token Id     | ⟨Lower⟩+ ('_'? ⟨Int⟩)? ;
+token INT    | ⟨DIGIT⟩+ ;                       // tokens
+token FLOAT  | ⟨INT⟩ "." ⟨INT⟩ ;
+token Id     | ⟨LOWER⟩+ ('_'? ⟨INT⟩)? ;
 
-token fragment Digit  | [0-9] ;
-token fragment Lower  | [a-z] ;
+token fragment DIGIT  | [0-9] ;
+token fragment LOWER  | [a-z] ;
 
 
-/* 2. SYNTAX ANALYSIS. */
+/* SYNTAX ANALYSIS. */
 
 sort Exp   | ⟦ ⟨Exp@1⟩ + ⟨Exp@2⟩ ⟧@1            // addition
            | ⟦ ⟨Exp@2⟩ * ⟨Exp@3⟩ ⟧@2            // multiplication
-           | ⟦ ⟨Int⟩ ⟧@3                        // integer
-           | ⟦ ⟨Float⟩ ⟧@3                      // floating point number
+           | ⟦ ⟨INT⟩ ⟧@3                        // integer
+           | ⟦ ⟨FLOAT⟩ ⟧@3                      // floating point number
            | ⟦ ⟨Name⟩ ⟧@3                       // assigned value
            | sugar ⟦ (⟨Exp#⟩) ⟧@3 → #           // parenthesis
            ;
@@ -50,8 +50,8 @@ sort Exp | ↑t;
 
 ⟦ (⟨Exp#1 ↑t(#t1)⟩ + ⟨Exp#2 ↑t(#t2)⟩) ⟧ ↑t(Unif(#t1,#t2));
 ⟦ (⟨Exp#1 ↑t(#t1)⟩ * ⟨Exp#2 ↑t(#t2)⟩) ⟧ ↑t(Unif(#t1,#t2));
-⟦ ⟨Int#⟩ ⟧ ↑t(Int);
-⟦ ⟨Float#⟩ ⟧ ↑t(Float);
+⟦ ⟨INT#⟩ ⟧ ↑t(Int);
+⟦ ⟨FLOAT#⟩ ⟧ ↑t(Float);
 
 attribute ↓e{Name:Type};  // inherited type environment
 
@@ -76,15 +76,15 @@ sort Exp | scheme ⟦ TA ⟨Exp⟩ ⟧ ↓e ;
 ⟦ TA id ⟧ ↓e{⟦id⟧ : #t} → ⟦ id ⟧ ↑t(#t);
 ⟦ TA id ⟧ ↓e{¬⟦id⟧} → error⟦Undefined identifier ⟨id⟩⟧;
 
-⟦ TA ⟨Int#⟩ ⟧ → ⟦ ⟨Int#⟩ ⟧;
-⟦ TA ⟨Float#⟩ ⟧ → ⟦ ⟨Float#⟩ ⟧;
+⟦ TA ⟨INT#⟩ ⟧ → ⟦ ⟨INT#⟩ ⟧;
+⟦ TA ⟨FLOAT#⟩ ⟧ → ⟦ ⟨FLOAT#⟩ ⟧;
 ⟦ TA (⟨Exp#1⟩ + ⟨Exp#2⟩) ⟧ → ⟦ (TA ⟨Exp#1⟩) + (TA ⟨Exp#2⟩) ⟧;
 ⟦ TA (⟨Exp#1⟩ * ⟨Exp#2⟩) ⟧ → ⟦ (TA ⟨Exp#1⟩) * (TA ⟨Exp#2⟩) ⟧;
 
 
 /* 5. INTERMEDIATE CODE GENERATION. */
 
-token T | T ('_' ⟨Int⟩)? ; // temporary
+token T | T ('_' ⟨INT⟩)? ; // temporary
 
 // Concrete syntax & abstract syntax sorts.
 
@@ -97,8 +97,8 @@ sort I_Instr | ⟦⟨Tmp⟩ = ⟨I_Arg⟩ + ⟨I_Arg⟩;¶⟧
 	     ;
 
 sort I_Arg | ⟦⟨Name⟩⟧
-     	   | ⟦⟨Float⟩⟧
-     	   | ⟦⟨Int⟩⟧
+     	   | ⟦⟨FLOAT⟩⟧
+     	   | ⟦⟨INT⟩⟧
 	   | ⟦⟨Tmp⟩⟧
 	   ;
 
@@ -117,8 +117,8 @@ sort I_Progr ;
 
 | scheme ⟦ ICGExp ⟨Tmp⟩ ⟨Exp⟩ ⟧ ;
 
-⟦ ICGExp T ⟨Int#1⟩ ⟧ → ⟦ T = ⟨Int#1⟩; ⟧ ;
-⟦ ICGExp T ⟨Float#1⟩ ⟧ → ⟦ T = ⟨Float#1⟩; ⟧ ;
+⟦ ICGExp T ⟨INT#1⟩ ⟧ → ⟦ T = ⟨INT#1⟩; ⟧ ;
+⟦ ICGExp T ⟨FLOAT#1⟩ ⟧ → ⟦ T = ⟨FLOAT#1⟩; ⟧ ;
 ⟦ ICGExp T id ⟧ → ⟦ T = id; ⟧ ;
 
 ⟦ ICGExp T ⟨Exp#1⟩ + ⟨Exp#2⟩ ⟧
@@ -145,7 +145,7 @@ sort A_Instr | ⟦ LDF ⟨Tmp⟩, ⟨A_Arg⟩¶⟧
      	     | ⟦ MULF ⟨A_Arg⟩, ⟨A_Arg⟩, ⟨A_Arg⟩¶⟧
 	     ;
 
-sort A_Arg | ⟦ #⟨Float⟩ ⟧ | ⟦ #⟨Int⟩ ⟧ | ⟦ ⟨Name⟩ ⟧ | ⟦ ⟨Tmp⟩ ⟧ ;
+sort A_Arg | ⟦ #⟨FLOAT⟩ ⟧ | ⟦ #⟨INT⟩ ⟧ | ⟦ ⟨Name⟩ ⟧ | ⟦ ⟨Tmp⟩ ⟧ ;
 
 // Schemes.
 
@@ -170,8 +170,8 @@ sort A_Arg ;
 | scheme ⟦ [⟨I_Arg⟩] ⟧ ;
 ⟦ [T] ⟧ → ⟦ T ⟧ ;
 ⟦ [name] ⟧ → ⟦ name ⟧ ;
-⟦ [⟨Float#1⟩] ⟧ → ⟦ #⟨Float#1⟩ ⟧ ;
-⟦ [⟨Int#1⟩] ⟧ → ⟦ #⟨Int#1⟩ ⟧ ;
+⟦ [⟨FLOAT#1⟩] ⟧ → ⟦ #⟨FLOAT#1⟩ ⟧ ;
+⟦ [⟨INT#1⟩] ⟧ → ⟦ #⟨INT#1⟩ ⟧ ;
 
 
 /* 7. MAIN. */

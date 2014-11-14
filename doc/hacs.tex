@@ -215,13 +215,13 @@ variation of \emph{regular expressions} for this.
 space [ \t\n] ;
 
 // Basic nonterminals.
-token INT      | ⟨Digit⟩+ ;
-token FLOAT    | ⟨Digit⟩* "." ⟨Digit⟩+ ;
-token ID       | ⟨Lower⟩+ ('_'? ⟨INT⟩)? ;
+token INT      | ⟨DIGIT⟩+ ;
+token FLOAT    | ⟨DIGIT⟩* "." ⟨DIGIT⟩+ ;
+token ID       | ⟨LOWER⟩+ ('_'? ⟨INT⟩)? ;
 
 // Special categories of letters.
-token fragment Digit  | [0-9] ;
-token fragment Lower  | [a-z] ;
+token fragment DIGIT  | [0-9] ;
+token fragment LOWER  | [a-z] ;
 \end{hacs}
   %%
   The example illustrates the following particulars of \HAX lexical expressions:
@@ -268,20 +268,12 @@ the next section.
     we shall introduce as we need them.}  Execution proceeds by parsing the string following
   the syntax of the token. We can, for example, check the lexical analysis of a number:\TBD{RERUN!}
 \begin{code}[commandchars=\\\{\}]
-$ \textcolor{blue}{./First.run --sort=Float --term=34.56}
+$ \textcolor{blue}{./First.run --sort=FLOAT --term=34.56}
 34.56
 \end{code}
   If there is an error, the lexical analyzer will inform us of this:\TBD{RERUN!}
 \begin{code}[commandchars=^\{\}]
-$ ^textcolor{blue}{./First.run --sort=Int --term=34.56}
-Exception in thread "main" java.lang.RuntimeException: net.sf.crsx.CRSException:
-net.sf.crsx.parser.ParseException:
- Parse error in embedded firstInt term at line 1, column 27: ⟦ 34.56 ⟧ ...
- Encountered " <T_T_M_FLOAT> "34.56 "" at line 1, column 29.
-Was expecting one of:
-    <T_meta1_T_M_INT> ...
-    "\u27e9" ...
-    <T_T_M_INT> ...
+$ ^textcolor{blue}{./First.run --sort=INT --term=34.56}
 \end{code}
   (where the trail of Java exceptions has been truncated: the important information is in the first
   few lines).
@@ -306,8 +298,8 @@ concrete syntax details managed through annotations and ``syntactic sugar'' decl
   %%
 \begin{hacs}[xleftmargin=\parindent,xrightmargin=\parindent,numbers=right]
 // Main program construct.
-main sort Stat  | ⟦ ⟨Name⟩ := ⟨Exp⟩ ; ⟨Stats⟩ ⟧
-                | ⟦ { ⟨Stats⟩ } ⟨Stats⟩ ⟧
+main sort Stat  | ⟦ ⟨Name⟩ := ⟨Exp⟩ ; ⟨Stat⟩ ⟧
+                | ⟦ { ⟨Stat⟩ } ⟨Stat⟩ ⟧
                 | ⟦⟧ ;
 
 sort Exp  | ⟦ ⟨Exp⟩ + ⟨Exp@1⟩ ⟧
@@ -515,8 +507,8 @@ Leftmost(⟦⟨Name#⟩⟧)  →  ⟦⟨Name#⟩⟧ ;
 \end{example}
 
 \begin{commands}[invoke scheme]
-  We can invoke the "Leftmost" scheme from the command line, since it operates on a syntactic
-  expression. 
+  The "Leftmost" scheme above is also included in \emph{First.hx}.  Since it operates on a syntactic
+  expression, we can invoke the "Leftmost" scheme from the command line as follows:
 
   \TBD{Do!}
 
@@ -531,7 +523,7 @@ Leftmost(⟦⟨Name#⟩⟧)  →  ⟦⟨Name#⟩⟧ ;
 sort A_Progr | scheme Compile(Stat);
 Compile(#stat) → ⟦ CG ICG TA ⟨Stat#1⟩ ⟧ ;
 \end{hacs}
-  (You will see later what the contraction here means.)  This is the reason for the
+  (You will see later what the right side of the "→" here means.)  This is the reason for the
   \verb|--scheme=Compile| option we invoked back in the getting started section.  Such wrapper raw
   schemes must have a single argument.
 \end{example}
@@ -602,8 +594,8 @@ to express it directly in \HAX as follows.
   This is read ``When considering an "E" (the current sort) which has the shape
   $⟦⟨E⟩+⟨E⟩⟧$ where furthermore the first expression has a value matching "#t1" for the
   synthesized attribute "t", and the second expression has a value matching "#t2" for the
-  synthesized attribute "t", then the entire expression has the value "Unif(#t1,#t2)" for the
-  synthesized attribute "t".''
+  synthesized attribute "t", then the entire expression should be assigned the value "Unif(#t1,#t2)"
+  for the synthesized attribute "t".''
 
 \end{enumerate}
 
@@ -655,6 +647,10 @@ sort Exp | ↑t ;           // expressions have an associated synthesized type, 
   should be, based on the values passed ``up'' from the subexpressions; these are generated
   mechanically as discussed above from the synthesis semantic rules.
 \end{example}
+
+Finally, note that if you have multiple synthetic attributes then a synthesis rule \emph{only} adds
+one new attribute to program construct in question, it does not remove any other atributes already
+set for it.
 
 
 \section{Full Syntax-Directed Definitions}
@@ -759,7 +755,7 @@ the steps to follow to translate the inheritance to \HAX.
   The first propagates into statements in the same way as for \thetag{2}, except only into the first
   subterm, and \emph{chains to the next stage}:
 \begin{hacs}
-   SeA(⟦name := ⟨E#2⟩; ⟨S#3⟩⟧)  →    SeB(⟦name := ⟨E Ee(#2)⟩; ⟨S#3⟩⟧) ;
+   SeA(⟦x := ⟨E#2⟩; ⟨S#3⟩⟧)  →    SeB(⟦x := ⟨E Ee(#2)⟩; ⟨S#3⟩⟧) ;
 \end{hacs}
   Notice how we invoke the "Ee" scheme to pass $E_2.e$ (the system understands that $S.e$ and
   $E_2.e$ refer to the same attribute), and how we do \emph{not} wrap "#3" in anything as nothing
@@ -850,7 +846,7 @@ sort Stat | scheme SeA(Stat) ↓e ;  // propagates e over Stat
 SeA(⟦id := ⟨Exp#1⟩; ⟨Stat#2⟩⟧) → SeB(⟦id := ⟨Exp Ee(#1)⟩; ⟨Stat#2⟩⟧);
 {
   | scheme SeB(Stat) ↓e;  // helper scheme for assignment after expression typeanalysis
-  SeB(⟦id := ⟨Exp#1 ↑t(#t1)⟩; ⟨Stat#2⟩ ⟧) → ⟦id := ⟨Exp#1⟩; ⟨Stat SeA(#2)⟩⟧ ↓e{⟦id⟧:#t1} ;
+  SeB(⟦id := ⟨Exp#1 ↑t(#t1)⟩; ⟨Stat#2⟩ ⟧ ↑#syn) → ⟦id := ⟨Exp#1⟩; ⟨Stat SeA(#2) ↓e{⟦id⟧:#t1}⟩⟧ ↑#syn  ;
 }
 
 SeA (⟦ { ⟨Stat#1⟩ } ⟨Stat#2⟩ ⟧) → ⟦ { ⟨Stat SeA(#1)⟩ } ⟨Stat SeA(#2)⟩ ⟧;
@@ -894,8 +890,6 @@ After the analysis we are ready for generating code.
 
 \begin{figure}[p]\small
 \begin{hacs}[numbers=right]
-/* 6. INTERMEDIATE CODE GENERATION. */
-
 token T | T ('_' ⟨INT⟩)? ; // temporary
 
 // Concrete syntax & abstract syntax sorts.
@@ -1436,8 +1430,12 @@ mycompiler.crs: Parse error in embedded myDecSome term at line 867, column 42:
 \begin{code}
 Java Compiler Compiler Version ??.??_?? (Parser Generator)
 (type "javacc" with no arguments for help)
-Reading from file net/sf/crsx/samples/gentle/FirstParser.jj . . .
-Warning: Line 769, Column 51: Non-ASCII characters used in regular expression.
+Reading from file FirstHx.jj . . .
+Warning: Choice conflict involving two expansions at
+         line 3030, column 34 and line 3033, column 8 respectively.
+         A common prefix is: "{" <T_HX_VAR>
+         Consider using a lookahead of 3 or more for earlier expansion.
+Warning: Line 4680, Column 18: Non-ASCII characters used in regular expression.
 Please make sure you use the correct Reader when you create the parser,
  one that can handle your character set.
 File "TokenMgrError.java" does not exist.  Will create one.

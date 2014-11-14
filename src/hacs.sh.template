@@ -41,10 +41,9 @@ for arg; do
     case "$arg" in
 	-k|--keep) keep=true ;;
 	--goal=*) goal=${arg#*=} ;;
-	-v|--verbose) tee='|& tee -a ' ;;
-	--verbose=*) tee='|& tee -a ' extra="$extra ${arg#--}" ;;
+	-e|--echo) tee='|& tee -a ' ;;
 	-q|--quiet) quiet=true ;;
-	--interpret) interpret=true ;;
+	-i|--interpret) interpret=true ;;
 	--*) extra="$extra ${arg#--}" ;;
 	*) file=$arg ;;
     esac

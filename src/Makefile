@@ -8,7 +8,7 @@
 #
 # Environment variables:
 # - DESTDIR - root of installation (empty by default)
-# - prefix - prefix of installation (/usr/local by default).
+# - prefix - prefix of installation ($HOME/.hacs by default).
 #
 # - CRSXJAR - full path to CRSX jar (at least version 3.2).
 # - JAVACCJAR - full path to JavaCC jar (at least version 5.0).
@@ -59,7 +59,7 @@ include Hacs.mk
 realclean ::; rm -fr $(BUILD)
 
 # Install setup.
-prefix = /usr/local
+prefix = $$HOME/.hacs
 LIBDIR = $(prefix)/lib/hacs
 BINDIR = $(prefix)/bin
 DOCDIR = $(prefix)/share/doc/hacs
@@ -105,7 +105,7 @@ RULES = \
 	org/crsx/hacs/Util.crs \
 	org/crsx/hacs/Prep.crs \
 	org/crsx/hacs/Cook.crs \
-	org/crsx/hacs/Main.crs \
+	org/crsx/hacs/Hacs.crs \
 	org/crsx/hacs/HxRaw.crs \
 	org/crsx/hacs/MakeRun.crs \
 	org/crsx/hacs/Hx.pgnames \
@@ -221,21 +221,21 @@ $(BUILD)/org/crsx/hacs/HxRaw.class: $(BUILD)/org/crsx/hacs/HxRaw.java
 
 # HACS main rewriter.
 
-all-full :: $(BUILD)/lib/hacs/MainRewriter
+all-full :: $(BUILD)/lib/hacs/HacsRewriter
 install ::
 	@mkdir -p $(DESTDIR)$(LIBDIR)
-	cp -a $(BUILD)/lib/hacs/MainRewriter $(DESTDIR)$(LIBDIR)
+	cp -a $(BUILD)/lib/hacs/HacsRewriter $(DESTDIR)$(LIBDIR)
 
-$(BUILD)/lib/hacs/MainRewriter : $(BUILD)/org/crsx/hacs/MainRewriter
+$(BUILD)/lib/hacs/HacsRewriter : $(BUILD)/org/crsx/hacs/HacsRewriter
 	@mkdir -p $(BUILD)/lib/hacs
-	cp $(BUILD)/org/crsx/hacs/MainRewriter $(BUILD)/lib/hacs
+	cp $(BUILD)/org/crsx/hacs/HacsRewriter $(BUILD)/lib/hacs
 
-$(BUILD)/org/crsx/hacs/MainRewriter: $(addprefix $(BUILD)/org/crsx/hacs/Main, .o _sorts.o _rules.o _symbols.o) $(addprefix $(BUILD)/org/crsx/hacs/, crsx.o crsx_scan.o linter.o prof.o)
+$(BUILD)/org/crsx/hacs/HacsRewriter: $(addprefix $(BUILD)/org/crsx/hacs/Hacs, .o _sorts.o _rules.o _symbols.o) $(addprefix $(BUILD)/org/crsx/hacs/, crsx.o crsx_scan.o linter.o prof.o)
 
-$(BUILD)/org/crsx/hacs/Main.o: $(BUILD)/org/crsx/hacs/Main.c $(BUILD)/org/crsx/hacs/Main.h $(BUILD)/share/hacs/crsx.h $(BUILD)/share/hacs/linter.h
-$(BUILD)/org/crsx/hacs/Main_sorts.o: $(BUILD)/org/crsx/hacs/Main_sorts.c $(BUILD)/org/crsx/hacs/Main.h $(BUILD)/share/hacs/crsx.h
-$(BUILD)/org/crsx/hacs/Main_rules.o: $(BUILD)/org/crsx/hacs/Main_rules.c $(BUILD)/org/crsx/hacs/Main.h $(BUILD)/share/hacs/crsx.h
-$(BUILD)/org/crsx/hacs/Main_symbols.o: $(BUILD)/org/crsx/hacs/Main_symbols.c $(BUILD)/org/crsx/hacs/Main.h $(BUILD)/share/hacs/crsx.h
+$(BUILD)/org/crsx/hacs/Hacs.o: $(BUILD)/org/crsx/hacs/Hacs.c $(BUILD)/org/crsx/hacs/Hacs.h $(BUILD)/share/hacs/crsx.h $(BUILD)/share/hacs/linter.h
+$(BUILD)/org/crsx/hacs/Hacs_sorts.o: $(BUILD)/org/crsx/hacs/Hacs_sorts.c $(BUILD)/org/crsx/hacs/Hacs.h $(BUILD)/share/hacs/crsx.h
+$(BUILD)/org/crsx/hacs/Hacs_rules.o: $(BUILD)/org/crsx/hacs/Hacs_rules.c $(BUILD)/org/crsx/hacs/Hacs.h $(BUILD)/share/hacs/crsx.h
+$(BUILD)/org/crsx/hacs/Hacs_symbols.o: $(BUILD)/org/crsx/hacs/Hacs_symbols.c $(BUILD)/org/crsx/hacs/Hacs.h $(BUILD)/share/hacs/crsx.h
 
 $(BUILD)/org/crsx/hacs/crsx.o : $(BUILD)/org/crsx/hacs/crsx.c $(BUILD)/share/hacs/crsx.h $(BUILD)/share/hacs/prof.h $(BUILD)/share/hacs/invariant.h
 $(BUILD)/org/crsx/hacs/crsx_scan.o : $(BUILD)/org/crsx/hacs/crsx_scan.c $(BUILD)/share/hacs/crsx.h
@@ -244,17 +244,17 @@ $(BUILD)/org/crsx/hacs/prof.o : $(BUILD)/org/crsx/hacs/prof.c $(BUILD)/share/hac
 
 ifndef FROMZIP
 
-$(BUILD)/org/crsx/hacs/Main.h: $(BUILD)/org/crsx/hacs/Main.dr.gz
-$(BUILD)/org/crsx/hacs/Main_sorts.c: $(BUILD)/org/crsx/hacs/Main.dr.gz
-$(BUILD)/org/crsx/hacs/Main_rules.c: $(BUILD)/org/crsx/hacs/Main.dr.gz
-$(BUILD)/org/crsx/hacs/Main_symbols.c: $(BUILD)/org/crsx/hacs/Main.dr.gz
+$(BUILD)/org/crsx/hacs/Hacs.h: $(BUILD)/org/crsx/hacs/Hacs.dr.gz
+$(BUILD)/org/crsx/hacs/Hacs_sorts.c: $(BUILD)/org/crsx/hacs/Hacs.dr.gz
+$(BUILD)/org/crsx/hacs/Hacs_rules.c: $(BUILD)/org/crsx/hacs/Hacs.dr.gz
+$(BUILD)/org/crsx/hacs/Hacs_symbols.c: $(BUILD)/org/crsx/hacs/Hacs.dr.gz
 
-$(BUILD)/org/crsx/hacs/Main.c: crsx-rulecompiler/net/sf/crsx/compiler/c/main.c
-	cp crsx-rulecompiler/net/sf/crsx/compiler/c/main.c $(BUILD)/org/crsx/hacs/Main.c
+$(BUILD)/org/crsx/hacs/Hacs.c: crsx-rulecompiler/net/sf/crsx/compiler/c/main.c
+	cp crsx-rulecompiler/net/sf/crsx/compiler/c/main.c $(BUILD)/org/crsx/hacs/Hacs.c
 
-$(BUILD)/org/crsx/hacs/Main.dr.gz: $(BUILD)/org/crsx/hacs/Main.crs $(BUILD)/lib/hacs/crsxc
+$(BUILD)/org/crsx/hacs/Hacs.dr.gz: $(BUILD)/org/crsx/hacs/Hacs.crs $(BUILD)/lib/hacs/crsxc
 
-all-debug :: $(BUILD)/org/crsx/hacs/Main.crsd
+all-debug :: $(BUILD)/org/crsx/hacs/Hacs.crsd
 
 endif
 

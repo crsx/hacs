@@ -213,11 +213,20 @@ U-then-ExtendDeclarationMap[OK, #DM, #Key, #Entry, dm¹.#[dm¹]] → U-ExtendDec
 {$String<!--Name--> : DeclarationMapEntry} U-IsFunction[$String<!--Name-->] :: Boolean ;
 {"All$Function2Inherited" : DME_N2NM[#S2S]} U-IsFunction[#Name] → CheckName2[#S2S, #Name] ;
 
+{$String<!--Name--> : DeclarationMapEntry} U-IsInheritedAttribute[$String<!--Name-->] :: Boolean ;
+{#DM; "All$InheritedNames" : DME_NAMES[#Names]} U-IsInheritedAttribute[#Name] → ContainsName[#Names, #Name] ;
+
+{$String<!--Name--> : DeclarationMapEntry} U-IsSynthesizedAttribute[$String<!--Name-->] :: Boolean ;
+{#DM; "All$SynthesizedNames" : DME_NAMES[#Names]} U-IsSynthesizedAttribute[#Name] → ContainsName[#Names, #Name] ;
+
 {$String<!--Name--> : DeclarationMapEntry} U-IsInheritedMapAttribute[$String<!--Name-->] :: Boolean ;
-{#DM; "All$Function2Inherited" : DME_N2NM[#S2S]} U-IsInheritedMapAttribute[#Name] → ContainsName[{#DM}U-AllInheritedMapNames, #Name] ;
+{#DM} U-IsInheritedMapAttribute[#Name] → ContainsName[{#DM}U-AllInheritedMapNames, #Name] ;
 
 {$String<!--Name--> : DeclarationMapEntry} U-IsSynthesizedMapAttribute[$String<!--Name-->] :: Boolean ;
-{#DM; "All$Function2Inherited" : DME_N2NM[#S2S]} U-IsInheritedMapAttribute[#Name] → ContainsName[{#DM}U-AllSynthesizedMapNames, #Name] ;
+{#DM} U-IsSynthesizedMapAttribute[#Name] → ContainsName[{#DM}U-AllSynthesizedMapNames, #Name] ;
+
+{$String<!--Name--> : DeclarationMapEntry} U-IsMapAttribute[$String<!--Name-->] :: Boolean ;
+{#DM} U-IsMapAttribute[#Name] → Or[ContainsName[{#DM}U-AllSynthesizedMapNames, #Name], ContainsName[{#DM}U-AllInheritedMapNames, #Name]] ;
 
 {$String : DeclarationMapEntry} U-then-SortHasUserHx[Ok, $String<!--SortName-->] :: Boolean ;
 {"All$Sort2UserConstructors" : DME_N2NM[#S2UC]} U-then-SortHasUserHx[OK, #Sort] → HasNames[LookupName2Names[#S2UC, #Sort]] ;
@@ -1225,9 +1234,12 @@ U-ParsedFormTag[#ParsedForm] → U-ParsedFormTag1[#ParsedForm, ""] ;
 
     U-ParsedFormTag1[HxParsedForm, $String<!--Accum-->] :: $String;
     U-ParsedFormTag1[Hx_ParsedFormSpace[#ConcreteSpace, #HxPP], #accum] → U-ParsedFormTag1[#HxPP, #accum] ;
-    U-ParsedFormTag1[Hx_ParsedFormWord[#ConcreteWord, #HxPP], #accum] → U-ParsedFormTag1[#HxPP, StringConcat[#accum, $[Replace,$[Replace,$[Replace,#ConcreteWord,"\"","\\\""],"\'","\\\'"],"$","USD"]]] ;
+    U-ParsedFormTag1[Hx_ParsedFormWord[#ConcreteWord, #HxPP], #accum] → U-ParsedFormTag1[#HxPP, StringConcat[#accum, U-ParsedFormWordTag[#ConcreteWord]]] ;
     U-ParsedFormTag1[Hx_ParsedFormTerm[#ScopeSortPrec, #HxPP], #accum] → U-ParsedFormTag1[#HxPP, StringJoin[(#accum; "_"; U-ScopeSortPrecTopSort[#ScopeSortPrec]; "_";), ""]] ;
-    -[Data[#accum]] : U-ParsedFormTag1[Hx_ParsedFormDone, #accum] → $[IfEmpty,#accum,"EMPTY",#accum] ;
+    -[Data[#accum]] : U-ParsedFormTag1[Hx_ParsedFormDone, #accum] → #accum ;
+
+U-ParsedFormWordTag[$String] :: $String ;
+U-ParsedFormWordTag[#ConcreteWord] → $[Replace,$[Replace,$[Replace,#ConcreteWord,"\"","\\\""],"\'","\\\'"],"$","USD"] ;
 
 U-ScopeSortPrecTopSort[HxScopeSortPrec] :: $String;
 -[Free[x::HxTerm]]: U-ScopeSortPrecTopSort[%rawHxScopeSortPrec⟪ #HxScopeSort# binds x ⟫] → U-ScopeSortTopSort[#HxScopeSort#] ;
