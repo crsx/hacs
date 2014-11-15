@@ -1,8 +1,7 @@
 # Main -*-Makefile-*- for Building HACS distribution.
 
-.PHONY: all all-full all-debug install install-support clean realclean gitclean
+.PHONY: all all-debug install install-support clean realclean gitclean
 all ::
-all-full ::
 all-debug ::
 install ::
 install-support ::
@@ -16,7 +15,7 @@ all install clean realclean gitclean ::
 	$(MAKE) -C src $@
 	$(MAKE) -C doc -I $(abspath src) $@
 
-all-full all-debug install-support ::
+all-debug install-support ::
 	$(MAKE) -C src $@
 
 src/% :
@@ -33,7 +32,6 @@ doc/% :
 $(eval HACSMAJOR$(basename $(shell cat VERSION)))
 
 hacs.zip : all
-	$(MAKE) -C src all-full
 	$(MAKE) $(shell cat ziplist)
 	$(MAKE) clean
 	rm -f *.zip

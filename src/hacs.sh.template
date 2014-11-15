@@ -21,16 +21,16 @@ else
     sharejava="%%%SHAREJAVA%%%"
 fi
 # environment overrides...
-bindir=$(realpath "${BINDIR:-$bindir}")
-libdir=$(realpath "${LIBDIR:-$libdir}")
-docdir=$(realpath "${DOCDIR:-$docdir}")
-sharedir=$(realpath "${SHAREDIR:-$sharedir}")
-sharejava=$(realpath "${SHAREJAVA:-$sharejava}")
-icu4cinclude=$(realpath "${ICU4CINCLUDE:-%%%ICU4CINCLUDE%%%}")
-icu4cdir=$(realpath "${ICU4CDIR:-%%%ICU4CDIR%%%}")
+bindir=$(readlink -f "${BINDIR:-$bindir}")
+libdir=$(readlink -f "${LIBDIR:-$libdir}")
+docdir=$(readlink -f "${DOCDIR:-$docdir}")
+sharedir=$(readlink -f "${SHAREDIR:-$sharedir}")
+sharejava=$(readlink -f "${SHAREJAVA:-$sharejava}")
+icu4cinclude=$(readlink -f "${ICU4CINCLUDE:-%%%ICU4CINCLUDE%%%}")
+icu4cdir=$(readlink -f "${ICU4CDIR:-%%%ICU4CDIR%%%}")
 
 # Options.
-build=$(realpath build)
+build=$(readlink -f build)
 extra=""
 tee='&>>'
 keep=false

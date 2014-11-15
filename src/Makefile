@@ -20,9 +20,8 @@
 
 # STANDARD TARGETS.
 
-.PHONY: all all-full install install-support clean realclean gitclean
+.PHONY: all install install-support clean realclean gitclean
 all ::
-all-full ::
 install ::
 install-support ::
 clean ::; rm -f *.tmp *~ ./#* *.log *~
@@ -80,6 +79,7 @@ $(CRSXJAR) :
 clean ::; rm -f crsx*.jar
 
 # The JavaCC utility.
+all :: $(JAVACCJAR)
 $(JAVACCJAR) :
 	rm -fr javacc*
 	wget "https://java.net/projects/javacc/downloads/download/$(basename $(notdir $(JAVACCJAR))).zip"
@@ -90,6 +90,7 @@ $(JAVACCJAR) :
 clean ::; rm -fr javacc*
 
 # The ICU4C libraries (dependency uses one arbitrary library file).
+all :: $(ICU4CDIR)/libicudata.so
 $(ICU4CDIR)/libicudata.so :
 	rm -fr usr ../lib/icu4c
 	wget "http://download.icu-project.org/files/icu4c/54.1/icu4c-54_1-RHEL6-x64.tgz"
@@ -179,7 +180,7 @@ CRSXC_H = crsx.h invariant.h linter.h prof.h
 CRSXC_C = crsx.c crsx_scan.l invariant.c linter.c prof.c
 CRSXC_O = crsx.o crsx_scan.o linter.o prof.o
 
-all-full :: $(BUILD)/lib/hacs/crsxc $(addprefix $(BUILD)/share/hacs/,$(CRSXC_H))
+all :: $(BUILD)/lib/hacs/crsxc $(addprefix $(BUILD)/share/hacs/,$(CRSXC_H))
 install ::
 	@mkdir -p $(DESTDIR)$(LIBDIR) $(DESTDIR)$(SHAREDIR)
 	cp -a $(BUILD)/lib/hacs/crsxc $(DESTDIR)$(LIBDIR)
@@ -221,7 +222,7 @@ $(BUILD)/org/crsx/hacs/HxRaw.class: $(BUILD)/org/crsx/hacs/HxRaw.java
 
 # HACS main rewriter.
 
-all-full :: $(BUILD)/lib/hacs/HacsRewriter
+all :: $(BUILD)/lib/hacs/HacsRewriter
 install ::
 	@mkdir -p $(DESTDIR)$(LIBDIR)
 	cp -a $(BUILD)/lib/hacs/HacsRewriter $(DESTDIR)$(LIBDIR)
@@ -287,7 +288,7 @@ $(BUILD)/bin/hacs: hacs.sh.template
 # HACS documents.
 
 DOCUMENTS = README.md
-SAMPLES = samples/First.hx
+SAMPLES = samples/First.hx samples/Bool.hx samples/First.hx
 
 all :: $(addprefix $(BUILD)/share/doc/hacs/,$(notdir $(DOCUMENTS))) $(addprefix $(BUILD)/share/doc/hacs/examples/,$(notdir $(SAMPLES)))
 

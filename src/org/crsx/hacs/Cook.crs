@@ -502,10 +502,10 @@ C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllN
     If[HasNames[#Needy],
       // Rewrite rule to first satisfy synthetic need.
       (
-        D_FORM[%rawHxForm⟪ %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Delayed_", U-Local[#HxConstructor#]]] » ( %HxSortName« #SortName » ) ⟫,
+        D_FORM[%rawHxForm⟪ %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Delayed_", U-Local[#HxConstructor#]]] » ( %HxSortName« #SortName » ) %HxInheritedRefs« NameSetList[{#DM} U-GetFunctionInherited[#HxConstructor#]] » ⟫,
           FK_SCHEME[U-QN[#ModuleName, #SortName, StringConcat["Delayed_", U-Local[#HxConstructor#]]]]];
         D_RULE[{#L}%rawHxRule⟪
-	  #HxConstructor# ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, #Needy, NoNames, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}C-GetConstructorScopeSorts[#HxConstructor#]] » ) #HxAttributes#
+	  #HxConstructor# ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, #Needy, NoNames, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}C-GetConstructorScopeSorts[#HxConstructor#]] » )
 	  →
 	  %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Delayed_", U-Local[#HxConstructor#]]] » ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, NoNames, #Needy, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}C-GetConstructorScopeSorts[#HxConstructor#]] » ) #HxAttributes#
 	⟫, #SortName, B_FALSE];
@@ -1117,7 +1117,10 @@ C-Text-unopen → %n⟪†«"\u2039"»⟫ ;
 C-Text-unclose :: Text ;
 C-Text-unclose → %n⟪†«"\u203a"»⟫ ;
 
+C-Text-dagger :: Text ;
 C-Text-dagger → %n⟪†«"\u2020"»⟫ ;
+C-Text-newline :: Text ;
+C-Text-newline → %n⟪†«"\u21b2"»⟫ ;
 
 // Helper to create scope pattern fragment.
 
@@ -1136,7 +1139,7 @@ C-ParsedForm-Text[HxParsedForm, $String, ok :: Ok s :: $String<!--Sort--> p :: $
 C-ParsedForm-Text[#ParsedForm, #ModuleName, ok s p i t.#1[ok,s,p,i,t], ok s p i.#2[ok,s,p,i]] → C-ParsedForm-TextFrom[#ParsedForm, #ModuleName, ok s p i t.#1[ok,s,p,i,t], ok s p i.#2[ok,s,p,i], 1] ;
 
 C-ParsedForm-TextFrom[HxParsedForm, $String, ok :: Ok s :: $String<!--Sort--> p :: $Numeric i :: $Numeric t :: Text . Text, ok :: Ok s :: $String<!--Sort--> p :: $Numeric i :: $Numeric . Text, $Numeric] :: Text;
-C-ParsedForm-TextFrom[Hx_ParsedFormSpace[#ConcreteSpace, #HxPP], #ModuleName, ok s p i t.#1[ok,s,p,i,t], ok s p i.#2[ok,s,p,i], #i] → %n⟪†«$[Replace,#ConcreteSpace,"¶","\n"]»« C-ParsedForm-TextFrom[#HxPP, #ModuleName, ok s p i t.#1[ok,s,p,i,t], ok s p i.#2[ok,s,p,i], #i] »⟫ ;
+C-ParsedForm-TextFrom[Hx_ParsedFormSpace[#ConcreteSpace, #HxPP], #ModuleName, ok s p i t.#1[ok,s,p,i,t], ok s p i.#2[ok,s,p,i], #i] → %n⟪†«#ConcreteSpace»« C-ParsedForm-TextFrom[#HxPP, #ModuleName, ok s p i t.#1[ok,s,p,i,t], ok s p i.#2[ok,s,p,i], #i] »⟫ ;
 C-ParsedForm-TextFrom[Hx_ParsedFormWord[#ConcreteWord, #HxPP], #ModuleName,ok s p i t.#1[ok,s,p,i,t], ok s p i.#2[ok,s,p,i], #i] → %n⟪†«#ConcreteWord»« C-ParsedForm-TextFrom[#HxPP, #ModuleName, ok s p i t.#1[ok,s,p,i,t], ok s p i.#2[ok,s,p,i], #i] »⟫ ;
 
 -[Data[#i]]: C-ParsedForm-TextFrom[Hx_ParsedFormTerm[%rawHxScopeSortPrec⟪ #HxScopeSort# #HxFormPrec# ⟫, #HxPP], #ModuleName, ok s p i t.#1[ok,s,p,i,t], ok s p i.#2[ok,s,p,i], #i]
