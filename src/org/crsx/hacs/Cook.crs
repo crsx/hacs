@@ -444,14 +444,15 @@ C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllN
 
     // * S-attributed rules for data.
     
-    C-UnsynthesizeRule[#RulePrefix, %rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) ↑ #HxAttributeName# ( #HxTerm# ) ⟫, Hx_NullTerm, #IsDataEquiv, #SortName, #ModuleName, #DM, #SM]
+    C-UnsynthesizeRule[#RulePrefix, %rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, Hx_NullTerm, #IsDataEquiv, #SortName, #ModuleName, #DM, #SM]
     →
-    C-UnsynthesizeRule1[#HxConstructor#, #HxScopes#, #HxAttributeName#, #HxTerm#, #RulePrefix, C-AddScopesSynthesized[#HxScopes#, NoNames], #IsDataEquiv, #SortName, #ModuleName, #DM, #SM]
+    C-UnsynthesizeRule-Data[#HxConstructor#, #HxScopes#, #HxAttributes#, #RulePrefix, C-AddScopesSynthesized[#HxScopes#, NoNames], #IsDataEquiv, #SortName, #ModuleName, #DM, #SM]
     ;
-    C-UnsynthesizeRule[#RulePrefix, %rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( #HxScopes# ) ↑ #HxAttributeName# ( #HxTerm# ) ⟫, Hx_NullTerm, #IsDataEquiv, #SortName, #ModuleName, #DM, #SM]
+    C-UnsynthesizeRule[#RulePrefix, %rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, Hx_NullTerm, #IsDataEquiv, #SortName, #ModuleName, #DM, #SM]
     →
-    C-UnsynthesizeRule1[#HxConstructor#, #HxScopes#, #HxAttributeName#, #HxTerm#, #RulePrefix, C-AddScopesSynthesized[#HxScopes#, NoNames], #IsDataEquiv, #SortName, #ModuleName, #DM, #SM]
+    C-UnsynthesizeRule-Data[#HxConstructor#, #HxScopes#, #HxAttributes#, #RulePrefix, C-AddScopesSynthesized[#HxScopes#, NoNames], #IsDataEquiv, #SortName, #ModuleName, #DM, #SM]
     ;
+    // TODO: Respect Repeat.
 
     // * Recursive scheme rules that may depend on synthetic attributes in pattern.
     
@@ -463,12 +464,14 @@ C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllN
     →
     C-UnsynthesizeRule2[#HxConstructor#, #HxScopes#, #HxAttributes#, #HxTopTerm#, #RulePrefix, C-AddScopesSynthesized[#HxScopes#, NoNames], #IsDataEquiv, #SortName, #ModuleName, #DM, #SM]
     ;
+    // TODO: Respect Repeat.
 
-    // SPLIT SYNTHESIS RULE INTO NEED GENERATION AND COLLECTION rules (if needed).
+    // SPLIT DATA SYNTHESIS RULE INTO NEED GENERATION AND COLLECTION rules (if needed).
 
-    C-UnsynthesizeRule1[$String<!--DataConstructor-->, $List[HxScope]<!--Subterms-->, $String<!--Attribute-->, HxTerm<!--NewValue-->, HxRulePrefix, NameSet<!--NeededSynthetic-->, Boolean<!--IsDataEquiv-->, $String<!--SortName-->, $String<!--ModuleName-->, DeclarationMap, SortMap] :: $List[Define] ;
+    C-UnsynthesizeRule-Data[$String<!--DataConstructor-->, $List[HxScope]<!--Subterms-->, $List[HxAttribute], HxRulePrefix, NameSet<!--NeededSynthetic-->, Boolean<!--IsDataEquiv-->, $String<!--SortName-->, $String<!--ModuleName-->, DeclarationMap, SortMap] :: $List[Define] ;
 
-    C-UnsynthesizeRule1[#HxConstructor#, #HxScopes#, #HxAttributeName#, #HxTerm#, {#L}#HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
+    // * Simple synthesized attributes generate simple need-collect pair.
+    C-UnsynthesizeRule-Data[#HxConstructor#, #HxScopes#, ({#L}%rawHxAttribute⟪ ↑ #HxAttributeName# ( #HxTerm# ) ⟫; #HxAttributes#), #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
     →
     If[HasNames[#NeededSynthetic],
       // Synthetic attribute propagation: first rule creates need, second collects results and generates attribute.
@@ -485,6 +488,7 @@ C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllN
 	  →
 	  #HxConstructor# ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, #NeededSynthetic, NoNames, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}C-GetConstructorScopeSorts[#HxConstructor#]] » ) ↑#synthesized ↑ #HxAttributeName# ( #HxTerm# )
 	⟫, #SortName, B_FALSE];
+        C-UnsynthesizeRule-Data[#HxConstructor#, #HxScopes#, #HxAttributes#, {#L}#HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
       ),
       // Simple synthetic attribute creation rule.
       (
@@ -494,8 +498,28 @@ C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllN
 	  →
 	  #HxConstructor# ( #HxScopes# ) ↑ #HxAttributeName# ( #HxTerm# )
 	⟫, #SortName, B_FALSE];
+        C-UnsynthesizeRule-Data[#HxConstructor#, #HxScopes#, #HxAttributes#, {#L}#HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
       )
     ];
+
+    // TODO:
+    // * Set/Map capture...
+    // * Set extension...
+    // * Map extension...
+    // * Set/Map elimination?
+    // * Synthesis copy?
+
+    // * Inherited attributes generate an error.
+    C-UnsynthesizeRule-Data[#HxConstructor#, #HxScopes#, ({#L}%rawHxAttribute⟪ ↓ #HxAttributeName# #HxAttributeValue# ⟫; #HxAttributes#), #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
+    →
+    {#L}Error[$[:,"Cannot have inherited attribute on synthesis rules for ",#HxConstructor#," data."]]
+    ;
+
+    // * When all attributes processed we are done.
+    C-UnsynthesizeRule-Data[#HxConstructor#, #HxScopes#, (), #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
+    →
+    ()
+    ;
 
     // SPLIT REGULAR RULE INTO NEED GENERATION AND REWRITE rules (if needed);
 
@@ -828,7 +852,7 @@ C-CrsxifyScope[%rawHxScope⟪ [ #HxVariableList# ] #HxTerm# ⟫, #TopInherited, 
 %n⟪ « WrappedTextJoin[Map[v.%n⟨‹v›⟩, #HxVariableList#], %n⟨⟩, %n⟨ ⟩, %n⟨ . ⟩] »« C-CrsxifyTerm[#HxTerm#, #TopInherited, #DM, #SM] »⟫
 ;
 
-// Convert a term, optionally with environment-capturing meta-variable.
+// Convert a term, optionally with environment-capturing meta-variable. TODO: Respect Repeat.
 
 C-CrsxifyTerm[HxTerm, NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
 
@@ -936,7 +960,7 @@ If[And[Empty[#Attributes], Not[HasNames[UnionNames[#ThisInherited, #TopInherited
     C-CrsxifyAttributeSimple[$String<!--Name-->, $List[HxAttributeValue], NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
     C-CrsxifyAttributeSimple[#a, (), #TopInherited, #DM, #SM] → If[ContainsName[#TopInherited, #a], %n⟪A_†«#a»[#_†«#a»]⟫, %n⟪A_†«#a»[A_†«#a»_null]⟫] ;
     C-CrsxifyAttributeSimple[#a, (#av;), #TopInherited, #DM, #SM] → %n⟪A_†«#a»[« C-CrsxifyAttributeSimpleValue[#av, #TopInherited, #DM, #SM] »]⟫ ;
-    C-CrsxifyAttributeSimple[#a, (#av1;#av2;#avs), #TopInherited, #DM, #SM] → $[Error, $[:,"cannot have more than one pattern/value set for simple attribute ",#a]] ;
+    C-CrsxifyAttributeSimple[#a, ({#L}#av1;#av2;#avs), #TopInherited, #DM, #SM] → Error[$[:,"Cannot have more than one pattern/value set for simple attribute ",#a]] ;
     // TODO: process system attributes in #ats.
 
     //
@@ -1022,6 +1046,7 @@ C-Print-Declarations[%rawHxDeclarations⟪ #HxSortAlternatives# ; #HxDeclaration
 C-Print-Declarations[%rawHxDeclarations⟪ rule #HxRule# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM] → C-Print-Declarations[#HxDeclarations#, #ModuleName, #LastSort, #DM] ;
 C-Print-Declarations[%rawHxDeclarations⟪ { #HxDeclarations1# } #HxDeclarations2# ⟫, #ModuleName, #LastSort, #DM] → %n⟪« C-Print-Declarations[#HxDeclarations1#, #ModuleName, #LastSort, #DM] »« C-Print-Declarations[#HxDeclarations2#, #ModuleName, #LastSort, #DM] »⟫ ;
 C-Print-Declarations[%rawHxDeclarations⟪ ⟫, #ModuleName, #LastSort, #DM] → %n⟪⟫ ;
+// TODO: Respect repeat.
 
 // Print a token.
 
@@ -1067,7 +1092,7 @@ C-Print-SymbolForm2[HxParsedForm, $String<!--ModuleName-->, $String<!--Sort-->, 
 
 C-Print-SymbolForm2[Hx_ParsedFormSpace[#ConcreteSpace, #HxPP], #ModuleName, #Sort, #DM] → C-Print-SymbolForm2[#HxPP, #ModuleName, #Sort, #DM] ;
 
-C-Print-SymbolForm2[Hx_ParsedFormWord[#ConcreteWord, #HxPP], #ModuleName, #Sort, #DM] → $[Error, $[:,"Keywords not permitted in symbol production."]] ;
+C-Print-SymbolForm2[{#L}Hx_ParsedFormWord[#ConcreteWord, #HxPP], #ModuleName, #Sort, #DM] → {#L}Error[$[:,"Keywords not permitted in symbol production."]] ;
 
 -[Fresh[x::Text]]:
 C-Print-SymbolForm2[Hx_ParsedFormTerm[#ScopeSortPrec, #HxPP], #ModuleName, #Sort, #DM]
@@ -1126,7 +1151,7 @@ C-Text-dagger → %n⟪†«"\u2020"»⟫ ;
 C-Text-newline :: Text ;
 C-Text-newline → %n⟪†«"\u21b2"»⟫ ;
 
-// Helper to create scope pattern fragment.
+// Helper to create scope pattern fragment. TODO: Repeat!
 
 C-ScopeSort-WrapPattern[HxScopeSort, $String<!--ModuleName-->, t :: Text . Text, s :: $String<!--Sort--> . Text] :: Text ;
 C-ScopeSort-WrapPattern[#ScopeSort, #ModuleName, t.#w[t], s.#[s]] → C-ScopeSort-WrapPattern2[#ScopeSort, #ModuleName, "", t.#w[t], s.#[s]] ;
@@ -1285,7 +1310,7 @@ C-AddAttributeTopInherited[(%rawHxAttribute⟪ ↓ #HxAttributeName# #HxAttribut
 {$String<!--SortName--> : DeclarationMapEntry} C-GetConstructorScopeSorts3[Ok, $List[Define], $String] :: $List[HxScopeSort] ;
 {#DM} C-GetConstructorScopeSorts3[OK, (D_FORM[Hx_FormConstruction[#Constructor1, #ScopeSorts1, #InheritedRefs1], #FormKind]; #Defines), #Constructor] → IfThen[SameString[U-Local[#Constructor1], U-Local[#Constructor]], ok.#ScopeSorts1, ok.{#DM}C-GetConstructorScopeSorts3[ok, #Defines, #Constructor]] ;
 {#DM} C-GetConstructorScopeSorts3[OK, ($[NotMatch,D_FORM[Hx_FormConstruction[#Constructor, #ScopeSorts, #InheritedRefs], #FormKind],#_]; #Defines), #Constructor] → {#DM} C-GetConstructorScopeSorts3[OK, #Defines, #Constructor] ;
-{#DM} C-GetConstructorScopeSorts3[OK, (), #Constructor] → $[Error,$[:,"Missing internal definition of constructor: ",#Constructor,"\n"]] ;
+{#DM} C-GetConstructorScopeSorts3[OK, (), #Constructor] → Error[$[:,"Missing internal definition of constructor: ",#Constructor,"."]] ;
 
 // List of free variables + meta-application argument , with their sorts...
 
@@ -1384,7 +1409,7 @@ C-SortMap-then-GetFreeVariableSort[OK, {#SM}SM[#fvs, #mvs], v] → $[{#SM}Get[$S
 {#DM} C-ExtendSortMap-Scopes[#Scopes, #ScopeSorts,
   {#DM} C-ExtendSortMap-Scopes2[#HxVariableList#, #HxTerm#, #ScopeSort, #SM]]
 ;
-    // Helper to capture local variable sorts before sort checking term.
+    // Helper to capture local variable sorts before sort checking term. TODO: Repeat.
     {$String<!--SortName--> : DeclarationMapEntry; HxTerm : $String} C-ExtendSortMap-Scopes2[$List[HxTerm], HxTerm, HxScopeSort, SortMap] :: SortMap ;
     {#DM} C-ExtendSortMap-Scopes2[(), #Term, %rawHxScopeSort⟪ #HxSort# #HxRepeat# [ #HxSubstituteSorts# ] ⟫, #SM]
     →
@@ -1415,28 +1440,24 @@ $[{#SM}IfDef, #MetaVariable,
     // Helper to instantiate from pattern meta-application.
     {$String<!--SortName--> : DeclarationMapEntry; HxTerm : $String} C-ExtendSortMap-MetaApplication2[$String<!--HxMetaVariable-->, $List[HxTerm], ss :: $List[$String] . $List[$String], SortMap] :: SortMap ;
     -[Free[v::HxTerm]] :
-    {#DM} C-ExtendSortMap-MetaApplication2[#MetaVariable, ( %rawHxTerm⟪ v #HxAttributes# ⟫ ; #Terms), ss¹.#[ss¹], {#SM}SM[#fvs, #mvs]]
+    {#DM} C-ExtendSortMap-MetaApplication2[#MetaVariable, ( {#L}%rawHxTerm⟪ v #HxAttributes# ⟫ ; #Terms), ss¹.#[ss¹], {#SM}SM[#fvs, #mvs]]
     →
     $[{#DM}IfDef, v,
       {#DM} C-ExtendSortMap-MetaApplication2[#MetaVariable, #Terms, ss¹.#[($[{#DM}Get[$String],v]; ss¹)], {#SM}SM[#fvs, #mvs]],
       $[{#SM}IfDef, v,
         {#DM} C-ExtendSortMap-MetaApplication2[#MetaVariable, #Terms, ss¹.#[($[{#SM}Get[$String],v]; ss¹)], {#SM}SM[#fvs, #mvs]],
-        C-ExtendSortMap-Error[v]]]
+        {#L}Error[$[:,"Undefined symbol ",$[Show,v]," used in ",#MetaVariable,"-meta-application."]]]]
     ;
     -[Free[v::HxTerm]] :
-    {#DM} C-ExtendSortMap-MetaApplication2[#MetaVariable, ( %rawHxTerm⟪ #HxConstructor1# #HxRepeat1# v #HxAttributes# ⟫ ; #Terms), ss¹.#[ss¹], {#SM}SM[#fvs, #mvs]]
+    {#DM} C-ExtendSortMap-MetaApplication2[#MetaVariable, ( {#L}%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# v #HxAttributes# ⟫ ; #Terms), ss¹.#[ss¹], {#SM}SM[#fvs, #mvs]]
     →
     $[{#DM}IfDef, v,
       {#DM} C-ExtendSortMap-MetaApplication2[#MetaVariable, #Terms, ss¹.#[($[{#DM}Get[$String],v]; ss¹)], {#SM}SM[#fvs, #mvs]],
       $[{#SM}IfDef, v,
         {#DM} C-ExtendSortMap-MetaApplication2[#MetaVariable, #Terms, ss¹.#[($[{#SM}Get[$String],v]; ss¹)], {#SM}SM[#fvs, #mvs]],
-        C-ExtendSortMap-Error[v]]]
+        {#L}Error[$[:,"Undefined symbol ",$[Show,v]," used in ",#MetaVariable,"-meta-application."]]]]
     ;
     {#DM} C-ExtendSortMap-MetaApplication2[#MetaVariable, (), ss¹.#[ss¹], {#SM}SM[#fvs, #mvs]] → {#SM; #MetaVariable : #[()]}SM[#fvs,(#MetaVariable;#mvs)] ;
-
-    C-ExtendSortMap-Error[HxTerm] :: SortMap ;
-    -[Free[v::HxTerm]]:
-    C-ExtendSortMap-Error[v] → $[Error,$[:,"Undefined variable ",$[Show,v]," used in pattern meta-application."]] ;
 
 {$String<!--SortName--> : DeclarationMapEntry; HxTerm : $String} C-ExtendSortMap-Attributes[$List[HxAttribute], SortMap] :: SortMap ;
 {#DM} C-ExtendSortMap-Attributes[(), #SM] → #SM ;

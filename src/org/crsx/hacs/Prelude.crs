@@ -27,7 +27,7 @@ $Lax;
 
 Ok ::=( OK; );
 
-∀ a . {$String : $StringEntry}When[Ok, a] :: a ;
+∀ a . {$String : $StringEntrySort}When[Ok, a] :: a ;
 {#E}When[OK, #] → {#E}# ;
 
 
@@ -606,12 +606,12 @@ MapTextWrap[x.#[x], (#1;#s), #Left, #Sep, #Right] → %n⟪« #Left »« #[#1] �
 //
 // All from text to something.
 
-∀ a . {$String : $StringEntry}Special_error[Text] :: a;
+∀ a . {$String : $StringEntrySort}Special_error[Text] :: a;
 -[Data[#text]]: {#L}Special_error[#text] → Special_error-2[$[{#L}Get[$String],"$$Location","?"], TextToString[#text]] ; 
     ∀ a . Special_error-2[$String,$String] :: a;
     -[Data[#loc,#mess]]: {#L}Special_error-2[#loc, #mess] → $[Error,$[:,"Error@",#loc,": ",#mess]] ; 
 
-∀ a . {$String : $StringEntry}Special_message[Text] :: a;
+∀ a . {$String : $StringEntrySort}Special_message[Text] :: a;
 -[Data[#text]]: {#L}Special_message[#text] → Special_message-2[TextToString[#text]] ; 
     ∀ a . Special_message-2[$String] :: a;
     -[Data[#mess]]: {#L}Special_message-2[#mess] → $[Echo,#mess] ; 
@@ -619,6 +619,8 @@ MapTextWrap[x.#[x], (#1;#s), #Left, #Sep, #Right] → %n⟪« #Left »« #[#1] �
 {$String : $StringEntrySort} Location ::=( LOC; );
 
 $StringEntrySort ::= ( STRING[$String]; );
+UnSTRING[$StringEntrySort] :: $String ;
+-[Data[#]]: UnSTRING[STRING[#]] → # ;
 
 ∀ a . Trace[$String, $String, a] :: a;
 -[Data[#message]]: Trace[#head, #body, #] → $[Trace, $[:,#head,#body], #] ;
@@ -626,6 +628,25 @@ $StringEntrySort ::= ( STRING[$String]; );
 ∀ a . TraceWhen[Ok, $String, $String, a] :: a;
 -[Data[#message]]: TraceWhen[OK, #head, #body, #] → $[Trace, $[:,#head,#body], #] ;
 
+∀ a . {$String : $StringEntrySort} Error[$String] :: a ;
+{#L} Error[#mess]
+→
+Error2[
+  UnSTRING[$[{#L}Get[$StringEntrySort], "$FileLocation", STRING[""]]],
+  UnSTRING[$[{#L}Get[$StringEntrySort], "$LineLocation", STRING[""]]],
+  UnSTRING[$[{#L}Get[$StringEntrySort], "$ColumnLocation", STRING[""]]],
+  #mess]
+;
+
+∀ a . {$String : $StringEntrySort} Error2[$String, $String, $String, $String] :: a ;
+-[Data[#file, #line, #column, #mess]]:
+Error2[#file, #line, #column, #mess]
+→
+$[Error, $[:,
+  $[IfEmpty, #file, "", $[:, "[", #file, "]"]],
+  $[IfEmpty, #line, "", $[:, #line, $[IfEmpty, #column, "", $[:,"(",#column,")"]], ": "]],
+  #mess]]
+;
 
 /////////////////////////////////////////////////////////////////////
 

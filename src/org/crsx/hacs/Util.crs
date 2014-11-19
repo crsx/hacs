@@ -1425,10 +1425,7 @@ U-DefineString2[D_RULE[#rule, #sort, #isdata]] → U-RuleString[#rule] ;
 // Helper to print error message for empty strings!
 
 ∀ a . U-CheckString[$String<!--to test-->, $String<!--message-->, a] :: a ;
--[Data[#string]]: U-CheckString[#string, #mess, #] → $[IfEmpty, #string, U-Error[#mess], #] ;
-
-∀ a . U-Error[$String] :: a ;
--[Data[#mess]]: U-Error[#mess] → $[Error, #mess] ;
+-[Data[#string]]: U-CheckString[#string, #mess, #] → $[IfEmpty, #string, Error[#mess], #] ;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
