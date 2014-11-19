@@ -135,6 +135,7 @@ lib/crsx-3.2.1.jar
 samples/Bool.hx
 samples/Deriv.hx
 samples/First.hx
+samples/Words.hx
 src/Env.mk
 src/Hacs.mk
 src/Makefile
