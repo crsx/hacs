@@ -27,15 +27,17 @@ samples/% :
 doc/% :
 	$(MAKE) -C doc -I $(abspath src) ../$@
 
+gitclean ::; rm -fr lib
+
 # Quick-install .zip.
 
-$(eval HACSMAJOR$(basename $(shell cat VERSION)))
+$(eval HACS$(shell cat VERSION))
 
 hacs.zip : all
 	$(MAKE) $(shell cat ziplist)
 	$(MAKE) clean
 	rm -f *.zip
-	cd .. && zip -r hacs/hacs-$(HACSMAJORVERSION).zip $(addprefix hacs/,$(shell cat ziplist))
-	ln -fs hacs-$(HACSMAJORVERSION).zip hacs.zip
+	cd .. && zip -r hacs/hacs-$(HACSVERSION).zip $(addprefix hacs/,$(shell cat ziplist))
+	ln -fs hacs-$(HACSVERSION).zip hacs.zip
 
 realclean ::; rm -f *.zip

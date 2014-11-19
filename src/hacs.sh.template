@@ -41,7 +41,7 @@ for arg; do
     case "$arg" in
 	-k|--keep) keep=true ;;
 	--goal=*) goal=${arg#*=} ;;
-	-e|--echo) tee='|& tee -a ' ;;
+	-e|--error*) tee='|& tee -a ' ;;
 	-q|--quiet) quiet=true ;;
 	-i|--interpret) interpret=true ;;
 	--*) extra="$extra ${arg#--}" ;;
@@ -66,7 +66,7 @@ function hacsmake () {
    	ICU4CINCLUDE="$icu4cinclude" ICU4CDIR="$icu4cdir" \
 	EXTRA="$extra" INTERPRET="$interpret" \
 	LOG="$tee"$( if [ -z "$packagedir" ]; then echo "/dev/null"; else echo "$packagedir/$NAME.log"; fi ) \
-	OUT=$( if $quiet; then if [ -z "$packagedir" ]; then echo ">>/dev/null"; else echo ">>$packagedir/$NAME.log"; fi; fi ) \
+	OUT=$( if $quiet; then echo "&>>/dev/null"; fi ) \
 	"$@"
     x=$?
     if [ $x -ne 0 -o ! -f "$1" ]; then

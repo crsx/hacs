@@ -2,26 +2,17 @@
 
 # SETUP.
 
-#TODO: Eliminate this hard-coding once crsx package exists...
-
-HACSJAR = $(abspath ../src/build/share/java/hacs.jar)
-CRSXJAR = $(abspath ../src/build/share/java/crsx.jar)
-JAVACCJAR = $(abspath ../src/build/share/java/javacc.jar)
-BUILD = build
+HACSJAR = $(readlink -f ../build/share/java/hacs.jar)
+CRSXJAR = $(readlink -f ../build/share/java/crsx.jar)
+JAVACCJAR = $(readlink -f ../build/share/java/javacc.jar)
 include Hacs.mk
 
 # STANDARD TARGETS.
 
 .PHONY: all install clean realclean gitclean
 all::
+	$(MAKE) -C ../src
 clean::; rm -f *.tmp *~ ./#* *.log *~ *.pgbase *.pg *.crs *.build *.hxp
 realclean:: clean
+	rm -fr build
 gitclean :: realclean
-
-$(TEMP)/org/crsx/hacs/samples/Lambda.pg: $(TEMP)/org/crsx/hacs/samples/Lambda.hx
-$(TEMP)/org/crsx/hacs/samples/Lambda.jj: $(TEMP)/org/crsx/hacs/samples/Lambda.pg
-$(TEMP)/org/crsx/hacs/samples/Lambda.java: $(TEMP)/org/crsx/hacs/samples/Lambda.pg
-
-%.test : %.Lambda
-	$(CRSX) "grammar=('org.crsx.hacs.samples.Lambda';)" input="$<" category='Lambda$$E' output=$@.tmp
-	mv $@.tmp $@

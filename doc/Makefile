@@ -14,3 +14,5 @@ gitclean:: realclean
 	grep -vq bibcite $*.aux || bibtex $*
 	pdflatex $*
 	pdflatex $*
+
+hacs.pdf : hacs.tex

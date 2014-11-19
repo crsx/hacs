@@ -185,9 +185,9 @@ net.sf.crsx.Sink s = null;⟧
 | ⟩], %n⟨⟩] »⟦{s = b.sink();}
 « JJ-Nonterminal[%n⟨s⟩, "HxSortName", %n⟨env⟩]
 »{savedSort = storedSort; storedSort = net.sf.crsx.util.Util.symbol(b.term(true));}
-( « JJ-Nonterminal[%n⟨sink⟩, "PresortedVariable", %n⟨env⟩] »
-« If[HasNames[#SortsWithUserConstructors], TextConcat3[%n⟨| ⟩, JJ-Nonterminal[%n⟨sink⟩, "Construction", %n⟨env⟩], %n⟨
-| ⟩], %n⟨⟩] »« JJ-Nonterminal[%n⟨sink⟩, "PresortedMetaApplication", %n⟨env⟩] »
+( « JJ-Nonterminal[%n⟨sink⟩, "PresortedVariable", %n⟨env⟩] »« If[HasNames[#SortsWithUserConstructors], TextConcat[%n⟨
+| ⟩, JJ-Nonterminal[%n⟨sink⟩, "Construction", %n⟨env⟩]], %n⟨⟩] »
+| « JJ-Nonterminal[%n⟨sink⟩, "PresortedMetaApplication", %n⟨env⟩] »
 | « JJ-Nonterminal[%n⟨sink⟩, "PresortedParsed", %n⟨env⟩] »
 )
 {storedSort = savedSort;}⟧
@@ -205,7 +205,7 @@ net.sf.crsx.Sink s = null;⟧
 %{
 net.sf.crsx.Sink N_Attribute$WithEOF(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) : {}{ « JJ-Nonterminal[%n⟨sink⟩, "Attribute", %n⟨env⟩] » <EOF> {return sink;} }
 net.sf.crsx.Sink N_Attribute(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) :
-{Token k, a, t = null;}{⟦
+{Token k = null, a = null, t = null;}{⟦
 (« {#DM} P-MetaJJ-AttributeAlternatives[#ModuleName, NameSetList[{#DM} U-AllSynthesizedNames], NameSetList[{#DM}U-AllInheritedNames]] »)
 {return sink;}⟧
 }
@@ -581,9 +581,9 @@ net.sf.crsx.Sink N_†« U-Local[#SortName] »(net.sf.crsx.Sink sink, net.sf.crs
     | « JJ-Nonterminal[%n⟨sink⟩, "PresortedMetaApplication", %n⟨env⟩] »
     | « JJ-Nonterminal[%n⟨sink⟩, "PresortedParsed", %n⟨env⟩] »
     | "†« U-Local[#SortName] »"
-      ( « JJ-Nonterminal[%n⟨sink⟩, "PresortedVariable", %n⟨env⟩] »
-« If[HasNames[FilterNamesWhen[ok s.{#DM}U-then-SortHasUserHx[ok, s], {#DM}U-AllSortNames]], TextConcat3[%n⟨| ⟩, JJ-Nonterminal[%n⟨sink⟩, "Construction", %n⟨env⟩], %n⟨
-| ⟩], %n⟨⟩] »« JJ-Nonterminal[%n⟨sink⟩, "PresortedMetaApplication", %n⟨env⟩] »
+      ( « JJ-Nonterminal[%n⟨sink⟩, "PresortedVariable", %n⟨env⟩] »« If[HasNames[FilterNamesWhen[ok s.{#DM}U-then-SortHasUserHx[ok, s], {#DM}U-AllSortNames]], TextConcat[%n⟨
+      | ⟩, JJ-Nonterminal[%n⟨sink⟩, "Construction", %n⟨env⟩]], %n⟨⟩] »
+      | « JJ-Nonterminal[%n⟨sink⟩, "PresortedMetaApplication", %n⟨env⟩] »
       |  « JJ-Nonterminal[%n⟨sink⟩, "PresortedParsed", %n⟨env⟩] »
     ))
     {storedSort = savedSort;}

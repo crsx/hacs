@@ -129,12 +129,9 @@ build/share/hacs/crsx.h
 build/share/hacs/invariant.h
 build/share/hacs/linter.h
 build/share/hacs/prof.h
-build/share/java/crsx-3.2.jar
-build/share/java/hacs-0.9.jar
-build/share/java/javacc-6.0.jar
 doc/Makefile
 doc/hacs.pdf
-lib/crsx-3.2.jar
+lib/crsx-3.2.1.jar
 samples/Bool.hx
 samples/Deriv.hx
 samples/First.hx

@@ -95,7 +95,7 @@ CATRESOURCE = $(if $(findstring .jar,$(HACSJAR)), $(X) $(UNZIP) -p $(HACSJAR) $(
 			output='$@.tmp' sink=net.sf.crsx.text.TextSink \
 		    && mv '$@.tmp' '$@' ; \
 		  fi \
-		) $(LOG) 
+		)
 
 clean::; @rm -f  *.env
 
@@ -125,17 +125,6 @@ clean::; @rm -f  *.env
 		   fi \
 		) $(LOG)
 	@chmod +x '$@'
-
-###		&& $(X) $(RUNCRSX) \
-###			rules=org/crsx/hacs/MakeRun.crs term=MakeRun "grammar=('net.sf.crsx.text.Text';)" \
-###			$(shell $(X) cat '$*.env') PACKAGE="$$package" PACKAGEDIR="$$packagedir" BUILD='$(BUILD)' \
-###			HACS$$($(call CATRESOURCE,org/crsx/hacs/VERSION)) CRSXJAR='$(CRSXJAR)' HACSJAR='$(HACSJAR)' CRSXC='$(CRSXC)' \
-###			ICU4CINCLUDE='$(ICU4CINCLUDE)' ICU4CDIR='$(ICU4CDIR)' \
-###			LIBDIR='$(LIBDIR)' BINDIR='$(BINDIR)' DOCDIR='$(DOCDIR)' SHAREDIR='$(SHAREDIR)' SHAREJAVA='$(SHAREJAVA)' \
-###			SHELL='$(SHELL)' JAVA='$(JAVA)' JAVAC='$(JAVAC)' \
-###			output='$@.tmp' sink=net.sf.crsx.text.TextSink \
-###		&& $(X) mv '$@.tmp' '$@' \
-###		) $(LOG)
 
 realclean::; @rm -f *.run
 
@@ -244,7 +233,6 @@ $(BUILD)/%.class: $(BUILD)/%.java
 		&& $(X) $(RUNCRSX) \
 			"grammar=('$$METAPARSERCLASS';'$$EMBEDPARSERCLASS';'net.sf.crsx.text.Text';)" \
 			input='$*.hx' category="$${METAPREFIX}HxModule" \
-			no-parse-verbose \
 			output='$@.tmp' simple-terms max-indent=10 width=255 \
 		&& $(X) mv '$@.tmp' '$@' \
 		) $(LOG)

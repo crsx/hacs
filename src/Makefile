@@ -3,14 +3,15 @@
 # Generate and/or install all HACS runtime artifacts.
 #
 # Usage:
-#   make
+#   make prefix="/usr/local"
 #   make DESTDIR="" prefix="/usr/local" install
+#   make DESTDIR="" prefix="/usr/local" install-support
 #
 # Environment variables:
 # - DESTDIR - root of installation (empty by default)
 # - prefix - prefix of installation ($HOME/.hacs by default).
 #
-# - CRSXJAR - full path to CRSX jar (at least version 3.2).
+# - CRSXJAR - full path to CRSX jar (version 3.2.1).
 # - JAVACCJAR - full path to JavaCC jar (at least version 5.0).
 # - ICU4CINCLUDE - directory where the ICU unicode/ include directory is a subdirectory.
 # - ICU4CDIR - directory where ICU library binaries live.
@@ -34,7 +35,7 @@ gitclean :: realclean
 
 # External library setup.
 ifndef CRSXJAR
-CRSXVERSION = 3.2
+CRSXVERSION = 3.2.1
 CRSXJAR = $(abspath ../lib/crsx-$(CRSXVERSION).jar)
 all :: $(CRSXJAR)
 endif
@@ -90,13 +91,14 @@ $(JAVACCJAR) :
 clean ::; rm -fr javacc*
 
 # The ICU4C libraries (dependency uses one arbitrary library file).
-all :: $(ICU4CDIR)/libicudata.so
-$(ICU4CDIR)/libicudata.so :
+$(ICU4CDIR)/libicudata.so : icu4c-54_1-RHEL6-x64.tgz
 	rm -fr usr ../lib/icu4c
-	wget "http://download.icu-project.org/files/icu4c/54.1/icu4c-54_1-RHEL6-x64.tgz"
 	tar xpzf icu4c-54_1-RHEL6-x64.tgz
 	mv usr/local ../lib/icu4c
 	rmdir usr
+
+icu4c-54_1-RHEL6-x64.tgz :
+	wget "http://download.icu-project.org/files/icu4c/54.1/icu4c-54_1-RHEL6-x64.tgz"
 
 # HACS MASTER FILE LIST
 
@@ -127,7 +129,8 @@ $(BUILD)/org/crsx/hacs/VERSION: ../VERSION
 
 # Hack to set HACSVERSION and HACSMAJORVERSION for this Makefile.
 $(eval HACS$(shell cat ../VERSION))
-$(eval HACSMAJOR$(basename $(shell cat ../VERSION)))
+$(eval HACSMAJOR$(shell cat ../VERSION))
+### $(eval HACSMAJOR$(basename $(shell cat ../VERSION)))
 
 # Jar has classes and resources...
 
@@ -288,7 +291,7 @@ $(BUILD)/bin/hacs: hacs.sh.template
 # HACS documents.
 
 DOCUMENTS = README.md
-SAMPLES = samples/First.hx samples/Bool.hx samples/First.hx
+SAMPLES = samples/First.hx samples/Bool.hx samples/Words.hx
 
 all :: $(addprefix $(BUILD)/share/doc/hacs/,$(notdir $(DOCUMENTS))) $(addprefix $(BUILD)/share/doc/hacs/examples/,$(notdir $(SAMPLES)))
 
@@ -305,7 +308,16 @@ install ::
 	cp $(addprefix $(BUILD)/share/doc/hacs/,$(notdir $(DOCUMENTS))) $(DESTDIR)$(DOCDIR)
 	cp $(addprefix $(BUILD)/share/doc/hacs/examples/,$(notdir $(SAMPLES))) $(DESTDIR)$(DOCDIR)/examples
 
+# Documents.
 
+clean::; rm -f *.tmp *~ ./#* *.log *~ *.aux *.bbl *.blg *.toc *.out *.idx *.ind
+realclean::; rm -fr auto *.pdf
+
+%.pdf : %.tex
+	pdflatex $*
+	grep -vq bibcite $*.aux || bibtex $*
+	pdflatex $*
+	pdflatex $*
 
 
 ### # ===========

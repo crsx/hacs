@@ -442,6 +442,8 @@ C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllN
 
     C-UnsynthesizeRule[HxRulePrefix, HxTerm, HxTerm, Boolean<!--IsDataEquiv-->, $String<!--SortName-->, $String<!--ModuleName-->, DeclarationMap, SortMap] :: $List[Define] ;
 
+    // * S-attributed rules for data.
+    
     C-UnsynthesizeRule[#RulePrefix, %rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) ↑ #HxAttributeName# ( #HxTerm# ) ⟫, Hx_NullTerm, #IsDataEquiv, #SortName, #ModuleName, #DM, #SM]
     →
     C-UnsynthesizeRule1[#HxConstructor#, #HxScopes#, #HxAttributeName#, #HxTerm#, #RulePrefix, C-AddScopesSynthesized[#HxScopes#, NoNames], #IsDataEquiv, #SortName, #ModuleName, #DM, #SM]
@@ -451,6 +453,8 @@ C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllN
     C-UnsynthesizeRule1[#HxConstructor#, #HxScopes#, #HxAttributeName#, #HxTerm#, #RulePrefix, C-AddScopesSynthesized[#HxScopes#, NoNames], #IsDataEquiv, #SortName, #ModuleName, #DM, #SM]
     ;
 
+    // * Recursive scheme rules that may depend on synthetic attributes in pattern.
+    
     C-UnsynthesizeRule[#RulePrefix, %rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, $[NotMatch,Hx_NullTerm,#HxTopTerm#], #IsDataEquiv, #SortName, #ModuleName, #DM, #SM]
     →
     C-UnsynthesizeRule2[#HxConstructor#, #HxScopes#, #HxAttributes#, #HxTopTerm#, #RulePrefix, C-AddScopesSynthesized[#HxScopes#, NoNames], #IsDataEquiv, #SortName, #ModuleName, #DM, #SM]

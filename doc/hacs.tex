@@ -12,7 +12,7 @@
 
 %% Topmatter.
 \title{
-  Compiler Generation Using \HAX\thanks{This version describes \HAX β version 0.9 released for use at NYU.}
+  Compiler Generation Using \HAX\thanks{This version describes \HAX β version 0.9.1 released for use at NYU.}
 }
 \author{
   Kristoffer H. Rose\\
@@ -104,12 +104,12 @@ computer.\footnote{\HAX is still a β release so please report any problems with
 \end{requirements}
 
 \begin{commands}[install \HAX]\label{com:all}
-  Retrieve the \emph{hacs-0.9.zip} archive, extract it to a new directory, and install it, for
+  Retrieve the \emph{hacs-0.9.1.zip} archive, extract it to a new directory, and install it, for
   example with the following commands:\footnote{User input is \textcolor{blue}{blue}.}
   %%
 \begin{code}[commandchars=\^\{\}]
-energon1[~]$ ^textcolor{blue}{^texttt{wget http://crsx.org/hacs-0.9.zip}}
-energon1[~]$ ^textcolor{blue}{^texttt{unzip hacs-0.9.zip}}
+energon1[~]$ ^textcolor{blue}{^texttt{wget http://crsx.org/hacs-0.9.1.zip}}
+energon1[~]$ ^textcolor{blue}{^texttt{unzip hacs-0.9.1.zip}}
 energon1[~]$ ^textcolor{blue}{^texttt{cd hacs}}
 energon1[hacs]$ ^textcolor{blue}{^texttt{make}}
 energon1[hacs]$ ^textcolor{blue}{^texttt{make install install-support}}
@@ -1372,14 +1372,16 @@ space [ \t\f\r\n] | nested "/*" "*/" | "//" .* ;
 
   \item \verb"--term="\emph{text} use the \emph{text} as the input.
 
-  \item \verb"--input="\emph{file} reads the input from \emph{file}.
+  \item \verb"--input="\emph{file} (or just the \emph{file}) reads the input from \emph{file}.
 
   \item \verb"--output="\emph{file} sends the input to \emph{file} (the default is the standard output).
+
+  \item \verb"--errors" reports details of errors found by subprocesses.
 
   \item \verb"--verbose="\emph{n} sets the verbosity of the underlying \CRSX rewrite engine to $n$. The
     default is 0 (quiet) but 1--3 are useful (above 3 you get a lot of low level diagnostic output).
 
-  \item \verb"--parse-verbose" activates verbose output from JavaCC of the parsing.
+  \item \verb"--parse-verbose" activates (very!) verbose output from JavaCC of the parsing.
 
   \end{enumerate}
   %%
@@ -1405,6 +1407,9 @@ space [ \t\f\r\n] | nested "/*" "*/" | "//" .* ;
 
 \section{Common Errors}\label{app:errors}
 
+In this appendix we list some of the more common of what can be called the ``error messages'' of
+\HAX. \emph{Note} that most of these only come out when \HAX is run with the \verb'-e' option.
+
 \begin{error}[\HAX syntax]\leavevmode
 \begin{code}
 Exception in thread "main" java.lang.RuntimeException: net.sf.crsx.CRSException:
@@ -1414,7 +1419,8 @@ Was expecting one of:
     "%Repeat" ...
     <MT_Attributes> ...
 \end{code}
-  Indicates a simple syntax errors in the \emph{.hx} file.
+This error message from the \verb'hacs' command indicates a simple syntax errors in the \emph{.hx}
+file.
 \end{error}
 
 \begin{error}[user syntax]\leavevmode
@@ -1455,7 +1461,7 @@ Parser generated with 0 errors and 1 warnings.
 Note: net/sf/crsx/samples/gentle/FirstParser.java uses or overrides a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
 \end{code}
-  These are ``normal'' messages from JavaCC.
+  These are ``normal'' messages from JavaCC. Yes, the choice conflict is annoying but is in fact safe.
 \end{error}
 
 \begin{error}[missing library]\leavevmode
@@ -1469,7 +1475,7 @@ crsx.c:11:30: fatal error: unicode/umachine.h: No such file or directory
 
 \begin{error}[meta-variable mistake]\leavevmode
 \begin{code}
-Error in rule Tiger-Ty2222222222111_9148-1: contractum uses undefined meta-variable (#es)
+Error in rule Tiger-Ty99_9148-1: contractum uses undefined meta-variable (#es)
 Errors prevent normalization.
 make: *** [pr3.crs-installed] Error 1
 \end{code}
@@ -1488,6 +1494,29 @@ cookmain: crsx.c:528: bufferEnd: Assertion
 \end{code}
   This indicates an arity error: a raw term in the \emph{.hx} file does not have the right number of
   arguments.
+\end{error}
+
+\begin{error}[]\leavevmode
+\begin{code}
+/home/krisrose/Desktop/teaching/.../hacs/cookmain PG pr3.hxt > pr3.pg
+cookmain: crsx.c:528: bufferEnd: Assertion
+   `(((childTerm)->descriptor == ((void *)0)) ? 0 :
+        (childTerm)->descriptor->arity) == bufferTop(buffer)->index' failed.
+/bin/sh: line 1: 14278 Aborted
+  (core dumped) /home/krisrose/Desktop/teaching/.../hacs/cookmain PG pr3.hxt > pr3.pg
+\end{code}
+  This indicates an arity error: a raw term in the \emph{.hx} file does not have the right number of
+  arguments.
+\end{error}
+
+\begin{error}[]\leavevmode
+\begin{code}
+« $Print-Check[
+...
+»
+\end{code}
+This error from your \emph{.run} script indicates that you requested a \verb'--scheme' "Check",
+which is not in fact declared as a "scheme" in the \emph{.hx} file.
 \end{error}
 
 
