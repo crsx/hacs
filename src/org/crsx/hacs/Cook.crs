@@ -468,58 +468,120 @@ C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllN
 
     // SPLIT DATA SYNTHESIS RULE INTO NEED GENERATION AND COLLECTION rules (if needed).
 
+    {$String : $List[HxAttribute]}
     C-UnsynthesizeRule-Data[$String<!--DataConstructor-->, $List[HxScope]<!--Subterms-->, $List[HxAttribute], HxRulePrefix, NameSet<!--NeededSynthetic-->, Boolean<!--IsDataEquiv-->, $String<!--SortName-->, $String<!--ModuleName-->, DeclarationMap, SortMap] :: $List[Define] ;
 
-    // * Simple synthesized attributes generate simple need-collect pair.
-    C-UnsynthesizeRule-Data[#HxConstructor#, #HxScopes#, ({#L}%rawHxAttribute⟪ ↑ #HxAttributeName# ( #HxTerm# ) ⟫; #HxAttributes#), #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
+    /// // * Simple synthesized attribute capture generates simple need-collect pair.
+    /// {#AS} C-UnsynthesizeRule-Data[#HxConstructor#, #HxScopes#, ({#L}%rawHxAttribute⟪ ↑ #HxAttributeName# ( #HxTerm# ) ⟫; #HxAttributes#), #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
+    /// →
+    /// If[HasNames[#NeededSynthetic],
+    ///   // Synthetic attribute propagation: first rule creates need, second collects results and generates attribute.
+    ///   (
+    ///     D_RULE[{#L}%rawHxRule⟪
+    /// 	  %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Need_", #HxAttributeName#]]
+    /// 	  » ( #HxConstructor# ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, #NeededSynthetic, NoNames, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}C-GetConstructorScopeSorts[#HxConstructor#]] » ) ↑#synthesized )
+    /// 	  →
+    /// 	  %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Collect_", #HxAttributeName#]]
+    /// 	  » ( #HxConstructor# ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, NoNames, #NeededSynthetic, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}C-GetConstructorScopeSorts[#HxConstructor#]] » ) ↑#synthesized )
+    /// 	⟫, #SortName, B_FALSE];
+    /// 	D_RULE[{#L}%rawHxRule⟪ #HxRulePrefix#
+    /// 	  %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Collect_", #HxAttributeName#]] » ( #HxConstructor# ( #HxScopes# ) ↑#synthesized )
+    /// 	  →
+    /// 	  #HxConstructor# ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, #NeededSynthetic, NoNames, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}C-GetConstructorScopeSorts[#HxConstructor#]] » ) ↑#synthesized ↑ #HxAttributeName# ( #HxTerm# )
+    /// 	⟫, #SortName, B_FALSE];
+    ///     {#AS} C-UnsynthesizeRule-Data[#HxConstructor#, #HxScopes#, #HxAttributes#, {#L}#HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
+    ///   ),
+    ///   // Simple synthetic attribute creation rule.
+    ///   (
+    ///     D_RULE[{#L}%rawHxRule⟪ #HxRulePrefix#
+    /// 	  %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Need_", #HxAttributeName#]]
+    /// 	  » ( #HxConstructor# ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, AddName[NoNames, #HxAttributeName#], NoNames, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}C-GetConstructorScopeSorts[#HxConstructor#]] » ) )
+    /// 	  →
+    /// 	  #HxConstructor# ( #HxScopes# ) ↑ #HxAttributeName# ( #HxTerm# )
+    /// 	⟫, #SortName, B_FALSE];
+    ///     {#AS} C-UnsynthesizeRule-Data[#HxConstructor#, #HxScopes#, #HxAttributes#, {#L}#HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
+    ///   )
+    /// ];
+
+    // * Synthesized.
+    {#AS} C-UnsynthesizeRule-Data[#HxConstructor#, #HxScopes#, ({#L}%rawHxAttribute⟪ ↑ #HxAttributeName# #HxAttributeValue# ⟫; #HxAttributes#), #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, #DM, #SM]
     →
-    If[HasNames[#NeededSynthetic],
-      // Synthetic attribute propagation: first rule creates need, second collects results and generates attribute.
-      (
-        D_RULE[{#L}%rawHxRule⟪
-	  %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Need_", #HxAttributeName#]]
-	  » ( #HxConstructor# ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, #NeededSynthetic, NoNames, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}C-GetConstructorScopeSorts[#HxConstructor#]] » ) ↑#synthesized )
-	  →
-	  %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Collect_", #HxAttributeName#]]
-	  » ( #HxConstructor# ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, NoNames, #NeededSynthetic, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}C-GetConstructorScopeSorts[#HxConstructor#]] » ) ↑#synthesized )
-	⟫, #SortName, B_FALSE];
-	D_RULE[{#L}%rawHxRule⟪ #HxRulePrefix#
-	  %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Collect_", #HxAttributeName#]] » ( #HxConstructor# ( #HxScopes# ) ↑#synthesized )
-	  →
-	  #HxConstructor# ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, #NeededSynthetic, NoNames, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}C-GetConstructorScopeSorts[#HxConstructor#]] » ) ↑#synthesized ↑ #HxAttributeName# ( #HxTerm# )
-	⟫, #SortName, B_FALSE];
-        C-UnsynthesizeRule-Data[#HxConstructor#, #HxScopes#, #HxAttributes#, {#L}#HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
-      ),
-      // Simple synthetic attribute creation rule.
-      (
-        D_RULE[{#L}%rawHxRule⟪ #HxRulePrefix#
-	  %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Need_", #HxAttributeName#]]
-	  » ( #HxConstructor# ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, AddName[NoNames, #HxAttributeName#], NoNames, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}C-GetConstructorScopeSorts[#HxConstructor#]] » ) )
-	  →
-	  #HxConstructor# ( #HxScopes# ) ↑ #HxAttributeName# ( #HxTerm# )
-	⟫, #SortName, B_FALSE];
-        C-UnsynthesizeRule-Data[#HxConstructor#, #HxScopes#, #HxAttributes#, {#L}#HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
-      )
-    ];
+    {#AS} C-UnsynthesizeRule-Data1[#HxAttributeName#, $[{#AS}Get[$List[HxAttribute]], #HxAttributeName#, ()], {#L}%rawHxAttribute⟪ ↑ #HxAttributeName# #HxAttributeValue# ⟫, #HxConstructor#, #HxScopes#, #HxAttributes#, #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, #DM, #SM]
+    ;
 
-    // TODO:
-    // * Set/Map capture...
-    // * Set extension...
-    // * Map extension...
-    // * Set/Map elimination?
-    // * Synthesis copy?
+        // Helper to extend suspended attribute values.
+	{$String : $List[HxAttribute]}
+	C-UnsynthesizeRule-Data1[$String, $List[HxAttribute], HxAttribute, $String<!--DataConstructor-->, $List[HxScope]<!--Subterms-->, $List[HxAttribute], HxRulePrefix, NameSet<!--NeededSynthetic-->, Boolean<!--IsDataEquiv-->, $String<!--SortName-->, $String<!--ModuleName-->, DeclarationMap, SortMap] :: $List[Define] ;
+	-[Data[#AttributeValues,#NewAttributeValue]]:
+	{#AS}
+	C-UnsynthesizeRule-Data1[#AttributeName, #Attributes, #NewAttribute, #HxConstructor#, #HxScopes#, (), #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
+	→
+	{#AS; #AttributeName : (#NewAttribute; #Attributes)}
+	C-UnsynthesizeRule-Data[#HxConstructor#, #HxScopes#, (), #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
+	;
 
-    // * Inherited attributes generate an error.
-    C-UnsynthesizeRule-Data[#HxConstructor#, #HxScopes#, ({#L}%rawHxAttribute⟪ ↓ #HxAttributeName# #HxAttributeValue# ⟫; #HxAttributes#), #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
+    // * Inherited.
+    {#AS} C-UnsynthesizeRule-Data[#HxConstructor#, #HxScopes#, ({#L}%rawHxAttribute⟪ ↓ #HxAttributeName# #HxAttributeValue# ⟫; #HxAttributes#), #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
     →
     {#L}Error[$[:,"Cannot have inherited attribute on synthesis rules for ",#HxConstructor#," data."]]
     ;
 
-    // * When all attributes processed we are done.
-    C-UnsynthesizeRule-Data[#HxConstructor#, #HxScopes#, (), #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
+    // * When all attributes processed we switch to emitting the attributes.
+    {#AS} C-UnsynthesizeRule-Data[#HxConstructor#, #HxScopes#, (), #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
     →
-    ()
+    {#AS} C-UnsynthesizeRule-Data2[NameSetList[NamesFrom[$[{#AS}Keys[$String]]]], #HxConstructor#, #HxScopes#, #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
     ;
+
+        // Helper to output map/set attribute synthesis rules.
+	{$String : $List[HxAttribute]}
+	C-UnsynthesizeRule-Data2[$List[$String], $String<!--DataConstructor-->, $List[HxScope]<!--Subterms-->, HxRulePrefix, NameSet<!--NeededSynthetic-->, Boolean<!--IsDataEquiv-->, $String<!--SortName-->, $String<!--ModuleName-->, DeclarationMap, SortMap] :: $List[Define] ;
+
+	{#AS} C-UnsynthesizeRule-Data2[(#AttributeName; #AttributeNames), #HxConstructor#, #HxScopes#, #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
+	→
+	{#AS} C-UnsynthesizeRule-Data3[#AttributeName, $[{#AS}Get[$List[HxAttribute]], #AttributeName], #AttributeNames, #HxConstructor#, #HxScopes#, #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
+	;
+
+	{#AS} C-UnsynthesizeRule-Data2[(), #HxConstructor#, #HxScopes#, #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
+	→
+	()
+	;
+
+	// Helper to print skeleton of synthesis rules.
+	{$String : $List[HxAttribute]}
+	C-UnsynthesizeRule-Data3[$String, $List[HxAttribute], $List[$String], $String<!--DataConstructor-->, $List[HxScope]<!--Subterms-->,HxRulePrefix, NameSet<!--NeededSynthetic-->, Boolean<!--IsDataEquiv-->, $String<!--SortName-->, $String<!--ModuleName-->, DeclarationMap, SortMap] :: $List[Define] ;
+
+	{#AS} C-UnsynthesizeRule-Data3[#HxAttributeName#, #HxAttributes#, #AttributeNames, #HxConstructor#, #HxScopes#, #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
+	→
+	If[HasNames[#NeededSynthetic],
+	  // Synthetic attribute propagation: first rule creates need, second collects results and generates attribute.
+	  (
+	    D_RULE[%rawHxRule⟪
+	      %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Need_", #HxAttributeName#]]
+	      » ( #HxConstructor# ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, #NeededSynthetic, NoNames, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}C-GetConstructorScopeSorts[#HxConstructor#]] » ) ↑#synthesized )
+	      →
+	      %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Collect_", #HxAttributeName#]]
+	      » ( #HxConstructor# ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, NoNames, #NeededSynthetic, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}C-GetConstructorScopeSorts[#HxConstructor#]] » ) ↑#synthesized )
+	    ⟫, #SortName, B_FALSE];
+	    D_RULE[%rawHxRule⟪ #HxRulePrefix#
+	      %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Collect_", #HxAttributeName#]] » ( #HxConstructor# ( #HxScopes# ) ↑#synthesized )
+	      →
+	      #HxConstructor# ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, #NeededSynthetic, NoNames, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}C-GetConstructorScopeSorts[#HxConstructor#]] » ) ↑#synthesized #HxAttributes#
+	    ⟫, #SortName, B_FALSE];
+	    {#AS} C-UnsynthesizeRule-Data2[#AttributeNames, #HxConstructor#, #HxScopes#, #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
+	  ),
+	  // Simple synthetic attribute creation rule.
+	  (
+	    D_RULE[%rawHxRule⟪ #HxRulePrefix#
+	      %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Need_", #HxAttributeName#]]
+	      » ( #HxConstructor# ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, AddName[NoNames, #HxAttributeName#], NoNames, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}C-GetConstructorScopeSorts[#HxConstructor#]] » ) )
+	      →
+	      #HxConstructor# ( #HxScopes# ) #HxAttributes#
+	    ⟫, #SortName, B_FALSE];
+	    {#AS} C-UnsynthesizeRule-Data2[#AttributeNames, #HxConstructor#, #HxScopes#, #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
+	  )
+	];
+
+
 
     // SPLIT REGULAR RULE INTO NEED GENERATION AND REWRITE rules (if needed);
 
