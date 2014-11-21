@@ -13,7 +13,6 @@ gitclean :: realclean
 
 all install clean realclean gitclean ::
 	$(MAKE) -C src $@
-	$(MAKE) -C doc -I $(abspath src) $@
 
 all-debug install-support ::
 	$(MAKE) -C src $@

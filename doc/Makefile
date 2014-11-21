@@ -1,7 +1,7 @@
 # Makefile for HACS documentation.
 
 .PHONY: all clean realclean install gitclean
-all:: hacs.pdf
+all::
 install::
 clean::
 	rm -f *.tmp *~ ./#* *.log *~ *.aux *.bbl *.blg *.toc *.out *.idx *.ind

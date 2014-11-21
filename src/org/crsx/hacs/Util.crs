@@ -1300,7 +1300,9 @@ U-SortName[HxSort] :: $String;
 
     U-KeepInheritedMapEntry2[DeclarationMapEntry, NameSet] :: NameSet;
     U-KeepInheritedMapEntry2[DME_ATTRIBUTE[%rawHxAttributeKind⟪ ↓ ⟫, #name, %rawHxAttributeForm⟪ { #HxSort1# : #HxSort2# } ⟫, #options], #inheritedmaps] → AddName[#inheritedmaps, #name] ;
-    U-KeepInheritedMapEntry2[$[NotMatch,DME_ATTRIBUTE[%rawHxAttributeKind⟪ ↓ ⟫, #name, %rawHxAttributeForm⟪ { #HxSort1# : #HxSort2# } ⟫, #options], #_], #inheritedmaps] → #inheritedmaps ;
+    U-KeepInheritedMapEntry2[DME_ATTRIBUTE[%rawHxAttributeKind⟪ ↓ ⟫, #name, %rawHxAttributeForm⟪ { #HxSort#  } ⟫, #options], #synthesizedmaps] → AddName[#synthesizedmaps, #name] ;
+    U-KeepInheritedMapEntry2[$[NotMatch,DME_ATTRIBUTE[%rawHxAttributeKind⟪ ↓ ⟫, #name, %rawHxAttributeForm⟪ { #HxSort1# : #HxSort2# } ⟫, #options],
+    									     $[NotMatch,DME_ATTRIBUTE[%rawHxAttributeKind⟪ ↑ ⟫, #name3, %rawHxAttributeForm⟪ { #HxSort3#  } ⟫, #options3],#_]], #synthesizedmaps] → #synthesizedmaps ;
 
 {$String : DeclarationMapEntry} U-MakeSynthesizedNames :: NameSet ;
 {#DM} U-MakeSynthesizedNames → FoldWhen[ok k ns.{#DM} U-KeepSynthesizedEntry[ok, k, ns], $[{#DM}Keys[$String]], NoNames] ;
@@ -1328,7 +1330,9 @@ U-SortName[HxSort] :: $String;
 
     U-KeepSynthesizedMapEntry2[DeclarationMapEntry, NameSet] :: NameSet;
     U-KeepSynthesizedMapEntry2[DME_ATTRIBUTE[%rawHxAttributeKind⟪ ↑ ⟫, #name, %rawHxAttributeForm⟪ { #HxSort1# : #HxSort2# } ⟫, #options], #synthesizedmaps] → AddName[#synthesizedmaps, #name] ;
-    U-KeepSynthesizedMapEntry2[$[NotMatch,DME_ATTRIBUTE[%rawHxAttributeKind⟪ ↑ ⟫, #name, %rawHxAttributeForm⟪ { #HxSort1# : #HxSort2# } ⟫, #options], #_], #synthesizedmaps] → #synthesizedmaps ;
+    U-KeepSynthesizedMapEntry2[DME_ATTRIBUTE[%rawHxAttributeKind⟪ ↑ ⟫, #name, %rawHxAttributeForm⟪ { #HxSort#  } ⟫, #options], #synthesizedmaps] → AddName[#synthesizedmaps, #name] ;
+    U-KeepSynthesizedMapEntry2[$[NotMatch,DME_ATTRIBUTE[%rawHxAttributeKind⟪ ↑ ⟫, #name, %rawHxAttributeForm⟪ { #HxSort1# : #HxSort2# } ⟫, #options],
+    									     $[NotMatch,DME_ATTRIBUTE[%rawHxAttributeKind⟪ ↑ ⟫, #name3, %rawHxAttributeForm⟪ { #HxSort3#  } ⟫, #options3],#_]], #synthesizedmaps] → #synthesizedmaps ;
 
 // STRING CONVERSION HELPERS.
 

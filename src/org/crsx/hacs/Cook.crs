@@ -512,12 +512,13 @@ C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllN
         // Helper to extend suspended attribute values.
 	{$String : $List[HxAttribute]}
 	C-UnsynthesizeRule-Data1[$String, $List[HxAttribute], HxAttribute, $String<!--DataConstructor-->, $List[HxScope]<!--Subterms-->, $List[HxAttribute], HxRulePrefix, NameSet<!--NeededSynthetic-->, Boolean<!--IsDataEquiv-->, $String<!--SortName-->, $String<!--ModuleName-->, DeclarationMap, SortMap] :: $List[Define] ;
+
 	-[Data[#AttributeValues,#NewAttributeValue]]:
 	{#AS}
-	C-UnsynthesizeRule-Data1[#AttributeName, #Attributes, #NewAttribute, #HxConstructor#, #HxScopes#, (), #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
+	C-UnsynthesizeRule-Data1[#AttributeName, #OldAttributes, #NewAttribute, #HxConstructor#, #HxScopes#, #OtherAttributes, #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
 	→
-	{#AS; #AttributeName : (#NewAttribute; #Attributes)}
-	C-UnsynthesizeRule-Data[#HxConstructor#, #HxScopes#, (), #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
+	{#AS; #AttributeName : (#NewAttribute; #OldAttributes)}
+	C-UnsynthesizeRule-Data[#HxConstructor#, #HxScopes#, #OtherAttributes, #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
 	;
 
     // * Inherited.
@@ -1026,25 +1027,42 @@ If[And[Empty[#Attributes], Not[HasNames[UnionNames[#ThisInherited, #TopInherited
     // TODO: process system attributes in #ats.
 
     //
-    C-CrsxifyAttributeMap[$String<!--Name-->, $List[HxAttributeValue], NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
-    C-CrsxifyAttributeMap[#a, #avs, #TopInherited, #DM, #SM]
-    →
-    If[ContainsName[#TopInherited, #a],
-      %n⟪{#†«#a»« TextJoin[Map[av.%n⟨; ‹ C-CrsxifyAttributeMapValue[av, #TopInherited, #DM, #SM] ›⟩, #avs], %n⟨⟩] »}A_†«#a»⟫,
-      %n⟪{« TextJoin[Map[av.%n⟨‹ C-CrsxifyAttributeMapValue[av, #TopInherited, #DM, #SM] ›⟩, #avs], %n⟨; ⟩] »}A_†«#a»⟫
-    ];
-
-    //
     C-CrsxifyAttributeSimpleValue[HxAttributeValue, NameSet<!--TopInherited-->, DeclarationMap, SortMap] ::Text ;
     C-CrsxifyAttributeSimpleValue[%rawHxAttributeValue⟪ ( #HxTerm# ) ⟫, #TopInherited, #DM, #SM] → C-CrsxifyTerm[#HxTerm#, #TopInherited, #DM, #SM] ;
     // TODO: catch-all and error location report
 
     //
-    C-CrsxifyAttributeMapValue[HxAttributeValue, NameSet<!--TopInherited-->, DeclarationMap, SortMap] ::Text ;
-    C-CrsxifyAttributeMapValue[%rawHxAttributeValue⟪ { #HxTerm1# : #HxTerm2# } ⟫, #TopInherited, #DM, #SM] → %n⟪« C-CrsxifyTerm[#HxTerm1#, NoNames, #DM, #SM] » : « C-CrsxifyTerm[#HxTerm2#, #TopInherited, #DM, #SM] »⟫ ;
-    C-CrsxifyAttributeMapValue[%rawHxAttributeValue⟪ { #HxTerm# } ⟫, #TopInherited, #DM, #SM] → C-CrsxifyTerm[#HxTerm#, NoNames, #DM, #SM] ;
-    C-CrsxifyAttributeMapValue[%rawHxAttributeValue⟪ { ¬ #HxTerm# } ⟫, #TopInherited, #DM, #SM] → %n⟪¬ « C-CrsxifyTerm[#HxTerm#, NoNames, #DM, #SM] »⟫ ;
-    // TODO: catch-all and error location report
+    C-CrsxifyAttributeMap[$String<!--Name-->, $List[HxAttributeValue], NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
+    C-CrsxifyAttributeMap[#a, #avs, #TopInherited, #DM, #SM]
+    →
+    %n⟪{« C-CrsxifyAttributeMap2[#a, #avs, #TopInherited, #DM, #SM, "", If[ContainsName[#TopInherited, #a], "#a", ""], t.t] »}A_†«#a»⟫
+    ;
+
+    //
+    C-CrsxifyAttributeMap2[$String<!--Name-->, $List[HxAttributeValue], NameSet<!--TopInherited-->, DeclarationMap, SortMap, $String<!--Sep-->, $String<!--CatchAllOrEmpty-->, t::Text.Text] :: Text ;
+
+    C-CrsxifyAttributeMap2[#a, (%rawHxAttributeValue⟪ { #HxTerm1# : #HxTerm2# } ⟫; #avs), #TopInherited, #DM, #SM, #sep, #all, t.#[t]]
+    →
+    C-CrsxifyAttributeMap2[#a, #avs, #TopInherited, #DM, #SM, "; ", #all, t.#[%n⟪†«#sep»« C-CrsxifyTerm[#HxTerm1#, NoNames, #DM, #SM] » : « C-CrsxifyTerm[#HxTerm2#, #TopInherited, #DM, #SM] »« t »⟫]]
+    ;
+    C-CrsxifyAttributeMap2[#a, (%rawHxAttributeValue⟪ { #HxTerm# } ⟫; #avs), #TopInherited, #DM, #SM, #sep, #all, t.#[t]]
+    →
+    C-CrsxifyAttributeMap2[#a, #avs, #TopInherited, #DM, #SM, "; ", #all, t.#[%n⟪†«#sep»« C-CrsxifyTerm[#HxTerm#, NoNames, #DM, #SM] » : OK« t »⟫]]
+    ;
+    C-CrsxifyAttributeMap2[#a, (%rawHxAttributeValue⟪ { ¬ #HxTerm# } ⟫; #avs), #TopInherited, #DM, #SM, #sep, #all, t.#[t]]
+    →
+    C-CrsxifyAttributeMap2[#a, #avs, #TopInherited, #DM, #SM, "; ", #all, t.#[%n⟪†«#sep»¬ « C-CrsxifyTerm[#HxTerm#, NoNames, #DM, #SM] »« t »⟫]]
+    ;
+    C-CrsxifyAttributeMap2[#a, (%rawHxAttributeValue⟪ { : #HxMetaVariable# } ⟫; #avs), #TopInherited, #DM, #SM, #sep, #all, t.#[t]]
+    →
+    C-CrsxifyAttributeMap2[#a, #avs, #TopInherited, #DM, #SM, #sep, #HxMetaVariable#, t.#[t]]
+    ;
+    -[Data[#all]]:
+    C-CrsxifyAttributeMap2[#a, (), #TopInherited, #DM, #SM, #sep, #all, t.#[t]]
+    →
+    If[StringEmpty[#all], #[%n⟨⟩], %n⟪†«#all»†«#sep»« #[%n⟨⟩] »⟫]
+    ;
+    // TODO: error location report
 
 // CHOICES:
 // Attribute a base constructor is A_a.
@@ -1313,6 +1331,14 @@ C-AddTermSynthesized[#HxTerm#, C-AddAttributeInnerSynthesized[#Attributes, #Name
 C-AddAttributeInnerSynthesized[(%rawHxAttribute⟪ #HxAttributeKind# #HxAttributeName# { #HxTerm1# : #HxTerm2# } ⟫; #Attributes), #Names]
 →
 C-AddTermSynthesized[#HxTerm1#, C-AddTermSynthesized[#HxTerm2#, C-AddAttributeInnerSynthesized[#Attributes, #Names]]]
+;
+C-AddAttributeInnerSynthesized[(%rawHxAttribute⟪ #HxAttributeKind# #HxAttributeName# { : #HxMetaVariable# } ⟫; #Attributes), #Names]
+→
+C-AddAttributeInnerSynthesized[#Attributes, #Names]
+;
+C-AddAttributeInnerSynthesized[(%rawHxAttribute⟪ #HxAttributeKind# #HxMetaVariable# ⟫; #Attributes), #Names]
+→
+C-AddAttributeInnerSynthesized[#Attributes, #Names]
 ;
 
 // Helpers to extract all synthetic attributes from a term.
