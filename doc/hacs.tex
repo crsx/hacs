@@ -11,7 +11,7 @@
 \bibliographystyle{plainurl}
 
 %% Topmatter.
-\def\version{0.9.3\xspace}
+\def\version{0.9.5\xspace}
 \title{
   Compiler Generation Using \HAX\thanks{This version describes \HAX β version \version released for use at NYU.}
 }
@@ -904,31 +904,281 @@ Se (⟦ ⟧ ↑#syn) → ⟦ ⟧ ↑#syn ;
 
   \end{itemize}
   %%
-  With those, the SDD can be expressed as shown in Figure~\ref{fig:sdd}, where we use the helpers
+  With those, the SDD can be expressed as shown in Figure~\ref{fig:sdd} using the helpers
   \op{Extend}, \op{Defined}, and \op{Lookup} to build an extended environment with an additional
   type declaration, check for existence, and look one up, respectively, and \op{Unif} to find the
   type of an arithmetic operation with operands of two specific types.
 
-  If we use the translation mechanism, then we obtain the \HAX fragment in
-  Figure~\ref{fig:sdd-hacs}.
+  We can translate this to the \HAX in Figure~\ref{fig:sdd-hacs}, with the following schemes:
+  %%
+  \begin{itemize}
+
+  \item "Unif" -- unify two types as needed for typing the operators.
+
+  \item "Ee" -- scheme to propagate the $e$ attribute over "Exp" values.
+
+  \item "Se" -- scheme to propagate the $e$ attribute over "Stat" values.
+
+  \item "SeB" -- helper scheme to propagate the $e$ attribute from left to right part of assignment
+    statements.
+    
+  \end{itemize}
+  %% 
+  The environment helpers get translated to native \HAX environment patterns as follows:
+  %% 
+  \begin{itemize}
+
+  \item ``$\op{Defined}(N.e, x)$'' is encoded as true with the additional constraint "↓e{⟦x⟧}"
+    in a pattern.
+
+  \item ``$\op{Lookup}(N.e, x)$'' is encoded as the additional constraint "↓e{⟦x⟧:#}" in a pattern,
+    which then binds the meta-variable "#" to the result of the lookup.
+
+  \item ``$\op{Extend}(N.e, x, V)$'' is encoded as the additional constraint "↓e{⟦x⟧:V}" in the
+    result.
+
+  \end{itemize}
   %% 
 \end{example}
 
-For reference, we conclude this section with a summary of how symbol tables are encoded in a
-production for a nonterminal $N$ with an inherited environment attribute $e$:
-%%
-\begin{itemize}
 
-\item ``$\op{Defined}(N.e, x)$'' is encoded as true with the additional constraint "↓e{⟦x⟧}"
-  in a pattern.
+\section{Working with Data}
+\label{sec:data}
 
-\item ``$\op{Lookup}(N.e, x)$'' is encoded as the additional constraint "↓e{⟦x⟧:#}" in a pattern,
-  which then binds the meta-variable "#" to the result of the lookup.
+Once the structure of a specification is clear, we can start analyzing and manipulating our internal
+representation.  In this section we work through some examples of this.
 
-\item ``$\op{Extend}(N.e, x, V)$'' is encoded as the additional constraint "↓e{⟦x⟧:V}" in the
-  result.
+\begin{figure}[t]
+\begin{hacs}[numbers=right,texcl]
+module org.crsx.hacs.samples.WordSet {
 
-\end{itemize}
+// Simple word membership query.
+main sort Query | ⟦ ⟨WORD⟩ in ⟨List⟩ ⟧ ;
+sort List | ⟦ ⟨WORD⟩, ⟨List⟩ ⟧ | ⟦ ⟨WORD⟩ ⟧ ;
+token WORD | [A-Za-z0-9]+ ;
+
+// Collect set of words.
+attribute ↑z{WORD} ;
+sort List | ↑z ;
+⟦ ⟨WORD#w⟩, ⟨List#rest ↑z{:#ws}⟩ ⟧ ↑z{:#ws} ↑z{#w} ;
+⟦ ⟨WORD#w⟩ ⟧ ↑z{#w} ;
+
+// We'll provide the answer in clear text.
+sort Answer
+| ⟦Yes, the list contains ⟨WORD⟩.⟧
+| ⟦No, the list does not contain ⟨WORD⟩.⟧
+;
+
+// Check is main query scheme, which gives an Answer.
+sort Answer | scheme Check(Query) ;
+
+// The main program needs the synthesized list before it can check membership.
+Check( ⟦ ⟨WORD#w⟩ in ⟨List#rest ↑z{#w}⟩ ⟧ ) → ⟦Yes, the list contains ⟨WORD#w⟩.⟧ ;
+Check( ⟦ ⟨WORD#w⟩ in ⟨List#rest ↑z{¬#w}⟩ ⟧ ) → ⟦No, the list does not contain ⟨WORD#w⟩.⟧ ;
+}
+\end{hacs}
+\caption{\emph{WordSet.hx}: Sets of Words.}
+\label{fig:wordset}
+\end{figure}
+
+\begin{example}[set of words]
+  %%
+  One common task is to synthesize a set from some syntactic construct, and subsequently search the
+  set. Figure~\ref{fig:wordset} shows a small toy syntax allowing simple queries of word set
+  membership.
+
+  The example uses some new mechanisms for synthesizing the set:
+  %%
+  \begin{itemize}
+
+  \item A helper "z" synthetic attribute contains a \emph{set} of word tokens, which is indicated by
+    the attribute declaration "↑z{WORD}" in line~9.
+
+  \item We associate a "z" set with all values of the syntactic sort "List" in line 10.
+
+  \item Lines 11 and 12 capture the synthesis of the set. Line 12 captures the simple case where a
+    singleton list synthesizes a singleton set.
+
+  \item Line 11 has a few more notations in play.  First, the \emph{pattern} part of the rule
+    includes the inner pattern "↑z{:#ws}". This specifies that the special meta-variable ``":#ws"''
+    captures all the existing members of the "z" set.  Second, the result of the rule is to add
+    \emph{two} new things to the top level of the rule: "↑z{:ws} ↑z{#w}". This adds \emph{both} the
+    existing members (just matched) \emph{and} the one new member "#w" to the result set.
+
+  \item Lines 24 and 25 are almost the same: the one difference is that 24 matches sets that contain
+    the "#w" word, whereas 25 matches sets that do not because of the "¬" logical negation sign.
+  \end{itemize}
+  %%
+  We can run the example as follows:
+  %%
+\begin{code}[commandchars=\^\{\}]
+energon1[~]$ ^textcolor{blue}{^texttt{hacs WordSet.hx}}
+energon1[~]$ ^textcolor{blue}{^texttt{./WordSet.run --scheme=Check --term="a in a,b,b,a"}}
+Yes, the list contains a.
+energon1[~]$ ^textcolor{blue}{^texttt{./WordSet.run --scheme=Check --term="a in b"}}
+No, the list does not contain a.
+\end{code}
+\end{example}
+
+
+
+\begin{figure}[tp]
+\begin{hacs}[numbers=right,texcl]
+module org.crsx.hacs.samples.WordMap {
+
+// Simple word map over list.
+main sort Query | ⟦ ⟨Map⟩ in ⟨List⟩ ⟧ ;
+sort List | ⟦ ⟨WORD⟩ ⟨List⟩ ⟧ | ⟦ ⟧ ;
+sort Map | ⟦ ⟨WORD⟩ : ⟨WORD⟩ , ⟨Map⟩ ⟧ | ⟦ ⟨WORD⟩ : ⟨WORD⟩ ⟧ ;
+token WORD | [A-Za-z0-9]+ ;
+
+// Collect word mapping.
+attribute ↑m{WORD:WORD} ;
+sort Map | ↑m ;
+⟦ ⟨WORD#key⟩ : ⟨WORD#value⟩, ⟨Map#map ↑m{:#ms}⟩ ⟧ ↑m{:#ms} ↑m{#key:#value} ;
+⟦ ⟨WORD#key⟩ : ⟨WORD#value⟩ ⟧ ↑m{#key:#value} ;
+
+// Main program takes a Query and gives a List.
+sort List | scheme Substitute(Query) ;
+
+// Environment for mappings during List processing.
+attribute ↓e{WORD:WORD} ;
+sort List | scheme ListE(List) ↓e ;
+
+// The main program needs the synthesized map before it can substitute.
+Substitute( ⟦ ⟨Map#map ↑m{:#ms}⟩ in ⟨List#list⟩ ⟧ ) → ListE( #list ) ↓e{:#ms} ;
+
+// Replace any mapped words.
+ListE( ⟦ ⟨WORD#word⟩ ⟨List#words⟩ ⟧ ↑#syn ) ↓e{#word : #replacement}
+→ 
+⟦ ⟨WORD#replacement⟩ ⟨List ListE(#words)⟩ ⟧↑#syn
+;
+
+ListE( ⟦ ⟨WORD#word⟩ ⟨List#words⟩ ⟧ ↑#syn ) ↓e{¬#word}
+→ 
+⟦ ⟨WORD#word⟩ ⟨List ListE(#words)⟩ ⟧↑#syn
+;
+
+ListE( ⟦ ⟧ ↑#syn ) → ⟦ ⟧ ↑#syn ;
+}
+\end{hacs}
+\caption{\emph{WordMap.hx}: Apply Word Substitution as Map.}
+\label{fig:wordmap}
+\end{figure}
+
+\begin{example}[map of words]
+  Figure~\ref{fig:wordmap} shows how an environment can be synthesized and then used as an
+  environment. The pattern is similar to the set example, except here we not only synthesize the map
+  attribute "m" but also ``copy'' it over to an inherited map -- an environment -- "e". Notice these
+  extras:
+  %%
+  \begin{itemize}
+
+  \item The map attribute is synthesized in lines 12--13 just like the set attribute was in the
+    previous example, the only difference is that the map of course includes both a key and value.
+
+  \item In line 23 we simply capture all the ``mappings'' of the "m" attribute with the special
+    ":#ms" pattern, which we then \emph{reuse} to populate the "e" environment.
+
+  \end{itemize}
+
+\begin{code}[commandchars=\^\{\}]
+energon1[~]$ ^textcolor{blue}{^texttt{hacs WordMap.hx}}
+energon1[~]$ ^textcolor{blue}{^texttt{./WordMap.run --scheme=Substitute --term="a:b in a b b a"}}
+b b b b
+energon1[~]$ ^textcolor{blue}{^texttt{./WordSet.run --scheme=Substitute --term="k:v in a b c"}}
+a b c
+\end{code}
+\end{example}
+
+\begin{figure}[tp]\scriptsize
+\begin{hacs}[numbers=right,texcl]
+module org.crsx.hacs.samples.WordPairs {
+
+// Simple map membership query.
+main sort Query | ⟦ ⟨WORD⟩ in ⟨Map⟩ ⟧ ;
+
+// A map is a list of :-separated pairs.
+sort Map | ⟦ ⟨WORD⟩ : ⟨WORD⟩, ⟨Map⟩ ⟧ | ⟦ ⟨WORD⟩ : ⟨WORD⟩ ⟧ ;
+
+// The keys and values are words and numbers.
+token WORD | [A-Za-z0-9]+ ;
+
+// Helper 'list' data structure sort to collect maps.
+sort Mappings | MoreMappings(WORD, WORD, Mappings) | NoMappings ;
+
+// Synthesize helper list that collects all the mappings in a Map.
+attribute ↑map(Mappings) ;
+sort Map | ↑map ;
+⟦ ⟨WORD#key⟩ : ⟨WORD#value⟩, ⟨Map#m ↑map(#map)⟩ ⟧ ↑map(MoreMappings(#key, #value, #map)) ;
+⟦ ⟨WORD#key⟩ : ⟨WORD#value⟩ ⟧ ↑map(MoreMappings(#key, #value, NoMappings)) ;
+
+// Synthesize helper list that collects all the reverse mappings in a list.
+attribute ↑pam(Mappings) ;
+sort Map | ↑pam ;
+⟦ ⟨WORD#key⟩ : ⟨WORD#value⟩, ⟨Map#m ↑pam(#pam)⟩ ⟧ ↑pam(MoreMappings(#value, #key, #pam)) ;
+⟦ ⟨WORD#key⟩ : ⟨WORD#value⟩ ⟧ ↑pam(MoreMappings(#value, #key, NoMappings)) ;
+
+// We'll provide the answer in clear text.
+sort Answer
+| ⟦Yes, the map takes ⟨WORD⟩ to ⟨WORD⟩.⟧
+| ⟦No, but map gets ⟨WORD⟩ from ⟨WORD⟩.⟧
+| ⟦No, the map does not contain ⟨WORD⟩.⟧
+;
+
+// Helper scheme to check if a map is in one of the maps.
+sort Answer | scheme CheckMapping(WORD, Mappings, Mappings) ;
+
+// If the map and the first member of the list are the same, then we succeed!
+CheckMapping(#key, MoreMappings(#key, #value, #map), #pam)
+  → ⟦Yes, the map takes ⟨WORD#key⟩ to ⟨WORD#value⟩.⟧ ;
+
+// Fall back to a default recursive case.
+default CheckMapping(#key1, MoreMappings(#key2, #value, #map), #pam)
+  → CheckMapping(#key1, #map, #pam) ;
+
+// If the map and the first member of the list are the same, then we succeed!
+CheckMapping(#key, NoMappings, MoreMappings(#key, #value, #pam))
+  → ⟦No, but map gets ⟨WORD#key⟩ from ⟨WORD#value⟩.⟧ ;
+
+// Fall back to a default recursive case.
+default CheckMapping(#key1, NoMappings, MoreMappings(#key2, #value, #pam))
+  → CheckMapping(#key1, NoMappings, #pam) ;
+
+// Once there is nothing left to search, we give up.
+CheckMapping(#key, NoMappings, NoMappings) → ⟦No, the map does not contain ⟨WORD#key⟩.⟧ ;
+
+// Main program takes a Query and gives an Answer.
+sort Answer | scheme Check(Query) ;
+
+// The main program forces the synthesized list before it can check membership.
+Check( ⟦ ⟨WORD#key⟩ in ⟨Map#m ↑map(#map) ↑pam(#pam)⟩ ⟧ ) → CheckMapping(#key, #map, #pam) ;
+
+}
+\end{hacs}
+\caption{\emph{WordPairs.hx}: Word Mapping by Pairs.}
+\label{fig:wordpairs}
+\end{figure}
+
+\begin{example}[using a list as an environment]
+  We can also synthesize information more manually.  Figure~\ref{fig:wordpairs} shows a similar
+  example, where we want to search \emph{pairs} of words.  However, unlike in the set and map
+  examples above, we have not chosen to generate the map on the fly but instead generate it as a
+  semantic data structure that we use traditional pattern matching to access.
+
+  Notice the following:
+  \begin{itemize}
+
+  \item In line 38 we restrict the rule to cases where the first parameter "#key" is \emph{the same}
+    as the first "#key" embedded in the "Mappings" data structure, by explicitly using the same
+    meta-variable name in both places.
+
+  \item Line 42 does not have the constraint: the two keys can have any values. Therefore the rules
+    is marked "default" to make sure it is tried \emph{after} the rule in line 38. (In normal
+    operation, rules are \emph{not} tried in any particular order.)
+
+  \end{itemize}
+\end{example}
 
 
 %%% \section{Advanced Features}
@@ -1326,9 +1576,11 @@ space [ \t\f\r\n] | nested "/*" "*/" | "//" .* ;
     %%
     \begin{enumerate}
     \item "↑Name(ValueSort)" defines that the synthesized attribute "Name" has "ValueSort" values;
-    \item "↓Name(ValueSort)" similarly for a simple inherited attribute;
-    \item "↓Name{SymbolSort:ValueSort}" defines the inherited symbol table attribute "Name" which
-      for each constant or variable of "SymbolSort" has a distinct "ValueSort" value.
+    \item "↑Name{KeySort}" defines that the synthesized attribute "Name" is a set of "KeySort" values;
+    \item "↑Name{KeySort:ValueSort}" defines that the synthesized attribute "Name" is a map from
+      "KeySort" to "Valuesort" values;
+    \item "↓Name(ValueSort)", "↓Name{KeySort}", and "↓Name{SymbolSort:ValueSort}" similarly for
+      inherited attributes;
     \end{enumerate}
 
   \item One can add a simple \emph{synthesized attributes} after a raw data term as
@@ -1351,6 +1603,10 @@ space [ \t\f\r\n] | nested "/*" "*/" | "//" .* ;
   \item A \emph{synthesis rule} is a special rule of the form $t↑name(t')$, where the term $t$ may
     contain subterms with attribute constraints. The rule specifies how terms of the current sort
     and shape $t$ synthesize \emph{name} attributes.
+
+  \item In \emph{rules} one can use the special forms "↑#m", which captures \emph{all} synthesized
+    attribute values; "↑t{:#ms}" ("↓t{:#ms}"), which captures the full set of keys or key-value mappings of the
+    "t" synthesized (inherited) attribute.
 
   \end{enumerate}
   %%
@@ -1393,6 +1649,8 @@ space [ \t\f\r\n] | nested "/*" "*/" | "//" .* ;
   Notice that the \emph{.run} script has absolute references to the files in the \emph{build}
   directory, so the latter should be moved with care.
 \end{manual}
+
+
 
 
 %%% \section{Bonus Examples}\label{appbonus}

@@ -171,6 +171,11 @@ Map2[x y.#[x,y], (), #ys] → () ;
 Map2[x y.#[x,y], #xs, ()] → () ;
 Map2[x y.#[x,y], (#x; #xs), (#y; #ys)] → (#[#x,#y]; Map2[x y.#[x,y], #xs, #ys]) ;
 
+∀ a b c . Map2x[x::a y::b . $sort[c], $List[a], $List[b], b] :: $List[c] ;
+Map2x[x y.#[x,y], (), #ys, #y0] → () ;
+Map2x[x y.#[x,y], (#x; #xs), (#y; #ys), #y0] → (#[#x,#y]; Map2x[x y.#[x,y], #xs, #ys, #y0]) ;
+Map2x[x y.#[x,y], (#x; #xs), (), #y0] → (#[#x,#y0]; Map2x[x y.#[x,y], #xs, (), #y0]) ;
+
 ∀ a b . MapIndex[x::a i::$Numeric . $sort[b], $List[a]] :: $List[b] ;
 MapIndex[x i.#[x,i], #list] → MapIndexFrom[x i.#[x,i], #list, 1] ;
 

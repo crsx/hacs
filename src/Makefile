@@ -35,7 +35,7 @@ gitclean :: realclean
 
 # External library setup.
 ifndef CRSXJAR
-CRSXVERSION = 3.2.1
+CRSXVERSION = 3.2.2
 CRSXJAR = $(abspath ../lib/crsx-$(CRSXVERSION).jar)
 all :: $(CRSXJAR)
 endif
@@ -87,6 +87,7 @@ $(JAVACCJAR) :
 	unzip $(basename $(notdir $(JAVACCJAR))).zip
 	@mkdir -p $(dir $(CRSXJAR))
 	cp -a $(basename $(notdir $(JAVACCJAR)))/bin/lib/javacc.jar $(JAVACCJAR)
+	chmod u+w $(JAVACCJAR)
 
 clean ::; rm -fr javacc*
 
@@ -277,6 +278,7 @@ $(BUILD)/share/hacs/Hacs.mk $(BUILD)/share/hacs/Env.mk : Hacs.mk Env.mk
 $(BUILD)/bin/hacs: hacs.sh.template
 	@mkdir -p $(BUILD)/bin
 	$(GNUSED) \
+		-e 's;%%%HACSVERSION%%%;$(HACSVERSION);' \
 		-e 's;%%%LIBDIR%%%;$(LIBDIR);' \
 		-e 's;%%%BINDIR%%%;$(BINDIR);' \
 		-e 's;%%%DOCDIR%%%;$(DOCDIR);' \

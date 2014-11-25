@@ -205,7 +205,7 @@ net.sf.crsx.Sink s = null;⟧
 %{
 net.sf.crsx.Sink N_Attribute$WithEOF(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) : {}{ « JJ-Nonterminal[%n⟨sink⟩, "Attribute", %n⟨env⟩] » <EOF> {return sink;} }
 net.sf.crsx.Sink N_Attribute(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) :
-{Token k = null, a = null, t = null;}{⟦
+{Token a = null, t = null;}{⟦
 (« {#DM} P-MetaJJ-AttributeAlternatives[#ModuleName, NameSetList[{#DM} U-AllSynthesizedNames], NameSetList[{#DM}U-AllInheritedNames]] »)
 {return sink;}⟧
 }
@@ -249,32 +249,54 @@ P-then-MetaSorts-ConstructionSortCaseText[OK, #ModuleName, #Name, #rest]
 
 {$String : DeclarationMapEntry} P-MetaJJ-AttributeAlternatives[$String, $List[$String], $List[$String]] :: Text ;
 
-{#DM} P-MetaJJ-AttributeAlternatives[#ModuleName, (), ()] → %n⟪ <T_HX_UP> sink=N_HxSystemAttribute(sink, env) ⟫ ;
-{#DM} P-MetaJJ-AttributeAlternatives[#ModuleName, (#s1; #ss), ()] → %n⟪ k=<T_HX_UP> (⟦ sink=N_HxSystemAttribute(sink, env) ¶|( a=<T_HX_VAR> « {#DM} P-MetaJJ-AttributeBodies[#ModuleName, (#s1; #ss)] »)⟧) ⟫ ;
-{#DM} P-MetaJJ-AttributeAlternatives[#ModuleName, (), (#i1; #is)] → %n⟪ <T_HX_UP> sink=N_HxSystemAttribute(sink, env) ¶| k=<T_HX_DOWN> a=<T_HX_VAR> (⟦« {#DM} P-MetaJJ-AttributeBodies[#ModuleName, (#i1; #is)] »⟧) ⟫ ;
-{#DM} P-MetaJJ-AttributeAlternatives[#ModuleName, (#s1; #ss), (#i1; #is)] → %n⟪ k=<T_HX_UP> (⟦ sink=N_HxSystemAttribute(sink, env) ¶| a=<T_HX_VAR> (« {#DM} P-MetaJJ-AttributeBodies[#ModuleName, (#s1; #ss)] »)⟧) ¶| k=<T_HX_DOWN> a=<T_HX_VAR> (⟦« {#DM} P-MetaJJ-AttributeBodies[#ModuleName, (#i1; #is)] »⟧) ⟫ ;
+{#DM} P-MetaJJ-AttributeAlternatives[#ModuleName, (), ()]
+→
+%n⟪ <T_HX_UP> (sink=N_HxSystemAttribute(sink, env) | « {#DM} P-MetaJJ-CatchAllAttributes[#ModuleName, %n⟨"AttributeKindUp"⟩] »)
+⟫
+;
+{#DM} P-MetaJJ-AttributeAlternatives[#ModuleName, (#s1; #ss), ()]
+→
+%n⟪ <T_HX_UP> (⟦ sink=N_HxSystemAttribute(sink, env) | « {#DM} P-MetaJJ-CatchAllAttributes[#ModuleName, %n⟨"AttributeKindUp"⟩] »
+| a=<T_HX_VAR> (⟦« {#DM} P-MetaJJ-AttributeBodies[#ModuleName, (#s1; #ss)] »⟧)⟧)
+⟫
+;
+{#DM} P-MetaJJ-AttributeAlternatives[#ModuleName, (), (#i1; #is)]
+→
+%n⟪ <T_HX_UP> (⟦ sink=N_HxSystemAttribute(sink, env) | « {#DM} P-MetaJJ-CatchAllAttributes[#ModuleName, %n⟨"AttributeKindUp"⟩] »⟧)
+| <T_HX_DOWN> a=<T_HX_VAR> (⟦« {#DM} P-MetaJJ-AttributeBodies[#ModuleName, (#i1; #is)] »⟧)
+⟫
+;
+{#DM} P-MetaJJ-AttributeAlternatives[#ModuleName, (#s1; #ss), (#i1; #is)]
+→
+%n⟪ <T_HX_UP> (⟦ sink=N_HxSystemAttribute(sink, env) | « {#DM} P-MetaJJ-CatchAllAttributes[#ModuleName, %n⟨"AttributeKindUp"⟩] »
+| a=<T_HX_VAR> (« {#DM} P-MetaJJ-AttributeBodies[#ModuleName, (#s1; #ss)] »)⟧)
+| <T_HX_DOWN> a=<T_HX_VAR> (⟦« {#DM} P-MetaJJ-AttributeBodies[#ModuleName, (#i1; #is)] »⟧)
+⟫
+;
+
+{$String : DeclarationMapEntry} P-MetaJJ-CatchAllAttributes[$String, Text] :: Text ;
+{#DM} P-MetaJJ-CatchAllAttributes[#ModuleName, #kind]
+→
+%n⟪⟦ {sink = sink.start(makeTConstructor(sink, a, hx("CatchAllAttributes"), null)).start(makeTConstructor(sink, a, hx(«#kind»), null)) .end();}
+sink=N_HxMetaVariable(sink, env)
+{sink = sink.end();} ⟧⟫
+;
 
 {$String : DeclarationMapEntry} P-MetaJJ-AttributeBodies[$String, $List[$String]] :: Text ;
 {#DM} P-MetaJJ-AttributeBodies[#ModuleName, (#Name; #Names)]
 →
-%n⟪«
-  {#DM} P-MetaJJ-AttributeBodies2[#ModuleName, (#Name; #Names)]
-»⟦{sink = sink.start(makeTConstructor(sink, a, hx("CatchAllAttributes"), null)).start(makeTConstructor(sink, a, hx(t.toString()), null)) .end();}
-sink=N_HxMetaVariable(sink, env)
-{sink = sink.end();}⟧
-⟫
+{#DM} P-MetaJJ-AttributeBodies2[#ModuleName, (#Name; #Names), ""]
 ;
 
-{$String : DeclarationMapEntry} P-MetaJJ-AttributeBodies2[$String, $List[$String]] :: Text ;
+{$String : DeclarationMapEntry} P-MetaJJ-AttributeBodies2[$String, $List[$String], $String] :: Text ;
 
 -[Data[#Name]]:
-{#DM} P-MetaJJ-AttributeBodies2[#ModuleName, (#Name; #Names)]
+{#DM} P-MetaJJ-AttributeBodies2[#ModuleName, (#Name; #Names), #sep]
 →
-%n⟪« P-MetaJJ-AttributeBody[#ModuleName, #Name, $[{#DM}Get, #Name, DME_NONE]] » |
-« {#DM}P-MetaJJ-AttributeBodies2[#ModuleName, #Names] »⟫
+%n⟪†«#sep»« P-MetaJJ-AttributeBody[#ModuleName, #Name, $[{#DM}Get, #Name, DME_NONE]] »« {#DM}P-MetaJJ-AttributeBodies2[#ModuleName, #Names, "| "] »⟫
 ;
 
-{#DM} P-MetaJJ-AttributeBodies2[#ModuleName, ()]
+{#DM} P-MetaJJ-AttributeBodies2[#ModuleName, (), #sep]
 →
 %n⟪⟫
 ;

@@ -2,6 +2,8 @@
 #
 # HACS executable.
 
+echo "HACS %%%HACSVERSION%%%"
+
 usage="Usage: $0 [--keep|--verbose] Module.hx"
 
 # Identify local relative installation, if any.
@@ -34,15 +36,14 @@ build=$(readlink -f build)
 extra=""
 tee='&>>'
 keep=false
-quiet=false
+quiet=true
 goal=
 
 for arg; do
     case "$arg" in
 	-k|--keep) keep=true ;;
 	--goal=*) goal=${arg#*=} ;;
-	-e|--error*) tee='|& tee -a ' ;;
-	-q|--quiet) quiet=true ;;
+	-e|--error*) tee='|& tee -a ' quiet=false ;;
 	-i|--interpret) interpret=true ;;
 	--*) extra="$extra ${arg#--}" ;;
 	*) file=$arg ;;
@@ -70,8 +71,9 @@ function hacsmake () {
 	"$@"
     x=$?
     if [ $x -ne 0 -o ! -f "$1" ]; then
-	echo "$0 aborted: could not hacsmake $1."
-	exit $(expr $x + 128)
+	echo "$0 aborted: could not hacsmake $1." >&2
+	echo "(use -e or see $packagedir/$NAME.log for error messages)" >&2
+	exit $(expr $x)
     fi
 }
 

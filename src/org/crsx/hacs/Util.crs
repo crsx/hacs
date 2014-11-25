@@ -135,6 +135,7 @@ DeclarationMapEntry ::=(
  DME_N2N[NameMap];
  DME_N2NM[Name2NamesMap];
  DME_AFM[AttributeFormMap];
+ DME_N2SS[Name2ScopeSorts];
 );
 
 Wrapper ::=( NO_WRAPPER; WRAPPER[HxParsedForm]; );
@@ -150,14 +151,18 @@ Define ::=(
 
 FormKind ::=( FK_DATA[$String<!--Tag-->]; FK_SCHEME[$String<!--Tag-->]; FK_SYMBOL[$Boolean<!--IsStatic-->, $String<!--token-->]; FK_SUGAR[HxTerm]; FK_ALIAS; );
 
-{$String : HxAttributeForm}
-AttributeFormMap ::=( AFM; );
+{$String : HxAttributeForm} AttributeFormMap ::=( AFM; );
 
 EmptyAttributeFormMap :: AttributeFormMap ;
 EmptyAttributeFormMap → {}AFM ;
 
 LookupAttributeForm[AttributeFormMap, $String<!--Attribute-->] :: HxAttributeForm ;
 -[Data[#Attribute]]: LookupAttributeForm[{#AFM}AFM, #Attribute] → $[{#AFM}Get[HxAttributeForm], #Attribute, Hx_NoAttributeForm] ;
+
+{$String : $List[HxScopeSort]} Name2ScopeSorts  ::=( N2SS; );
+
+EmptyName2ScopeSorts :: Name2ScopeSorts ;
+EmptyName2ScopeSorts → {}N2SS ;
 
 // Basic ops.
 
@@ -201,6 +206,29 @@ U-then-ExtendDeclarationMap[OK, #DM, #Key, #Entry, dm¹.#[dm¹]] → U-ExtendDec
 
 {$String<!--Name--> : DeclarationMapEntry} U-GetConstructorSort[$String<!--Constructor-->] :: $String ;
 {"All$Constructor2Sort" : DME_N2N[#C2S]} U-GetConstructorSort[#Constructor] → LookupName[#C2S, #Constructor] ;
+
+// Get the ScopeSorts of a constructor (assumes DM has been "Unparsed").
+
+{$String<!--SortName--> : DeclarationMapEntry} U-GetConstructorScopeSorts[$String] :: $List[HxScopeSort] ;
+{#DM} U-GetConstructorScopeSorts[#Constructor] → {#DM} U-GetConstructorScopeSorts1[{#DM} U-GetConstructorSort[#Constructor], #Constructor] ;
+
+{$String<!--SortName--> : DeclarationMapEntry} U-GetConstructorScopeSorts1[$String, $String] :: $List[HxScopeSort] ;
+-[Data[#Sort]]: {#DM} U-GetConstructorScopeSorts1[#Sort, #Constructor] → {#DM} U-GetConstructorScopeSorts2[$[{#DM}Get[DeclarationMapEntry], #Sort, DME_NONE], #Sort, #Constructor] ;
+
+{$String<!--SortName--> : DeclarationMapEntry} U-GetConstructorScopeSorts2[DeclarationMapEntry, $String, $String] :: $List[HxScopeSort] ;
+{#DM} U-GetConstructorScopeSorts2[DME_SORT[#Defines, #Name, #Precs, #Wrapper, #IsMain], #Sort, #Constructor] → {#DM} U-GetConstructorScopeSorts3[OK, #Defines, #Constructor] ;
+{#DM} U-GetConstructorScopeSorts2[DME_NONE, #Sort, #Constructor] → () ;
+
+{$String<!--SortName--> : DeclarationMapEntry} U-GetConstructorScopeSorts3[Ok, $List[Define], $String] :: $List[HxScopeSort] ;
+{#DM} U-GetConstructorScopeSorts3[OK, (D_FORM[Hx_FormConstruction[#Constructor1, #ScopeSorts1, #InheritedRefs1], #FormKind]; #Defines), #Constructor] → IfThen[SameString[U-Local[#Constructor1], U-Local[#Constructor]], ok.#ScopeSorts1, ok.{#DM}U-GetConstructorScopeSorts3[ok, #Defines, #Constructor]] ;
+{#DM} U-GetConstructorScopeSorts3[OK, ($[NotMatch,D_FORM[Hx_FormConstruction[#Constructor, #ScopeSorts, #InheritedRefs], #FormKind],#_]; #Defines), #Constructor] → {#DM} U-GetConstructorScopeSorts3[OK, #Defines, #Constructor] ;
+{#DM} U-GetConstructorScopeSorts3[OK, (), #Constructor] → Error[$[:,"Missing internal definition of constructor: ",#Constructor,"."]] ;
+/// 
+/// {$String<!--Name--> : DeclarationMapEntry} U-GetConstructorScopeSorts[$String<!--Constructor-->] :: $List[HxScopeSort] ;
+/// -[Data[#Constructor]]: {"All$Constructor2ScopeSorts" : DME_N2SS[#C2SS]} U-GetConstructorScopeSorts[#Constructor] → U-GetConstructorScopeSorts2[$[Trace,#Constructor], #C2SS] ;
+/// 
+/// U-GetConstructorScopeSorts2[$String<!--Constructor-->, Name2ScopeSorts] :: $List[HxScopeSort] ;
+/// U-GetConstructorScopeSorts2[#Constructor,{#C2SS}N2SS] → $[Trace, $[{#C2SS}Get[$List[HxScopeSort]], #Constructor, ()] ] ;
 
 {$String<!--Name--> : DeclarationMapEntry} U-GetSortSynthesized[$String<!--Sort-->] :: NameSet;
 {"All$Sort2Synthesized" : DME_N2NM[#S2S]} U-GetSortSynthesized[#Sort] → LookupName2Names[#S2S, #Sort] ;
@@ -929,29 +957,18 @@ U-MakeDM-ExtraInformation1[#ModuleName, {#DM}DM]
 {#DM} U-MakeDM-ExtraInformation2[{#DM} U-MakeAllNames, {#DM} U-MakeSortNames, {#DM} U-MakeTokenNames,
   {#DM} U-MakeInheritedNames, {#DM} U-MakeInheritedMapNames, {#DM} U-MakeSynthesizedNames, {#DM} U-MakeSynthesizedMapNames,
   {#DM} U-MakeAttribute2Form[#ModuleName], {#DM} U-MakeAttribute2KeySort[#ModuleName], {#DM} U-MakeAttribute2ValueSort[#ModuleName],
-  {#DM} U-MakeConstructor2Sort[#ModuleName], {#DM} U-MakeSort2Synthesized[#ModuleName], {#DM} U-MakeFunction2Inherited[#ModuleName], {#DM} U-MakeSort2UserConstructors[#ModuleName]]
+  {#DM} U-MakeConstructor2Sort[#ModuleName], {#DM} U-MakeConstructor2ScopeSorts[#ModuleName],
+  {#DM} U-MakeSort2Synthesized[#ModuleName], {#DM} U-MakeFunction2Inherited[#ModuleName], {#DM} U-MakeSort2UserConstructors[#ModuleName]]
 ;
     {$String<!--SortName--> : DeclarationMapEntry}
     U-MakeDM-ExtraInformation2[NameSet<!--AllNames-->, NameSet<!--Sorts-->, NameSet<!--Tokens-->,
       NameSet<!--Inherited-->, NameSet<!--InheritedMaps-->, NameSet<!--Synthesized-->, NameSet<!--SynthesizedMaps-->,
       AttributeFormMap, NameMap<!--Attribute2KeySort-->, NameMap<!--Attribute2ValueSort-->,
-      NameMap<!--Constructor2Sort-->, Name2NamesMap<!--Sort2Synthesized-->, Name2NamesMap<!--Function2Inherited-->, Name2NamesMap<!--Sort2UserConstructors-->] :: DeclarationMap ;
+      NameMap<!--Constructor2Sort-->, Name2ScopeSorts<!--Constructor2ScopeSorts-->,
+      Name2NamesMap<!--Sort2Synthesized-->, Name2NamesMap<!--Function2Inherited-->, Name2NamesMap<!--Sort2UserConstructors-->] :: DeclarationMap ;
 
-    -[Data[#AllNames,#SortNames,#TokenNames,#InheritedNames,#InheritedMapNames,#SynthesizedNames,#SynthesizedMapNames,#Attribute2Form,#Attribute2KeySort,#Attribute2ValueSort,#Constructor2Sort,#Sort2Synthesized,#Function2Inherited,#Sort2UserConstructors]]:
-    {#DM} U-MakeDM-ExtraInformation2[#AllNames, #SortNames, #TokenNames, #InheritedNames, #InheritedMapNames, #SynthesizedNames, #SynthesizedMapNames, #Attribute2Form, #Attribute2KeySort, #Attribute2ValueSort, #Constructor2Sort, #Sort2Synthesized, #Function2Inherited, #Sort2UserConstructors]
-    →
-    {#DM} U-MakeDM-ExtraInformation3[#AllNames, #SortNames, #TokenNames, #InheritedNames, #InheritedMapNames, #SynthesizedNames, #SynthesizedMapNames, #Attribute2Form, #Attribute2KeySort, #Attribute2ValueSort, #Constructor2Sort, #Sort2Synthesized, #Function2Inherited, #Sort2UserConstructors]
-    ///{#DM} U-MakeDM-ExtraInformation3[TraceNameSet["AllNames", #AllNames], TraceNameSet["SortNames", #SortNames], TraceNameSet["TokenNames", #TokenNames], TraceNameSet["InheritedNames", #InheritedNames], TraceNameSet["InheritedMapNames", #InheritedMapNames], TraceNameSet["SynthesizedNames", #SynthesizedNames], TraceNameSet["SynthesizedMapNames", #SynthesizedMapNames], #Attribute2Form, #Attribute2KeySort, #Attribute2ValueSort, #Constructor2Sort, #Sort2Synthesized, #Function2Inherited, #Sort2UserConstructors]
-    ;
-
-    {$String<!--SortName--> : DeclarationMapEntry}
-    U-MakeDM-ExtraInformation3[NameSet<!--AllNames-->, NameSet<!--Sorts-->, NameSet<!--Tokens-->,
-      NameSet<!--Inherited-->, NameSet<!--InheritedMaps-->, NameSet<!--Synthesized-->, NameSet<!--SynthesizedMaps-->,
-      AttributeFormMap, NameMap<!--Attribute2KeySort-->, NameMap<!--Attribute2ValueSort-->,
-      NameMap<!--Constructor2Sort-->, Name2NamesMap<!--Sort2Synthesized-->, Name2NamesMap<!--Function2Inherited-->, Name2NamesMap<!--Sort2UserConstructors-->] :: DeclarationMap ;
-
-    -[Data[#AllNames,#SortNames,#TokenNames,#InheritedNames,#InheritedMapNames,#SynthesizedNames,#SynthesizedMapNames,#Attribute2Form,#Attribute2KeySort,#Attribute2ValueSort,#Constructor2Sort,#Sort2Synthesized,#Function2Inherited,#Sort2UserConstructors]]:
-    {#DM} U-MakeDM-ExtraInformation3[#AllNames, #SortNames, #TokenNames, #InheritedNames, #InheritedMapNames, #SynthesizedNames, #SynthesizedMapNames, #Attribute2Form, #Attribute2KeySort, #Attribute2ValueSort, #Constructor2Sort, #Sort2Synthesized, #Function2Inherited, #Sort2UserConstructors]
+    -[Data[#AllNames,#SortNames,#TokenNames,#InheritedNames,#InheritedMapNames,#SynthesizedNames,#SynthesizedMapNames,#Attribute2Form,#Attribute2KeySort,#Attribute2ValueSort,#Constructor2Sort,#Constructor2ScopeSorts,#Sort2Synthesized,#Function2Inherited,#Sort2UserConstructors]]:
+    {#DM} U-MakeDM-ExtraInformation2[#AllNames, #SortNames, #TokenNames, #InheritedNames, #InheritedMapNames, #SynthesizedNames, #SynthesizedMapNames, #Attribute2Form, #Attribute2KeySort, #Attribute2ValueSort, #Constructor2Sort, #Constructor2ScopeSorts, #Sort2Synthesized, #Function2Inherited, #Sort2UserConstructors]
     →
     {#DM;
        "All$Names" : DME_NAMES[#AllNames];
@@ -962,6 +979,7 @@ U-MakeDM-ExtraInformation1[#ModuleName, {#DM}DM]
        "All$SynthesizedNames" : DME_NAMES[#SynthesizedNames];
        "All$SynthesizedMapNames" : DME_NAMES[#SynthesizedMapNames];
        "All$Constructor2Sort" : DME_N2N[#Constructor2Sort];
+       "All$Constructor2ScopeSorts" : DME_N2SS[#Constructor2ScopeSorts];
        "All$Attribute2Form" : DME_AFM[#Attribute2Form];
        "All$Attribute2KeySort" : DME_N2N[#Attribute2KeySort];
        "All$Attribute2ValueSort" : DME_N2N[#Attribute2ValueSort];
@@ -1099,15 +1117,45 @@ U-MakeDM-ExtraInformation1[#ModuleName, {#DM}DM]
     U-MakeConstructor2Sort3[#ModuleName, $[NotMatch, DME_SORT[#_Defines, #_Name, #_Precs, #_Wrapper, #_IsMain], #_], #C2S] → #C2S ;
 
     U-MakeConstructor2Sort4[$String<!--ModuleName-->, $List[Define], $String<!--SortName-->, NameMap] :: NameMap ;
-    U-MakeConstructor2Sort4[#ModuleName, (), #Sort, #C2S] → U-MakeConstructor2Sort4b[#ModuleName, (), #Sort, #C2S] ;
-    U-MakeConstructor2Sort4[#ModuleName, (#Define; #Defines), #Sort, #C2S] → U-MakeConstructor2Sort4b[#ModuleName, (#Define; #Defines), #Sort, #C2S] ;
+    U-MakeConstructor2Sort4[#ModuleName, (), #Sort, #C2S] → U-MakeConstructor2Sort5[#ModuleName, (), #Sort, #C2S] ;
+    U-MakeConstructor2Sort4[#ModuleName, (#Define; #Defines), #Sort, #C2S] → U-MakeConstructor2Sort5[#ModuleName, (#Define; #Defines), #Sort, #C2S] ;
 
-    U-MakeConstructor2Sort4b[$String<!--ModuleName-->, $List[Define], $String<!--SortName-->, NameMap] :: NameMap ;
-    U-MakeConstructor2Sort4b[#ModuleName, (), #Sort, #C2S] → #C2S ;
+    U-MakeConstructor2Sort5[$String<!--ModuleName-->, $List[Define], $String<!--SortName-->, NameMap] :: NameMap ;
+    U-MakeConstructor2Sort5[#ModuleName, (), #Sort, #C2S] → #C2S ;
     -[Fresh[dummy::HxSortParam]]:
-    U-MakeConstructor2Sort4b[#ModuleName, ( D_ABSTRACTION[a.#Define[a]] ; #Defines ), #Sort, #C2S] → U-MakeConstructor2Sort4[#ModuleName, ( #Define[dummy] ; #Defines ), #Sort, #C2S] ;
-    U-MakeConstructor2Sort4b[#ModuleName, ( D_FORM[#Form, #Kind] ; #Defines ), #Sort, #C2S] → SetName[U-MakeConstructor2Sort4[#ModuleName, #Defines, #Sort, #C2S], U-QN[#ModuleName, #Sort, U-FormTag[#Form]], #Sort] ;
-    U-MakeConstructor2Sort4b[#ModuleName, ( $[NotMatch,D_ABSTRACTION[a.#_Define[a]],$[NotMatch,D_FORM[#_Form, #_Kind],#_]] ; #Defines ), #Sort, #C2S] → U-MakeConstructor2Sort4[#ModuleName, #Defines, #Sort, #C2S] ;
+    U-MakeConstructor2Sort5[#ModuleName, ( D_ABSTRACTION[a.#Define[a]] ; #Defines ), #Sort, #C2S] → U-MakeConstructor2Sort4[#ModuleName, ( #Define[dummy] ; #Defines ), #Sort, #C2S] ;
+    U-MakeConstructor2Sort5[#ModuleName, ( D_FORM[#Form, #Kind] ; #Defines ), #Sort, #C2S] → SetName[U-MakeConstructor2Sort4[#ModuleName, #Defines, #Sort, #C2S], U-QN[#ModuleName, #Sort, U-FormTag[#Form]], #Sort] ;
+    U-MakeConstructor2Sort5[#ModuleName, ( $[NotMatch,D_ABSTRACTION[a.#_Define[a]],$[NotMatch,D_FORM[#_Form, #_Kind],#_]] ; #Defines ), #Sort, #C2S] → U-MakeConstructor2Sort4[#ModuleName, #Defines, #Sort, #C2S] ;
+
+// Assemble map from each user symbol to the corresponding scope sorts.
+
+{$String : $List[HxScopeSort]} Name2ScopeSorts  ::=( N2SS; );
+
+{$String<!--SortName--> : DeclarationMapEntry} U-MakeConstructor2ScopeSorts[$String<!--ModuleName-->] :: Name2ScopeSorts ;
+{#DM} U-MakeConstructor2ScopeSorts[#ModuleName] → {#DM} U-MakeConstructor2ScopeSorts2[#ModuleName, $[{#DM}Keys[$String]], EmptyName2ScopeSorts] ;
+
+    {$String<!--Name--> : DeclarationMapEntry} U-MakeConstructor2ScopeSorts2[$String<!--ModuleName-->, $List[$String], Name2ScopeSorts] :: Name2ScopeSorts ;
+    {#DM} U-MakeConstructor2ScopeSorts2[#ModuleName, (), #C2SS] → #C2SS ;
+    {#DM} U-MakeConstructor2ScopeSorts2[#ModuleName, (#Sort; #Sorts), #C2SS] → U-MakeConstructor2ScopeSorts3[#ModuleName, $[{#DM}Get[DeclarationMapEntry], #Sort], {#DM} U-MakeConstructor2ScopeSorts2[#ModuleName, #Sorts, #C2SS]] ;
+
+    U-MakeConstructor2ScopeSorts3[$String<!--ModuleName-->, DeclarationMapEntry, Name2ScopeSorts] :: Name2ScopeSorts ;
+    U-MakeConstructor2ScopeSorts3[#ModuleName, DME_SORT[#Defines, #Name, #Precs, #Wrapper, #IsMain], #C2SS] → U-MakeConstructor2ScopeSorts4[#ModuleName, #Defines, #C2SS] ;
+    U-MakeConstructor2ScopeSorts3[#ModuleName, $[NotMatch, DME_SORT[#_Defines, #_Name, #_Precs, #_Wrapper, #_IsMain], #_], #C2SS] → #C2SS ;
+
+    U-MakeConstructor2ScopeSorts4[$String<!--ModuleName-->, $List[Define], Name2ScopeSorts] :: Name2ScopeSorts ;
+    U-MakeConstructor2ScopeSorts4[#ModuleName, (), #C2SS] → U-MakeConstructor2ScopeSorts5[#ModuleName, (), #C2SS] ;
+    U-MakeConstructor2ScopeSorts4[#ModuleName, (#Define; #Defines), #C2SS] → U-MakeConstructor2ScopeSorts5[#ModuleName, (#Define; #Defines), #C2SS] ;
+
+    U-MakeConstructor2ScopeSorts5[$String<!--ModuleName-->, $List[Define], Name2ScopeSorts] :: Name2ScopeSorts ;
+    U-MakeConstructor2ScopeSorts5[#ModuleName, (), #C2SS] → #C2SS ;
+    -[Fresh[dummy::HxSortParam]]:
+    U-MakeConstructor2ScopeSorts5[#ModuleName, ( D_ABSTRACTION[a.#Define[a]] ; #Defines ), #C2SS] → U-MakeConstructor2ScopeSorts4[#ModuleName, ( #Define[dummy] ; #Defines ), #C2SS] ;
+    U-MakeConstructor2ScopeSorts5[#ModuleName, ( D_FORM[#Form, #Kind] ; #Defines ), #C2SS] → U-MakeConstructor2ScopeSorts6[#ModuleName, #Form, U-MakeConstructor2ScopeSorts5[#ModuleName, #Defines, #C2SS]] ;
+    U-MakeConstructor2ScopeSorts5[#ModuleName, ( $[NotMatch,D_ABSTRACTION[a.#_Define[a]],$[NotMatch,D_FORM[#_Form, #_Kind],#_]] ; #Defines ), #C2SS] → U-MakeConstructor2ScopeSorts4[#ModuleName, #Defines, #C2SS] ;
+
+    U-MakeConstructor2ScopeSorts6[$String<!--ModuleName-->, HxForm, Name2ScopeSorts] :: Name2ScopeSorts ;
+    U-MakeConstructor2ScopeSorts6[#ModuleName, %rawHxForm⟪ #HxConstructor# ( #HxBindersScopeSorts# ) #HxInheritedRefs# ⟫, {#C2SS}N2SS] → {#C2SS; #HxConstructor# : #HxBindersScopeSorts#}N2SS ;
+    U-MakeConstructor2ScopeSorts6[#ModuleName, %rawHxForm⟪ #HxParsedForm# #HxFormPrec# #HxInheritedRefs# ⟫, {#C2SS}N2SS] → {#C2SS}N2SS ;
 
 // Assemble map from each sort to the user (non-parsed) constructors.
 

@@ -131,11 +131,13 @@ build/share/hacs/linter.h
 build/share/hacs/prof.h
 doc/Makefile
 doc/hacs.pdf
-lib/crsx-3.2.1.jar
+lib/crsx-3.2.2.jar
 samples/Bool.hx
 samples/Deriv.hx
 samples/First.hx
-samples/Words.hx
+samples/WordSet.hx
+samples/WordMap.hx
+samples/WordPairs.hx
 src/Env.mk
 src/Hacs.mk
 src/Makefile
