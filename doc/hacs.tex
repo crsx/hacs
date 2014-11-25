@@ -950,6 +950,34 @@ representation.  In this section we work through some examples of this.
 
 \begin{figure}[t]
 \begin{hacs}[numbers=right,texcl]
+module org.crsx.hacs.samples.IfCat {
+
+sort Name | ⟦⟨ID⟩⟧ ;
+
+token ID | [A-Za-z0-9]+ ;
+
+sort Boolean | ⟦True⟧ | ⟦False⟧;
+
+sort Boolean | scheme IsCat(Name);
+IsCat(#name) → IsCatHelper(#name, ⟦cat⟧);
+
+sort Boolean | scheme IsCatHelper(Name, Name);
+IsCatHelper(#,#) → ⟦True⟧;
+default IsCatHelper(#1, #2) → ⟦False⟧;
+
+}
+\end{hacs}
+\caption{\emph{IfCat.hx}: Finding cats.}
+\label{fig:cats}
+\end{figure}
+
+\begin{example}[finding cats]
+  The small example in Figure~\ref{fig:cats} illustrates how to test for equality using a
+  non-linear rule in line 13 combined with a ``catch-all' default rule in line 14.
+\end{example}
+
+\begin{figure}[t]
+\begin{hacs}[numbers=right,texcl]
 module org.crsx.hacs.samples.WordSet {
 
 // Simple word membership query.

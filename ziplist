@@ -135,6 +135,7 @@ lib/crsx-3.2.2.jar
 samples/Bool.hx
 samples/Deriv.hx
 samples/First.hx
+samples/IfCat.hx
 samples/WordSet.hx
 samples/WordMap.hx
 samples/WordPairs.hx

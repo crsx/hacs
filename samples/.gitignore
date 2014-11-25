@@ -4,3 +4,6 @@ gentle/
 *.crs
 *.pgbase
 *.run
+*.env
+build/
+

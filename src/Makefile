@@ -293,7 +293,7 @@ $(BUILD)/bin/hacs: hacs.sh.template
 # HACS documents.
 
 DOCUMENTS = README.md
-SAMPLES = samples/First.hx samples/Bool.hx samples/Words.hx
+SAMPLES = samples/First.hx samples/Bool.hx samples/IfCat.hx samples/WordSet.hx samples/WordMap.hx samples/WordPairs.hx
 
 all :: $(addprefix $(BUILD)/share/doc/hacs/,$(notdir $(DOCUMENTS))) $(addprefix $(BUILD)/share/doc/hacs/examples/,$(notdir $(SAMPLES)))
 
