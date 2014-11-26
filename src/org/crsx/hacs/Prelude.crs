@@ -1,6 +1,8 @@
 // Prelude.crs: CRSX3 SUPPORT LIBRARY FOR HACS OPERATIONS.
 // Copyright © 2012,2014 Kristoffer H. Rose <krisrose@crsx.org>
 
+// NOTE: This file needs to be in sync with Prelude.pg as well as Util/Prep/Cook.crs.
+
 Prelude[(
 
 // Contents:
@@ -98,6 +100,9 @@ NumericToStringWhen[Ok, $Numeric] :: $String;
 Less2[$Numeric, $Numeric] :: Boolean ;
 -[Data[#1,#2]]: Less2[#1, #2] → $[If, $[LessThan, #1, #2], B_TRUE, B_FALSE] ;
 
+LessEqual2[$Numeric, $Numeric] :: Boolean ;
+-[Data[#1,#2]]: Less2[#1, #2] → $[If, $[LessThan, #1, #2], B_TRUE, B_FALSE] ;
+
 Eq2[$Numeric, $Numeric] :: Boolean ;
 -[Data[#1,#2]]: Eq2[#1, #2] → $[If, $[Equal, $[Plus,#1,0], $[Plus,#2,0]], B_TRUE, B_FALSE] ;
 
@@ -111,6 +116,9 @@ Min2[$Numeric, $Numeric] :: $Numeric ;
 
 Sum2[$Numeric, $Numeric] :: $Numeric ;
 -[Data[#1,#2]]: Sum2[#1, #2] → $[Plus, #1, #2] ;
+
+Sub2[$Numeric, $Numeric] :: $Numeric ;
+-[Data[#1,#2]]: Sub[#1, #2] → $[Minus, #1, #2] ;
 
 Neg[$Numeric] :: $Numeric ;
 -[Data[#]]: Neg[#] → $[Minus, 0, #] ;

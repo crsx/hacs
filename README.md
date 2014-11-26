@@ -13,20 +13,6 @@ HACS is implemented on top of the [CRSX](http://crsx.org) rewriting
 engine.
 
 
-Prerequisites
-----
-
-HACS relies on the following software:
-
-* The [ICU4C](http://icu-project.org/apiref/icu4c/) libraries must be
-  available eiher in libraries matching `/usr/lib*/libicu*.so` or
-  `/usr/lib*/*/libicu*.so`, with the include files in standard locations.
-  (On debian this is achieved by `apt-get install libicu-dev`.)
-
-* The [JavaCC](http://javacc.java.net) parser generator. This is
-  downloaded automatically as part of installation.
-
-
 How to Install
 ----
 
@@ -45,11 +31,10 @@ these commands:
 ```
 wget http://crsx.org/hacs-0.9.zip
 unzip hacs-0.9.zip
-make -C hacs prefix=$HOME/.hacs FROMZIP=yes install install-support
+make -C hacs all install install-support
 ```
 
-Using `prefix=$HOME/.hacs`, as proposed above, creates the following
-files and subdirectories:
+This creates the following directories (you can change the default `prefix=$HOME/.hacs` if you wish):
 
 * `$HOME/.hacs/bin/hacs` - the main executable shell script.
 * `$HOME/.hacs/lib/hacs` - directory with utility binaries.
@@ -64,5 +49,5 @@ You can clone the [crsx/hacs](https://github.com/crsx/hacs) github
 project and then
 
 ```
-make -C hacs prefix=$HOME/.hacs install install-support
+make all install install-support
 ```
