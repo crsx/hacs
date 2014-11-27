@@ -117,11 +117,44 @@ Min2[$Numeric, $Numeric] :: $Numeric ;
 Sum2[$Numeric, $Numeric] :: $Numeric ;
 -[Data[#1,#2]]: Sum2[#1, #2] → $[Plus, #1, #2] ;
 
-Sub2[$Numeric, $Numeric] :: $Numeric ;
+Prod2[$Numeric, $Numeric] :: $Numeric ;
+-[Data[#1,#2]]: Sum2[#1, #2] → $[Times, #1, #2] ;
+
+Sub[$Numeric, $Numeric] :: $Numeric ;
+-[Data[#1,#2]]: Sub[#1, #2] → $[Minus, #1, #2] ;
+
+Div[$Numeric, $Numeric] :: $Numeric ;
+-[Data[#1,#2]]: Div[#1, #2] → $[Divide, #1, #2] ;
+
+Mod[$Numeric, $Numeric] :: $Numeric ;
+-[Data[#1,#2]]: Mod[#1, #2] → $[Modulo, #1, #2] ;
+
+Sub[$Numeric, $Numeric] :: $Numeric ;
 -[Data[#1,#2]]: Sub[#1, #2] → $[Minus, #1, #2] ;
 
 Neg[$Numeric] :: $Numeric ;
 -[Data[#]]: Neg[#] → $[Minus, 0, #] ;
+
+BitAnd[$Numeric, $Numeric] :: $Numeric ;
+-[Data[#1,#2]]: BitAnd[#1, #2] → $[BitAnd, #1, #2] ;
+
+BitOr[$Numeric, $Numeric] :: $Numeric ;
+-[Data[#1,#2]]: BitOr[#1, #2] → $[BitOr, #1, #2] ;
+
+BitXor[$Numeric, $Numeric] :: $Numeric ;
+-[Data[#1,#2]]: BitXor[#1, #2] → $[BitXor, #1, #2] ;
+
+BitMinus[$Numeric, $Numeric] :: $Numeric ;
+-[Data[#1,#2]]: BitMinus[#1, #2] → $[BitMinus, #1, #2] ;
+
+BitShiftLeft[$Numeric, $Numeric] :: $Numeric ;
+-[Data[#1,#2]]: BitShiftLeft[#1, #2] → $[BitShiftLeft, #1, #2] ;
+
+BitShiftRight[$Numeric, $Numeric] :: $Numeric ;
+-[Data[#1,#2]]: BitShiftRight[#1, #2] → $[BitShiftRight, #1, #2] ;
+
+BitNot[$Numeric] :: $Numeric ;
+-[Data[#]]: BitNot[#] → $[BitNot, #] ;
 
 
 /////////////////////////////////////////////////////////////////////
@@ -660,6 +693,13 @@ $[Error, $[:,
   $[IfEmpty, #line, "", $[:, #line, $[IfEmpty, #column, "", $[:,"(",#column,")"]], ": "]],
   #mess]]
 ;
+
+
+/////////////////////////////////////////////////////////////////////
+// 10. Logical Bit Expressions
+
+
+
 
 /////////////////////////////////////////////////////////////////////
 

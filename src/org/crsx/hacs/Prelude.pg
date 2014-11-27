@@ -5,46 +5,59 @@ class org.crsx.hacs.Prelude : <E>
 
 prefix "prelude"
 
-declarations
-%{
+<E> ::= <Eadd> .
 
-%}
+<Eadd> ::= <Emult>:#1 <Eadd2 #1> .
+<Eadd2 #1> ::=
+         "+" <Emult>:#2 <Eadd2 {{Sum2[#1,#2]}}>
+       | "-" <Emult>:#2 <Eadd2 {{Sub[#1,#2]}}>
+       | "|" <Emult>:#2 <Eadd2 {{BitOr[#1,#2]}}>
+       | "^" <Emult>:#2 <Eadd2 {{BitXor[#1,#2]}}>
+       | "\\" <Emult>:#2 <Eadd2 {{BitMinus[#1,#2]}}>
+       | {{#1}}
+       .
 
-//
+<Emult> ::= <Epre>:#1 <Emult2 #1> .
+<Emult2 #1> ::=
+         ("*"|"×") <Epre>:#2 {{Prod2[#1,#2]}}>
+       | ("/"|"÷") <Epre>:#2 {{Div[#1,#2]}}>
+       | "%" <Epre>:#2 {{Mod[#1,#2]}}>
+       | "&" <Epre>:#2 {{BitAnd[#1,#2]}}>
+       | ("<<"|"«") <Epre>:#2 {{BitShiftLeft[#1,#2]}}>
+       | (">>"|"»") <Epre>:#2 {{BitShiftRight[#1,#2]}}>
+       | "&" <Epre>:#2 {{BitAnd[#1,#2]}}>
+       | {{#}}
+       .
+       
+<Epre> ::= <Eprim>
+       | "-"{Neg} <Eprim>
+       | "+" <Eprim>
+       | "~"{BitNot} <Eprim>
+       | "(" <E> ")"
+       | HEX:# {{$[Hex,#]}}
+       | DECIMAL:# {{$[Decimal,#]}}
+       | STRING$
+       | META@
+       .
 
-<E> ::= <Eor> .
-<Eor> ::= <Eor>:# ( ("∨"|"||"){Or} {{#}} <Eand> | {{#}} ) .
-<Eand> ::= <Eand>:# ( ("∧"|"&&"){And} {{#}} <Erel> | {{#}} ) .
-<Erel> ::= <Eadd>:#
-       ( "="{Eq2} {{#}} <Eadd>
-       | ("!="|"≠"){Not} ({Eq2} {{#}} <Eadd>)
-       | "<"{Less2} {{#}} <Eadd>
-       | ">"{Less2} <Eadd> {{#}}
-       | ("<="|"≤"){LessEqual2} <Eadd> {{#}}
-       | (">="|"≥"){LessEqual2} {{#}} <Eadd>
-       | {{#}} ).
-<Eadd> ::= <Emult>:#
-       ( "+"{Sum2} {{#}} <E2>
-       | "-"{Sub} {{#}} <E2>
-       | "|"{BitOr} {{#}} <E2>
-       | "-"{Sub} {{#}} <E2>
-       | "-"{Sub} {{#}} <E2>
-       | {{#}} ) .
+token HEX ::= "0x" [0-9A-fa-f]+ .
+token DECIMAL ::= [0-9]+ .
 
-<E1> ::= <E2>:# ( ("∧"|"&&"){And} {{#}} <E2> | {{#}} ) .
+token META ::= '#' NAME .
 
-<E1> ::= <E2>:# ( ("∧"|"&&"){And} {{#}} <E2> | {{#}} ) .
+token STRING ::= '"' ( ~[\\\"\n] | [\\] ESCAPEDCHAR )* '"' .
+fragment ESCAPEDCHAR ::= ~[0-9ux] | [\\] [0-3]? [0-7]? [0-7] | [\\] [u] ( HEX | '{' HEX '}' ) .
 
-<E1> ::= <E2>:# ( ("∧"|"&&"){And} {{#}} <E2> | {{#}} ) .
+token NAME ::= [A-Za-z] [A-Za-z0-9_]* .
 
-<E1> ::= <E2>:# ( ("∧"|"&&"){And} {{#}} <E2> | {{#}} ) .
-
-<E1> ::= <E2>:# ( ("∧"|"&&"){And} {{#}} <E2> | {{#}} ) .
-
-<E1> ::= <E2>:# ( ("∧"|"&&"){And} {{#}} <E2> | {{#}} ) .
-
-<E1> ::= <E2>:# ( ("∧"|"&&"){And} {{#}} <E2> | {{#}} ) .
-
-<E1> ::= <E2>:# ( ("∧"|"&&"){And} {{#}} <E2> | {{#}} ) .
-
-<E1> ::= <E2>:# ( ("∧"|"&&"){And} {{#}} <E2> | {{#}} ) .
+/// <Eor> ::= <Eor>:# ( ("∨"|"||"){POr} {{#}} <Eand> | {{#}} ) .
+/// <Eand> ::= <Eand>:# ( ("∧"|"&&"){PAnd} {{#}} <Erel> | {{#}} ) .
+/// <Erel> ::= <Eadd>:#
+///        ( "="{PEq} {{#}} <Eadd>
+///        | ("!="|"≠"){PNeq} {{#}} <Eadd>
+///        | "<"{PLess} {{#}} <Eadd>
+///        | ">"{PLess} <Eadd> {{#}}
+///        | ("<="|"≤"){PLessEqual} <Eadd> {{#}}
+///        | (">="|"≥"){PLessEqual} {{#}} <Eadd>
+///        | {{#}}
+///        ).

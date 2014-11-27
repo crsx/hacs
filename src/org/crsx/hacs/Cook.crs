@@ -683,6 +683,12 @@ C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllN
       as¹.#[({#L}%rawHxAttribute⟪ ↓ #HxAttributeName# %HxAttributeValue« C-UnsynthesizeAttributeValue[#HxAttributeValue#, #HxAttributeName#, #Remove, #Needy, #ModuleName, #DM, #SM] » ⟫; as¹)], #Remove, #Needy, #ModuleName, #DM, #SM]
     ;
 
+    -[Data[#]]:
+    C-UnsynthesizeAttributes[({#L}%rawHxAttribute⟪ ↑ #HxMetaVariable# ⟫; #Attributes), #SortName, as¹.#[as¹], #Remove, #Needy, #ModuleName, #DM, #SM]
+    →
+    C-UnsynthesizeAttributes[#Attributes, #SortName, as¹.#[({#L}%rawHxAttribute⟪ ↓ #HxMetaVariable# ⟫; as¹)], #Remove, #Needy, #ModuleName, #DM, #SM]
+    ;
+
     C-UnsynthesizeAttributeValue[HxAttributeValue, $String<!--AttributeName-->, NameSet<!--Attributes to remove-->, NameSet<!--Attributes to make needy-->, $String<!--ModuleName-->, DeclarationMap, SortMap] :: HxAttributeValue ;
     C-UnsynthesizeAttributeValue[{#L}%rawHxAttributeValue⟪ ( #HxTerm# ) ⟫, #AttributeName, #Remove, #Needy, #ModuleName, {#DM}DM, #SM]
     →
@@ -1589,6 +1595,10 @@ $[{#SM}IfDef, #MetaVariable,
 {#DM} C-ExtendSortMap-Attributes[#Attributes, {#DM} C-ExtendSortMap[#HxTerm1#, {#DM} U-GetAttributeKeySort[#HxAttributeName#], {#DM} C-ExtendSortMap[#HxTerm2#, {#DM} U-GetAttributeValueSort[#HxAttributeName#], #SM]]]
 ;
 {#DM} C-ExtendSortMap-Attributes[(%rawHxAttribute⟪ #HxAttributeKind# #HxAttributeName# { : #HxMetaVariable# } ⟫; #Attributes), #SM]
+→
+{#DM} C-ExtendSortMap-Attributes[#Attributes, #SM]
+;
+{#DM} C-ExtendSortMap-Attributes[(%rawHxAttribute⟪ #HxAttributeKind# #HxMetaVariable# ⟫; #Attributes), #SM]
 →
 {#DM} C-ExtendSortMap-Attributes[#Attributes, #SM]
 ;
