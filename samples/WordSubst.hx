@@ -26,7 +26,7 @@ attribute ↓env{Variable:NAT} ;   // mappings to apply
 
 // Top scheme.
 main sort Units | scheme Run(Units) ;
-Run(#units) → Run1(#units, #subst) ;
+Run(#units) → Run1(#units) ;
 
 // Strategy: two passes.
 // 1. force synthesis of subst attribute.
@@ -54,7 +54,7 @@ sort Unit | ↑subst ;
 // Inheritance of env.
 
 sort Units | scheme Unitsenv(Units) ↓env ;
-Unitsenv( ⟦ ⟨Unit#1⟩ ⟨Units#2⟩ ⟧ →  ⟦ ⟨Unit Unitenv(#1)⟩ ⟨Units Unitsenv(#2)⟩ ⟧ ;
+Unitsenv( ⟦ ⟨Unit#1⟩ ⟨Units#2⟩ ⟧ ) →  ⟦ ⟨Unit Unitenv(#1)⟩ ⟨Units Unitsenv(#2)⟩ ⟧ ;
 Unitsenv( ⟦ ⟧ ) → ⟦ ⟧ ;
 
 sort Unit | scheme Unitenv(Unit) ↓env ;

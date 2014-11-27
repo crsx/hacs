@@ -144,9 +144,16 @@ energon1[~]$ ^textcolor{blue}{^texttt{cp $HOME/.hacs/share/doc/hacs/examples/Fir
 energon1[~]$ ^textcolor{blue}{^texttt{$HOME/.hacs/bin/hacs First.hx}}
 energon1[~]$ ^textcolor{blue}{^texttt{./First.run --scheme=Compile \}}
            ^textcolor{blue}{^texttt{--term="^{initial := 1; rate := 1.0; position := initial + rate * 60;^}"}}
-  LDF T_2,  #1     STF initial, T_2    LDF T_2,  #1.0     STF rate, T_2
-  LDF T_3,  initial     LDF T_3,  rate     LDF T_4,  #60
-  MULF  T_4 ,  T_3 ,  T_4     ADDF  T_2 ,  T_3 ,  T_4     STF position, T_2  
+  LDF T_2,  #1 
+    STF initial, T_2
+    LDF T_2,  #1.0 
+    STF rate, T_2
+    LDF T_3,  initial 
+    LDF T_3,  rate 
+    LDF T_4,  #60 
+    MULF  T_4 ,  T_3 ,  T_4 
+    ADDF  T_2 ,  T_3 ,  T_4 
+    STF position, T_2
 \end{code}
   %%
   Congratulations---you just built your first compiler!\footnote{Please do not mind the spacing --
@@ -164,7 +171,7 @@ module org.crsx.hacs.samples.First
   $\text{\it Lexical Analysis (Section~\ref{sec:tokens})}$
   $\text{\it Syntax Analysis (Section~\ref{sec:syntax})}$
   $\text{\it Semantic Analysis (Sections~\ref{sec:collect} and \ref{sec:sdd})}$
-  $\text{\it Code Generator (Section~\ref{sec:schemes})}$
+  $\text{\it Code Generator}$
   $\text{\it Main (Section~\ref{sec:schemes})}$
 }
 \end{hacs}
@@ -950,30 +957,43 @@ representation.  In this section we work through some examples of this.
 
 \begin{figure}[t]
 \begin{hacs}[numbers=right,texcl]
-module org.crsx.hacs.samples.IfCat {
+module org.crsx.hacs.samples.IsCat {
 
-sort Name | ⟦⟨ID⟩⟧ ;
+token WORD | [A-Za-z]+ ;
+main sort Word | ⟦⟨WORD⟩⟧ ;
 
-token ID | [A-Za-z0-9]+ ;
+sort Boolean | ⟦True⟧ | ⟦False⟧ ;
 
-sort Boolean | ⟦True⟧ | ⟦False⟧;
+sort Boolean | scheme IsCat(Word) ;
+IsCat(#word) → IsSameWord(#word, ⟦cat⟧) ;
 
-sort Boolean | scheme IsCat(Name);
-IsCat(#name) → IsCatHelper(#name, ⟦cat⟧);
-
-sort Boolean | scheme IsCatHelper(Name, Name);
-IsCatHelper(#,#) → ⟦True⟧;
-default IsCatHelper(#1, #2) → ⟦False⟧;
-
+sort Boolean | scheme IsSameWord(Word, Word) ;
+IsSameWord(#, #) → ⟦True⟧ ;
+default IsSameWord(#1, #2) → ⟦False⟧ ;
 }
 \end{hacs}
-\caption{\emph{IfCat.hx}: Finding cats.}
+\caption{\emph{IsCat.hx}: Finding cats.}
 \label{fig:cats}
 \end{figure}
 
 \begin{example}[finding cats]
   The small example in Figure~\ref{fig:cats} illustrates how to test for equality using a
-  non-linear rule in line 13 combined with a ``catch-all' default rule in line 14.
+  non-linear rule in line 12 combined with a ``catch-all'' default rule in line 13.
+
+  Note that we cannot use "⟦cat⟧" directly in a pattern: patterns are restricted to \emph{syntactic
+    cases} of the grammar.  Also note that we have here defined the "Boolean" sort to have syntactic
+  values rather than just constructors: this allows us to print them.
+
+  Here is a possible run using this command:
+  %%
+\begin{code}[commandchars=\\\{\}]
+$ \textcolor{blue}{hacs IsCat.hx}
+...
+$ \textcolor{blue}{./IsCat.run --scheme=IsCat --term="dog"}
+False
+$ \textcolor{blue}{./IsCat.run --scheme=IsCat --term="cat"}
+True
+\end{code}
 \end{example}
 
 \begin{figure}[t]
@@ -1043,12 +1063,10 @@ Check( ⟦ ⟨WORD#w⟩ in ⟨List#rest ↑z{¬#w}⟩ ⟧ ) → ⟦No, the list 
 energon1[~]$ ^textcolor{blue}{^texttt{hacs WordSet.hx}}
 energon1[~]$ ^textcolor{blue}{^texttt{./WordSet.run --scheme=Check --term="a in a,b,b,a"}}
 Yes, the list contains a.
-energon1[~]$ ^textcolor{blue}{^texttt{./WordSet.run --scheme=Check --term="a in b"}}
-No, the list does not contain a.
+energon1[~]$ ^textcolor{blue}{^texttt{./WordSet.run --scheme=Check --term="Foo in Bar"}}
+No, the list does not contain Foo.
 \end{code}
 \end{example}
-
-
 
 \begin{figure}[tp]
 \begin{hacs}[numbers=right,texcl]
@@ -1094,11 +1112,10 @@ ListE( ⟦ ⟧ ↑#syn ) → ⟦ ⟧ ↑#syn ;
 \label{fig:wordmap}
 \end{figure}
 
-\begin{example}[map of words]
-  Figure~\ref{fig:wordmap} shows how an environment can be synthesized and then used as an
-  environment. The pattern is similar to the set example, except here we not only synthesize the map
-  attribute "m" but also ``copy'' it over to an inherited map -- an environment -- "e". Notice these
-  extras:
+\begin{example}[map of words]\label{ex:wordmap}
+  Figure~\ref{fig:wordmap} shows how a map can be synthesized and then used as an environment. The
+  pattern is similar to the set example, except here we not only synthesize the map attribute "m"
+  but also ``copy'' it over to an inherited map -- an environment -- "e". Notice these extras:
   %%
   \begin{itemize}
 
@@ -1108,8 +1125,13 @@ ListE( ⟦ ⟧ ↑#syn ) → ⟦ ⟧ ↑#syn ;
   \item In line 23 we simply capture all the ``mappings'' of the "m" attribute with the special
     ":#ms" pattern, which we then \emph{reuse} to populate the "e" environment.
 
-  \end{itemize}
+  \item We actually combine the distribution of the inherited map with a recursive transformation
+    that replaces words, in lines 26--34. The two rules for an initial "WORD" are mutually exclusive
+    because the pattern in line 26 requires that the word is present with a mapping in the "e"
+    attribute, whereas the pattern in line 31 requires that the word is not present.
 
+  \end{itemize}
+  Here is a run demonstrating the program:
 \begin{code}[commandchars=\^\{\}]
 energon1[~]$ ^textcolor{blue}{^texttt{hacs WordMap.hx}}
 energon1[~]$ ^textcolor{blue}{^texttt{./WordMap.run --scheme=Substitute --term="a:b in a b b a"}}
@@ -1119,93 +1141,208 @@ a b c
 \end{code}
 \end{example}
 
+%%% \begin{figure}[tp]\scriptsize
+%%% \begin{hacs}[numbers=right,texcl]
+%%% module org.crsx.hacs.samples.WordPairs {
+%%% 
+%%% // Simple map membership query.
+%%% main sort Query | ⟦ ⟨WORD⟩ in ⟨Map⟩ ⟧ ;
+%%% 
+%%% // A map is a list of :-separated pairs.
+%%% sort Map | ⟦ ⟨WORD⟩ : ⟨WORD⟩, ⟨Map⟩ ⟧ | ⟦ ⟨WORD⟩ : ⟨WORD⟩ ⟧ ;
+%%% 
+%%% // The keys and values are words and numbers.
+%%% token WORD | [A-Za-z0-9]+ ;
+%%% 
+%%% // Helper 'list' data structure sort to collect maps.
+%%% sort Mappings | MoreMappings(WORD, WORD, Mappings) | NoMappings ;
+%%% 
+%%% // Synthesize helper list that collects all the mappings in a Map.
+%%% attribute ↑map(Mappings) ;
+%%% sort Map | ↑map ;
+%%% ⟦ ⟨WORD#key⟩ : ⟨WORD#value⟩, ⟨Map#m ↑map(#map)⟩ ⟧ ↑map(MoreMappings(#key, #value, #map)) ;
+%%% ⟦ ⟨WORD#key⟩ : ⟨WORD#value⟩ ⟧ ↑map(MoreMappings(#key, #value, NoMappings)) ;
+%%% 
+%%% // Synthesize helper list that collects all the reverse mappings in a list.
+%%% attribute ↑pam(Mappings) ;
+%%% sort Map | ↑pam ;
+%%% ⟦ ⟨WORD#key⟩ : ⟨WORD#value⟩, ⟨Map#m ↑pam(#pam)⟩ ⟧ ↑pam(MoreMappings(#value, #key, #pam)) ;
+%%% ⟦ ⟨WORD#key⟩ : ⟨WORD#value⟩ ⟧ ↑pam(MoreMappings(#value, #key, NoMappings)) ;
+%%% 
+%%% // We'll provide the answer in clear text.
+%%% sort Answer
+%%% | ⟦Yes, the map takes ⟨WORD⟩ to ⟨WORD⟩.⟧
+%%% | ⟦No, but map gets ⟨WORD⟩ from ⟨WORD⟩.⟧
+%%% | ⟦No, the map does not contain ⟨WORD⟩.⟧
+%%% ;
+%%% 
+%%% // Helper scheme to check if a map is in one of the maps.
+%%% sort Answer | scheme CheckMapping(WORD, Mappings, Mappings) ;
+%%% 
+%%% // If the map and the first member of the list are the same, then we succeed!
+%%% CheckMapping(#key, MoreMappings(#key, #value, #map), #pam)
+%%%   → ⟦Yes, the map takes ⟨WORD#key⟩ to ⟨WORD#value⟩.⟧ ;
+%%% 
+%%% // Fall back to a default recursive case.
+%%% default CheckMapping(#key1, MoreMappings(#key2, #value, #map), #pam)
+%%%   → CheckMapping(#key1, #map, #pam) ;
+%%% 
+%%% // If the map and the first member of the list are the same, then we succeed!
+%%% CheckMapping(#key, NoMappings, MoreMappings(#key, #value, #pam))
+%%%   → ⟦No, but map gets ⟨WORD#key⟩ from ⟨WORD#value⟩.⟧ ;
+%%% 
+%%% // Fall back to a default recursive case.
+%%% default CheckMapping(#key1, NoMappings, MoreMappings(#key2, #value, #pam))
+%%%   → CheckMapping(#key1, NoMappings, #pam) ;
+%%% 
+%%% // Once there is nothing left to search, we give up.
+%%% CheckMapping(#key, NoMappings, NoMappings) → ⟦No, the map does not contain ⟨WORD#key⟩.⟧ ;
+%%% 
+%%% // Main program takes a Query and gives an Answer.
+%%% sort Answer | scheme Check(Query) ;
+%%% 
+%%% // The main program forces the synthesized list before it can check membership.
+%%% Check( ⟦ ⟨WORD#key⟩ in ⟨Map#m ↑map(#map) ↑pam(#pam)⟩ ⟧ ) → CheckMapping(#key, #map, #pam) ;
+%%% 
+%%% }
+%%% \end{hacs}
+%%% \caption{\emph{WordPairs.hx}: Word Mapping by Pairs.}
+%%% \label{fig:wordpairs}
+%%% \end{figure}
+%%% 
+%%% \begin{example}[using a list as an environment]
+%%%   We can also synthesize information more manually.  Figure~\ref{fig:wordpairs} shows a similar
+%%%   example, where we want to search \emph{pairs} of words.  However, unlike in the set and map
+%%%   examples above, we have not chosen to generate the map on the fly but instead generate it as a
+%%%   semantic data structure that we use traditional pattern matching to access.
+%%% 
+%%%   Notice the following:
+%%%   \begin{itemize}
+%%% 
+%%%   \item In line 38 we restrict the rule to cases where the first parameter "#key" is \emph{the same}
+%%%     as the first "#key" embedded in the "Mappings" data structure, by explicitly using the same
+%%%     meta-variable name in both places.
+%%% 
+%%%   \item Line 42 does not have the constraint: the two keys can have any values. Therefore the rules
+%%%     is marked "default" to make sure it is tried \emph{after} the rule in line 38. (In normal
+%%%     operation, rules are \emph{not} tried in any particular order.)
+%%% 
+%%%   \end{itemize}
+%%% \end{example}
+
+
 \begin{figure}[tp]\scriptsize
 \begin{hacs}[numbers=right,texcl]
-module org.crsx.hacs.samples.WordPairs {
+module org.crsx.hacs.samples.WordSubst {
 
-// Simple map membership query.
-main sort Query | ⟦ ⟨WORD⟩ in ⟨Map⟩ ⟧ ;
+// Grammar.
+sort Units | ⟦ ⟨Unit⟩ ⟨Units⟩ ⟧ | ⟦⟧ ;
+sort Unit | ⟦⟨Variable⟩=⟨NAT⟩⟧ | ⟦⟨Variable⟩⟧ | ⟦⟨NAT⟩⟧ | ⟦ { ⟨Units⟩ } ⟧ ;
+sort Variable | symbol ⟦⟨ID⟩⟧ ;
 
-// A map is a list of :-separated pairs.
-sort Map | ⟦ ⟨WORD⟩ : ⟨WORD⟩, ⟨Map⟩ ⟧ | ⟦ ⟨WORD⟩ : ⟨WORD⟩ ⟧ ;
+token ID | [A-Za-z]+ ;
+token NAT | [0-9]+ ;
+space [\ \t\n\r] ;
 
-// The keys and values are words and numbers.
-token WORD | [A-Za-z0-9]+ ;
+// Helper Subst structure: lists of variable-NAT pairs.
+sort Subst | MoreSubst(Variable, NAT, Subst) | NoSubst ;
 
-// Helper 'list' data structure sort to collect maps.
-sort Mappings | MoreMappings(WORD, WORD, Mappings) | NoMappings ;
+// Append operation for Subst structures.
+| scheme SubstAppend(Subst, Subst) ;
+SubstAppend(MoreSubst(#var, #nat, #subst1), #subst2) → MoreSubst(#var, #nat, SubstAppend(#subst1, #subst2)) ;
+SubstAppend(NoSubst, #subst2) → #subst2 ;
 
-// Synthesize helper list that collects all the mappings in a Map.
-attribute ↑map(Mappings) ;
-sort Map | ↑map ;
-⟦ ⟨WORD#key⟩ : ⟨WORD#value⟩, ⟨Map#m ↑map(#map)⟩ ⟧ ↑map(MoreMappings(#key, #value, #map)) ;
-⟦ ⟨WORD#key⟩ : ⟨WORD#value⟩ ⟧ ↑map(MoreMappings(#key, #value, NoMappings)) ;
+// Attributes.
+attribute ↑subst(Subst) ;        // collected Subst structure
+attribute ↓env{Variable:NAT} ;   // mappings to apply
 
-// Synthesize helper list that collects all the reverse mappings in a list.
-attribute ↑pam(Mappings) ;
-sort Map | ↑pam ;
-⟦ ⟨WORD#key⟩ : ⟨WORD#value⟩, ⟨Map#m ↑pam(#pam)⟩ ⟧ ↑pam(MoreMappings(#value, #key, #pam)) ;
-⟦ ⟨WORD#key⟩ : ⟨WORD#value⟩ ⟧ ↑pam(MoreMappings(#value, #key, NoMappings)) ;
+// Top scheme.
+main sort Units | scheme Run(Units) ;
+Run(#units) → Run1(#units) ;
 
-// We'll provide the answer in clear text.
-sort Answer
-| ⟦Yes, the map takes ⟨WORD⟩ to ⟨WORD⟩.⟧
-| ⟦No, but map gets ⟨WORD⟩ from ⟨WORD⟩.⟧
-| ⟦No, the map does not contain ⟨WORD⟩.⟧
-;
+// Strategy: two passes.
+// 1. force synthesis of subst attribute.
+// 2. convert subst attribute to inherited environment (which forces replacement).
 
-// Helper scheme to check if a map is in one of the maps.
-sort Answer | scheme CheckMapping(WORD, Mappings, Mappings) ;
+| scheme Run1(Units) ;
+Run1(#units ↑subst(#subst)) → Run2(#units, #subst) ;
 
-// If the map and the first member of the list are the same, then we succeed!
-CheckMapping(#key, MoreMappings(#key, #value, #map), #pam)
-  → ⟦Yes, the map takes ⟨WORD#key⟩ to ⟨WORD#value⟩.⟧ ;
+| scheme Run2(Units, Subst) ↓env ;
+Run2(#units, MoreSubst(#var, #nat, #subst)) → Run2(#units, #subst) ↓env{#var : #nat} ;
+Run2(#units, NoSubst) → Unitsenv(#units) ;
 
-// Fall back to a default recursive case.
-default CheckMapping(#key1, MoreMappings(#key2, #value, #map), #pam)
-  → CheckMapping(#key1, #map, #pam) ;
+// Synthesis of subst.
 
-// If the map and the first member of the list are the same, then we succeed!
-CheckMapping(#key, NoMappings, MoreMappings(#key, #value, #pam))
-  → ⟦No, but map gets ⟨WORD#key⟩ from ⟨WORD#value⟩.⟧ ;
+sort Units | ↑subst ;
+⟦ ⟨Unit #1 ↑subst(#subst1) ⟩ ⟨Units #2 ↑subst(#subst2)⟩ ⟧ ↑subst(SubstAppend(#subst1, #subst2)) ;
+⟦ ⟧ ↑subst(NoSubst) ;
 
-// Fall back to a default recursive case.
-default CheckMapping(#key1, NoMappings, MoreMappings(#key2, #value, #pam))
-  → CheckMapping(#key1, NoMappings, #pam) ;
+sort Unit | ↑subst ;
+⟦v=⟨NAT#n⟩⟧ ↑subst(MoreSubst(⟦v⟧, #n, NoSubst)) ;
+⟦v⟧ ↑subst(NoSubst) ;
+⟦⟨NAT#n⟩⟧ ↑subst(NoSubst) ;
+⟦ { ⟨Units#units ↑subst(#subst)⟩ } ⟧ ↑subst(#subst) ;
 
-// Once there is nothing left to search, we give up.
-CheckMapping(#key, NoMappings, NoMappings) → ⟦No, the map does not contain ⟨WORD#key⟩.⟧ ;
+// Inheritance of env combined with substitution.
 
-// Main program takes a Query and gives an Answer.
-sort Answer | scheme Check(Query) ;
+sort Units | scheme Unitsenv(Units) ↓env ;
+Unitsenv( ⟦ ⟨Unit#1⟩ ⟨Units#2⟩ ⟧↑#s ) →  ⟦ ⟨Unit Unitenv(#1)⟩ ⟨Units Unitsenv(#2)⟩ ⟧↑#s ;
+Unitsenv( ⟦ ⟧↑#s ) → ⟦ ⟧↑#s ;
 
-// The main program forces the synthesized list before it can check membership.
-Check( ⟦ ⟨WORD#key⟩ in ⟨Map#m ↑map(#map) ↑pam(#pam)⟩ ⟧ ) → CheckMapping(#key, #map, #pam) ;
-
+sort Unit | scheme Unitenv(Unit) ↓env ;
+Unitenv( ⟦v=⟨NAT#n⟩ ⟧↑#s) → ⟦v=⟨NAT#n⟩⟧↑#s ;
+Unitenv( ⟦v⟧ ) ↓env{⟦v⟧:#n} → ⟦⟨NAT#n⟩⟧ ;
+Unitenv( ⟦v⟧↑#s ) ↓env{¬⟦v⟧} → ⟦v⟧↑#s ;
+Unitenv( ⟦⟨NAT#n⟩⟧↑#s ) → ⟦⟨NAT#n⟩⟧↑#s ;
+Unitenv( ⟦ { ⟨Units#units⟩ } ⟧↑#s ) → ⟦ { ⟨Units Unitsenv(#units)⟩ } ⟧↑#s ;
 }
 \end{hacs}
-\caption{\emph{WordPairs.hx}: Word Mapping by Pairs.}
-\label{fig:wordpairs}
+\caption{\emph{WordSubst.hx}: Combining list, maps, and transformation.}\label{fig:wordsubst}
 \end{figure}
 
-\begin{example}[using a list as an environment]
-  We can also synthesize information more manually.  Figure~\ref{fig:wordpairs} shows a similar
-  example, where we want to search \emph{pairs} of words.  However, unlike in the set and map
-  examples above, we have not chosen to generate the map on the fly but instead generate it as a
-  semantic data structure that we use traditional pattern matching to access.
-
-  Notice the following:
+\begin{example}[word substitution]
+  Figure~\ref{fig:wordsubst} shows a \HAX program to collect substitutions from a document and apply
+  them to the entire document.  Notice the following:
   \begin{itemize}
 
-  \item In line 38 we restrict the rule to cases where the first parameter "#key" is \emph{the same}
-    as the first "#key" embedded in the "Mappings" data structure, by explicitly using the same
-    meta-variable name in both places.
+  \item The strategy is a typical two-pass one: first one pass to collect the substitutions into a
+    synthesized attribute, then a second pass where the full list of substitutions is applied
+    everywhere.
 
-  \item Line 42 does not have the constraint: the two keys can have any values. Therefore the rules
-    is marked "default" to make sure it is tried \emph{after} the rule in line 38. (In normal
-    operation, rules are \emph{not} tried in any particular order.)
+  \item We have chosen to synthesize the map as a \emph{data structure} instead of a native \HAX map
+    as in the previous Example~\ref{ex:wordmap} because we here need to \emph{append} two maps (in
+    line 42), which is not supported for the native maps.  The synthesis happens in lines 41--49.
+
+  \item We translate the synthesized map in list form into a native \HAX map before starting the
+    second pass: notice how "Run2" starts by recursing over the list of substitutions, inserting
+    each into the carried inherited "env" map.  Since the map is consumed from left to right, the
+    \emph{latest} substitution for any variable is always used.
+
+  \item Since the inheritance schemes for "env" in lines 53--63 are doing a recursive traversal of
+    the term, we benefit by building the actual substitutions into the traversal.
+
+  \item In the inheritance rules we are careful to preserve the synthesized attributes only when the
+    term does not change. In our case this is manifest by just the rule in line 59 not including the
+    "↑#s" marker to capture and copy the synthesized attributes; in general this should be
+    considered for every situation.
 
   \end{itemize}
+  %%
+  Here is a run with this system:
+  %%
+\begin{code}[commandchars=\\\{\}]
+energon1[~]$ \textcolor{blue}{hacs WordSubst.hx}
+...
+energon1[~]$ \textcolor{blue}{./WordSubst.run --scheme=Run --term="a=1 a"}
+ a=1  1   
+energon1[~]$ \textcolor{blue}{./WordSubst.run --scheme=Run --term="b a \{a=1 b=2\}"}
+ 2  1   {  a=1  b=2    }     
+energon1[~]$ \textcolor{blue}{./WordSubst.run --scheme=Run --term="\{a=1 b=2 c=3\} a b c \{a=4\} a b c"}
+  \{  a=1  b=2  c=3     \}   4  2  3   \{  a=4   \}   4  2  3         
+\end{code}
+  %%
+  The last example shows how the latest substitution for "a" ``wins.''
+  %%
 \end{example}
 
 

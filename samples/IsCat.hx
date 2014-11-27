@@ -1,13 +1,14 @@
 module org.crsx.hacs.samples.IsCat {
 
 token WORD | [A-Za-z]+ ;
+main sort Word | ⟦⟨WORD⟩⟧ ;
 
 sort Boolean | ⟦True⟧ | ⟦False⟧ ;
 
-sort Boolean | scheme IsCat(WORD) ;
+sort Boolean | scheme IsCat(Word) ;
 IsCat(#word) → IsSameWord(#word, ⟦cat⟧) ;
 
-sort Boolean | scheme IsSameWord(WORD, WORD) ;
+sort Boolean | scheme IsSameWord(Word, Word) ;
 IsSameWord(#, #) → ⟦True⟧ ;
 default IsSameWord(#1, #2) → ⟦False⟧ ;
 
