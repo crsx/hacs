@@ -11,7 +11,7 @@
 \bibliographystyle{plainurl}
 
 %% Topmatter.
-\def\version{0.9.7\xspace}
+\def\version{0.9.8\xspace}
 \title{
   Compiler Generation Using \HAX\thanks{This version describes \HAX β version \version released for use at NYU.}
 }
@@ -112,8 +112,7 @@ computer.\footnote{\HAX is still a β release so please report any problems with
 energon1[~]$ ^textcolor{blue}{^texttt{wget http://crsx.org/hacs-^version.zip}}
 energon1[~]$ ^textcolor{blue}{^texttt{unzip hacs-^version.zip}}
 energon1[~]$ ^textcolor{blue}{^texttt{cd hacs}}
-energon1[hacs]$ ^textcolor{blue}{^texttt{make}}
-energon1[hacs]$ ^textcolor{blue}{^texttt{make install install-support}}
+energon1[hacs]$ ^textcolor{blue}{^texttt{make FROMZIP=1 install install-support}}
 \end{code}
   %%
   These commands will need Internet access, using the wget command to retrieve support
@@ -1141,96 +1140,6 @@ a b c
 \end{code}
 \end{example}
 
-%%% \begin{figure}[tp]\scriptsize
-%%% \begin{hacs}[numbers=right,texcl]
-%%% module org.crsx.hacs.samples.WordPairs {
-%%% 
-%%% // Simple map membership query.
-%%% main sort Query | ⟦ ⟨WORD⟩ in ⟨Map⟩ ⟧ ;
-%%% 
-%%% // A map is a list of :-separated pairs.
-%%% sort Map | ⟦ ⟨WORD⟩ : ⟨WORD⟩, ⟨Map⟩ ⟧ | ⟦ ⟨WORD⟩ : ⟨WORD⟩ ⟧ ;
-%%% 
-%%% // The keys and values are words and numbers.
-%%% token WORD | [A-Za-z0-9]+ ;
-%%% 
-%%% // Helper 'list' data structure sort to collect maps.
-%%% sort Mappings | MoreMappings(WORD, WORD, Mappings) | NoMappings ;
-%%% 
-%%% // Synthesize helper list that collects all the mappings in a Map.
-%%% attribute ↑map(Mappings) ;
-%%% sort Map | ↑map ;
-%%% ⟦ ⟨WORD#key⟩ : ⟨WORD#value⟩, ⟨Map#m ↑map(#map)⟩ ⟧ ↑map(MoreMappings(#key, #value, #map)) ;
-%%% ⟦ ⟨WORD#key⟩ : ⟨WORD#value⟩ ⟧ ↑map(MoreMappings(#key, #value, NoMappings)) ;
-%%% 
-%%% // Synthesize helper list that collects all the reverse mappings in a list.
-%%% attribute ↑pam(Mappings) ;
-%%% sort Map | ↑pam ;
-%%% ⟦ ⟨WORD#key⟩ : ⟨WORD#value⟩, ⟨Map#m ↑pam(#pam)⟩ ⟧ ↑pam(MoreMappings(#value, #key, #pam)) ;
-%%% ⟦ ⟨WORD#key⟩ : ⟨WORD#value⟩ ⟧ ↑pam(MoreMappings(#value, #key, NoMappings)) ;
-%%% 
-%%% // We'll provide the answer in clear text.
-%%% sort Answer
-%%% | ⟦Yes, the map takes ⟨WORD⟩ to ⟨WORD⟩.⟧
-%%% | ⟦No, but map gets ⟨WORD⟩ from ⟨WORD⟩.⟧
-%%% | ⟦No, the map does not contain ⟨WORD⟩.⟧
-%%% ;
-%%% 
-%%% // Helper scheme to check if a map is in one of the maps.
-%%% sort Answer | scheme CheckMapping(WORD, Mappings, Mappings) ;
-%%% 
-%%% // If the map and the first member of the list are the same, then we succeed!
-%%% CheckMapping(#key, MoreMappings(#key, #value, #map), #pam)
-%%%   → ⟦Yes, the map takes ⟨WORD#key⟩ to ⟨WORD#value⟩.⟧ ;
-%%% 
-%%% // Fall back to a default recursive case.
-%%% default CheckMapping(#key1, MoreMappings(#key2, #value, #map), #pam)
-%%%   → CheckMapping(#key1, #map, #pam) ;
-%%% 
-%%% // If the map and the first member of the list are the same, then we succeed!
-%%% CheckMapping(#key, NoMappings, MoreMappings(#key, #value, #pam))
-%%%   → ⟦No, but map gets ⟨WORD#key⟩ from ⟨WORD#value⟩.⟧ ;
-%%% 
-%%% // Fall back to a default recursive case.
-%%% default CheckMapping(#key1, NoMappings, MoreMappings(#key2, #value, #pam))
-%%%   → CheckMapping(#key1, NoMappings, #pam) ;
-%%% 
-%%% // Once there is nothing left to search, we give up.
-%%% CheckMapping(#key, NoMappings, NoMappings) → ⟦No, the map does not contain ⟨WORD#key⟩.⟧ ;
-%%% 
-%%% // Main program takes a Query and gives an Answer.
-%%% sort Answer | scheme Check(Query) ;
-%%% 
-%%% // The main program forces the synthesized list before it can check membership.
-%%% Check( ⟦ ⟨WORD#key⟩ in ⟨Map#m ↑map(#map) ↑pam(#pam)⟩ ⟧ ) → CheckMapping(#key, #map, #pam) ;
-%%% 
-%%% }
-%%% \end{hacs}
-%%% \caption{\emph{WordPairs.hx}: Word Mapping by Pairs.}
-%%% \label{fig:wordpairs}
-%%% \end{figure}
-%%% 
-%%% \begin{example}[using a list as an environment]
-%%%   We can also synthesize information more manually.  Figure~\ref{fig:wordpairs} shows a similar
-%%%   example, where we want to search \emph{pairs} of words.  However, unlike in the set and map
-%%%   examples above, we have not chosen to generate the map on the fly but instead generate it as a
-%%%   semantic data structure that we use traditional pattern matching to access.
-%%% 
-%%%   Notice the following:
-%%%   \begin{itemize}
-%%% 
-%%%   \item In line 38 we restrict the rule to cases where the first parameter "#key" is \emph{the same}
-%%%     as the first "#key" embedded in the "Mappings" data structure, by explicitly using the same
-%%%     meta-variable name in both places.
-%%% 
-%%%   \item Line 42 does not have the constraint: the two keys can have any values. Therefore the rules
-%%%     is marked "default" to make sure it is tried \emph{after} the rule in line 38. (In normal
-%%%     operation, rules are \emph{not} tried in any particular order.)
-%%% 
-%%%   \end{itemize}
-%%% \end{example}
-
-
 \begin{figure}[tp]\scriptsize
 \begin{hacs}[numbers=right,texcl]
 module org.crsx.hacs.samples.WordSubst {
@@ -1344,6 +1253,13 @@ energon1[~]$ \textcolor{blue}{./WordSubst.run --scheme=Run --term="\{a=1 b=2 c=3
   The last example shows how the latest substitution for "a" ``wins.''
   %%
 \end{example}
+
+
+\section{Working with Numbers}
+\label{sec:numbers}
+
+\textbf{To Be Done...}
+
 
 
 %%% \section{Advanced Features}

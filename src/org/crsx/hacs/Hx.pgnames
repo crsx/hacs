@@ -9,3 +9,4 @@
 <HxLiteral>, <HxMetaVariable>, <HxMetaVariables>, <HxVariable>, <HxAttributeName>,
 <HxRegExpClass>, <HxCC>, <HxCC_RangesTop>, <HxCC_Ranges>, <HxCC_FirstRangeStartChar>, <HxCC_NonDashRangeStartChar>, <HxCC_RangeChar>,
 <HxPP>, <HxPPConcreteSpace>, <HxPPConcreteSpace>, <HxPPConcreteWord>, <HxPPUnconcrete>, <HxScopeSortPrec>,
+<ComputedInteger>,

@@ -220,7 +220,7 @@ realclean::; @rm -f *.run
 		) $(LOG)
 
 # Compile Java to class file.
-$(BUILD)/%.class: $(BUILD)/%.java
+%.class: %.java
 	@$(ECHO) -e '\nHACS: Compiling Java class $@...' $(OUT) && $(SH_EXTRA) \
 	&&	( $(X) cd $(BUILD) && $(X) $(JAVAC) -cp ":$(HACSJAR):$(CRSXJAR)" $*.java \
 		) $(LOG)
@@ -231,7 +231,7 @@ $(BUILD)/%.class: $(BUILD)/%.java
 	&&	( $(shell $(X) cat '$<') \
 		&& dir=$(dir $@) && package=$${MODULE%.*} && packagedir=$$(echo $$package | tr '.' '/') \
 		&& $(X) $(RUNCRSX) \
-			"grammar=('$$METAPARSERCLASS';'$$EMBEDPARSERCLASS';'net.sf.crsx.text.Text';)" \
+			"grammar=('$$METAPARSERCLASS';'$$EMBEDPARSERCLASS';'net.sf.crsx.text.Text';'org.crsx.hacs.Prelude';)" \
 			input='$*.hx' category="$${METAPREFIX}HxModule" \
 			output='$@.tmp' simple-terms max-indent=10 width=255 \
 		&& $(X) mv '$@.tmp' '$@' \

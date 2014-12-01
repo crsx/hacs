@@ -1,44 +1,60 @@
 // Prelude.pg: GRAMMAR FOR .hx STANDARD LIBRARY
 // Copyright © 2014 Kristoffer H. Rose <krisrose@crsx.org>
 
-class org.crsx.hacs.Prelude : <E>
+class org.crsx.hacs.Prelude : <ComputedInteger>
 
-prefix "prelude"
+prefix "prelude_"
 
-<E> ::= <Eadd> .
+<ComputedInteger> ::= <ComputedIntegerAdd> .
 
-<Eadd> ::= <Emult>:#1 <Eadd2 #1> .
-<Eadd2 #1> ::=
-         "+" <Emult>:#2 <Eadd2 {{Sum2[#1,#2]}}>
-       | "-" <Emult>:#2 <Eadd2 {{Sub[#1,#2]}}>
-       | "|" <Emult>:#2 <Eadd2 {{BitOr[#1,#2]}}>
-       | "^" <Emult>:#2 <Eadd2 {{BitXor[#1,#2]}}>
-       | "\\" <Emult>:#2 <Eadd2 {{BitMinus[#1,#2]}}>
+<ComputedIntegerAdd> ::= <ComputedIntegerMult>:#1 <ComputedIntegerAdd2 #1> .
+<ComputedIntegerAdd2 #1> ::=
+         "+" <ComputedIntegerMult>:#2 <ComputedIntegerAdd2 {{Sum2[#1,#2]}}>
+       | "-" <ComputedIntegerMult>:#2 <ComputedIntegerAdd2 {{Sub[#1,#2]}}>
+       | "|" <ComputedIntegerMult>:#2 <ComputedIntegerAdd2 {{BitOr[#1,#2]}}>
+       | "^" <ComputedIntegerMult>:#2 <ComputedIntegerAdd2 {{BitXor[#1,#2]}}>
+       | "\\" <ComputedIntegerMult>:#2 <ComputedIntegerAdd2 {{BitMinus[#1,#2]}}>
        | {{#1}}
        .
 
-<Emult> ::= <Epre>:#1 <Emult2 #1> .
-<Emult2 #1> ::=
-         ("*"|"×") <Epre>:#2 {{Prod2[#1,#2]}}>
-       | ("/"|"÷") <Epre>:#2 {{Div[#1,#2]}}>
-       | "%" <Epre>:#2 {{Mod[#1,#2]}}>
-       | "&" <Epre>:#2 {{BitAnd[#1,#2]}}>
-       | ("<<"|"«") <Epre>:#2 {{BitShiftLeft[#1,#2]}}>
-       | (">>"|"»") <Epre>:#2 {{BitShiftRight[#1,#2]}}>
-       | "&" <Epre>:#2 {{BitAnd[#1,#2]}}>
-       | {{#}}
+<ComputedIntegerMult> ::= <ComputedIntegerPre>:#1 <ComputedIntegerMult2 #1> .
+<ComputedIntegerMult2 #1> ::=
+         ("*"|"×") <ComputedIntegerPre>:#2 <ComputedIntegerMult2 {{Prod2[#1,#2]}}>
+       | ("/"|"÷") <ComputedIntegerPre>:#2 <ComputedIntegerMult2 {{Div[#1,#2]}}>
+       | "%" <ComputedIntegerPre>:#2 <ComputedIntegerMult2 {{Mod[#1,#2]}}>
+       | "&" <ComputedIntegerPre>:#2 <ComputedIntegerMult2 {{BitAnd[#1,#2]}}>
+       | ("<<"|"«") <ComputedIntegerPre>:#2 <ComputedIntegerMult2 {{BitShiftLeft[#1,#2]}}>
+       | (">>"|"»") <ComputedIntegerPre>:#2 <ComputedIntegerMult2 {{BitShiftRight[#1,#2]}}>
+       | {{#1}}
        .
        
-<Epre> ::= <Eprim>
-       | "-"{Neg} <Eprim>
-       | "+" <Eprim>
-       | "~"{BitNot} <Eprim>
-       | "(" <E> ")"
+<ComputedIntegerPre> ::= <ComputedIntegerPrim>
+       | "-"{Neg} <ComputedIntegerPre>
+       | "+" <ComputedIntegerPre>
+       | "~"{BitNot} <ComputedIntegerPre>
+       .
+
+<ComputedIntegerPrim> ::= "(" <ComputedInteger> ")"
        | HEX:# {{$[Hex,#]}}
        | DECIMAL:# {{$[Decimal,#]}}
        | STRING$
        | META@
        .
+
+/// <TestInteger> ::= 
+/// 
+/// <TestIntegerOr> ::= <TestIntegerOr>:# ( ("∨"|"||"){POr} {{#}} <TestIntegerAnd> | {{#}} ) .
+/// 
+/// <TestIntegerAnd> ::= <TestIntegerAnd>:# ( ("∧"|"&&"){PAnd} {{#}} <TestIntegerRel> | {{#}} ) .
+/// <TestIntegerRel> ::= <TestIntegerAdd>:#
+///        ( "="{PEq} {{#}} <TestIntegerAdd>
+///        | ("!="|"≠"){PNeq} {{#}} <TestIntegerAdd>
+///        | "<"{PLess} {{#}} <TestIntegerAdd>
+///        | ">"{PLess} <TestIntegerAdd> {{#}}
+///        | ("<="|"≤"){PLessEqual} <TestIntegerAdd> {{#}}
+///        | (">="|"≥"){PLessEqual} {{#}} <TestIntegerAdd>
+///        | {{#}}
+///        ).
 
 token HEX ::= "0x" [0-9A-fa-f]+ .
 token DECIMAL ::= [0-9]+ .
@@ -46,18 +62,6 @@ token DECIMAL ::= [0-9]+ .
 token META ::= '#' NAME .
 
 token STRING ::= '"' ( ~[\\\"\n] | [\\] ESCAPEDCHAR )* '"' .
-fragment ESCAPEDCHAR ::= ~[0-9ux] | [\\] [0-3]? [0-7]? [0-7] | [\\] [u] ( HEX | '{' HEX '}' ) .
+fragment ESCAPEDCHAR ::= ~[0-9a-zA-Z] | [\\] [0-3]? [0-7]? [0-7] | [\\] [uU] ( HEX | '{' HEX '}' ) .
 
 token NAME ::= [A-Za-z] [A-Za-z0-9_]* .
-
-/// <Eor> ::= <Eor>:# ( ("∨"|"||"){POr} {{#}} <Eand> | {{#}} ) .
-/// <Eand> ::= <Eand>:# ( ("∧"|"&&"){PAnd} {{#}} <Erel> | {{#}} ) .
-/// <Erel> ::= <Eadd>:#
-///        ( "="{PEq} {{#}} <Eadd>
-///        | ("!="|"≠"){PNeq} {{#}} <Eadd>
-///        | "<"{PLess} {{#}} <Eadd>
-///        | ">"{PLess} <Eadd> {{#}}
-///        | ("<="|"≤"){PLessEqual} <Eadd> {{#}}
-///        | (">="|"≥"){PLessEqual} {{#}} <Eadd>
-///        | {{#}}
-///        ).

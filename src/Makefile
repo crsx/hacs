@@ -35,7 +35,7 @@ gitclean :: realclean
 
 # External library setup.
 ifndef CRSXJAR
-CRSXVERSION = 3.2.2
+CRSXVERSION = 3.2.2.4
 CRSXJAR = $(abspath ../lib/crsx-$(CRSXVERSION).jar)
 all :: $(CRSXJAR)
 endif
@@ -106,6 +106,7 @@ icu4c-54_1-RHEL6-x64.tgz :
 # All CRSX rules of HACS.
 RULES = \
 	org/crsx/hacs/Prelude.crs \
+	org/crsx/hacs/Prelude.pg \
 	org/crsx/hacs/Util.crs \
 	org/crsx/hacs/Prep.crs \
 	org/crsx/hacs/Cook.crs \
@@ -117,6 +118,12 @@ RULES = \
 	org/crsx/hacs/Hx.pgpre \
 	org/crsx/hacs/Hx.pgpost \
 
+define FROM_SOURCE
+$(BUILD)/$(1) : $(1)
+	@mkdir -p $(dir $(BUILD)/$(1))
+	cp $(1) $(BUILD)/$(1)
+endef
+$(foreach R,$(RULES),$(eval $(call FROM_SOURCE,$(R))))
 
 # HACS BUILD DEPENDENCIES.
 
@@ -143,12 +150,13 @@ install ::
 
 $(BUILD)/share/java/hacs.jar: \
 		$(BUILD)/org/crsx/hacs/HxRaw.class \
+		$(BUILD)/org/crsx/hacs/Prelude.class \
 		$(BUILD)/org/crsx/hacs/VERSION \
-		$(RULES)
+		$(addprefix $(BUILD)/,$(RULES))
 	rm -f $(BUILD)/share/java/hacs-$(HACSMAJORVERSION).jar $(BUILD)/share/java/hacs.jar
 	@mkdir -p $(BUILD)/org/crsx/hacs $(BUILD)/share/java
-	cp $(RULES) $(BUILD)/org/crsx/hacs
 	for java in $$(find $(BUILD)/org -name '*.java'); do $(X) rm -f $${java%.java}.class; $(X) $(MAKE) $${java%.java}.class; done
+	$(MAKE) $(BUILD)/org/crsx/hacs/Prelude.java
 	cd $(BUILD) && classes=$$($(X) find org -name '*.class') && $(X) $(JAR) cf $(BUILD)/share/java/hacs-$(HACSMAJORVERSION).jar $(RULES) org/crsx/hacs/VERSION $$classes
 	cd $(BUILD)/share/java && $(X) ln -fs hacs-$(HACSMAJORVERSION).jar hacs.jar
 
@@ -213,6 +221,12 @@ crsx-rulecompiler/net/sf/crsx/compiler/c/build/crsxc :
 
 gitclean ::
 	rm -fr crsx-rulecompiler
+
+# HACS standard prelude.
+
+$(BUILD)/org/crsx/hacs/Prelude.jj: $(BUILD)/org/crsx/hacs/Prelude.pg
+$(BUILD)/org/crsx/hacs/Prelude.java: $(BUILD)/org/crsx/hacs/Prelude.jj
+$(BUILD)/org/crsx/hacs/Prelude.class: $(BUILD)/org/crsx/hacs/Prelude.java
 
 # HACS "raw" parser bootstrapping dependencies.
 
