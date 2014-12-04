@@ -8,6 +8,7 @@ Prelude[(
 // Contents:
 // 1. Blocking
 // 2. Boolean
+// 3. Numeric
 // 4. List
 // 5. String
 // 6. Set of Names
@@ -269,7 +270,7 @@ FilterWhen[ok n.#[ok,n], (#x;#xs)] → Filter2[#[OK,#x], #x, FilterWhen[ok n.#[o
 /////////////////////////////////////////////////////////////////////
 // 5. STRING
 
-// Note: Uses the internal $String - use Text for all user textual data.
+// Note: Uses the internal $String - use Text for user textual data.
 
 // Conversions.
 
@@ -281,6 +282,15 @@ UnString[$String] :: $String ;
 
 Trim[$String] :: $String ;
 -[Data[#]]: Trim[#] → $[Trim, #] ;
+
+Ord[$String] :: $String ;
+-[Data[#]]: Ord[#] → $[DecodePoint, #] ;
+
+Escape[$String] :: $String ;
+-[Data[#]]: Escape[#] → $[Escape, #] ;
+
+Unescape[$String] :: $String ;
+-[Data[#]]: Unescape[#] → $[Rescape, #] ;
 
 // Tests.
 

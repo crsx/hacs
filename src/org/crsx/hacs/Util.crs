@@ -167,7 +167,7 @@ EmptyName2ScopeSorts → {}N2SS ;
 // Basic ops.
 
 U-ExtendDeclarationMap[DeclarationMap, $String<!--Key-->, DeclarationMapEntry, dm¹::DeclarationMap.DeclarationMap] :: DeclarationMap ;
-U-ExtendDeclarationMap[{#DM} DM, #Key, #Entry, dm¹.#[dm¹]] → #[{#DM; #Key : #Entry} DM] ;
+U-ExtendDeclarationMap[{#DM} DM, #Key, #Entry, dm¹.#[dm¹]] → $[Trace, $[:,"ExtendDM: ",#Key], #[{#DM; #Key : #Entry} DM]] ;
 
 U-then-ExtendDeclarationMap[Ok, DeclarationMap, $String<!--Key-->, DeclarationMapEntry, dm¹::DeclarationMap.DeclarationMap] :: DeclarationMap ;
 U-then-ExtendDeclarationMap[OK, #DM, #Key, #Entry, dm¹.#[dm¹]] → U-ExtendDeclarationMap[#DM, #Key, #Entry, dm¹.#[dm¹]] ;
@@ -463,7 +463,8 @@ U-MakeDM[{}DM, #Declarations, #ModuleName, "", NoNames, dm¹ s ss.U-MakeDM-Finis
 
     {#DM} U-MakeDM1[%rawHxDeclarations⟪ main sort #HxSortName# #HxRepeat# #HxSortAbstraction# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, dm¹ s ss.#[dm¹, s, ss]]
     →
-    {#DM} U-MakeDM-SortAbstraction[#HxSortAbstraction#, B_TRUE, #ModuleName, U-SortNameWithRepeat1[#HxSortName#, #HxRepeat#], #Names, dm¹ s ss.U-MakeDM[dm¹, #HxDeclarations#, #ModuleName, s, ss, dm2¹ s2 ss2.#[dm2¹, s2, ss2]]]
+    {#DM} U-MakeDM-SortAbstraction[#HxSortAbstraction#, B_TRUE, #ModuleName, U-QN[#ModuleName, "", U-SortNameWithRepeat1[#HxSortName#, #HxRepeat#]], #Names,
+    	  dm¹ s ss.U-MakeDM[dm¹, #HxDeclarations#, #ModuleName, s, ss, dm2¹ s2 ss2.#[dm2¹, s2, ss2]]]
     ;
 
     {#DM} U-MakeDM1[%rawHxDeclarations⟪ #HxSortAlternatives# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, dm¹ s ss.#[dm¹, s, ss]]
@@ -495,7 +496,9 @@ U-MakeDM[{}DM, #Declarations, #ModuleName, "", NoNames, dm¹ s ss.U-MakeDM-Finis
     {#DM}
     U-MakeDM2[#Key, #Entry, #Declarations, #ModuleName, #LastSortName, #Names, dm¹ s ss.#[dm¹, s, ss]]
     →
+    $[Trace, $[:, "DM2-Extend: ",#Key],
     {#DM; #Key : #Entry} U-MakeDM1[#Declarations, #ModuleName, #LastSortName, #Names, dm¹ s ss.#[dm¹, s, ss]]
+    ]
     ;
 
     // Sort declarations factor any leading parameters over all declarations.
@@ -637,7 +640,6 @@ U-MakeDM[{}DM, #Declarations, #ModuleName, "", NoNames, dm¹ s ss.U-MakeDM-Finis
     -[Data[#Prec,#Precs,#MaxPrec]]:
     {#DM} U-MakeDM-Finish6[#ModuleName, #Prec, #Precs, #MaxPrec, #Name, #RestNames, #Names]
     →
-    ///{#DM} U-MakeDM-Finish4[#ModuleName, #Precs, $[If, $[GreaterThan, $[Decimal,#Prec], #MaxPrec], $[Decimal,#Prec], #MaxPrec], #Name, #RestNames, #Names]
     {#DM} U-MakeDM-Finish4[#ModuleName, #Precs, Max2[#Prec, #MaxPrec], #Name, #RestNames, #Names]
     ;
 
@@ -702,8 +704,10 @@ U-MakeDM[{}DM, #Declarations, #ModuleName, "", NoNames, dm¹ s ss.U-MakeDM-Finis
 	    U-InsertDefinesMain1[$List[Define], $String<!--Name-->, NameSet<!--Precs-->, Wrapper, Boolean<!--IsMain-->, $String<!--Name-->, NameSet<!--Names-->, dm¹ :: DeclarationMap s :: $String ss :: NameSet . DeclarationMap] :: DeclarationMap ;
 	    -[Data[#IsMain]]:
 	    {#DM} U-InsertDefinesMain1[#existingDefines1, #Name1, #Precs1, #Wrapper1, #IsMain, #Name, #Names, dm¹ s ss.#[dm¹, s, ss]]
-	    → 
+	    →
+	    $[Trace, $[:,"InsertSortMain1: ",#Name],
 	    #[{#DM; #Name : DME_SORT[#existingDefines1, #Name1, #Precs1, #Wrapper1, #IsMain]}DM, #Name, #Names]
+	    ]
 	    ;
 
         {#DM} U-InsertDefinesMain[$[NotMatch,DME_SORT[#existingDefines1, #Name1, #Precs1, #Wrapper1, #IsMain1],#_], #IsMain, #Name, #Names, dm¹ s ss.#[dm¹, s, ss]]
@@ -771,7 +775,9 @@ U-MakeDM[{}DM, #Declarations, #ModuleName, "", NoNames, dm¹ s ss.U-MakeDM-Finis
 	{#DM}
 	U-InsertDefine1b[#Name, #Names, #newDefine, #Precs, #Wrapper, #IsMain, dm¹ s ss.#[dm¹, s, ss]]
 	→
+	$[Trace, $[:,"InsertSort1b: ",#Name],
 	#[{#DM; #Name : DME_SORT[(#newDefine;), #Name, #Precs, #Wrapper, #IsMain]}DM, #Name, AddName[#Names, #Name]]
+	]
 	;
 
 	U-InsertDefine2[$List[Define]<!--existing-->, Define<!--new-->] :: $List[Define]<!--merged-->;
@@ -796,7 +802,9 @@ U-MakeDM[{}DM, #Declarations, #ModuleName, "", NoNames, dm¹ s ss.U-MakeDM-Finis
 	{#DM}
 	U-InsertDefine4[#Defines, #Precs, #Name, #Names, #Wrapper, #IsMain, dm¹ s ss.#[dm¹, s, ss]]
 	→
+	$[Trace, $[:,"InsertSort4; ",#Name],
 	#[{#DM; #Name : DME_SORT[#Defines, #Name, #Precs, #Wrapper, #IsMain]}DM, #Name, #Names]
+	]
 	;
 
     // Compare of defines.
@@ -1009,7 +1017,8 @@ U-MakeDM-ExtraInformation1[#ModuleName, {#DM}DM]
 // Generate the sort names.
 
 {$String<!--Name--> : DeclarationMapEntry} U-MakeSortNames :: NameSet;
-{#DM} U-MakeSortNames → NamesFrom[FilterWhen[ok n .  {#DM}U-then-TestIfSort[ok, n], $[{#DM}Keys[$String]]]] ;
+{#DM} U-MakeSortNames → NamesFrom[FilterWhen[ok n . {#DM}U-then-TestIfSort[ok, n], $[{#DM}Keys[$String]]]] ;
+/// {#DM} U-MakeSortNames → NamesFrom[FilterWhen[ok n . TraceWhen[ok, "MakeSort: ", n, {#DM}U-then-TestIfSort[ok, n]], $[{#DM}Keys[$String]]]] ;
 /// FilterNamesWhen[ok n.{#DM} U-then-TestIfSort[ok, n], NamesFrom[$[{#DM}Keys[$String]]]] ;
 
     {$String<!--Name--> : DeclarationMapEntry} U-then-TestIfSort[Ok, $String] :: Boolean ;

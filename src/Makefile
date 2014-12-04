@@ -271,7 +271,7 @@ $(BUILD)/org/crsx/hacs/Hacs_symbols.c: $(BUILD)/org/crsx/hacs/Hacs.dr.gz
 $(BUILD)/org/crsx/hacs/Hacs.c: crsx-rulecompiler/net/sf/crsx/compiler/c/main.c
 	cp crsx-rulecompiler/net/sf/crsx/compiler/c/main.c $(BUILD)/org/crsx/hacs/Hacs.c
 
-$(BUILD)/org/crsx/hacs/Hacs.dr.gz: $(BUILD)/org/crsx/hacs/Hacs.crs $(BUILD)/lib/hacs/crsxc
+$(BUILD)/org/crsx/hacs/Hacs.dr.gz: $(BUILD)/org/crsx/hacs/Hacs.crs $(BUILD)/lib/hacs/crsxc $(addprefix $(BUILD)/,$(RULES))
 
 all-debug :: $(BUILD)/org/crsx/hacs/Hacs.crsd
 

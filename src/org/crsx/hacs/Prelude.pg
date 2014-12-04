@@ -5,7 +5,21 @@ class org.crsx.hacs.Prelude : <ComputedInteger>
 
 prefix "prelude_"
 
-<ComputedInteger> ::= <ComputedIntegerAdd> .
+<ComputedInteger> ::= <ComputedIntegerRel> .
+
+// Pattern expressions (tests).
+
+<ComputedIntegerRel> ::= <ComputedIntegerAdd>:#1
+       ( "=" <ComputedIntegerPrim>:#2 {{ $["NumericEqual", #1, #2] }}
+       | ("!="|"/="|"≠") <ComputedIntegerPrim>:#2 {{ $["NumericNotEqual", #1, #2] }}
+       | "<" <ComputedIntegerPrim>:#2 {{ $["LessThan", #1, #2] }}
+       | ">" <ComputedIntegerPrim>:#2 {{ $["GreaterThan", #1, #2] }}
+       | ("<="|"≤") <ComputedIntegerPrim>:#2 {{ $["LessThatOrEqual", #1, #2] }}
+       | (">="|"≥") <ComputedIntegerPrim>:#2 {{ $["GreaterThanOrEqual", #1, #2] }}
+       | {{#1}}
+       ).
+
+// Expressions.
 
 <ComputedIntegerAdd> ::= <ComputedIntegerMult>:#1 <ComputedIntegerAdd2 #1> .
 <ComputedIntegerAdd2 #1> ::=
@@ -23,45 +37,37 @@ prefix "prelude_"
        | ("/"|"÷") <ComputedIntegerPre>:#2 <ComputedIntegerMult2 {{Div[#1,#2]}}>
        | "%" <ComputedIntegerPre>:#2 <ComputedIntegerMult2 {{Mod[#1,#2]}}>
        | "&" <ComputedIntegerPre>:#2 <ComputedIntegerMult2 {{BitAnd[#1,#2]}}>
-       | ("<<"|"«") <ComputedIntegerPre>:#2 <ComputedIntegerMult2 {{BitShiftLeft[#1,#2]}}>
-       | (">>"|"»") <ComputedIntegerPre>:#2 <ComputedIntegerMult2 {{BitShiftRight[#1,#2]}}>
+       | "<<" <ComputedIntegerPre>:#2 <ComputedIntegerMult2 {{BitShiftLeft[#1,#2]}}>
+       | ">>" <ComputedIntegerPre>:#2 <ComputedIntegerMult2 {{BitShiftRight[#1,#2]}}>
        | {{#1}}
        .
-       
+
 <ComputedIntegerPre> ::= <ComputedIntegerPrim>
        | "-"{Neg} <ComputedIntegerPre>
        | "+" <ComputedIntegerPre>
        | "~"{BitNot} <ComputedIntegerPre>
+       | "ord" {Ord} <ComputedIntegerPrim>
+       | "tail" {Tail} <ComputedIntegerPrim>
+       | "escape" {Escape} <ComputedIntegerPrim>
+       | "unescape" {Unescape} <ComputedIntegerPrim>
        .
 
 <ComputedIntegerPrim> ::= "(" <ComputedInteger> ")"
        | HEX:# {{$[Hex,#]}}
        | DECIMAL:# {{$[Decimal,#]}}
        | STRING$
-       | META@
+       | "$" {StringToNumeric} <ComputedIntegerRef>
+       | <ComputedIntegerRef>
        .
 
-/// <TestInteger> ::= 
-/// 
-/// <TestIntegerOr> ::= <TestIntegerOr>:# ( ("∨"|"||"){POr} {{#}} <TestIntegerAnd> | {{#}} ) .
-/// 
-/// <TestIntegerAnd> ::= <TestIntegerAnd>:# ( ("∧"|"&&"){PAnd} {{#}} <TestIntegerRel> | {{#}} ) .
-/// <TestIntegerRel> ::= <TestIntegerAdd>:#
-///        ( "="{PEq} {{#}} <TestIntegerAdd>
-///        | ("!="|"≠"){PNeq} {{#}} <TestIntegerAdd>
-///        | "<"{PLess} {{#}} <TestIntegerAdd>
-///        | ">"{PLess} <TestIntegerAdd> {{#}}
-///        | ("<="|"≤"){PLessEqual} <TestIntegerAdd> {{#}}
-///        | (">="|"≥"){PLessEqual} {{#}} <TestIntegerAdd>
-///        | {{#}}
-///        ).
+<ComputedIntegerRef> ::= META@ .
 
 token HEX ::= "0x" [0-9A-fa-f]+ .
 token DECIMAL ::= [0-9]+ .
 
 token META ::= '#' NAME .
 
-token STRING ::= '"' ( ~[\\\"\n] | [\\] ESCAPEDCHAR )* '"' .
+token STRING ::= '"' ( ~[\\""\n] | [\\] ESCAPEDCHAR )* '"' .
 fragment ESCAPEDCHAR ::= ~[0-9a-zA-Z] | [\\] [0-3]? [0-7]? [0-7] | [\\] [uU] ( HEX | '{' HEX '}' ) .
 
 token NAME ::= [A-Za-z] [A-Za-z0-9_]* .
