@@ -280,17 +280,20 @@ Stringify[$String] :: $String ;
 UnString[$String] :: $String ;
 -[Data[#]]: UnString[#] → $[Rescape, #] ;
 
-Trim[$String] :: $String ;
--[Data[#]]: Trim[#] → $[Trim, #] ;
+StringTrim[$String] :: $String ;
+-[Data[#]]: StringTrim[#] → $[Trim, #] ;
 
-Ord[$String] :: $String ;
--[Data[#]]: Ord[#] → $[DecodePoint, #] ;
+StringOrd[$String] :: $Numeric ;
+-[Data[#]]: StringOrd[#] → 0 ; ///$[DecodePoint, #] ;
 
-Escape[$String] :: $String ;
--[Data[#]]: Escape[#] → $[Escape, #] ;
+StringEscape[$String] :: $String ;
+-[Data[#]]: StringEscape[#] → $[Escape, #] ;
 
-Unescape[$String] :: $String ;
--[Data[#]]: Unescape[#] → $[Rescape, #] ;
+StringUnescape[$String] :: $String ;
+-[Data[#]]: StringUnescape[#] → $[Rescape, #] ;
+
+StringLength[$String] :: $Numeric ;
+-[Data[#]]: StringLength[#] → $[Length,$[Rescape,#]] ;
 
 // Tests.
 
@@ -700,13 +703,6 @@ $[Error, $[:,
   $[IfEmpty, #line, "", $[:, #line, $[IfEmpty, #column, "", $[:,"(",#column,")"]], ": "]],
   #mess]]
 ;
-
-
-/////////////////////////////////////////////////////////////////////
-// 10. Logical Bit Expressions
-
-
-
 
 /////////////////////////////////////////////////////////////////////
 

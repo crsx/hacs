@@ -94,6 +94,39 @@ inject[<HxEmbedded>] ::=  '%<PRODUCTION_NAME>', '', '' .
 <HxConcrete> ::= HX_CONCRETE$:unwrap .
 <HxConcreteText> ::= HX_CONCRETE$$:unwrap:{n} .
 
+%{
+
+/* Computed hack. */
+
+net.sf.crsx.Sink N_Computed$WithEOF(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) : {}{ sink=N_Computed(sink, env)
+ <EOF> {return sink;} }
+net.sf.crsx.Sink N_Computed(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) :
+{Token t;}{
+  t=<T_HX_CONCRETE>
+  {
+    try {sink = factory.parser(factory).parse(sink, "prelude_Computed", new java.io.StringReader(unwrap(t.toString())), unit, t.beginLine, t.beginColumn+1, env);}
+    catch (java.io.IOException e) {throw new ParseException(e.getMessage());}
+    catch (net.sf.crsx.CRSException e) {Throwable cause = e.getCause(); if (cause instanceof ParseException) throw (ParseException) cause; else throw new ParseException(e.getMessage());}
+  }
+  {return sink;}
+}
+
+/* TestInteger hack. */
+
+net.sf.crsx.Sink N_TestInteger$WithEOF(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) : {}{ sink=N_TestInteger(sink, env)
+ <EOF> {return sink;} }
+net.sf.crsx.Sink N_TestInteger(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) :
+{Token t;}{
+  t=<T_HX_CONCRETE>
+  {
+    try {sink = factory.parser(factory).parse(sink, "prelude_TestInteger", new java.io.StringReader(unwrap(t.toString())), unit, t.beginLine, t.beginColumn+1, env);}
+    catch (java.io.IOException e) {throw new ParseException(e.getMessage());}
+    catch (net.sf.crsx.CRSException e) {Throwable cause = e.getCause(); if (cause instanceof ParseException) throw (ParseException) cause; else throw new ParseException(e.getMessage());}
+  }
+  {return sink;}
+}
+
+%}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 %%%HXPOSTPRODUCTIONS%%%

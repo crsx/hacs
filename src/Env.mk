@@ -43,6 +43,7 @@ FLEX = flex
 SHELL = /bin/bash
 ECHO = /bin/echo
 GNUSED = sed
+RSYNC = rsync
 
 # Net utilities.
 WGET = wget

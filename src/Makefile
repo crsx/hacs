@@ -95,7 +95,7 @@ clean ::; rm -fr javacc*
 $(ICU4CDIR)/libicudata.so : icu4c-54_1-RHEL6-x64.tgz
 	rm -fr usr ../lib/icu4c
 	tar xpzf icu4c-54_1-RHEL6-x64.tgz
-	mv usr/local ../lib/icu4c
+	mv usr/local $(dir $(dir $(ICU4CDIR)))
 	rmdir usr
 
 icu4c-54_1-RHEL6-x64.tgz :
@@ -160,7 +160,7 @@ $(BUILD)/share/java/hacs.jar: \
 	cd $(BUILD) && classes=$$($(X) find org -name '*.class') && $(X) $(JAR) cf $(BUILD)/share/java/hacs-$(HACSMAJORVERSION).jar $(RULES) org/crsx/hacs/VERSION $$classes
 	cd $(BUILD)/share/java && $(X) ln -fs hacs-$(HACSMAJORVERSION).jar hacs.jar
 
-# Support jars.
+# Support jars & libraries.
 
 all :: $(BUILD)/share/java/crsx.jar
 install-support :: $(BUILD)/share/java/crsx.jar
@@ -185,6 +185,10 @@ $(BUILD)/share/java/javacc.jar: $(JAVACCJAR)
 	@mkdir -p $(BUILD)/share/java
 	cp $(JAVACCJAR) $(BUILD)/share/java/javacc-$(JAVACCVERSION).jar
 	cd $(BUILD)/share/java && $(X) ln -fs javacc-$(JAVACCVERSION).jar javacc.jar
+
+install-support :: $(ICU4CDIR)/libicudata.so
+	@mkdir -p "$(DESTDIR)$(LIBDIR)/icu4c"
+	$(RSYNC) -a "$(ICU4CDIR)/.." "$(DESTDIR)$(LIBDIR)/icu4c/."
 
 # CRSX rulecompiler (crsxc).
 

@@ -11,9 +11,10 @@
 \bibliographystyle{plainurl}
 
 %% Topmatter.
-\def\version{0.9.8\xspace}
+\def\version{0.9.10\xspace}
 \title{
-  Compiler Generation Using \HAX\thanks{This version describes \HAX β version \version released for use at NYU.}
+  Compiler Generation Using \HAX%
+  \thanks{This version describes \HAX β version \version released for use at NYU as of \today.}
 }
 \author{
   Kristoffer H. Rose\\
@@ -28,7 +29,7 @@
   With \HAX it is possible to create a fully functional compiler from a single source file.  This
   document explains how to get \HAX up and running, and walks through the code of a simple example
   with each of the main stages of a compiler in \HAX: lexical analysis, syntax analysis, semantic
-  analysis, intermediate code generation with optimization, and code generation.
+  analysis, and code generation.
 \end{abstract}
 
 \compacttableofcontents
@@ -50,11 +51,11 @@ suitable for that stage of the compiler. Specifically, \HAX supports the followi
   \emph{tokens}. The regular expressions of \HAX follows common
   conventions~\cite{Aho+:2006}. Section~\ref{sec:tokens} gives details of this notation.
 
-\item[Context Free Grammars.] \HAX uses a form of BNF~\cite{NaurEtal:cacm1960} with common
-  extensions to describe \emph{context free grammars}. \HAX includes simple mechanisms for automatic
-  resolution of operator precedence and productions using immediate recursion such that the
-  transformation from token stream to abstract syntax can be formalized. Details in
-  Section~\ref{sec:syntax}.
+\item[Context Free Grammars.] \HAX uses a form of BNF~\cite{NaurEtal:cacm1960} \emph{context free
+    grammars}; the notation has been tweaked to look more like \emph{templates} to allow for reuse
+  of the notation in rewrite rules later. \HAX includes simple mechanisms for automatic resolution
+  of operator precedence and productions using immediate recursion such that the transformation from
+  token stream to abstract syntax can be formalized. Details in Section~\ref{sec:syntax}.
 
 \item[Recursive Translation Schemes.] Simple translations in general, and code generation in
   particular, are traditionally achieved by \emph{recursive translation} from one abstract form to
@@ -65,7 +66,8 @@ suitable for that stage of the compiler. Specifically, \HAX supports the followi
   \emph{Syntax-Directed Definitions}~\cite{Aho+:2006}, originally introduced as \emph{attribute
     grammars}~\cite{Knuth:mst1968}, which describe how properties propagate through the abstract
   syntax tree.  Section~\ref{sec:collect} details how the basic propagation rules work for
-  synthesized attributes, Section~\ref{sec:sdd} explains how inherited atributes are described, and
+  synthesized attributes, Section~\ref{sec:sdd} explains how inherited atributes are integrated such
+  that full syntax-directed definitions can be encoded.
 
 %%%  Section~\ref{sec:advanced} summarizes the special considerations needed when managing scoped
 %%%  symbols and binders using \emph{higher-order abstract syntax}.
@@ -80,12 +82,15 @@ how to write specifications. %
 We explain lexical analysis in Section~\ref{sec:tokens}, %
 syntax analysis in Section~\ref{sec:syntax}, %
 basic semantic sorts and recursive translation schemes in Section~\ref{sec:schemes}, %
-bottom-up semantic analysis in Section~\ref{sec:collect}. %
-and general syntax-directed definitions in Section~\ref{sec:sdd}, %
+bottom-up semantic analysis in Section~\ref{sec:collect}, %
+and general syntax-directed definitions in Section~\ref{sec:sdd}. %
+In Section~\ref{sec:comp} we explain how primitive values can be manipulated, %
+and in Section~\ref{sec:examples} we give several examples of how everything can be combined.
+
 %%and advanced features in Section~\ref{sec:advanced}. %
 Appendix~\ref{app:manual} has a reference manual, %
 %% Appendix~\ref{app:bonus} has some bonus examples, %
-Appendix~\ref{app:errors} explains some cryptic error messages, %
+Appendix~\ref{app:errors} explains some of the (still) cryptic error messages, %
 and Appendix~\ref{app:limits} lists some current limitations.
 
 
@@ -122,7 +127,7 @@ energon1[hacs]$ ^textcolor{blue}{^texttt{make FROMZIP=1 install install-support}
   \verb|prefix=|…  to (all uses of) \emph{make}; if so then make sure to replace occurrences of
   \verb|$HOME/.hacs| everywhere below with your chosen directory.
 
-  The main \emph{make} command will take some time (of the order of 10 minutes) but should end
+  The main \emph{make} command will take some time (of the order of 3 minutes) but should end
   without error.
 
   The following command makes the main \emph{hacs} command available for use:
@@ -169,8 +174,8 @@ module org.crsx.hacs.samples.First
   // Remark.
   $\text{\it Lexical Analysis (Section~\ref{sec:tokens})}$
   $\text{\it Syntax Analysis (Section~\ref{sec:syntax})}$
-  $\text{\it Semantic Analysis (Sections~\ref{sec:collect} and \ref{sec:sdd})}$
-  $\text{\it Code Generator}$
+  $\text{\it Semantic Analysis (Sections \ref{sec:schemes}, \ref{sec:collect} and \ref{sec:sdd})}$
+  $\text{\it Code Generator (Section~\ref{sec:examples})}$
   $\text{\it Main (Section~\ref{sec:schemes})}$
 }
 \end{hacs}
@@ -185,6 +190,8 @@ module org.crsx.hacs.samples.First
       \emph{Glyph} & \emph{Code Point} & \emph{Character} \Bigstrut \\
       \hline
       {¬} & U+00AC & logical negation sign \\
+      {×} & U+00D7 & multiplication sign \\
+      {÷} & U+00F7 & multiplication sign \\
       {¶} & U+00B6 & paragraph sign \\
       \hline
       ↑ & U+2191 & upwards arrow \\
@@ -463,12 +470,17 @@ Unif(Float, #2) → Float;
 
   The semantic sort also includes a "scheme" declaration for the "Unif" constructor, which must be
   followed by an argument list with two "Type" arguments. The scheme declaration is ``instantiated''
-  by \emph{rules} of the form ``pattern→replacement,'' which must specify for each possible shape of
-  "Unif"-construction how it should be simplified by the scheme.  Rules may include
-  \emph{parameters} in the form of ``meta-variables'' starting with "#" (hash), like "#1", to
-  designate ``function arguments'' that should be copied from the pattern to the replacement.
+  by \emph{rules} of the form
+  \begin{displaymath}
+    "pattern→replacement"
+  \end{displaymath}
+  which must specify for each possible shape of "Unif"-construction how it should be simplified by
+  the scheme.  Rules may include \emph{parameters} in the form of ``meta-variables'' starting with
+  "#" (hash), like "#1", to designate ``function arguments'' that should be copied from the pattern
+  to the replacement.
 
-  The rules above can, for example, be used to simplify a composite term as follows:
+  The rules for the "Unif" scheme above can, for example, be used to simplify a composite term as
+  follows:
   %%
 \begin{hacs}[xleftmargin=\parindent,xrightmargin=\parindent]
 Unif(Unif(Int, Float), Int) → Unif(Float, Int) → Float
@@ -481,11 +493,11 @@ Unif(Unif(Int, Float), Int) → Unif(Float, Int) → Float
   %% 
 \end{example}
 
-\begin{example}[Syntactic scheme]\label{ex:leftmost}
-  The "Unif" scheme defined in the example is a simple example of a recursive translation scheme,
-  defined by rewrite rules.  We are permitted to define such schemes over the syntactic sorts, as
-  well.  Here is, for example, code to extract the leftmost leaf expression from an "Exp" tree from
-  Example~\ref{ex:syntax}:
+\begin{example}[scheme over syntax]\label{ex:leftmost}
+  The "Unif" scheme defined in the example is a simple example of a semantic recursive translation
+  scheme, defined by rewrite rules.  We are permitted to define such schemes over the syntactic
+  sorts, as well.  Here is, for example, code to extract the leftmost leaf expression from an "Exp"
+  tree from Example~\ref{ex:syntax}:
   %%
 \begin{hacs}[xleftmargin=\parindent,xrightmargin=\parindent]
 sort Exp | scheme Leftmost(Exp) ;
@@ -500,7 +512,7 @@ Leftmost(⟦⟨Name#⟩⟧)  →  ⟦⟨Name#⟩⟧ ;
   \begin{itemize}
 
   \item We first set the current sort to "Exp" and then add a "scheme" called "Leftmost" that takes
-    one argument of "Exp" sort.
+    one argument of the syntactic "Exp" sort.
 
   \item There is precisely one rule with a pattern applying "Leftmost" to each non-"sugar"
     production for "Exp" from Example~\ref{ex:syntax}.
@@ -528,12 +540,47 @@ $ \textcolor{blue}{./First.run --scheme=Leftmost --sort=Exp --term="(2*3)+4"}
  2
 \end{code}
   %%
-  We specify the sort of our expression here because "Leftmost" takes an "Exp" argument, which is
-  different from the main "Stat" sort.
+  We specify the sort of our input expression here because "Leftmost" takes an "Exp" argument, which
+  is different from the main "Stat" sort.
 
   Note that we cannot meaningfully invoke the "Unif" scheme from the command line because there is
   no user syntax for types in our example!
 \end{commands}
+
+\begin{example}[syntactic scheme]\label{ex:append}
+  We can even go all the way and define a purely ``syntactic scheme.''  This is best explained with
+  an example. Consider the list sort
+  %%
+\begin{hacs}
+sort List | ⟦ ⟨Elem⟩ ⟨List⟩ ⟧ | ⟦⟧ ;
+\end{hacs}
+  %%
+  If we want to allow appending and flattening of lists, then we can define
+  %%
+\begin{hacs}
+sort List | scheme ⟦ { ⟨List⟩ } ⟨List⟩ ⟧ ;
+⟦ { ⟨Elem#1⟩ ⟨List#2⟩ } ⟨List#3⟩ ⟧ → ⟦ ⟨Elem#1⟩ { ⟨List#2⟩ } ⟨List#3⟩ ⟧ ;
+⟦ { } ⟨List#⟩ ⟧ → # ;
+\end{hacs}
+  %%
+  Notice that:
+  %%
+  \begin{itemize}
+
+  \item The two rules differ on the content of the braces, and are clearly designed to fully
+    eliminate all braces used: this is essential, and we say that the scheme should be
+    \emph{complete}.
+
+  \item This is very like "sugar" productions except we can have more than one rule for a given
+    construct -- sugar is limited to a single rule that cannot depend on the inner structure of the
+    construct.
+
+  \item If you work with synthesized attributes (explained in the next section) then be aware that
+    syntactic rules such as the ones presented this one will mess with any synthetic attributes.
+
+  \end{itemize}
+  %%
+\end{example}
 
 \begin{example}
   The \emph{First.hx} example defines the "Compile" scheme as a top level function to be used from
@@ -542,7 +589,7 @@ $ \textcolor{blue}{./First.run --scheme=Leftmost --sort=Exp --term="(2*3)+4"}
 sort AProgr | scheme Compile(Stat);
 Compile(#) → ⟦ CG ICG TA ⟨Stat#⟩ ⟧ ;
 \end{hacs}
-  The "Compile" scheme refelcts how our compiler is structured, and in particular that the input is
+  The "Compile" scheme reflects how our compiler is structured, and in particular that the input is
   a "Stat" and the output an "AProgr", which stands for ``assembly program.''
   (You will see later what the right side of the "→" here means.)  This is the reason for the
   \verb|--scheme=Compile| option we invoked back in the getting started section.  Such wrapper raw
@@ -932,25 +979,103 @@ Se (⟦ ⟧ ↑#syn) → ⟦ ⟧ ↑#syn ;
   %% 
   \begin{itemize}
 
-  \item ``$\op{Defined}(N.e, x)$'' is encoded as true with the additional constraint "↓e{⟦x⟧}"
-    in a pattern.
+  \item A ``$\op{Defined}(N.e, x)$'' test is encoded by having two rules: one for the ``true''
+    branch with the constraint "↓e{⟦x⟧}" in a pattern, and one for the ``false'' case with the
+    constraint "↓e{⟦¬x⟧}" in the pattern.
 
-  \item ``$\op{Lookup}(N.e, x)$'' is encoded as the additional constraint "↓e{⟦x⟧:#}" in a pattern,
-    which then binds the meta-variable "#" to the result of the lookup.
+  \item ``$\op{Lookup}(N.e, x)$'' is encoded by adding a constraint "↓e{⟦x⟧:#}" in a pattern, which
+    then binds the meta-variable "#" to the result of the lookup. (This will imply the ``defined''
+    pattern discussed above.)
 
-  \item ``$\op{Extend}(N.e, x, V)$'' is encoded as the additional constraint "↓e{⟦x⟧:V}" in the
-    result.
+  \item ``$\op{Extend}(N.e, x, V)$'' is encoded by additing a constraint "↓e{⟦x⟧:V}" in the
+    \emph{replacement}.
 
   \end{itemize}
   %% 
 \end{example}
 
 
-\section{Working with Data}
-\label{sec:data}
+\section{Compile-time Computations}
+\label{sec:comp}
+
+\begin{figure}[t]
+  \begin{displaymath}
+    \begin{array}{c|p{.5\linewidth}}
+      \hline
+      \textit{Operators} & \textit{Explanation} \\
+      \hline
+      +,- & \text{addition, subtraction} \\
+      \mid, \caret, \backslash & \text{bitwise or, exclusive or, clear} \\
+      \hline
+      ×, ÷, \% & \text{multiplication, divison, modulo} \\
+      \& & \text{bitwise and} \\
+      \ll, \gg & \text{bitwise shift left and right} \\
+      \hline
+      +,- & \text{unary plus and minus}\\
+      {\sim} & \text{bitwise not} \\
+      \hline
+    \end{array}
+  \end{displaymath}
+  \caption{Operations permitted in Computed syntax.}
+  \label{fig:ops}
+\end{figure}
+
+We may sometimes need to compute helper values, most commonly for counting. \HAX supports this
+through a special sort, "Computed", which has special syntax for operations on primitive values.
+
+The mechanism is quite simple: in rule replacements, arguments of sort "Computed" can contain
+expressions in ⟦⟧s, which include
+%%
+\begin{itemize}
+\item References to meta-variables of sort "Computed".
+\item Integers in decimal and "0x"-hexadecimal notation.
+\item Standard operators and parentheses.
+\end{itemize}
+
+\begin{example}[count]\label{ex:count}
+  Consider the list from Example~\ref{ex:append}. The following computes the length of the list.
+  %%
+\begin{hacs}
+sort Computed | scheme ListLength(List, Computed) ;
+ListLength(⟦ ⟨Elem#1⟩ ⟨List#2⟩ ⟧, #n) →  ListLength(#2, ⟦ #n + 1 ⟧) ;
+ListLength(⟦ ⟧, #n) → #n ;
+\end{hacs}
+  %%
+\end{example}
+
+
+\section{Examples}
+\label{sec:examples}
 
 Once the structure of a specification is clear, we can start analyzing and manipulating our internal
 representation.  In this section we work through some examples of this.
+
+\begin{remark}
+  Before we start, here is a short checklist of recommended practices for \HAX processing:
+  %% 
+  \begin{itemize}
+
+  \item Separate token names from sort names, for example by using ALL CAPS for token names.
+
+  \item If you use some kind of identifier then declare it as a special sort like
+    \begin{displaymath}
+      "sort Symbol | symbol ⟦⟨SYMBOL⟩⟧ ;"
+    \end{displaymath}
+    with "SYMBOL" defined as a token that always allows numeric extensions, like
+    \begin{displaymath}
+      "token SYMBOL | [a-z]+ ('_'"~"[0-9]+)* ;"
+    \end{displaymath}
+    When you do this then you are allowed to use symbols of the specified kind in patterns, \ie, a
+    rule lile
+    \begin{displaymath}
+      "F(⟦x_1⟧) →   ⟦ x_1 + x_2 ⟧ ;"
+    \end{displaymath}
+    will allow "F" to be applied to \emph{any} "Symbol", with "x_1" being the \emph{representative} of
+    that symbol for the purpose of the rule. Similarly, "x_2" will correspond to a \emph{globally fresh} symbol,
+    as it only occurs left of the "→".
+
+  \end{itemize}
+\end{remark}
 
 \begin{figure}[t]
 \begin{hacs}[numbers=right,texcl]
@@ -1253,13 +1378,6 @@ energon1[~]$ \textcolor{blue}{./WordSubst.run --scheme=Run --term="\{a=1 b=2 c=3
 \end{example}
 
 
-\section{Working with Numbers}
-\label{sec:numbers}
-
-
-
-
-
 %%% \section{Advanced Features}
 %%% \label{sec:advanced}
 %%% 
@@ -1397,6 +1515,8 @@ energon1[~]$ \textcolor{blue}{./WordSubst.run --scheme=Run --term="\{a=1 b=2 c=3
 \appendix\small
 
 \section{Manual}\label{app:manual}
+
+This appendix is an evolving attempt at giving a systematic description on \HAX.
 
 \begin{manual}[grammar structure]\label{man:structure}
   A \HAX compiler is specified as a single \emph{.hx} module file with the following structure:
@@ -1836,6 +1956,32 @@ cookmain: crsx.c:528: bufferEnd: Assertion
   arguments.
 \end{error}
 
+\begin{error}\leavevmode
+\begin{code}
+// $Sortify
+// $[Load, ".../build/edu/nyu/csci/cc/fall14/Pr2Solution.hx", "pr2solutionMeta_HxModule"]
+Exception in thread "main" edu.nyu.csci.cc.fall14.TokenMgrError:
+   Lexical error at line 184, column 31.  Encountered: "t" (116), after : "Call"
+\end{code}
+This indicates that you have an undefined symbol of sort error in the \emph{.hx} file: the symbol
+starting with "Callt" is either undefined or used in a location where it does not match the required
+sort.
+\end{error}
+
+\begin{error}\leavevmode
+\begin{code}
+// $Sortify
+// $[Load, ".../build/edu/nyu/csci/cc/fall14/Pr2Solution.hx", "pr2solutionMeta_HxModule"]
+Exception in thread "main" java.lang.RuntimeException: net.sf.crsx.CRSException:
+   Encountered " ")" ") "" at line 255, column 112.
+Was expecting one of:
+    "," ...
+\end{code}
+This indicates that you have an incorrect number of arguments in the \emph{.hx} file: here
+insufficient arguments (encountering a ")" instead of ","); a similar but opposite error is given
+when excess arguments are present.
+\end{error}
+
 \begin{error}[]\leavevmode
 \begin{code}
 /home/krisrose/Desktop/teaching/.../hacs/cookmain PG pr3.hxt > pr3.pg
@@ -1872,11 +2018,11 @@ which is not in fact declared as a "scheme" in the \emph{.hx} file.
 \item It is not possible to use binders and left recursion in the same production with the same
   precedence.
 
-\item Only \emph{direct} left recursion is currently supported, \ie, the left recursion should be
-  within a single production.<
+\item Only \emph{immediate} left recursion is currently supported, \ie, the left recursion should be
+  within a single production.
 
 \item Productions can share a prefix but only within productions for the same sort, and the prefix
-  has to be literally identical unit by unit, \ie,
+  has to be literally identical unit by unit (except for left recursive precedence markers), \ie,
   \begin{code}
 sort S | ⟦ ⟨A⟩ then ⟨B⟩ then C ⟧
        | ⟦ ⟨A⟩ then ⟨B⟩ or else D ⟧ ;

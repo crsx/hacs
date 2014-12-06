@@ -14,13 +14,17 @@ if [ -d "$bindir" -a -d "$bindir/../share/hacs" ]; then
     docdir=$prefix/share/doc/hacs
     sharejava=$prefix/share/java
     libdir=$prefix/lib/hacs
-else
-    # fall back to global installation.
-    bindir="%%%BINDIR%%%"
-    libdir="%%%LIBDIR%%%"
-    docdir="%%%DOCDIR%%%"
-    sharedir="%%%SHAREDIR%%%"
-    sharejava="%%%SHAREJAVA%%%"
+    icu4cinclude=$libdir/icu4c/include
+    icu4cdir=$libdir/icu4c/lib
+#else
+#    # fall back to global installation.
+#    bindir="%%%BINDIR%%%"
+#    libdir="%%%LIBDIR%%%"
+#    docdir="%%%DOCDIR%%%"
+#    sharedir="%%%SHAREDIR%%%"
+#    sharejava="%%%SHAREJAVA%%%"
+#    icu4cinclude="%%%ICU4CINCLUDE%%%"
+#    icu4cdir="%%%ICU4CDIR%%%"
 fi
 # environment overrides...
 bindir=$(readlink -f "${BINDIR:-$bindir}")
@@ -28,8 +32,8 @@ libdir=$(readlink -f "${LIBDIR:-$libdir}")
 docdir=$(readlink -f "${DOCDIR:-$docdir}")
 sharedir=$(readlink -f "${SHAREDIR:-$sharedir}")
 sharejava=$(readlink -f "${SHAREJAVA:-$sharejava}")
-icu4cinclude=$(readlink -f "${ICU4CINCLUDE:-%%%ICU4CINCLUDE%%%}")
-icu4cdir=$(readlink -f "${ICU4CDIR:-%%%ICU4CDIR%%%}")
+icu4cinclude=$(readlink -f "${ICU4CINCLUDE:-$icu4cinclude}")
+icu4cdir=$(readlink -f "${ICU4CDIR:-$icu4cdir}")
 
 # Options.
 build=$(readlink -f build)

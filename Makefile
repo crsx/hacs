@@ -1,4 +1,4 @@
-# Main -*-Makefile-*- for Building HACS distribution.
+# Main -*-GNUMakefile-*- for Building HACS distribution.
 
 .PHONY: all all-debug install install-support clean realclean gitclean
 all ::
@@ -8,6 +8,21 @@ install-support ::
 clean :: ; rm -f *.tmp *~ ./#* *.log *~
 realclean :: clean
 gitclean :: realclean
+
+# Set default install directories.
+
+ifndef prefix
+prefix=$(shell echo $$HOME)/.hacs
+endif
+ifndef SHAREJAVA
+SHAREJAVA="$(prefix)/share/java/"
+endif
+ifndef ICU4CINCLUDE
+ICU4CINCLUDE="$(prefix)/lib/icu4c/include"
+endif
+ifndef ICU4CDIR
+ICU4CDIR="$(prefix)/lib/icu4c/lib"
+endif
 
 # Targets propagate to subdirectories...
 

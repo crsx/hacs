@@ -273,13 +273,13 @@ ifndef FROMZIP
 
 %_sorts.c : %.dr.gz
 	@gunzip <$< >$*.dr
-	$(CRSXC) wrapper=ComputeSorts HEADERS="$*.h" input=$*.dr output=$@.tmp
+	$(CRSXC) wrapper=ComputeSorts HEADERS="$(notdir $*).h" input=$*.dr output=$@.tmp
 	$(GNUSED) 's/222222222/9/g' '$@.tmp' >'$@'
 	@rm -f '$*.dr' '$@.tmp'
 
 %_rules.c : %.dr.gz
 	@gunzip <$< >$*.dr
-	$(CRSXC) wrapper=ComputeRules HEADERS="$*.h" input=$*.dr output=$@.tmp
+	$(CRSXC) wrapper=ComputeRules HEADERS="$(notdir $*).h" input=$*.dr output=$@.tmp
 	$(GNUSED) 's/222222222/9/g' '$@.tmp' >'$@'
 	@rm -f '$*.dr' '$@.tmp'
 
@@ -292,7 +292,7 @@ ifndef FROMZIP
 %_symbols.c : %.rawsymlist
 	LC_ALL=C sort -bu $< | sed -n '/./p' > $@.tmp
 	@(echo '/* $* symbols. */'; \
-	  echo '#include "$*.h"'; \
+	  echo '#include "$(notdir $*).h"'; \
 	  echo "size_t symbolDescriptorCount = $$(wc -l <$@.tmp);"; \
 	  echo 'struct _SymbolDescriptor symbolDescriptorTable[] = {';\
 	  cat $@.tmp;\

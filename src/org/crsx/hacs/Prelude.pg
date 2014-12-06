@@ -1,73 +1,74 @@
 // Prelude.pg: GRAMMAR FOR .hx STANDARD LIBRARY
 // Copyright © 2014 Kristoffer H. Rose <krisrose@crsx.org>
 
-class org.crsx.hacs.Prelude : <ComputedInteger>
+class org.crsx.hacs.Prelude : <Computed>
 
 prefix "prelude_"
 
-<ComputedInteger> ::= <ComputedIntegerRel> .
+<Computed> ::= <ComputedRel> .
 
 // Pattern expressions (tests).
 
-<ComputedIntegerRel> ::= <ComputedIntegerAdd>:#1
-       ( "=" <ComputedIntegerPrim>:#2 {{ $["NumericEqual", #1, #2] }}
-       | ("!="|"/="|"≠") <ComputedIntegerPrim>:#2 {{ $["NumericNotEqual", #1, #2] }}
-       | "<" <ComputedIntegerPrim>:#2 {{ $["LessThan", #1, #2] }}
-       | ">" <ComputedIntegerPrim>:#2 {{ $["GreaterThan", #1, #2] }}
-       | ("<="|"≤") <ComputedIntegerPrim>:#2 {{ $["LessThatOrEqual", #1, #2] }}
-       | (">="|"≥") <ComputedIntegerPrim>:#2 {{ $["GreaterThanOrEqual", #1, #2] }}
+<ComputedRel> ::= <ComputedAdd>:#1
+       ( "=" <ComputedPrim>:#2 {{ PreludeCompare["NumericEqual", #1, #2] }}
+       | ("!="|"/="|"≠") <ComputedPrim>:#2 {{ PreludeCompare["NumericNotEqual", #1, #2] }}
+       | "<" <ComputedPrim>:#2 {{ PreludeCompare["LessThan", #1, #2] }}
+       | ">" <ComputedPrim>:#2 {{ PreludeCompare["GreaterThan", #1, #2] }}
+       | ("<="|"≤") <ComputedPrim>:#2 {{ PreludeCompare["LessThatOrEqual", #1, #2] }}
+       | (">="|"≥") <ComputedPrim>:#2 {{ PreludeCompare["GreaterThanOrEqual", #1, #2] }}
        | {{#1}}
        ).
 
 // Expressions.
 
-<ComputedIntegerAdd> ::= <ComputedIntegerMult>:#1 <ComputedIntegerAdd2 #1> .
-<ComputedIntegerAdd2 #1> ::=
-         "+" <ComputedIntegerMult>:#2 <ComputedIntegerAdd2 {{Sum2[#1,#2]}}>
-       | "-" <ComputedIntegerMult>:#2 <ComputedIntegerAdd2 {{Sub[#1,#2]}}>
-       | "|" <ComputedIntegerMult>:#2 <ComputedIntegerAdd2 {{BitOr[#1,#2]}}>
-       | "^" <ComputedIntegerMult>:#2 <ComputedIntegerAdd2 {{BitXor[#1,#2]}}>
-       | "\\" <ComputedIntegerMult>:#2 <ComputedIntegerAdd2 {{BitMinus[#1,#2]}}>
+<ComputedAdd> ::= <ComputedMult>:#1 <ComputedAdd2 #1> .
+<ComputedAdd2 #1> ::=
+         "+" <ComputedMult>:#2 <ComputedAdd2 {{ PreludeBinary["Sum2", #1, #2] }}>
+       | "-" <ComputedMult>:#2 <ComputedAdd2 {{ PreludeBinary["Sub", #1,#2] }}>
+       | "|" <ComputedMult>:#2 <ComputedAdd2 {{ PreludeBinary["BitOr", #1,#2] }}>
+       | "^" <ComputedMult>:#2 <ComputedAdd2 {{ PreludeBinary["BitXor", #1,#2] }}>
+       | "\\" <ComputedMult>:#2 <ComputedAdd2 {{ PreludeBinary["BitMinus", #1,#2] }}>
        | {{#1}}
        .
 
-<ComputedIntegerMult> ::= <ComputedIntegerPre>:#1 <ComputedIntegerMult2 #1> .
-<ComputedIntegerMult2 #1> ::=
-         ("*"|"×") <ComputedIntegerPre>:#2 <ComputedIntegerMult2 {{Prod2[#1,#2]}}>
-       | ("/"|"÷") <ComputedIntegerPre>:#2 <ComputedIntegerMult2 {{Div[#1,#2]}}>
-       | "%" <ComputedIntegerPre>:#2 <ComputedIntegerMult2 {{Mod[#1,#2]}}>
-       | "&" <ComputedIntegerPre>:#2 <ComputedIntegerMult2 {{BitAnd[#1,#2]}}>
-       | "<<" <ComputedIntegerPre>:#2 <ComputedIntegerMult2 {{BitShiftLeft[#1,#2]}}>
-       | ">>" <ComputedIntegerPre>:#2 <ComputedIntegerMult2 {{BitShiftRight[#1,#2]}}>
+<ComputedMult> ::= <ComputedPre>:#1 <ComputedMult2 #1> .
+<ComputedMult2 #1> ::=
+         ("*"|"×") <ComputedPre>:#2 <ComputedMult2 {{ PreludeBinary["Prod2", #1,#2] }}>
+       | ("/"|"÷") <ComputedPre>:#2 <ComputedMult2 {{ PreludeBinary["Div", #1,#2] }}>
+       | "%" <ComputedPre>:#2 <ComputedMult2 {{ PreludeBinary["Mod", #1,#2] }}>
+       | "&" <ComputedPre>:#2 <ComputedMult2 {{ PreludeBinary["BitAnd", #1,#2] }}>
+       | "<<" <ComputedPre>:#2 <ComputedMult2 {{ PreludeBinary["BitShiftLeft", #1,#2] }}>
+       | ">>" <ComputedPre>:#2 <ComputedMult2 {{ PreludeBinary["BitShiftRight", #1,#2] }}>
        | {{#1}}
        .
 
-<ComputedIntegerPre> ::= <ComputedIntegerPrim>
-       | "-"{Neg} <ComputedIntegerPre>
-       | "+" <ComputedIntegerPre>
-       | "~"{BitNot} <ComputedIntegerPre>
-       | "ord" {Ord} <ComputedIntegerPrim>
-       | "tail" {Tail} <ComputedIntegerPrim>
-       | "escape" {Escape} <ComputedIntegerPrim>
-       | "unescape" {Unescape} <ComputedIntegerPrim>
+<ComputedPre> ::= <ComputedPrim>
+       | "-" <ComputedPre>:# {{ PreludeUnary["StringToNumeric", #] }}
+       | "+" <ComputedPre>
+       | "~" <ComputedPre>:# {{ PreludeUnary["BitNot", #] }}
+       | "ord" <ComputedPrim>:# {{ PreludeUnary["StringOrd", #] }}
+       | "tail" <ComputedPrim>:# {{ PreludeUnary["StringTail", #] }}
+       | "escape" <ComputedPrim>:# {{ PreludeUnary["StringEscape", #] }}
+       | "unescape" <ComputedPrim>:# {{ PreludeUnary["StringUnescape", #] }}
+       | "length" <ComputedPrim>:# {{ PreludeUnary["StringLength", #] }}
        .
 
-<ComputedIntegerPrim> ::= "(" <ComputedInteger> ")"
-       | HEX:# {{$[Hex,#]}}
-       | DECIMAL:# {{$[Decimal,#]}}
+<ComputedPrim> ::= "(" <Computed> ")"
+       | HEX:# {{ PreludeHex[#] }}
+       | DECIMAL:# {{ PreludeDecimal[#] }}
        | STRING$
-       | "$" {StringToNumeric} <ComputedIntegerRef>
-       | <ComputedIntegerRef>
+       | "$" <ComputedRef>:# {{ PreludeUnary["StringToNumeric", #] }}
+       | <ComputedRef>
        .
 
-<ComputedIntegerRef> ::= META@ .
+<ComputedRef> ::= {PreludeMeta} META$ .
 
 token HEX ::= "0x" [0-9A-fa-f]+ .
 token DECIMAL ::= [0-9]+ .
 
-token META ::= '#' NAME .
+token META ::= '#' [A-Za-z0-9_]* .
 
-token STRING ::= '"' ( ~[\\""\n] | [\\] ESCAPEDCHAR )* '"' .
+token STRING ::= '"' ( ~[\\\"\n] | [\\] ESCAPEDCHAR )* '"' .
 fragment ESCAPEDCHAR ::= ~[0-9a-zA-Z] | [\\] [0-3]? [0-7]? [0-7] | [\\] [uU] ( HEX | '{' HEX '}' ) .
 
 token NAME ::= [A-Za-z] [A-Za-z0-9_]* .
