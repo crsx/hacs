@@ -42,8 +42,8 @@ prefix "prelude_"
        | {{#1}}
        .
 
-<ComputedPre> ::= <ComputedPrim>
-       | "-" <ComputedPre>:# {{ PreludeUnary["StringToNumeric", #] }}
+<ComputedPre> ::=
+         "-" <ComputedPre>:# {{ PreludeUnary["StringToNumeric", #] }}
        | "+" <ComputedPre>
        | "~" <ComputedPre>:# {{ PreludeUnary["BitNot", #] }}
        | "ord" <ComputedPrim>:# {{ PreludeUnary["StringOrd", #] }}
@@ -51,12 +51,13 @@ prefix "prelude_"
        | "escape" <ComputedPrim>:# {{ PreludeUnary["StringEscape", #] }}
        | "unescape" <ComputedPrim>:# {{ PreludeUnary["StringUnescape", #] }}
        | "length" <ComputedPrim>:# {{ PreludeUnary["StringLength", #] }}
+       | <ComputedPrim>
        .
 
 <ComputedPrim> ::= "(" <Computed> ")"
-       | HEX:# {{ PreludeHex[#] }}
-       | DECIMAL:# {{ PreludeDecimal[#] }}
-       | STRING$
+       | {PreludeHex} HEX$
+       | {PreludeDecimal} DECIMAL$
+       | {PreludeString} STRING$
        | "$" <ComputedRef>:# {{ PreludeUnary["StringToNumeric", #] }}
        | <ComputedRef>
        .
@@ -66,9 +67,11 @@ prefix "prelude_"
 token HEX ::= "0x" [0-9A-fa-f]+ .
 token DECIMAL ::= [0-9]+ .
 
-token META ::= '#' [A-Za-z0-9_]* .
+token META ::= "#" [A-Za-z0-9_]* .
 
 token STRING ::= '"' ( ~[\\\"\n] | [\\] ESCAPEDCHAR )* '"' .
 fragment ESCAPEDCHAR ::= ~[0-9a-zA-Z] | [\\] [0-3]? [0-7]? [0-7] | [\\] [uU] ( HEX | '{' HEX '}' ) .
 
 token NAME ::= [A-Za-z] [A-Za-z0-9_]* .
+
+skip ::= [\ \t\n\r] .
