@@ -79,7 +79,7 @@ Any[(B_FALSE; #s)] → All[#s] ;
 // Conversions.
 
 StringToNumeric[$String] :: $Numeric;
--[Data[#]]: StringToNumeric[#] → $[If, $[StartsWith, #, "0x"], $[Hex, $[Substring, #, 2]], $[Decimal, #]] ;
+-[Data[#]]: StringToNumeric[#] → $[Decimal, #] ;
 
 HexToNumeric[$String] :: $Numeric;
 -[Data[#]]: HexToNumeric[#] → $[Hex, #] ;
