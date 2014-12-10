@@ -48,6 +48,7 @@ Cook[{#L}%rawHxModule⟪ module #HxModuleName# { #HxDeclarations# } ⟫]
 →
 Cook1[#HxModuleName#, U-ResolveImports[#HxDeclarations#, #HxModuleName#, ""]]
 ;
+// Note: inserts dummy declaration for Computed helper sort. TODO: clean this up...
 
 // Cook1: Convert parsed forms to construction forms.
 Cook1[$String<!--ModuleName-->, $List[HxDeclaration]] :: Text;
@@ -56,13 +57,13 @@ Cook1[#ModuleName, #Declarations] → Cook2[#ModuleName, #Declarations, C-Unpars
 // Cook2: Normalize the declarations into a declarations map.
 Cook2[$String<!--ModuleName-->, $List[HxDeclaration], $List[HxDeclaration]] :: Text;
 -[Data[#Declarations]]:
-Cook2[#ModuleName, #OriginalDeclarations, #Declarations] → Cook3[#ModuleName, #OriginalDeclarations, {} U-MakeDeclarationMap[#Declarations, #ModuleName]]
-;
+Cook2[#ModuleName, #OriginalDeclarations, #Declarations] → Cook3[#ModuleName, #OriginalDeclarations, C-AddComputedSort[#ModuleName, {} U-MakeDeclarationMap[#Declarations, #ModuleName]]] ;
 
 // Cook3: Replace rules depending on synthesized attributes to regular rules with attribute computation.
 Cook3[$String<!--ModuleName-->, $List[HxDeclaration], DeclarationMap]  :: Text ;
--[Data[#DM]]:
-Cook3[#ModuleName, #OriginalDeclarations, #DM] → Cook4[#ModuleName, #OriginalDeclarations, U-MakeDM-ExtraInformation[#ModuleName, C-Unsynthesize[#ModuleName, #DM]]]
+Cook3[#ModuleName, #OriginalDeclarations, {#DM}DM]
+→
+Cook4[#ModuleName, #OriginalDeclarations, U-MakeDM-ExtraInformation[#ModuleName, C-Unsynthesize[#ModuleName, {#DM}DM]]]
 ;
 
 // Cook4: Assemble file.
@@ -96,6 +97,17 @@ Cook4[#ModuleName, #OriginalDeclarations, #DM]
 )] //†« U-LastName[#ModuleName] »
 ⟫
 ;
+
+C-AddComputedSort[$String<!--ModuleName-->, DeclarationMap] :: DeclarationMap ;
+-[Data[#Module]]:
+C-AddComputedSort[#ModuleName, #DM] → C-AddComputedSort1[U-QN[#ModuleName, "", "Computed"], #DM] ;
+
+C-AddComputedSort1[$String<!--Name-->, DeclarationMap] :: DeclarationMap ;
+-[Data[#Name]]:
+C-AddComputedSort1[#Name, {#DM}DM] → C-AddComputedSort2[#Name, $[{#DM}Get[DeclarationMapEntry], #Name, DME_SORT[(), #Name, NoNames, NO_WRAPPER, B_FALSE]], {#DM}DM] ;
+
+C-AddComputedSort2[$String, DeclarationMapEntry, DeclarationMap] :: DeclarationMap ;
+C-AddComputedSort2[#Name, #Entry, {#DM}DM] → {#DM; #Name : #Entry}DM ;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -209,16 +221,16 @@ PreludeString[#HxString#] → %rawHxTerm⟪ Computed #HxString# ⟫ ;
 
 C-Unparse[$List[HxDeclaration]] :: $List[HxDeclaration];
 
-Unparse-Import:
-C-Unparse[%rawHxDeclarations⟪ import #HxModuleName# ; #HxDeclarations# ⟫]
-→
-%rawHxDeclarations⟪ import #HxModuleName# ; %HxDeclarations« C-Unparse[#HxDeclarations#] »⟫
-;
-
 Unparse-Module:
 C-Unparse[%rawHxDeclarations⟪ module #HxModuleName2# { #HxDeclarations2# } ; #HxDeclarations# ⟫]
 →
 %rawHxDeclarations⟪ module #HxModuleName2# { %HxDeclarations« C-Unparse[#HxDeclarations2#] » } ; %HxDeclarations« C-Unparse[#HxDeclarations#] » ⟫
+;
+
+Unparse-Import:
+C-Unparse[%rawHxDeclarations⟪ import #HxModuleName# ; #HxDeclarations# ⟫]
+→
+%rawHxDeclarations⟪ import #HxModuleName# ; %HxDeclarations« C-Unparse[#HxDeclarations#] »⟫
 ;
 
 Unparse-Space:
@@ -740,45 +752,60 @@ C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllN
 
 // Convert normalized HACS declarations to CRSX form (as Text).
 
+// Add Computed terms (that should be available to Crsxify).
 C-Crsxify[DeclarationMap] :: Text ;
 C-Crsxify[#DM]
 →
 C-Crsxify2[
-  C-AddVirtualConstructor["Sum2", "Comp$Computed", (%rawHxScopeSort⟪Computed⟫; %rawHxScopeSort⟪Computed⟫;),
-  C-AddVirtualConstructor["Sub", "Comp$Computed", (%rawHxScopeSort⟪Computed⟫; %rawHxScopeSort⟪Computed⟫;),
-  C-AddVirtualConstructor["BitOr", "Comp$Computed", (%rawHxScopeSort⟪Computed⟫; %rawHxScopeSort⟪Computed⟫;),
-  C-AddVirtualConstructor["BitXor", "Comp$Computed", (%rawHxScopeSort⟪Computed⟫; %rawHxScopeSort⟪Computed⟫;),
-  C-AddVirtualConstructor["BitMinus", "Comp$Computed", (%rawHxScopeSort⟪Computed⟫; %rawHxScopeSort⟪Computed⟫;),
-  C-AddVirtualConstructor["Prod2", "Comp$Computed", (%rawHxScopeSort⟪Computed⟫; %rawHxScopeSort⟪Computed⟫;),
-  C-AddVirtualConstructor["Div", "Comp$Computed", (%rawHxScopeSort⟪Computed⟫; %rawHxScopeSort⟪Computed⟫;),
-  C-AddVirtualConstructor["Mod", "Comp$Computed", (%rawHxScopeSort⟪Computed⟫; %rawHxScopeSort⟪Computed⟫;),
-  C-AddVirtualConstructor["BitAnd", "Comp$Computed", (%rawHxScopeSort⟪Computed⟫; %rawHxScopeSort⟪Computed⟫;),
-  C-AddVirtualConstructor["BitShiftLeft", "Comp$Computed", (%rawHxScopeSort⟪Computed⟫; %rawHxScopeSort⟪Computed⟫;),
-  C-AddVirtualConstructor["BitShiftRight", "Comp$Computed", (%rawHxScopeSort⟪Computed⟫; %rawHxScopeSort⟪Computed⟫;),
-  C-AddVirtualConstructor["Sum2", "Comp$Computed", (%rawHxScopeSort⟪Computed⟫; %rawHxScopeSort⟪Computed⟫;),
-  C-AddVirtualConstructor["StringToNumeric", "Comp$Computed", (%rawHxScopeSort⟪Computed⟫;),
-  C-AddVirtualConstructor["BitNot", "Comp$Computed", (%rawHxScopeSort⟪Computed⟫;),
-  C-AddVirtualConstructor["StringOrd", "Comp$Computed", (%rawHxScopeSort⟪Computed⟫;),
-  C-AddVirtualConstructor["StringTail", "Comp$Computed", (%rawHxScopeSort⟪Computed⟫;),
-  C-AddVirtualConstructor["StringEscape", "Comp$Computed", (%rawHxScopeSort⟪Computed⟫;),
-  C-AddVirtualConstructor["StringUnescape", "Comp$Computed", (%rawHxScopeSort⟪Computed⟫;),
-  C-AddVirtualConstructor["StringLength", "Comp$Computed", (%rawHxScopeSort⟪Computed⟫;),
-  #DM]]]]]]]]]]]]]]]]]]]
+  C-AddComputedConstructor["Sum2", (%rawHxScopeSort⟪Computed⟫; %rawHxScopeSort⟪Computed⟫;),
+  C-AddComputedConstructor["Sub", (%rawHxScopeSort⟪Computed⟫; %rawHxScopeSort⟪Computed⟫;),
+  C-AddComputedConstructor["BitOr", (%rawHxScopeSort⟪Computed⟫; %rawHxScopeSort⟪Computed⟫;),
+  C-AddComputedConstructor["BitXor", (%rawHxScopeSort⟪Computed⟫; %rawHxScopeSort⟪Computed⟫;),
+  C-AddComputedConstructor["BitMinus", (%rawHxScopeSort⟪Computed⟫; %rawHxScopeSort⟪Computed⟫;),
+  C-AddComputedConstructor["Prod2", (%rawHxScopeSort⟪Computed⟫; %rawHxScopeSort⟪Computed⟫;),
+  C-AddComputedConstructor["Div", (%rawHxScopeSort⟪Computed⟫; %rawHxScopeSort⟪Computed⟫;),
+  C-AddComputedConstructor["Mod", (%rawHxScopeSort⟪Computed⟫; %rawHxScopeSort⟪Computed⟫;),
+  C-AddComputedConstructor["BitAnd", (%rawHxScopeSort⟪Computed⟫; %rawHxScopeSort⟪Computed⟫;),
+  C-AddComputedConstructor["BitShiftLeft", (%rawHxScopeSort⟪Computed⟫; %rawHxScopeSort⟪Computed⟫;),
+  C-AddComputedConstructor["BitShiftRight", (%rawHxScopeSort⟪Computed⟫; %rawHxScopeSort⟪Computed⟫;),
+  C-AddComputedConstructor["Sum2", (%rawHxScopeSort⟪Computed⟫; %rawHxScopeSort⟪Computed⟫;),
+  C-AddComputedConstructor["StringToNumeric", (%rawHxScopeSort⟪Computed⟫;),
+  C-AddComputedConstructor["HexToNumeric", (%rawHxScopeSort⟪Computed⟫;),
+  C-AddComputedConstructor["BitNot", (%rawHxScopeSort⟪Computed⟫;),
+  C-AddComputedConstructor["StringOrd", (%rawHxScopeSort⟪Computed⟫;),
+  C-AddComputedConstructor["StringTail", (%rawHxScopeSort⟪Computed⟫;),
+  C-AddComputedConstructor["StringEscape", (%rawHxScopeSort⟪Computed⟫;),
+  C-AddComputedConstructor["StringUnescape", (%rawHxScopeSort⟪Computed⟫;),
+  C-AddComputedConstructor["StringLength", (%rawHxScopeSort⟪Computed⟫;),
+  #DM]]]]]]]]]]]]]]]]]]]]
 ]
 ;
-    // Add virtual terms (that should be available to Crsxify correctly):
-
-    C-AddVirtualConstructor[$String<!--Constructor-->, $String<!--Sort-->, $List[HxScopeSort], DeclarationMap] :: DeclarationMap;
-    C-AddVirtualConstructor[#Constructor, #Sort, #Scopes, {#DM; "All$Constructor2Sort" : DME_N2N[#Constructor2Sort]; "All$Constructor2ScopeSorts" : DME_N2SS[#Constructor2ScopeSorts]}DM]
-    →
-    C-AddVirtualConstructor2[SetName[#Constructor2Sort, #Constructor, #Sort], AddName2ScopeSorts[#Constructor2ScopeSorts, #Constructor, #Scopes], {#DM}DM]
-    ;
-
-    C-AddVirtualConstructor2[NameMap, Name2ScopeSorts, DeclarationMap] :: DeclarationMap;
-    C-AddVirtualConstructor2[#Constructor2Sort, #Constructor2ScopeSorts, {#DM}DM]
+    C-AddComputedConstructor[$String<!--Constructor-->, $List[HxScopeSort], DeclarationMap] :: DeclarationMap;
+    -[Data[#Constructor]]:
+    C-AddComputedConstructor[#Constructor, #Scopes, {#DM; "All$Constructor2Sort" : DME_N2N[#Constructor2Sort]; "All$Constructor2ScopeSorts" : DME_N2SS[#Constructor2ScopeSorts]}DM]
     →
     {#DM; "All$Constructor2Sort" : DME_N2N[#Constructor2Sort]; "All$Constructor2ScopeSorts" : DME_N2SS[#Constructor2ScopeSorts]}DM
     ;
+
+    /// C-AddVirtualConstructor[$String<!--Constructor-->, $String<!--ModuleName-->, $String<!--Sort-->, $List[HxScopeSort], DeclarationMap] :: DeclarationMap;
+    /// C-AddVirtualConstructor[#Constructor, #ModuleName, #Sort, #Scopes, #DM]
+    /// →
+    /// C-AddVirtualConstructor1[#Constructor, U-LastName[#ModuleName], #Sort, #Scopes, #DM]
+    /// ;
+    /// 
+    /// C-AddVirtualConstructor1[$String<!--Constructor-->, $String<!--ModuleLastName-->, $String<!--Sort-->, $List[HxScopeSort], DeclarationMap] :: DeclarationMap;
+    /// -[Data[#Constructor,#LastName]] :
+    /// C-AddVirtualConstructor1[#Constructor, #LastName, #Sort, #Scopes, {#DM; "All$Constructor2Sort" : DME_N2N[#Constructor2Sort]; "All$Constructor2ScopeSorts" : DME_N2SS[#Constructor2ScopeSorts]}DM]
+    /// →
+    /// ///C-AddVirtualConstructor2[SetName[#Constructor2Sort, $[:,#LastName,"$",#Constructor], #Sort], AddName2ScopeSorts[#Constructor2ScopeSorts, $[:,#LastName,"$",#Constructor], #Scopes], {#DM}DM]
+    /// C-AddVirtualConstructor2[SetName[#Constructor2Sort, #Constructor, #Sort], AddName2ScopeSorts[#Constructor2ScopeSorts, #Constructor, #Scopes], {#DM}DM]
+    /// ;
+    /// 
+    /// C-AddVirtualConstructor2[NameMap, Name2ScopeSorts, DeclarationMap] :: DeclarationMap;
+    /// C-AddVirtualConstructor2[#Constructor2Sort, #Constructor2ScopeSorts, {#DM}DM]
+    /// →
+    /// {#DM; "All$Constructor2Sort" : DME_N2N[#Constructor2Sort]; "All$Constructor2ScopeSorts" : DME_N2SS[#Constructor2ScopeSorts]}DM
+    /// ;
 
 C-Crsxify2[DeclarationMap] :: Text ;
 C-Crsxify2[{#DM} DM]

@@ -16,8 +16,6 @@ engine.
 How to Install
 ----
 
-The current version of HACS is version 0.9.11.
-
 The installation method depends on how you obtained HACS.
 
 In any case you must have internet access when installing.
@@ -25,12 +23,12 @@ In any case you must have internet access when installing.
 ### Installing from downloaded hacs.zip archive
 
 The simplest mechanism is to download the
-[hacs-0.9.11.zip](http://crsx.org/hacs-0.9.11.zip) archive and install with
+[hacs.zip](http://crsx.org/hacs.zip) archive and install with
 these commands:
 
 ```
-wget http://crsx.org/hacs-0.9.11.zip
-unzip hacs-0.9.11.zip
+wget http://crsx.org/hacs.zip
+unzip hacs.zip
 make -C hacs all install install-support
 ```
 
