@@ -4,7 +4,7 @@ README.md
 VERSION
 doc/Makefile
 doc/hacs.pdf
-lib/crsx-3.2.2.4.jar
+lib/crsx-3.2.2.5.jar
 samples/Bool.hx
 samples/First.hx
 samples/IsCat.hx
