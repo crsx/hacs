@@ -12,7 +12,7 @@ Cook[(
 // 1. Setup and Top Level Assembly (Cook, C-Rewrite).
 // 2. Preprocessing.
 // 3. Convert parsed declarations to constructions (C-Unparse).
-// 4. Expand Synthesis Rules (C-Unsynthesize).
+// 4. Expand Synthesis (C-Unsynthesize).
 // 5. Convert recursive schemes with attributes to CRSX Text form (C-Crsxify).
 // 6. Print (C-Print).
 // 7. Helpers.
@@ -379,11 +379,10 @@ C-ParsedForm-ScopeSorts[#ParsedForm] → {}C-ParsedForm-ScopeSorts1[#ParsedForm,
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 4. EXPAND SYNTHESIS RULES
+// 4. EXPAND SYNTHESIS
 
-// 
-//
-//
+// Synthesis rules expand to pairs of rules propagating Need-wrappers and elimination of Collect-wrappers.
+// Synthesized attributes in patterns split the rule into Need-wrapper generation and resolution.
 
 C-Unsynthesize[$String<!--ModuleName-->, DeclarationMap] :: DeclarationMap ;
 C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllNames], #ModuleName, {#DM}DM, dm¹.dm¹] ;
