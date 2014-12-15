@@ -7,11 +7,10 @@
 #   make DESTDIR="" prefix="/usr/local" install
 #   make DESTDIR="" prefix="/usr/local" install-support
 #
-# Environment variables:
+# Environment variables (all with suitable defaults):
 # - DESTDIR - root of installation (empty by default)
 # - prefix - prefix of installation ($HOME/.hacs by default).
-#
-# - CRSXJAR - full path to CRSX jar (version 3.2.1).
+# - CRSXJAR - full path to CRSX jar
 # - JAVACCJAR - full path to JavaCC jar (at least version 5.0).
 # - ICU4CINCLUDE - directory where the ICU unicode/ include directory is a subdirectory.
 # - ICU4CDIR - directory where ICU library binaries live.
@@ -35,7 +34,7 @@ gitclean :: realclean
 
 # External library setup.
 ifndef CRSXJAR
-CRSXVERSION = 3.2.2.5
+CRSXVERSION = 3.2.2.6
 CRSXJAR = $(abspath ../lib/crsx-$(CRSXVERSION).jar)
 all :: $(CRSXJAR)
 endif

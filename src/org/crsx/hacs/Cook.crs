@@ -1326,7 +1326,7 @@ C-Print-SymbolForm2[{#L}Hx_ParsedFormWord[#ConcreteWord, #HxPP], #ModuleName, #S
 -[Fresh[x::Text]]:
 C-Print-SymbolForm2[Hx_ParsedFormTerm[#ScopeSortPrec, #HxPP], #ModuleName, #Sort, #DM]
 →
-%n⟪-[Free[«x»]]: '$Print2-†«U-LastName[#ModuleName]»$†«#Sort»' [«x», #prec] → « C-Text-open »« C-Text-dagger »« C-Text-unopen »$[Symbol,« x »]« C-Text-unclose »« C-Text-close » ;
+%n⟪-[Free[«x»]]: '$Print2-†«U-LastName[#ModuleName]»$†«#Sort»' [«x», #prec] → « C-Text-open »« C-Text-unopen »« x »« C-Text-unclose »« C-Text-close » ;
 ⟫;
 // TODO: make sure variable name falls within lexical space for token.
 

@@ -4,7 +4,7 @@ README.md
 VERSION
 doc/Makefile
 doc/hacs.pdf
-lib/crsx-3.2.2.5.jar
+lib/crsx-3.2.2.6.jar
 samples/Bool.hx
 samples/First.hx
 samples/IsCat.hx
@@ -34,6 +34,9 @@ src/crsx-rulecompiler/net/sf/crsx/compiler/c/build/CRSXC_EVAL-E1_fun.c
 src/crsx-rulecompiler/net/sf/crsx/compiler/c/build/CRSXC_EVAL-E2.h
 src/crsx-rulecompiler/net/sf/crsx/compiler/c/build/CRSXC_EVAL-E2.symlist
 src/crsx-rulecompiler/net/sf/crsx/compiler/c/build/CRSXC_EVAL-E2_fun.c
+src/crsx-rulecompiler/net/sf/crsx/compiler/c/build/CRSXC_EVAL-E3.h
+src/crsx-rulecompiler/net/sf/crsx/compiler/c/build/CRSXC_EVAL-E3.symlist
+src/crsx-rulecompiler/net/sf/crsx/compiler/c/build/CRSXC_EVAL-E3_fun.c
 src/crsx-rulecompiler/net/sf/crsx/compiler/c/build/CRSXC_HEADER.h
 src/crsx-rulecompiler/net/sf/crsx/compiler/c/build/CRSXC_HEADER.symlist
 src/crsx-rulecompiler/net/sf/crsx/compiler/c/build/CRSXC_HEADER_fun.c

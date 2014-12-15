@@ -11,7 +11,7 @@
 \bibliographystyle{plainurl}
 
 %% Topmatter.
-\def\version{0.9.14\xspace}
+\def\version{0.9.15\xspace}
 \title{
   Compiler Generation Using \HAX%
   \thanks{This version describes \HAX β version \version released for use at NYU. This printing \today.}
@@ -150,14 +150,14 @@ energon1[~]$ ^textcolor{blue}{^texttt{./First.run --scheme=Compile \}}
            ^textcolor{blue}{^texttt{--term="^{initial := 1; rate := 1.0; position := initial + rate * 60;^}"}}
   LDF T_2,  #1 
     STF initial, T_2
-    LDF T_2,  #1.0 
-    STF rate, T_2
+    LDF T_2_37,  #1.0 
+    STF rate, T_2_37
     LDF T_3,  initial 
-    LDF T_3,  rate 
+    LDF T_3_42,  rate 
     LDF T_4,  #60 
-    MULF  T_4 ,  T_3 ,  T_4 
-    ADDF  T_2 ,  T_3 ,  T_4 
-    STF position, T_2
+    MULF  T_4_71 ,  T_3_42 ,  T_4 
+    ADDF  T_2_49 ,  T_3 ,  T_4_71 
+    STF position, T_2_49
 \end{code}
   %%
   Congratulations---you just built your first compiler!\footnote{Please do not mind the spacing --
@@ -232,7 +232,7 @@ space [ \t\n] ;
 // Basic nonterminals.
 token INT      | ⟨DIGIT⟩+ ;
 token FLOAT    | ⟨DIGIT⟩* "." ⟨DIGIT⟩+ ;
-token ID       | ⟨LOWER⟩+ ('_'? ⟨INT⟩)? ;
+token ID       | ⟨LOWER⟩+ ('_'? ⟨INT⟩)* ;
 
 // Special categories of letters.
 token fragment DIGIT  | [0-9] ;
@@ -403,8 +403,8 @@ Here are the formal rules:
   be ``disambiguated'' with distinct markers like "#" or "#5" in this way.)
 
 \item As a special case, A sort can be defined with a single "symbol" declaration. If so, then the
-  actual syntax must refer to a single token, and that token must allow that a trailing "_"$n$
-  (underscore and count) is added to any instance (this permits automatic symbol generation).
+  actual syntax must refer to a single token, and that token must allow multiple trailing "_"$n$
+  (underscore and count), which is added to any instance (this permits automatic symbol generation).
 
 \end{itemize}
 %%
@@ -1043,6 +1043,14 @@ ListLength(⟦ ⟧, #n) → #n ;
   %%
 \end{example}
 
+%Finally, it is possible to extract strings from tokens and reinsert computed values back into
+%syntactic expressions as tokens with the following two constructs:
+%\begin{itemize}
+%
+%\item A \emph{token string value} can be inserted into a "Computed" construction with the \$ prefix.
+%\item A "Computed" value can be converted to a token string with the 
+%
+%\end{itemize}
 
 \section{Examples}
 \label{sec:examples}
