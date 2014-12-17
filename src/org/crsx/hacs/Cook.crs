@@ -1167,7 +1167,7 @@ If[And[Empty[#Attributes], Not[HasNames[UnionNames[#ThisInherited, #TopInherited
 
     //
     C-CrsxifyAttributeSimple[$String<!--Name-->, $List[HxAttributeValue], NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
-    C-CrsxifyAttributeSimple[#a, (), #TopInherited, #DM, #SM] → If[ContainsName[#TopInherited, #a], %n⟪A_†«#a»[#_†«#a»]⟫, %n⟪A_†«#a»[A_†«#a»_null]⟫] ;
+    C-CrsxifyAttributeSimple[#a, (), #TopInherited, #DM, #SM] → If[ContainsName[#TopInherited, #a], %n⟪A_†«#a»[#†«#a»]⟫, %n⟪A_†«#a»[A_†«#a»_null]⟫] ;
     C-CrsxifyAttributeSimple[#a, (#av;), #TopInherited, #DM, #SM] → %n⟪A_†«#a»[« C-CrsxifyAttributeSimpleValue[#av, #TopInherited, #DM, #SM] »]⟫ ;
     C-CrsxifyAttributeSimple[#a, ({#L}#av1;#av2;#avs), #TopInherited, #DM, #SM] → Error[$[:,"Cannot have more than one pattern/value set for simple attribute ",#a]] ;
     // TODO: process system attributes in #ats.
@@ -1578,13 +1578,34 @@ C-SortMap-then-GetFreeVariableSort[OK, {#SM}SM[#fvs, #mvs], v] → $[{#SM}Get[$S
 
 {#DM} C-ExtendSortMap-Terms[(), (), #SM] → #SM ;
 
+{#DM} C-ExtendSortMap-Terms[(#Term; #Terms), (#Sort; #Sorts), #SM]
+→
+{#DM} C-ExtendSortMap-Terms1[ContainsName[{#DM}U-AllTokenNames, #Sort], #Term, #Terms, #Sort, #Sorts, #SM]
+;
+
+// Ignore tokens...
+
+{$String<!--SortName--> : DeclarationMapEntry; HxTerm : $String} C-ExtendSortMap-Terms1[Boolean<!--IsToken-->, HxTerm, $List[HxTerm], $String, $List[$String], SortMap] :: SortMap ;
+
+{#DM} C-ExtendSortMap-Terms1[B_TRUE, #Term, #Terms, #Sort, #Sorts, #SM]
+→
+{#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, #SM]
+;
+// TODO: can token take attributes?
+
+{#DM} C-ExtendSortMap-Terms1[B_FALSE, #Term, #Terms, #Sort, #Sorts, #SM] → {#DM} C-ExtendSortMap-Terms2[#Term, #Terms, #Sort, #Sorts, #SM] ;
+
+// Proper sort.
+
+{$String<!--SortName--> : DeclarationMapEntry; HxTerm : $String} C-ExtendSortMap-Terms2[HxTerm, $List[HxTerm], $String, $List[$String], SortMap] :: SortMap ;
+
 -[Free[v::HxTerm]] :
-{#DM} C-ExtendSortMap-Terms[( %rawHxTerm⟪ v #HxAttributes# ⟫ ; #Terms), (#Sort; #Sorts), #SM]
+{#DM} C-ExtendSortMap-Terms2[%rawHxTerm⟪ v #HxAttributes# ⟫, #Terms, #Sort, #Sorts, #SM]
 →
 {#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, {#DM} C-ExtendSortMap-Attributes[#HxAttributes#, C-ExtendSortMap-AddVariable[#SM, v, #Sort, $[{#DM}IfDef[$String], v, B_FALSE, B_TRUE]]]]
 ;
 -[Free[v::HxTerm]] :
-{#DM} C-ExtendSortMap-Terms[( %rawHxTerm⟪ #HxConstructor1# #HxRepeat1# v #HxAttributes# ⟫ ; #Terms), (#Sort; #Sorts), #SM]
+{#DM} C-ExtendSortMap-Terms2[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# v #HxAttributes# ⟫, #Terms, #Sort, #Sorts, #SM]
 →
 {#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, {#DM} C-ExtendSortMap-Attributes[#HxAttributes#, C-ExtendSortMap-AddVariable[#SM, v, #Sort, $[{#DM}IfDef[$String], v, B_FALSE, B_TRUE]]]]
 ;
@@ -1593,38 +1614,38 @@ C-SortMap-then-GetFreeVariableSort[OK, {#SM}SM[#fvs, #mvs], v] → $[{#SM}Get[$S
     -[Data[#Sort]]: C-ExtendSortMap-AddVariable[#SM, #v, #Sort, B_FALSE] → #SM ;
     -[Free[v::HxTerm],Data[#Sort]]: C-ExtendSortMap-AddVariable[{#SM}SM[#fvs, #mvs], v, #Sort, B_TRUE] → {#SM; v : #Sort}SM[(v; #fvs), #mvs] ;
 
-{#DM} C-ExtendSortMap-Terms[( %rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫ ; #Terms), (#Sort; #Sorts), #SM]
+{#DM} C-ExtendSortMap-Terms2[%rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #Terms, #Sort, #Sorts, #SM]
 →
 {#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, {#DM} C-ExtendSortMap-Attributes[#HxAttributes#,
   {#DM} C-ExtendSortMap-Scopes[#HxScopes#, {#DM} U-GetConstructorScopeSorts[#HxConstructor#], #SM]]]
 ;
-{#DM} C-ExtendSortMap-Terms[( %rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫ ; #Terms), (#Sort; #Sorts), #SM]
+{#DM} C-ExtendSortMap-Terms2[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #Terms, #Sort, #Sorts, #SM]
 →
 {#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, {#DM} C-ExtendSortMap-Attributes[#HxAttributes#,
   {#DM} C-ExtendSortMap-Scopes[#HxScopes#, {#DM} U-GetConstructorScopeSorts[#HxConstructor#], #SM]]]
 ;
-{#DM} C-ExtendSortMap-Terms[( %rawHxTerm⟪ #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫ ; #Terms), (#Sort; #Sorts), #SM]
+{#DM} C-ExtendSortMap-Terms2[%rawHxTerm⟪ #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫, #Terms, #Sort, #Sorts, #SM]
 →
 {#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, {#DM} C-ExtendSortMap-Attributes[#HxAttributes#,
   {#DM} C-ExtendSortMap-MetaApplication[#HxMetaVariable#, #HxTerms#, #SM]]]
 ;
-{#DM} C-ExtendSortMap-Terms[( %rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫ ; #Terms), (#Sort; #Sorts), #SM]
+{#DM} C-ExtendSortMap-Terms2[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫, #Terms, #Sort, #Sorts, #SM]
 →
 {#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, {#DM} C-ExtendSortMap-Attributes[#HxAttributes#,
   {#DM} C-ExtendSortMap-MetaApplication[#HxMetaVariable#, #HxTerms#, #SM]]]
 ;
-{#DM} C-ExtendSortMap-Terms[( %rawHxTerm⟪ #HxLiteral# #HxAttributes# ⟫ ; #Terms), (#Sort; #Sorts), #SM]
+{#DM} C-ExtendSortMap-Terms2[%rawHxTerm⟪ #HxLiteral# #HxAttributes# ⟫, #Terms, #Sort, #Sorts, #SM]
 →
 {#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, {#DM} C-ExtendSortMap-Attributes[#HxAttributes#, #SM]]
 ;
-{#DM} C-ExtendSortMap-Terms[( %rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxLiteral# #HxAttributes# ⟫ ; #Terms), (#Sort; #Sorts), #SM]
+{#DM} C-ExtendSortMap-Terms2[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxLiteral# #HxAttributes# ⟫, #Terms, #Sort, #Sorts, #SM]
 →
 {#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, {#DM} C-ExtendSortMap-Attributes[#HxAttributes#, #SM]]
 ;
-{#DM} C-ExtendSortMap-Terms[( Hx_Special[#v, #Concrete, #Attributes] ; #Terms), (#Sort; #Sorts), #SM] → {#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, {#DM} C-ExtendSortMap-Attributes[#Attributes, #SM]] ;
-{#DM} C-ExtendSortMap-Terms[( Hx_Unparsed[#Unparsed, #Attributes] ; #Terms), (#Sort; #Sorts), #SM] → {#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, {#DM} C-ExtendSortMap-Attributes[#Attributes, #SM]] ;
-{#DM} C-ExtendSortMap-Terms[( Hx_UnparsedSorted[#SortName, #Repeat, #Unparsed, #Attributes] ; #Terms), (#Sort; #Sorts), #SM] → {#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, {#DM} C-ExtendSortMap-Attributes[#Attributes, #SM]] ;
-{#DM} C-ExtendSortMap-Terms[( Hx_NullTerm ; #Terms), (#Sort; #Sorts), #SM] → {#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, #SM] ;
+{#DM} C-ExtendSortMap-Terms2[Hx_Special[#v, #Concrete, #Attributes], #Terms, #Sort, #Sorts, #SM] → {#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, {#DM} C-ExtendSortMap-Attributes[#Attributes, #SM]] ;
+{#DM} C-ExtendSortMap-Terms2[Hx_Unparsed[#Unparsed, #Attributes], #Terms, #Sort, #Sorts, #SM] → {#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, {#DM} C-ExtendSortMap-Attributes[#Attributes, #SM]] ;
+{#DM} C-ExtendSortMap-Terms2[Hx_UnparsedSorted[#SortName, #Repeat, #Unparsed, #Attributes], #Terms, #Sort, #Sorts, #SM] → {#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, {#DM} C-ExtendSortMap-Attributes[#Attributes, #SM]] ;
+{#DM} C-ExtendSortMap-Terms2[Hx_NullTerm, #Terms, #Sort, #Sorts, #SM] → {#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, #SM] ;
 
 // Accumulate sort map over scopes.
 
