@@ -3,6 +3,11 @@
 \documentclass[11pt]{article} %style: font size.
 \input{setup}
 
+\toks0={\input ../VERSION }
+\typeout{FOO \the\toks0}
+\def\setversion VERSION=#1@{\def\version{#1}}
+\setversion VERSION=1.0.0@
+
 %% Style.
 \usepackage[margin=1in]{geometry}
 \usepackage[T1]{fontenc}
@@ -11,8 +16,8 @@
 \bibliographystyle{plainurl}
 
 %% Topmatter.
-\def\version{0.9.16\xspace}
 \title{
+  \emph{Introduction to}\\
   Compiler Generation Using \HAX%
   \thanks{This version describes \HAX β version \version released for use at NYU. This printing \today.}
 }
@@ -28,7 +33,7 @@
   Higher-order Attribute Contraction Schemes---or \HAX---is a language for programming compilers.
   With \HAX it is possible to create a fully functional compiler from a single source file.  This
   document explains how to get \HAX up and running, and walks through the code of a simple example
-  with each of the main stages of a compiler in \HAX: lexical analysis, syntax analysis, semantic
+  with each of the main stages of a compiler as specified in \HAX: lexical analysis, syntax analysis, semantic
   analysis, and code generation.
 \end{abstract}
 
@@ -39,7 +44,9 @@
 
 \HAX abbreviates \emph{Higher-order Attribute Contraction Schemes}, which is a formal system for
 symbolic rewriting extended with programming idioms commonly used when coding compilers. \HAX is
-developed as a front-end to the \CRSX higher-order rewriting engine~\cite{crsx}.
+developed as a front-end to the \CRSX higher-order rewriting engine~\cite{crsx}, however, \HAX users
+need not be concerned with the details of higher-order rewriting (even if those are, in fact, most
+interesting).
 
 A compiler written in \HAX consists of a single \emph{specification file} with a series of formal
 sections, each corresponding to a stage of the compiler.  Each section is written in a formal style
@@ -62,18 +69,24 @@ suitable for that stage of the compiler. Specifically, \HAX supports the followi
   another.  \HAX includes special notations for defining such translations, as well as a mechanism
   for defining auxiliary so-called ``semantic sorts,'' detailed in Section~\ref{sec:schemes}.
 
-\item[Attribute Grammars.] Analyses can be described with attribute grammars in the style of
+\item[Attribute Grammars.] Analyses can often be conveniently described in the style of
   \emph{Syntax-Directed Definitions}~\cite{Aho+:2006}, originally introduced as \emph{attribute
     grammars}~\cite{Knuth:mst1968}, which describe how properties propagate through the abstract
   syntax tree.  Section~\ref{sec:collect} details how the basic propagation rules work for
   synthesized attributes, Section~\ref{sec:sdd} explains how inherited atributes are integrated such
   that full syntax-directed definitions can be encoded.
 
+%%% TODO: blurb on symbol tables/higher order syntax.
 %%%  Section~\ref{sec:advanced} summarizes the special considerations needed when managing scoped
 %%%  symbols and binders using \emph{higher-order abstract syntax}.
 
 \end{description}
 %%
+A typical compiler written with \HAX will typically involve multiple instances of each of the above,
+as each used language, including intermediate and target languages, are typically specified using
+grammars and have language-specific analyses, with the transformations between them specified as
+translation schemes.
+
 In the remainder of this document we introduce the most important features of the \HAX language by
 explaining the relevant parts of the included \emph{First.hx} example, inspired by
 \cite[Figure~1.7]{Aho+:2006}, as well as several other minor examples. %
@@ -97,8 +110,7 @@ and Appendix~\ref{app:limits} lists some current limitations.
 \section{Getting Started}\label{sec:run}
 
 In this section we walk through the steps for getting a functional \HAX installation on your
-computer.\footnote{\HAX is still a β release so please report any problems with this procedure to
-  \emph{hacs-bugs@crsx.org}.}
+computer.\footnote{Please report any problems with this procedure to \emph{hacs-bugs@crsx.org}.}
 
 \begin{requirements}
   To run the \HAX examples here you need a *nix system (including a shell and the usual utilities)
@@ -148,7 +160,7 @@ energon1[~]$ ^textcolor{blue}{^texttt{cp $HOME/.hacs/share/doc/hacs/examples/Fir
 energon1[~]$ ^textcolor{blue}{^texttt{$HOME/.hacs/bin/hacs First.hx}}
 energon1[~]$ ^textcolor{blue}{^texttt{./First.run --scheme=Compile \}}
            ^textcolor{blue}{^texttt{--term="^{initial := 1; rate := 1.0; position := initial + rate * 60;^}"}}
-  LDF T_2,  #1 
+    LDF T_2,  #1 
     STF initial, T_2
     LDF T_2_37,  #1.0 
     STF rate, T_2_37
@@ -168,10 +180,10 @@ energon1[~]$ ^textcolor{blue}{^texttt{./First.run --scheme=Compile \}}
   The source file for the \emph{First.hx} file used in the example above has the structure
   %%
 \begin{hacs}[mathescape,xleftmargin=\parindent]
-/* Top comment. */
+/* Our first compiler. */
 module org.crsx.hacs.samples.First
 {
-  // Remark.
+  // Sections.
   $\text{\it Lexical Analysis (Section~\ref{sec:tokens})}$
   $\text{\it Syntax Analysis (Section~\ref{sec:syntax})}$
   $\text{\it Semantic Analysis (Sections \ref{sec:schemes}, \ref{sec:collect} and \ref{sec:sdd})}$
@@ -191,7 +203,7 @@ module org.crsx.hacs.samples.First
       \hline
       {¬} & U+00AC & logical negation sign \\
       {×} & U+00D7 & multiplication sign \\
-      {÷} & U+00F7 & multiplication sign \\
+      {÷} & U+00F7 & division sign \\
       {¶} & U+00B6 & paragraph sign \\
       \hline
       ↑ & U+2191 & upwards arrow \\
@@ -223,7 +235,7 @@ variation of \emph{regular expressions} for this.
 \begin{example}[tokens and white space]\label{ex:lexical}
   %%
   Here is a \HAX fragment for setting up the concrete syntax of integers, basic floating point
-  numbers, identifiers, and white space, for use by a simple language:
+  numbers, identifiers, and white space, for use by our simple language:
   %%
 \begin{hacs}[xleftmargin=\parindent,numbers=right,texcl]
 // White space convention.
@@ -246,18 +258,19 @@ token fragment LOWER  | [a-z] ;
   \item Declarations generally start with a keyword or two and are terminated by a ";" (semicolon).
 
   \item "token" declarations in particular have the "token" keyword followed by a regular expression
-    between a "|" (vertical bar) and a ";" (semicolon). It defines the token as a
-    \emph{non-terminal} that can be used in syntax productions described in the next section.
+    between a "|" (vertical bar) and a ";" (semicolon). It defines the token as a \emph{terminal
+      symbol} that can be used in other token declarations as well as the syntax productions
+    described in the next section.
 
   \item A regular expressions is a sequence of units, corresponding to the concatenation of
     sequences of characters that match each one.  Each unit can be a \emph{character class} such as
-    "[a-z]", which matches a single character in the indicated range (or, more generally, a sequence
-    of individual characters and ranges), a \emph{string} such as \hacsc|"."|, or a \emph{reference}
-    to a token or fragment such as "⟨Lower⟩", enclosed in the special Unicode mathematical angle
-    brackets (see Table~\ref{tab:unicode}).
+    "[a-z]", which matches a single character in the indicated range (or, more generally, in one of
+    a sequence of individual characters and ranges), a \emph{string} such as \hacsc|"."|, or a
+    \emph{reference} to a token or fragment such as "⟨Lower⟩", enclosed in the special Unicode
+    mathematical angle brackets (see Table~\ref{tab:unicode}).
 
   \item A "token fragment" declaration means that the defined token can only be used in other token
-    declarations, and not as grammar non-terminal in syntax productions.
+    declarations, and not in syntax productions.
 
   \item Every regular expression component can be followed by a repetition marker "?", "+", or~"*",
     and regular expressions can be \emph{grouped} with parentheses.
@@ -269,7 +282,10 @@ token fragment LOWER  | [a-z] ;
   \end{itemize}
   %%
   In addition, we have followed the convention of naming proper grammar terminals with ALL-CAPS
-  names, like "INT", so they are easy to distinguish from non-terminals below.
+  names, like "INT", so they are easy to distinguish from non-terminals below. (Token declarations
+  are not grammar productions: tokens cannot be recursively defined, and a token referenced from
+  another token is merely a reference to the character sequences allowed by what is referenced.)
+
   %%
 \end{example}
 
@@ -299,6 +315,11 @@ Was expecting:
   few lines).
 \end{commands}
 
+As the example illustrates, all the token declarations together define how the processed stream of
+characters is partitioned into terminal symbols without any need for consulting a grammar.
+
+The reference manual in Appendix~\ref{app:manual} gives further details.
+
 
 \section{Syntax Analysis}
 \label{sec:syntax}
@@ -312,9 +333,9 @@ concrete syntax details managed through annotations and ``syntactic sugar'' decl
 
 \begin{example}\label{ex:syntax}
   %%
-  Here is another extract from our \emph{First.hx} example, with a small syntax analysis, or
-  grammar. Our small example source language merely has blocks, assignment statements, and a few
-  forms of expression, like so:
+  Here is another extract from our \emph{First.hx} example, with a syntax analysis grammar. Our
+  small example source language merely has blocks, assignment statements, and a few forms of
+  expression, like so:
   %%
 \begin{hacs}[xleftmargin=\parindent,xrightmargin=\parindent,numbers=right]
 // Main program construct.
@@ -338,35 +359,28 @@ sort Name | symbol ⟦⟨ID⟩⟧ ;
 \end{example}
 
 The example grammar above captures the \HAX version of several standard parsing notions:
+%%
 \begin{description}
 
 \item[Literal syntax] is indicated by the double ``syntax brackets,'' $⟦…⟧$.  Text inside $⟦…⟧$
-  consists of three things only: space, literal character ``words,'' and references to non-terminals
-  and predefined tokens inside (nested) $⟨…⟩$.  In this way, literal syntax is similar to macro
+  consists of three things only: spaces, literal character ``words,'' and references to
+  non-terminals and predefined tokens inside $⟨…⟩$.  In this way, literal syntax is similar to macro
   notation or ``quasi-quotation'' of other programming languages.
 
 \item[Syntactic sugar] is represented by the "sugar" part of the "Exp" sort declaration, which
   states that the parser should accept an "Exp" in parenthesis, identified as "#", and replace it
   with just that same "Exp", indicated by the "→ Exp#" part.  This avoids any need to think of
-  parentheses in the generated AST.
+  parentheses in the generated AST as well as in rules below.
 
 \item[Precedence rules] are represented by the "@"-annotations, which assign precedence and
-  associativity to each operator. Thus the same "Exp" language would be recognized by
-  something like the following concrete \HAX specification (where we have also made the sugar
-  concrete):
-  %% 
-\begin{hacs}[xleftmargin=\parindent]
-sort Exp   | ⟦ ⟨Exp0⟩ ⟧ ;
-sort Exp0  | ⟦ ⟨Exp0⟩ + ⟨Exp1⟩ ⟧ | ⟦ ⟨Exp1⟩ ⟧ ;
-sort Exp1  | ⟦ ⟨Exp1⟩ * ⟨Exp2⟩ ⟧ | ⟦ ⟨Exp2⟩ ⟧ ;
-sort Exp2  | ⟦ ⟨Int⟩ ⟧ | ⟦ ⟨Float⟩ ⟧ | ⟦ ⟨Name⟩ ⟧ | ⟦ ( ⟨Exp⟩ ) ⟧ ;
-\end{hacs}%|
-  %%
-  However, this grammar generates a different result tree, where the nodes have the four
-  different sorts used instead of all being of the single "Exp" sort that the precedence
-  annotations make possible.  The transformed system also illustrates how \HAX deals with left
-  recursion with "@"-annotations: each becomes an instance of \emph{immediate left recursion},
-  which is eliminated automatically.
+  associativity to each operator. In our example, we have marked all references to the "Exp"
+  non-terminal inside the productions for "Exp" with the lowest permitted priority in each case. So
+  the first rule in line 6 says that the "+" operator is restricted on the right to only expressions
+  with at least priority 1 (but not restricted on the left, so it is left recursive). The outer "@1"
+  in line 7 states that all "*" expressions have priority 1, and the inner "@"-annotations allow
+  left subexpressions of "*" of at least priority 1 (so "*" is also left recursive) whereas right
+  subexpressions must have at least priority~2. Notice that left (right) recursion is identified by
+  the \emph{leftmost (rightmost) unit in the production having the outer precedence}.
 
 \end{description}
 %%
@@ -374,26 +388,44 @@ The precedence notation allows us to define one sort per ``sort of abstract synt
 This allows us to use a single kind of AST node to represent all the ``levels'' of expression, which
 helps the subsequent steps.
 
-The notation is admittedly dense: this is intentional, as we generalize this very same notation to
-serve all the formalisms of the following sections.
-Here are the formal rules:
+This is traditionally done with additional ``helper'' productions. We could, for example, recognize
+the same "Exp" language as in the example by something like the following concrete \HAX
+specification (where we have also made the sugar concrete):
+%% 
+\begin{hacs}[xleftmargin=\parindent]
+sort Exp   | ⟦ ⟨Exp0⟩ ⟧ ;
+sort Exp0  | ⟦ ⟨Exp0⟩ + ⟨Exp1⟩ ⟧ | ⟦ ⟨Exp1⟩ ⟧ ;
+sort Exp1  | ⟦ ⟨Exp1⟩ * ⟨Exp2⟩ ⟧ | ⟦ ⟨Exp2⟩ ⟧ ;
+sort Exp2  | ⟦ ⟨Int⟩ ⟧ | ⟦ ⟨Float⟩ ⟧ | ⟦ ⟨Name⟩ ⟧ | ⟦ ( ⟨Exp⟩ ) ⟧ ;
+\end{hacs}%|
+%%
+However, this grammar generates a different result tree, where the nodes have the four different
+sorts used instead of all being of the single "Exp" sort that the precedence annotations make
+possible.  The transformed system also illustrates how \HAX deals with left recursion with
+"@"-annotations: each becomes an instance of \emph{immediate left recursion}, which is eliminated
+automatically using standard techniques.
+
+Also note that the notation is admittedly dense: this is intentional, as we generalize this very
+same notation to serve all the formalisms of the following sections.  Here are the formal rules:
 %% 
 \begin{itemize}
 
-\item Each sort is defined by a "sort" declaration followed by a number of \emph{productions},
-  each introduced by a "|" (bar). (The first "|" corresponds to what is usually written ``::='' or
-  ``→'' in grammars.)
+\item Each sort is defined by a "sort" declaration followed by a number of \emph{productions}, each
+  introduced by a "|" (bar). (The first "|" corresponds to what is usually written ``::='' or ``→''
+  in BNF grammars.)  All productions for a sort define cases for that sort as a nonterminal, called
+  the ``target'' non-terminal.
 
 \item Concrete syntax is enclosed in "⟦…⟧" (``double'' or ``white'' brackets). Everything inside
   double brackets should be seen as \emph{literal syntax}, even "\" (backslash), \emph{except} for
   \HAX white space (corresponding to "[ \t\n\r]"), which is ignored, and references in "⟨…⟩" (angle
   brackets), which are special.
 
-\item References to \emph{nonterminals} (other productions) are wrapped in "⟨…⟩" (angle brackets).
+\item References to \emph{terminals} (tokens) and \emph{nonterminals} (other productions) are
+  wrapped in "⟨…⟩" (angle brackets).
 
 \item \emph{Precedence} is indicated with "@"$n$, where higher numbers $n$ designate higher
-  (tighter) precedence. After every top-level "⟦⟧" and inside every "⟨⟩" there is a precedence,
-  which defaults to "@0".
+  (tighter) precedence. After every top-level "⟦⟧" and inside every "⟨⟩"-reference to the target
+  non-terminal there is a precedence, which defaults to "@0".
 
 \item The special "sugar" declaration expresses that the concrete syntax can use parentheses to
   raise the precedence of the enclosed expression to~2: it is the first example of a \emph{rewrite
@@ -402,16 +434,16 @@ Here are the formal rules:
   parenthesis.  (In fact the general rule is that when an "→" is used then all sort specifiers must
   be ``disambiguated'' with distinct markers like "#" or "#5" in this way.)
 
-\item As a special case, A sort can be defined with a single "symbol" declaration. If so, then the
+\item As a special case, a sort can be defined with a single "symbol" declaration. If so, then the
   actual syntax must refer to a single token, and that token must allow multiple trailing "_"$n$
   (underscore and count), which is added to any instance (this permits automatic symbol generation).
 
 \end{itemize}
 %%
 Of all these rules, the one thing that is unique to parsing is the precedence notation with "@".
-When specifying a grammar then \emph{every} subterm has a precedence, which determines how ambiguous
-terms should be parsed. So imagine that every "⟨⟩" contains a "@" marker, defaulting to "@0", and
-that every "⟦⟧" is terminated with a "@" marker, again defaulting to "@0".
+When specifying a grammar then \emph{every} target non-terminal reference has a precedence, which
+determines how ambiguous terms should be parsed. So imagine that every "⟨⟩" contains a "@" marker,
+defaulting to "@0", and that every "⟦⟧" is terminated with a "@" marker, again defaulting to "@0".
 
 Notice that \HAX will do two things automatically:
 %%
@@ -597,7 +629,90 @@ Compile(#) → ⟦ CG ICG TA ⟨Stat#⟩ ⟧ ;
 \end{example}
 
 
-\section{Collecting Information}
+\section{Inherited Environments}
+\label{sec:env}
+
+When working with recursive schemes we sometimes wish to aggregate supplemental information for the
+recursive invocations. This can be done with additional arguments to recursive schemes, of course,
+but for structures such as \emph{symbol tables} having additional parameters can be distracting;
+especially as most rules will merely ``pass through'' any environments.
+
+In compiler construction formalization we can express this using an SDD with an inherited attribute
+that for each node in the AST associates the appropriate symbol table for that node. Consider the
+following three simple semantic rules, which demonstrate this approach:
+%% 
+\begin{equation*}
+  \begin{array}{l|ll}
+    \hline
+    \hline
+    \textsc{Production}  & \textsc{Semantic Rules} \Bigstrut&\\
+    \hline
+    S → T_1 ~ \textbf{name}_2 = E_3; S_4
+    &
+    E_3.e = S.e; 
+    S_4.e = \op{Extend}(S.e, \textbf{name}_2.sym, T_1) \Bigstrut\quad
+    &\thetag{1}
+    \\[\jot]
+    E → E_1 + E_2
+    &
+    E_1.e=E.e; E_2.e=E.e
+    &\thetag{2}
+    \\[1pt]
+    \quad~\mid \textbf{name}_1
+    &
+    \textbf{name}_1.type = \op{Lookup}(E.e, \textbf{name}_1.sym)
+    &\thetag{3}
+    \\[\jot]
+    \hline
+  \end{array}
+\end{equation*}
+%%
+Rule \thetag{1} is a declaration that creates a modified version of the context symbol table
+extended with an association of a name to its declared type. 
+
+\begin{center}
+  \textbf{To Be Completed.}
+\end{center}
+
+where we furthermore have that the $E.t$ property cannot be synthesized until \emph{after} the
+inherited attribute $E.e$ has been ``spread'' into the term (we shall see later why this is
+typical).
+
+Here are the steps to follow to translate the inheritance to \HAX.
+%%
+\begin{enumerate}
+
+\item The first thing to do is, again, to declare the attribute.  Since $S.e$ and $E.e$ are a
+  \emph{map} from names to types, this is written as follows:
+\begin{hacs}
+   attribute ↓e{Name:Type} ;
+\end{hacs}
+  The "↓" indicates an inherited attribute, and the "{Name:Type}" part declares the value of the
+  attribute to be a mapping from values of "Name" sort to values of "Type" sort. (We'll assume that
+  we still have the $E.t$ synthesized attribute defined as previously.)  As above, attributes are
+  always given lower case names.
+
+  Note that only sorts with a "symbol" declaration can be used for keys of mappings: the mappings
+  take the rôle of \emph{symbol tables} from traditional compilers.
+
+\item The second thing to do is to associate the inherited attribute to a \emph{recursive scheme},
+  which will be responsible for propagating that inherited attribute over a values of a certain
+  sort.  This has to be done separately for each sort that $e$ propagates over.  Rule \thetag{2} is
+  the simplest, so we take that first.  The rule propagates the $e$ attribute over $E$
+  subexpressions, so we invent a scheme, "Ee", which does that.
+\begin{hacs}
+   sort E | scheme Ee(E) ↓e ;
+\end{hacs}
+  As can be seen, the scheme generates results of the "E" sort and also takes parameters of the "E"
+  sort; in addition it \emph{carries} the inherited attribute "e".
+
+\end{enumerate}
+%%
+
+
+
+
+\section{Synthesizing Information}
 \label{sec:collect}
 
 \HAX has special support for assembling information in a ``bottom-up'' manner, corresponding to how

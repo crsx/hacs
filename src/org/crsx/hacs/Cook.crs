@@ -905,7 +905,7 @@ C-CrsxifyRulePrefix[HxRulePrefix, $String<!--Sort-->, DeclarationMap, SortMap<!-
 C-CrsxifyRulePrefix[{#L}%rawHxRulePrefix⟪ #HxRulePriority# [ #HxRuleOptions# ] ⟫, #Sort, #DM, #SM1, #SM2, #Pattern, #Contractum]
 →
 %n⟪¶« {#L}C-CrsxifyRuleName[#HxRulePriority#, #HxRuleOptions#] »«
-  WrappedTextJoin[Append[C-CrsxifyRulePriority[#HxRulePriority#], C-CrsxifyRuleOptions[#HxRuleOptions#, #DM, #SM1, #SM2, #Pattern, #Contractum, ss¹.ss¹]], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]
+  WrappedTextJoin[Append[C-CrsxifyRulePriority[#HxRulePriority#, #SM1], C-CrsxifyRuleOptions[#HxRuleOptions#, #DM, #SM1, #SM2, #Pattern, #Contractum, ss¹.ss¹]], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]
 »:⟫
 ;
 
@@ -916,10 +916,10 @@ C-CrsxifyRuleName[#RulePriority, #RuleOptions]
 %n⟪- ⟫
 ;
 
-C-CrsxifyRulePriority[HxRulePriority] :: $List[Text] ;
-C-CrsxifyRulePriority[%rawHxRulePriority⟪ priority ⟫] → (%n⟪Priority⟫;) ;
-C-CrsxifyRulePriority[%rawHxRulePriority⟪ default ⟫] → (%n⟪Fallback⟫;) ;
-C-CrsxifyRulePriority[%rawHxRulePriority⟪ ⟫] → () ;
+C-CrsxifyRulePriority[HxRulePriority, SortMap] :: $List[Text] ;
+C-CrsxifyRulePriority[%rawHxRulePriority⟪ priority ⟫, #SM] → (%n⟪Priority⟫;) ;
+C-CrsxifyRulePriority[%rawHxRulePriority⟪ default ⟫, SM[#fvs,#mvs]] → (%n⟪Fallback⟫; %n⟪Data[« TextJoin[Map[mv.%n⟨†‹mv›⟩, #mvs], %n⟨,⟩] »]⟫;) ;
+C-CrsxifyRulePriority[%rawHxRulePriority⟪ ⟫, #SM] → () ;
 
 C-CrsxifyRuleOptions[$List[$String], DeclarationMap, SortMap<!--OnlyPattern-->, SortMap<!--Rule-->, HxTerm<!--Pattern-->, HxTerm<!--Contractum-->, ss¹::$List[Text].$List[Text]] :: $List[Text] ;
 C-CrsxifyRuleOptions[(), #DM, #SM1, #SM2, #Pattern, #Contractum, ss¹.#[ss¹]] → #[C-CrsxifyRuleVars[#DM, #SM1, #SM2, #Pattern, #Contractum]] ;
