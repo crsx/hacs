@@ -3,10 +3,17 @@
 \documentclass[11pt]{article} %style: font size.
 \input{setup}
 
-\toks0={\input ../VERSION }
-\typeout{FOO \the\toks0}
-\def\setversion VERSION=#1@{\def\version{#1}}
-\setversion VERSION=1.0.0@
+%% {\tracingall\makeatletter
+%%  \let\e@=\expandafter 
+%%  %\e@\long\e@\gdef\e@\getversion\e@{\e@\setversion\@@input ../VERSION !!!}%
+%%  \long\def\settoksz@#1!!!{\toks0={#1}}%
+%%  \e@\settoksz@ \@@input ../VERSION !!!
+%%  \def\setversion VERSION=#1!!!{\def\version{#1}}%
+%%  %\getversion
+%%  \e@\setversion\thetoks0!!!
+%% }
+%% %\setversion VERSION=1.0.1@
+\def\version{1.0.1}
 
 %% Style.
 \usepackage[margin=1in]{geometry}
@@ -378,7 +385,7 @@ The example grammar above captures the \HAX version of several standard parsing 
   the first rule in line 6 says that the "+" operator is restricted on the right to only expressions
   with at least priority 1 (but not restricted on the left, so it is left recursive). The outer "@1"
   in line 7 states that all "*" expressions have priority 1, and the inner "@"-annotations allow
-  left subexpressions of "*" of at least priority 1 (so "*" is also left recursive) whereas right
+  left subexpressions of "*" with at least priority 1 (so "*" is also left recursive) whereas right
   subexpressions must have at least priority~2. Notice that left (right) recursion is identified by
   the \emph{leftmost (rightmost) unit in the production having the outer precedence}.
 
@@ -388,6 +395,7 @@ The precedence notation allows us to define one sort per ``sort of abstract synt
 This allows us to use a single kind of AST node to represent all the ``levels'' of expression, which
 helps the subsequent steps.
 
+{\small\begin{remark}
 This is traditionally done with additional ``helper'' productions. We could, for example, recognize
 the same "Exp" language as in the example by something like the following concrete \HAX
 specification (where we have also made the sugar concrete):
@@ -404,6 +412,7 @@ sorts used instead of all being of the single "Exp" sort that the precedence ann
 possible.  The transformed system also illustrates how \HAX deals with left recursion with
 "@"-annotations: each becomes an instance of \emph{immediate left recursion}, which is eliminated
 automatically using standard techniques.
+\end{remark}}
 
 Also note that the notation is admittedly dense: this is intentional, as we generalize this very
 same notation to serve all the formalisms of the following sections.  Here are the formal rules:
@@ -425,7 +434,9 @@ same notation to serve all the formalisms of the following sections.  Here are t
 
 \item \emph{Precedence} is indicated with "@"$n$, where higher numbers $n$ designate higher
   (tighter) precedence. After every top-level "⟦⟧" and inside every "⟨⟩"-reference to the target
-  non-terminal there is a precedence, which defaults to "@0".
+  non-terminal there is a precedence, which defaults to "@0".  The precedence of self references at
+  the beginning and end of a production must be \emph{greater than or equal to} the outer
+  precedence; at most one of the ends can have precedence equal to the outer one.
 
 \item The special "sugar" declaration expresses that the concrete syntax can use parentheses to
   raise the precedence of the enclosed expression to~2: it is the first example of a \emph{rewrite
@@ -667,16 +678,18 @@ following three simple semantic rules, which demonstrate this approach:
   \end{array}
 \end{equation*}
 %%
-Rule \thetag{1} is a declaration that creates a modified version of the context symbol table
-extended with an association of a name to its declared type. 
+Rule \thetag{1} handles declarations in our toy language: it creates a \emph{new environment} (or
+\emph{symbol table}) that \emph{extends} the environment from the context, the \emph{inherited}
+environment $S.e$, with a new coupling from the symbol of $\textbf{name}_2$ to the type~$T_1$: the
+notation means that the new environment $S_4.e$ contains the new mapping as well as all the bindings
+from $S.e$ (\emph{except} any previous mapping of the symbol $\textbf{name}_2$.
 
-\begin{center}
-  \textbf{To Be Completed.}
-\end{center}
+Rule \thetag{2} merely expresses that the $e$ attribute is inherited from the context to both
+subexpressions of addition expresions.
 
-where we furthermore have that the $E.t$ property cannot be synthesized until \emph{after} the
-inherited attribute $E.e$ has been ``spread'' into the term (we shall see later why this is
-typical).
+Finally, rule \thetag{3} uses the environment to attach a (synthesized) attribute $type$ to each
+\textbf{name} token. Specifically, the notation is meant to suggest that the type value is obtanied
+by a \emph{lookup} of the mapping for the symbol of $\textbf{name}_1$.
 
 Here are the steps to follow to translate the inheritance to \HAX.
 %%
@@ -692,19 +705,22 @@ Here are the steps to follow to translate the inheritance to \HAX.
   we still have the $E.t$ synthesized attribute defined as previously.)  As above, attributes are
   always given lower case names.
 
-  Note that only sorts with a "symbol" declaration can be used for keys of mappings: the mappings
-  take the rôle of \emph{symbol tables} from traditional compilers.
+  Note that only sorts with a "symbol" declaration can be used for keys of mappings: as suggested
+  above, the mappings take the rôle of \emph{symbol tables} from traditional compilers.
 
-\item The second thing to do is to associate the inherited attribute to a \emph{recursive scheme},
-  which will be responsible for propagating that inherited attribute over a values of a certain
-  sort.  This has to be done separately for each sort that $e$ propagates over.  Rule \thetag{2} is
-  the simplest, so we take that first.  The rule propagates the $e$ attribute over $E$
-  subexpressions, so we invent a scheme, "Ee", which does that.
+\item The second thing to do is to associate the inherited attribute to one or more \emph{recursive
+    schemes}, which will be responsible for propagating that inherited attribute over a values of a
+  certain sort.  This has to be done separately for each sort that $e$ propagates over, so we invent
+  a scheme for each of $S$ and $E$:
 \begin{hacs}
+   sort S | scheme Se(S) ↓e ;
    sort E | scheme Ee(E) ↓e ;
 \end{hacs}
-  As can be seen, the scheme generates results of the "E" sort and also takes parameters of the "E"
-  sort; in addition it \emph{carries} the inherited attribute "e".
+  As can be seen, the scheme generates results of the "S" and "E" sorts and also takes a single
+  parameter of the "S" and "E" sorts, respectively, which each \emph{carry} the inherited
+  attribute~"e".
+
+\item \textbf{More Steps -- This Section Not Complete}
 
 \end{enumerate}
 %%
