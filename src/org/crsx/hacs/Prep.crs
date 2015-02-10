@@ -1536,7 +1536,7 @@ P-InlineRegExpRangeChar[$String, $String<!--ModuleName-->, $String] :: Text;
 -[Data[#HxRegExpRangeStartChar#]]:
 P-InlineRegExpRangeChar[#HxRegExpRangeStartChar#, #ModuleName, #id]
 →
-$[If, $[Equal,#HxRegExpRangeStartChar#,"'"], %n⟪"'"⟫, %n⟪"†«#HxRegExpRangeStartChar#»"⟫]
+$[If, $[StringEqual,#HxRegExpRangeStartChar#,"\""], %n⟪\"⟫, %n⟪"†«#HxRegExpRangeStartChar#»"⟫]
 ;
 
 //

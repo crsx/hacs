@@ -13,7 +13,7 @@
 %%  \e@\setversion\thetoks0!!!
 %% }
 %% %\setversion VERSION=1.0.1@
-\def\version{1.0.1}
+\def\version{1.0.3\xspace}
 
 %% Style.
 \usepackage[margin=1in]{geometry}
@@ -26,7 +26,7 @@
 \title{
   \emph{Introduction to}\\
   Compiler Generation Using \HAX%
-  \thanks{This version describes \HAX β version \version released for use at NYU. This printing \today.}
+  \thanks{This version describes \HAX version \version released for use at NYU. This printing \today.}
 }
 \author{
   Kristoffer H. Rose\\
@@ -113,6 +113,8 @@ Appendix~\ref{app:manual} has a reference manual, %
 Appendix~\ref{app:errors} explains some of the (still) cryptic error messages, %
 and Appendix~\ref{app:limits} lists some current limitations.
 
+\paragraph*{Acknowledgements.} The author would like to thank Eva Rose and José
+
 
 \section{Getting Started}\label{sec:run}
 
@@ -129,7 +131,14 @@ computer.\footnote{Please report any problems with this procedure to \emph{hacs-
 \end{requirements}
 
 \begin{commands}[install \HAX]\label{com:all}
-  Retrieve the \emph{hacs-\version.zip} archive, extract it to a new directory, and install it, for
+  %%
+  If you have an old version of \HAX installed, then it is best to remove it first with a command like
+  %%
+\begin{code}[commandchars=\^\{\}]
+energon1[~]$ ^textcolor{blue}{^texttt{rm -fr ~/.hacs}}
+\end{code}
+  %%
+  Now retrieve the \emph{hacs-\version.zip} archive, extract it to a new directory, and install it, for
   example with the following commands:\footnote{User input is \textcolor{blue}{blue}.}
   %%
 \begin{code}[commandchars=\^\{\}]
@@ -139,6 +148,9 @@ energon1[~]$ ^textcolor{blue}{^texttt{cd hacs}}
 energon1[hacs]$ ^textcolor{blue}{^texttt{make FROMZIP=1 install install-support}}
 \end{code}
   %%
+
+
+
   These commands will need Internet access, using the wget command to retrieve support
   libraries.\footnote{Specifically, \HAX needs the \CRSX system, JavaCC parser generator, and ICU4C
     Unicode library. The setup is documented in \emph{src/Env.mk}.} The above command will install
@@ -169,14 +181,14 @@ energon1[~]$ ^textcolor{blue}{^texttt{./First.run --scheme=Compile \}}
            ^textcolor{blue}{^texttt{--term="^{initial := 1; rate := 1.0; position := initial + rate * 60;^}"}}
     LDF T_2,  #1 
     STF initial, T_2
-    LDF T_2_37,  #1.0 
-    STF rate, T_2_37
+    LDF T_2_69,  #1.0 
+    STF rate, T_2_69
     LDF T_3,  initial 
-    LDF T_3_42,  rate 
+    LDF T_3_28,  rate 
     LDF T_4,  #60 
-    MULF  T_4_71 ,  T_3_42 ,  T_4 
-    ADDF  T_2_49 ,  T_3 ,  T_4_71 
-    STF position, T_2_49
+    MULF  T_4_29 ,  T_3_28 ,  T_4 
+    ADDF  T_2_63 ,  T_3 ,  T_4_29 
+    STF position, T_2_63
 \end{code}
   %%
   Congratulations---you just built your first compiler!\footnote{Please do not mind the spacing --
@@ -198,7 +210,8 @@ module org.crsx.hacs.samples.First
   $\text{\it Main (Section~\ref{sec:schemes})}$
 }
 \end{hacs}
-  Notice that \HAX permits C/Java style comments.
+  Notice that \HAX permits C/Java style comments, and that the final component of the module name is
+  the same as the base of the filename.
 \end{example}
 
 \begin{table}[t]
@@ -264,10 +277,12 @@ token fragment LOWER  | [a-z] ;
 
   \item Declarations generally start with a keyword or two and are terminated by a ";" (semicolon).
 
-  \item "token" declarations in particular have the "token" keyword followed by a regular expression
-    between a "|" (vertical bar) and a ";" (semicolon). It defines the token as a \emph{terminal
-      symbol} that can be used in other token declarations as well as the syntax productions
-    described in the next section.
+  \item "token" declarations in particular have the "token" keyword followed by the token name and a
+    regular expression between a "|" (vertical bar) and a ";" (semicolon). It defines the token as a
+    \emph{terminal symbol} that can be used in other token declarations as well as the syntax
+    productions described in the next section.
+
+  \item Token names must be words that start with an upper case letter.
 
   \item A regular expressions is a sequence of units, corresponding to the concatenation of
     sequences of characters that match each one.  Each unit can be a \emph{character class} such as
@@ -424,6 +439,8 @@ same notation to serve all the formalisms of the following sections.  Here are t
   in BNF grammars.)  All productions for a sort define cases for that sort as a nonterminal, called
   the ``target'' non-terminal.
 
+\item Sort names must be words that start with an upper case letter.
+
 \item Concrete syntax is enclosed in "⟦…⟧" (``double'' or ``white'' brackets). Everything inside
   double brackets should be seen as \emph{literal syntax}, even "\" (backslash), \emph{except} for
   \HAX white space (corresponding to "[ \t\n\r]"), which is ignored, and references in "⟨…⟩" (angle
@@ -456,7 +473,7 @@ When specifying a grammar then \emph{every} target non-terminal reference has a 
 determines how ambiguous terms should be parsed. So imagine that every "⟨⟩" contains a "@" marker,
 defaulting to "@0", and that every "⟦⟧" is terminated with a "@" marker, again defaulting to "@0".
 
-Notice that \HAX will do two things automatically:
+Notice that \HAX will do three things automatically:
 %%
 \begin{enumerate}
 \item Eliminate immediate left recursion, such as found in the example.
@@ -544,11 +561,11 @@ Unif(Unif(Int, Float), Int) → Unif(Float, Int) → Float
   %%
 \begin{hacs}[xleftmargin=\parindent,xrightmargin=\parindent]
 sort Exp | scheme Leftmost(Exp) ;
-Leftmost(⟦⟨Exp#1⟩ + ⟨Exp#2⟩⟧)  →  Leftmost(Exp#1) ;
-Leftmost(⟦⟨Exp#2⟩ * ⟨Exp#3⟩⟧)  →  Leftmost(Exp#1) ;
-Leftmost(⟦⟨INT#⟩⟧)  →  ⟦⟨INT#⟩⟧ ;
-Leftmost(⟦⟨FLOAT#⟩⟧)  →  ⟦⟨FLOAT#⟩⟧ ;
-Leftmost(⟦⟨Name#⟩⟧)  →  ⟦⟨Name#⟩⟧ ;
+Leftmost(⟦⟨Exp#1⟩ + ⟨Exp#2⟩⟧)  →     Leftmost(#1) ;
+Leftmost(⟦⟨Exp#1⟩ * ⟨Exp#2⟩⟧)  →     Leftmost(#1) ;
+Leftmost(⟦⟨INT#⟩⟧)  →       ⟦⟨INT#⟩⟧ ;
+Leftmost(⟦⟨FLOAT#⟩⟧)  →     ⟦⟨FLOAT#⟩⟧ ;
+Leftmost(⟦name⟧)  →         ⟦name⟧ ;
 \end{hacs}
   %%
   Notice how:
@@ -560,18 +577,52 @@ Leftmost(⟦⟨Name#⟩⟧)  →  ⟦⟨Name#⟩⟧ ;
   \item There is precisely one rule with a pattern applying "Leftmost" to each non-"sugar"
     production for "Exp" from Example~\ref{ex:syntax}.
 
-  \item Each non-terminal reference has the non-terminal name followed by a "#"$n$ marker to
-    identify the subexpression of that non-terminal sort for use on the right side of the "→".
+  \item Each non-terminal and token reference has the non-terminal name followed by a "#"$n$ marker
+    to identify the subexpression of that non-terminal sort for use on the right side of the
+    "→". So, for example, the grammar case
+\begin{hacs}
+   | ⟦ ⟨Exp@2⟩ * ⟨Exp@3⟩ ⟧@2
+\end{hacs}
+    leads to a \emph{syntactic pattern}
+\begin{hacs}
+   ⟦ ⟨Exp#1⟩ * ⟨Exp#2⟩ ⟧
+\end{hacs}
+    where we have removed the "@" precedence markers and introduced the ``disambiguation'' markers
+    "#1" and "#2" so the rule can refer to the left one after the~"→".  We can then \emph{insert}
+    the pattern in one case of the scheme, which gives us the beginning of the second rule
+\begin{hacs}
+   Leftmost(⟦⟨Exp#1⟩*⟨Exp#2⟩⟧)  →     …
+\end{hacs}
+    Notice how the core of the syntax specification -- "⟦⟨Exp⟩*⟨Exp⟩⟧" -- is \emph{all} present still.
 
   \item Each rule rewrites an "Exp" expression to another "Exp" expression, either by recursively
     invoking the defined "Leftmost" scheme on a smaller part of the term or by returning the term
     itself.
 
-  \item We \emph{have} to write "⟦⟨Name#⟩⟧" rather than just "Name#" or "#" in the last rules
-    because the form "Name#" describes something of "Name" sort, not "Exp" sort.  Indeed in the last
-    rule, "Name#" stands for the subterm of the "Exp" expression that is a "Name".
+  \item We \emph{have} to write "⟦⟨INT#⟩⟧" rather than just "INT#" or "#" in the third rule because
+    the form "INT#" describes something of "INT" token sort, not "Exp" sort.
+
+  \item The last case uses the pattern "⟦name⟧" instead of "⟦⟨Name#⟩⟧" because "Name" is declared as
+    a "symbol" sort: symbols should always be given in syntactic form like this (which works because
+    "name" is a possible form of "ID" token). We will discuss this further below.
 
   \end{itemize}
+\end{example}
+
+\begin{example}[default rules]
+  Since the last three cases of our "Leftmost" system above really just return the entire term
+  again, we can instead write the system as
+  %%
+\begin{hacs}[xleftmargin=\parindent,xrightmargin=\parindent]
+sort Exp | scheme Leftmost(Exp) ;
+Leftmost(⟦⟨Exp#1⟩ + ⟨Exp#2⟩⟧)  →     Leftmost(#1) ;
+Leftmost(⟦⟨Exp#1⟩ * ⟨Exp#2⟩⟧)  →     Leftmost(#1) ;
+default Leftmost(#)  →  # ;
+\end{hacs}
+  %%
+  which explicitly calls out that if none of the two special cases apply then the scheme just
+  returns the contained expression.
+  %%
 \end{example}
 
 \begin{commands}[invoke scheme]
@@ -579,7 +630,7 @@ Leftmost(⟦⟨Name#⟩⟧)  →  ⟦⟨Name#⟩⟧ ;
   expression, we can invoke the "Leftmost" scheme from the command line as follows:
   %%
 \begin{code}[commandchars=\\\{\}]
-$ \textcolor{blue}{./First.run --scheme=Leftmost --sort=Exp --term="(2*3)+4"}
+$ \textcolor{blue}{./First.run --scheme=Leftmost --sort=Exp --term="2*3+4"}
  2
 \end{code}
   %%
@@ -592,7 +643,7 @@ $ \textcolor{blue}{./First.run --scheme=Leftmost --sort=Exp --term="(2*3)+4"}
 
 \begin{example}[syntactic scheme]\label{ex:append}
   We can even go all the way and define a purely ``syntactic scheme.''  This is best explained with
-  an example. Consider the list sort
+  an example. Consider the syntactic list sort
   %%
 \begin{hacs}
 sort List | ⟦ ⟨Elem⟩ ⟨List⟩ ⟧ | ⟦⟧ ;
@@ -606,20 +657,21 @@ sort List | scheme ⟦ { ⟨List⟩ } ⟨List⟩ ⟧ ;
 ⟦ { } ⟨List#⟩ ⟧ → # ;
 \end{hacs}
   %%
-  Notice that:
+  This creates a scheme that we can informally write as "⟦ { _ } _ ⟧ " with the understanding that
+  the two "_" should be filled with lists. Notice that:
   %%
   \begin{itemize}
 
-  \item The two rules differ on the content of the braces, and are clearly designed to fully
-    eliminate all braces used: this is essential, and we say that the scheme should be
-    \emph{complete}.
+  \item The two rules differ on the \emph{content} of the braces, and are clearly designed to fully
+    eliminate all possible contents of the braces: this is essential, and we say that the scheme
+    should be \emph{complete}.
 
   \item This is very like "sugar" productions except we can have more than one rule for a given
     construct -- sugar is limited to a single rule that cannot depend on the inner structure of the
     construct.
 
   \item If you work with synthesized attributes (explained in the next section) then be aware that
-    syntactic rules such as the ones presented this one will mess with any synthetic attributes.
+    syntactic rules such as the ones presented will mess with any synthetic attributes.
 
   \end{itemize}
   %%
@@ -648,8 +700,8 @@ recursive invocations. This can be done with additional arguments to recursive s
 but for structures such as \emph{symbol tables} having additional parameters can be distracting;
 especially as most rules will merely ``pass through'' any environments.
 
-In compiler construction formalization we can express this using an SDD with an inherited attribute
-that for each node in the AST associates the appropriate symbol table for that node. Consider the
+In compiler construction formalization we express this using an SDD with an inherited attribute that
+for each node in the AST associates the appropriate symbol table for that node. Consider the
 following three simple semantic rules, which demonstrate this approach:
 %% 
 \begin{equation*}
@@ -671,7 +723,7 @@ following three simple semantic rules, which demonstrate this approach:
     \\[1pt]
     \quad~\mid \textbf{name}_1
     &
-    \textbf{name}_1.type = \op{Lookup}(E.e, \textbf{name}_1.sym)
+    \textbf{name}_1.t = \op{Lookup}(E.e, \textbf{name}_1.sym)
     &\thetag{3}
     \\[\jot]
     \hline
@@ -682,50 +734,142 @@ Rule \thetag{1} handles declarations in our toy language: it creates a \emph{new
 \emph{symbol table}) that \emph{extends} the environment from the context, the \emph{inherited}
 environment $S.e$, with a new coupling from the symbol of $\textbf{name}_2$ to the type~$T_1$: the
 notation means that the new environment $S_4.e$ contains the new mapping as well as all the bindings
-from $S.e$ (\emph{except} any previous mapping of the symbol $\textbf{name}_2$.
+from $S.e$ (\emph{except} any previous mapping of the symbol $\textbf{name}_2$).
 
 Rule \thetag{2} merely expresses that the $e$ attribute is inherited from the context to both
 subexpressions of addition expresions.
 
-Finally, rule \thetag{3} uses the environment to attach a (synthesized) attribute $type$ to each
-\textbf{name} token. Specifically, the notation is meant to suggest that the type value is obtanied
-by a \emph{lookup} of the mapping for the symbol of $\textbf{name}_1$.
+Finally, rule \thetag{3} uses the environment to attach another attribute $t$ passed into each
+\textbf{name} token. Specifically, the notation is meant to suggest that the type value is obtained
+by a \emph{lookup} of the mapping for the symbol of $\textbf{name}_1$. (In the example we are not
+using this for anything.)
 
-Here are the steps to follow to translate the inheritance to \HAX.
+Here are the steps to follow to translate the above SDD fragment to \HAX.
 %%
 \begin{enumerate}
 
-\item The first thing to do is, again, to declare the attribute.  Since $S.e$ and $E.e$ are a
-  \emph{map} from names to types, this is written as follows:
+\item The first thing to do is to encode the grammar (assuming an "ID" token as before):
 \begin{hacs}
-   attribute ↓e{Name:Type} ;
+   main sort S  | ⟦ ⟨T⟩ ⟨Name⟩ = ⟨E⟩ ; ⟨S⟩ ⟧ ;
+   sort E  | ⟦ ⟨E⟩ + ⟨E@1⟩ ⟧   | ⟦ ⟨Name⟩ ⟧@1 ;
+   sort Name | symbol ⟦⟨ID⟩⟧ ;
 \end{hacs}
-  The "↓" indicates an inherited attribute, and the "{Name:Type}" part declares the value of the
-  attribute to be a mapping from values of "Name" sort to values of "Type" sort. (We'll assume that
-  we still have the $E.t$ synthesized attribute defined as previously.)  As above, attributes are
-  always given lower case names.
+  %%
+  The "Name" sort is declared as a "symbol" sort so we can use it in maps next; the rest of the
+  syntax specification follows the rules given previously. We assume that the "T" sort is defined
+  elsewhere with the possible types.
 
-  Note that only sorts with a "symbol" declaration can be used for keys of mappings: as suggested
-  above, the mappings take the rôle of \emph{symbol tables} from traditional compilers.
+\item Once the grammar is defined, we can declare the two attributes. First, $t$:
+\begin{hacs}
+   attribute ↓t(T) ;
+\end{hacs}
+  The "↓" indicates an \emph{inherited} attribute, and the "(T)" part declares the value of
+  the attribute to be of "T" sort. Attributes are always given lower case names. The $e$ attribute
+  is next:
+\begin{hacs}
+   attribute ↓e{Name:T} ;
+\end{hacs}
+  The "{Name:T}" part declares the value of the attribute to be a \emph{mapping} from values of
+  "Name" sort to values of "T" sort. Mappings take the rôle of \emph{symbol tables} from traditional
+  compilers.
 
 \item The second thing to do is to associate the inherited attribute to one or more \emph{recursive
     schemes}, which will be responsible for propagating that inherited attribute over a values of a
-  certain sort.  This has to be done separately for each sort that $e$ propagates over, so we invent
-  a scheme for each of $S$ and $E$:
+  certain sort.  This has to be done by inveting a separate scheme for each combination of a art and
+  an inherited attribute:
 \begin{hacs}
    sort S | scheme Se(S) ↓e ;
    sort E | scheme Ee(E) ↓e ;
+   sort Name | scheme Namet(Name) ↓t ;
 \end{hacs}
-  As can be seen, the scheme generates results of the "S" and "E" sorts and also takes a single
-  parameter of the "S" and "E" sorts, respectively, which each \emph{carry} the inherited
-  attribute~"e".
+  As can be seen, the scheme generates results of the "S", "E", and "Name" sorts, in each case taking a
+  single argument of the same sort, and each indicated with a "↓" that the scheme \emph{carries} the
+  associated inherited attribute.
 
-\item \textbf{More Steps -- This Section Not Complete}
+\item Next we encode the simplest rule, \thetag{2}. As in the previous section, we observe that
+  \thetag{2} operates on sums, which in our case have a syntax case like this:
+\begin{hacs}
+   | ⟦ ⟨E⟩ + ⟨E@1⟩ ⟧
+\end{hacs}
+  As before, we create a \emph{pattern} that is equivalent to this, using the subscripts from \thetag{2}:
+\begin{hacs}
+   ⟦ ⟨E#1⟩ + ⟨E#2⟩ ⟧
+\end{hacs}
+   Finally, we \emph{insert} the pattern into the scheme:
+\begin{hacs}
+   Ee(⟦⟨E#1⟩ + ⟨E#2⟩⟧)
+\end{hacs}
+  This clearly respects the sort constraints we defined above, with "Ee" being applied to an "E"
+  expression. Since there are no complicated dependencies in \thetag{2}, we are almost done: we just
+  have to create a rule where we on the right side of the "→" \emph{apply} the "Ee" scheme
+  recursively to the subexpressions that should inherit the "e" attribute, which are the two marked
+  subexpression, \emph{inside the syntax markers}:
+\begin{hacs}
+   Ee(⟦⟨E#1⟩ + ⟨E#2⟩⟧)  →   ⟦⟨E Ee(#1)⟩ + ⟨E Ee(#2)⟩⟧ ;
+\end{hacs}
+  Notice that there is no explicit mention of the "e" attribute, only the \emph{implicit} copying
+  that follows from the use of the "Ee" scheme. The recursive  arrangement of the "Ee" wrappers
+  implies the two attribute equations $E_1.e=E.e$ and $E_2.e=E.e$ from \thetag{2}.
+
+\item Let us do \thetag{3}. It defines the inherited attribute $t$ on \textbf{name} using a
+  ``Lookup'' meta-function that is meant to suggest that we extract the mapping from the $E.e$
+  environment inherited from the context. We start with a template like this:
+\begin{hacs}
+   Ee(⟦name_1⟧)  →  ⟦⟨Name Namet(⟦name_1⟧)⟩⟧ ;
+\end{hacs}
+  which just states that when the $e$ attribute is inherited from the $E$ context (through "Ee")
+  then the $t$ attribute is passed into the "name" subterm (through "Namet"). However, this rule
+  fails to actually set the $t$ attribute. To fix it, we first have to capture the ``Lookup'' in
+  the inherited environment. \HAX has a special notation for this: write the pattern as follows:
+\begin{hacs}
+   Ee(⟦name_1⟧) ↓e{⟦name_1⟧ : #t}  →     …
+\end{hacs}
+  The pattern of this rule is equipped with a \emph{mapping constraint} on the "e" inherited
+  attribute, which corresponds to the "Lookup" notation of \thetag{3} above. It will match when "Ee"
+  is applied to a name, called "name_1", which is \emph{also} mapped by the associated "e" attribute
+  to a type, which we call~"#t". After we have captured the mapped type this way, we can complete
+  the rule by explicitly associating it to the "t" attribute associated with "Namet".
+\begin{hacs}
+   Ee(⟦name_1⟧) ↓e{⟦name_1⟧ : #t}  →     ⟦⟨Name Namet(⟦name_1⟧) ↓t(#t)⟩⟧ ;
+\end{hacs}
+  Notice how mappings like "e" use "{}" notation for both declarations and constraints, and simply
+  valued attributes like "t" use~"()".
+
+\item Finally, we can encode \thetag{1}. It starts as
+\begin{hacs}
+   Se(⟦⟨T#1⟩ name_2 = ⟨E#3⟩; ⟨S#4⟩⟧)  →      ⟦⟨T#1⟩ name_2 = ⟨E Ee(#3)⟩; ⟨S Se(#4)⟩⟧ ;
+\end{hacs}
+  which merely establish  the basic rules that the $S.e$ attribute inherited from the context (through
+  the left hand "Se") is passed to both $E_3$ and $S_4$ through the right "Ee" and "Se",
+  respectively. This captures everything except the ``Extend'' notation. \HAX supports this by
+  allowing mapping constraints also on the right side of the "→" acting as \emph{extensions} of the
+  map.
+\begin{hacs}
+   Se(⟦⟨T#1⟩ name_2 = ⟨E#3⟩; ⟨S#4⟩⟧)
+   →   ⟦⟨T#1⟩ name_2 = ⟨E Ee(#3)⟩; ⟨S Se(#4) ↓e{⟦name_2⟧ : #1}⟩⟧ ;
+\end{hacs}
 
 \end{enumerate}
 %%
-
-
+To summarize, we have the following notational conventions for \HAX:
+%%
+\begin{displaymath}
+  \begin{array}{c|c|c}
+    \hline
+    \hline
+    \emph{Grammar} & \emph{SDD Notation} & \emph{\HAX Notation} \strut \\
+    \hline
+    Y → …
+    & X = \op{Lookup}(Y.e, \textbf{name}.sym)
+    & "Ye(…) ↓e{⟦name⟧ : #X}" → …
+    \\
+    Y → …
+    & Z.e  = \op{Extend}(Y.e, \textbf{name}.sym, X) 
+    & … → "Ze(…) ↓e{⟦name⟧ : #X}"
+    \\
+    \hline
+  \end{array}
+\end{displaymath}
 
 
 \section{Synthesizing Information}
@@ -913,31 +1057,6 @@ Here are the steps to follow to translate the inheritance to \HAX.
 \end{hacs}
   As can be seen, the scheme generates results of the "E" sort and also takes parameters of the "E"
   sort; in addition it \emph{carries} the inherited attribute "e".
-
-\item We first observe that \thetag{2} operates on sums, which in our case have a syntax like this:
-\begin{hacs}
-   sort E | ⟦ ⟨E@1⟩ + ⟨E@2⟩ ⟧@1 ;
-\end{hacs}
-  As before, we create a \emph{pattern} that is equivalent to this, using the subscripts from \thetag{2}:
-\begin{hacs}
-   ⟦ ⟨E#1⟩ + ⟨E#2⟩ ⟧
-\end{hacs}
-
-\item Now \emph{insert} the pattern into the scheme:
-\begin{hacs}
-   Ee(⟦⟨E#1⟩ + ⟨E#2⟩⟧)
-\end{hacs}
-  This clearly respects the sort constraints we defined above, with "Ee" being applied to an "E" expression.
-
-\item Since there are no complicated dependencies in \thetag{2}, we are almost done: we just have to
-  create a rule where we on the right side of the "→" \emph{apply} the "Ee" scheme recursively to
-  the subexpressions that should inherit the "e" attribute:
-\begin{hacs}
-   Ee(⟦⟨E#1⟩ + ⟨E#2⟩⟧)  → ⟦⟨E Ee(#1)⟩ + ⟨E Ee(#2)⟩⟧ ;
-\end{hacs}
-  Notice that there is no explicit mention of the "e" attribute, only the \emph{implicit} copying
-  that follows from the use of the "Ee" scheme. The recursive  arrangement of the "Ee" wrappers
-  implies the two attribute equations $E_1.e=E.e$ and $E_2.e=E.e$ from \thetag{2}.
 
 \item The above rule implements \thetag{2}, with one caveat: every time the "e" attribute is
   propagated through, a new expression is created, which thus loses all the synthesized properties
@@ -1705,11 +1824,13 @@ module $\text{\it\color{blue}modulename}$
     \item if the first (after "^") character is "]" then that character is (not) permitted;
     \item a "\" followed by an \emph{escape code} is encountered then it stands for the encoded
       character;
+    \item The characters \verb|\'"| should always be escaped;
     \item two characters connected with a "-" (dash) stands for a single character in the indicated
       (inclusive) \emph{range}.
     \end{enumerate}
     Note that a character class cannot be empty, however, "[^]" is permitted and stands for all
     characters.
+    
 
   \item The "." (period) character stands for the character class "[^\n]".
 
