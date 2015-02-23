@@ -13,7 +13,7 @@
 %%  \e@\setversion\thetoks0!!!
 %% }
 %% %\setversion VERSION=1.0.1@
-\def\version{1.0.3\xspace}
+\def\version{1.0.4\xspace}
 
 %% Style.
 \usepackage[margin=1in]{geometry}
@@ -127,7 +127,9 @@ computer.\footnote{Please report any problems with this procedure to \emph{hacs-
   and "javac" commands); and a standard *nix development setup including GNU Make and a C99
   compiler. In addition, the setup process needs internet access to retrieve the \CRSX base
   system~\cite{crsx}, JavaCC parser generator~\cite{JavaCC}, and \emph{icu} Unicode C
-  libraries~\cite{ICU}.
+  libraries~\cite{ICU}. Finally, these instructions are written for and tested on Ubuntu and Debian
+  GNU/Linux systems using the "bash" shell; if your system is different some adaptation may be
+  needed.
 \end{requirements}
 
 \begin{commands}[install \HAX]\label{com:all}
@@ -148,9 +150,6 @@ energon1[~]$ ^textcolor{blue}{^texttt{cd hacs}}
 energon1[hacs]$ ^textcolor{blue}{^texttt{make FROMZIP=1 install install-support}}
 \end{code}
   %%
-
-
-
   These commands will need Internet access, using the wget command to retrieve support
   libraries.\footnote{Specifically, \HAX needs the \CRSX system, JavaCC parser generator, and ICU4C
     Unicode library. The setup is documented in \emph{src/Env.mk}.} The above command will install
@@ -158,17 +157,8 @@ energon1[hacs]$ ^textcolor{blue}{^texttt{make FROMZIP=1 install install-support}
   \verb|prefix=|…  to (all uses of) \emph{make}; if so then make sure to replace occurrences of
   \verb|$HOME/.hacs| everywhere below with your chosen directory.
 
-  The main \emph{make} command will take some time (of the order of 3 minutes) but should end
+  The main \emph{make} command will take some time the first time (several minutes) and should end
   without error.
-
-  The following command makes the main \emph{hacs} command available for use:
-  %%
-\begin{code}[commandchars=\^\{\}]
-energon1[hacs]$ ^textcolor{blue}{^texttt{alias hacs=$HOME/.hacs/bin/hacs}}
-\end{code}
-  %%
-  (It may be worth including this command in your setup, or including the \verb|$HOME/.hacs/bin|
-  directory in your \verb|$PATH|.)
 
   Please check that your new installation works with these commands:
 \begin{code}[commandchars=\^\{\}]
@@ -193,6 +183,17 @@ energon1[~]$ ^textcolor{blue}{^texttt{./First.run --scheme=Compile \}}
   %%
   Congratulations---you just built your first compiler!\footnote{Please do not mind the spacing --
     that is how \HAX prints in its present state.}
+  %%
+  Below we'll asume that you have issued the following command to make the main \emph{hacs} command
+  available for use:
+  %%
+\begin{code}[commandchars=\^\{\}]
+energon1[hacs]$ ^textcolor{blue}{^texttt{alias hacs=$HOME/.hacs/bin/hacs}}
+\end{code}
+  %%
+  (It may be worth including this command in your setup, or including the \verb|$HOME/.hacs/bin|
+  directory in your \verb|$PATH|.)
+  %%
 \end{commands}
 
 \begin{example}[module wrapper]%
@@ -205,7 +206,7 @@ module org.crsx.hacs.samples.First
   // Sections.
   $\text{\it Lexical Analysis (Section~\ref{sec:tokens})}$
   $\text{\it Syntax Analysis (Section~\ref{sec:syntax})}$
-  $\text{\it Semantic Analysis (Sections \ref{sec:schemes}, \ref{sec:collect} and \ref{sec:sdd})}$
+  $\text{\it Semantic Analysis (Sections \ref{sec:schemes}, \ref{sec:env}, \ref{sec:collect} and \ref{sec:sdd})}$
   $\text{\it Code Generator (Section~\ref{sec:examples})}$
   $\text{\it Main (Section~\ref{sec:schemes})}$
 }
@@ -359,8 +360,7 @@ concrete syntax details managed through annotations and ``syntactic sugar'' decl
   small example source language merely has blocks, assignment statements, and a few forms of
   expression, like so:
   %%
-\begin{hacs}[xleftmargin=\parindent,xrightmargin=\parindent,numbers=right]
-// Main program construct.
+\begin{hacs}[xleftmargin=\parindent,xrightmargin=2em,numbers=right]
 main sort Stat  | ⟦ ⟨Name⟩ := ⟨Exp⟩ ; ⟨Stat⟩ ⟧
                 | ⟦ { ⟨Stat⟩ } ⟨Stat⟩ ⟧
                 | ⟦⟧ ;
@@ -372,11 +372,11 @@ sort Exp  | ⟦ ⟨Exp⟩ + ⟨Exp@1⟩ ⟧
           | ⟦ ⟨Name⟩ ⟧@2
           | sugar ⟦ ( ⟨Exp#⟩ ) ⟧@2 → Exp# ;
 
-sort Name | symbol ⟦⟨ID⟩⟧ ;
+sort Name  | ⟦⟨ID⟩⟧ ;
 \end{hacs}
   %%
   The grammar structures the input as three sorts: "Stat" for statements, "Exp" for expressions, and
-  "Name" for names (which we shall need later for symbol tables).
+  "Name" for names.
   %%
 \end{example}
 
@@ -397,9 +397,9 @@ The example grammar above captures the \HAX version of several standard parsing 
 \item[Precedence rules] are represented by the "@"-annotations, which assign precedence and
   associativity to each operator. In our example, we have marked all references to the "Exp"
   non-terminal inside the productions for "Exp" with the lowest permitted priority in each case. So
-  the first rule in line 6 says that the "+" operator is restricted on the right to only expressions
+  the first rule in line 5 says that the "+" operator is restricted on the right to only expressions
   with at least priority 1 (but not restricted on the left, so it is left recursive). The outer "@1"
-  in line 7 states that all "*" expressions have priority 1, and the inner "@"-annotations allow
+  in line 6 states that all "*" expressions have priority 1, and the inner "@"-annotations allow
   left subexpressions of "*" with at least priority 1 (so "*" is also left recursive) whereas right
   subexpressions must have at least priority~2. Notice that left (right) recursion is identified by
   the \emph{leftmost (rightmost) unit in the production having the outer precedence}.
@@ -462,10 +462,6 @@ same notation to serve all the formalisms of the following sections.  Here are t
   parenthesis.  (In fact the general rule is that when an "→" is used then all sort specifiers must
   be ``disambiguated'' with distinct markers like "#" or "#5" in this way.)
 
-\item As a special case, a sort can be defined with a single "symbol" declaration. If so, then the
-  actual syntax must refer to a single token, and that token must allow multiple trailing "_"$n$
-  (underscore and count), which is added to any instance (this permits automatic symbol generation).
-
 \end{itemize}
 %%
 Of all these rules, the one thing that is unique to parsing is the precedence notation with "@".
@@ -498,6 +494,45 @@ $ \textcolor{blue}{./First.run --sort=Exp --term="(2+(3*(4+5)))"}
   the AST with minimal insertion of parentheses.
   %%
 \end{commands}
+
+
+\section{Higher Order Abstract Syntax}
+\label{sec:hoas}
+
+
+\begin{example}\label{ex:hoas}
+  %%
+
+  %%
+\begin{hacs}[xleftmargin=\parindent,xrightmargin=2em,numbers=right]
+main sort Stat  | ⟦ ⟨Name⟩ := ⟨Exp⟩ ; ⟨Stat⟩ ⟧
+                | ⟦ { ⟨Stat⟩ } ⟨Stat⟩ ⟧
+                | ⟦⟧ ;
+
+sort Exp  | ⟦ ⟨Exp⟩ + ⟨Exp@1⟩ ⟧
+          | ⟦ ⟨Exp@1⟩ * ⟨Exp@2⟩ ⟧@1
+          | ⟦ ⟨INT⟩ ⟧@2
+          | ⟦ ⟨FLOAT⟩ ⟧@2
+          | ⟦ ⟨Name⟩ ⟧@2
+          | sugar ⟦ ( ⟨Exp#⟩ ) ⟧@2 → Exp# ;
+
+sort Name  | ⟦⟨ID⟩⟧ ;
+\end{hacs}
+  %%
+  The grammar structures the input as three sorts: "Stat" for statements, "Exp" for expressions, and
+  "Name" for names.
+  %%
+\end{example}
+
+
+
+\begin{itemize}
+
+\item As a special case, a sort can be defined with a single "symbol" declaration. If so, then the
+  actual syntax must refer to a single token, and that token must allow multiple trailing "_"$n$
+  (underscore and count), which is added to any instance (this permits automatic symbol generation).
+
+\end{itemize}
 
 
 \section{Sorts and Recursive Translation Schemes}
@@ -1822,9 +1857,8 @@ module $\text{\it\color{blue}modulename}$
    \begin{enumerate}
     \item if the first character is "^" then the character class is negated;
     \item if the first (after "^") character is "]" then that character is (not) permitted;
-    \item a "\" followed by an \emph{escape code} is encountered then it stands for the encoded
-      character;
-    \item The characters \verb|\'"| should always be escaped;
+    \item a "\" followed by an \emph{escape code} stands for the encoded character;
+    \item The characters \verb|\'"| should always be escaped (this is a bug);
     \item two characters connected with a "-" (dash) stands for a single character in the indicated
       (inclusive) \emph{range}.
     \end{enumerate}
@@ -2110,8 +2144,6 @@ space [ \t\f\r\n] | nested "/*" "*/" | "//" .* ;
 \end{manual}
 
 
-
-
 %%% \section{Bonus Examples}\label{appbonus}
 %%% 
 %%% Some additional \emph{untested} examples. \emph{Note: still need to be worked through.}
@@ -2270,30 +2302,45 @@ which is not in fact declared as a "scheme" in the \emph{.hx} file.
 
 \begin{itemize}
 
-\item At most one "nested" declaration per "token".
-
-\item Precedence can only be used on self references, \ie, "⟨E@2⟩" can only occur inside
-  productions for the sort "E".
+\item At most one "nested" choice per "token" declaration.
 
 \item It is not possible to use binders and left recursion in the same production with the same
   precedence.
 
-\item Only \emph{immediate} left recursion is currently supported, \ie, the left recursion should be
-  within a single production.
+\item Only \emph{immediate} left recursion is currently supported, \ie, left recursion should be
+  within a single production. Specifically,
+\begin{hacs}
+sort A | ⟦ ⟨A⟩ stuff ⟧ | ⟦ other-stuff ⟧ ;
+\end{hacs}
+  and 
+\begin{hacs}
+sort A | ⟦ ⟨A@1⟩ stuff ⟧@1 | ⟦ other-stuff ⟧@2 ;
+\end{hacs}
+  are alright but
+\begin{hacs}
+sort A | ⟦ ⟨B⟩ a-stuff ⟧ | ⟦ other-a-stuff ⟧ ;
+sort B | ⟦ ⟨A⟩ b-stuff ⟧ | ⟦ other-b-stuff ⟧ ;
+\end{hacs}
+  and 
+\begin{hacs}
+sort A  | ⟦ ⟨A@1⟩ stuff ⟧@2 | ⟦ other ⟧ ;
+\end{hacs}
+  are not: both involve indirect recursion (the latter case because the inner left recursive
+  precedence 1 is less than the outer precedence 2). 
 
 \item Productions can share a prefix but only within productions for the same sort, and the prefix
   has to be literally identical unit by unit (except for left recursive precedence markers), \ie,
-  \begin{code}
+\begin{code}
 sort S | ⟦ ⟨A⟩ then ⟨B⟩ then C ⟧
        | ⟦ ⟨A⟩ then ⟨B⟩ or else D ⟧ ;
 \end{code}
-is fine but
+  is fine but
 \begin{code}
 sort S | ⟦ ⟨A⟩ then ⟨B⟩ then C ⟧
        | ⟦ ⟨A⟩ ⟨ThenB⟩ or else D ⟧ ;
 sort ThenB | ⟦ then ⟨B⟩ ⟧;
 \end{code}
-is not.
+  is not.
 
 \item It is not possible to left-factor a binder (so multiple binding constructs cannot have the
   same binder prefix).
@@ -2301,7 +2348,7 @@ is not.
 \item Variables embedded in "error⟦…⟧" instructions must start with a lower case letter.
 
 \item When using the "symbol" qualifier on a reference to a token then the token \emph{must} allow
-  ending in "_"$n$ for $n$ any natural number.
+  ending with a sequence of "_"$n$ for $n$ any natural numbers.
 
 \item When using the same name for a symbol inside of "⟦…⟧" and the corresponding raw variable
   outside of the ⟦⟧, then the common symbol and variable name must be a plain word starting with a
@@ -2309,7 +2356,7 @@ is not.
 
 \item Special terms like "error⟦…⟧" cannot be used as raw subterms.
 
-\item The "default" rule qualifier is rather fragile and does not yet always work.
+\item The "default" and "priority" rule qualifiers are rather fragile and do not yet always work.
 
 \end{itemize}
 

@@ -146,7 +146,19 @@
   pages		= {1-116}
 }
 
-% Research references.
+% Other meta-programming systems.
+
+@Article{CameronIto:toplas1984,
+  author = 	{Robert D. Cameron and M. Robert Ito},
+  title = 		{Grammar-Based Definition of Metaprogramming Systems},
+  journal = 	{ACM Trans. on Progr. Lang. and Syst.},
+  year =		1984,
+  volume =	6,
+  number =	1,
+  pages =		{20-54},
+  month =	jan,
+  doi =		{10.1145/357233.357235}
+}
 
 @InProceedings{Bos+:eptcs2011,
   author = 	 {Bos, J. van den and Hills, M. A. and Klint, P. and Storm, T. van der and Vinju, J. J.},
@@ -157,6 +169,106 @@
   volume = 	 56,
   series = 	 {Electronic Proceedings in Theoretical Computer Science},
   pages = 	 {15-32}}
+
+@Article{Brand+:toplas2002,
+ author = "Brand, {M.G.J. van den} and J. Heering and P. Klint and P. A. Olivier",
+ title = "Compiling Language Definitions: The {ASF+SDF} Compiler",
+ journal = toplas,
+ year = 2002,
+ volume = 24,
+ number = 4,
+ pages = {334-368},
+ doi = {10.1145/567097.567099}
+}
+
+@InProceedings{Borras+:sde1988,
+  author =       {P. Borras and D. Clément and Th. Despeyroux and J. Incerpi and G. Kahn and B. Lang and V. Pascual},
+  title =        {Centaur: the system},
+  booktitle = {{SIGSOFT'88}---Third Annual Symposium on Software Development Environments},
+  year =      1988,
+  address =   {Boston, USA}
+}
+
+@InProceedings{Chlipala:icfp2008,
+  author =       {Adam Chlipala},
+  title =        {Parametric Higher-Order Abstract Syntax for Mechanized Semantics},
+  booktitle = {Proceedings of the 13th ACM SIGPLAN International Conference on Functional Programming ({ICFP}'08)},
+  year =      2008,
+  editor =    {James Hook and Peter Thiemann},
+  address =   {Victoria, BC, Canada},
+  month =     sep,
+  organization = {ACM},
+  doi = {10.1145/1411204.1411226}
+}
+
+@inproceedings{GilbertMcLellan:sjcp1967,
+ author = {Gilbert, Philip and McLellan, William G.},
+ title = {Compiler generation using formal specification of procedure-oriented and machine languages},
+ booktitle = {Proceedings of the April 18-20, 1967, spring joint computer conference},
+ series = {AFIPS '67 (Spring)},
+ year = {1967},
+ location = {Atlantic City, New Jersey},
+ pages = {447-455},
+ numpages = {9},
+ doi = {10.1145/1465482.1465553},
+ acmid = {1465553},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+}
+
+@incollection {Gaudel:fpc1981,
+   author = {Gaudel, M.},
+   affiliation = {Inria France Inria France},
+   title = {Compiler generation from formal definition of programming languages : A survey},
+   booktitle = {Formalization of Programming Concepts},
+   series = {Lecture Notes in Computer Science},
+   editor = {Díaz, J. and Ramos, I.},
+   publisher = {Springer Berlin / Heidelberg},
+   isbn = {},
+   pages = {96-114},
+   volume = {107},
+   doi = {10.1007/3-540-10699-5\_94},
+   year = {1981}
+}
+
+@article{Wand:sn1984,
+ author = {Wand, Mitchell},
+ title = {A semantic prototyping system},
+ journal = {SIGPLAN Not.},
+ volume = {19},
+ issue = {6},
+ month = {June},
+ year = {1984},
+ issn = {0362-1340},
+ pages = {213-221},
+ numpages = {9},
+ doi = {10.1145/502949.502895},
+ acmid = {502895},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+}
+
+@TechReport{Mosses:daimi1979,
+  author = 	{Peter Mosses},
+  title = 	 	{{SIS} -- Semantics Implementation System, Reference Manual and User's Guide},
+  institution =	{DAIMI (Computer Science Department), Aarhus University},
+  year = 	 	1979,
+  number =	{MD-30},
+  month =	aug
+}
+
+@Book{BjornerJones:1982,
+  author =       {Bjørner, D. and Jones, C.B.},
+  title =        {Formal Specification and Software Development},
+  publisher =    {Prentice Hall International},
+  year =         1982,
+  isbn = {0-13-880733-7}
+}
+
+    
+
+
+
 
 @Article{Barendregt+:ic1987,
   author	= {H. P. Barendregt and J. R. Kennaway and J. W. Klop and M. R. Sleep},
@@ -274,37 +386,6 @@
   number =    {1999-30},
   month =     jun,
   url = {http://hdl.handle.net/2332/731}
-}
-
-@Article{Brand+:toplas2002,
- author = "Brand, {M.G.J. van den} and J. Heering and P. Klint and P. A. Olivier",
- title = "Compiling Language Definitions: The {ASF+SDF} Compiler",
- journal = toplas,
- year = 2002,
- volume = 24,
- number = 4,
- pages = {334-368},
- doi = {10.1145/567097.567099}
-}
-
-@InProceedings{Borras+:sde1988,
-  author =       {P. Borras and D. Clément and Th. Despeyroux and J. Incerpi and G. Kahn and B. Lang and V. Pascual},
-  title =        {Centaur: the system},
-  booktitle = {{SIGSOFT'88}---Third Annual Symposium on Software Development Environments},
-  year =      1988,
-  address =   {Boston, USA}
-}
-
-@InProceedings{Chlipala:icfp2008,
-  author =       {Adam Chlipala},
-  title =        {Parametric Higher-Order Abstract Syntax for Mechanized Semantics},
-  booktitle = {Proceedings of the 13th ACM SIGPLAN International Conference on Functional Programming ({ICFP}'08)},
-  year =      2008,
-  editor =    {James Hook and Peter Thiemann},
-  address =   {Victoria, BC, Canada},
-  month =     sep,
-  organization = {ACM},
-  doi = "10.1145/1411204.1411226"
 }
 
 @InProceedings{DespeyrouxEtal:tlca1995,
@@ -801,80 +882,9 @@
   doi =       {10.1007/978-3-642-03816-7_40}
 }
 
-@inproceedings{GilbertMcLellan:sjcp1967,
- author = {Gilbert, Philip and McLellan, William G.},
- title = {Compiler generation using formal specification of procedure-oriented and machine languages},
- booktitle = {Proceedings of the April 18-20, 1967, spring joint computer conference},
- series = {AFIPS '67 (Spring)},
- year = {1967},
- location = {Atlantic City, New Jersey},
- pages = {447-455},
- numpages = {9},
- doi = {10.1145/1465482.1465553},
- acmid = {1465553},
- publisher = {ACM},
- address = {New York, NY, USA},
-}
 
-@incollection {Gaudel:fpc1981,
-   author = {Gaudel, M.},
-   affiliation = {Inria France Inria France},
-   title = {Compiler generation from formal definition of programming languages : A survey},
-   booktitle = {Formalization of Programming Concepts},
-   series = {Lecture Notes in Computer Science},
-   editor = {Díaz, J. and Ramos, I.},
-   publisher = {Springer Berlin / Heidelberg},
-   isbn = {},
-   pages = {96-114},
-   volume = {107},
-   doi = {10.1007/3-540-10699-5\_94},
-   year = {1981}
-}
 
-@article{Wand:sn1984,
- author = {Wand, Mitchell},
- title = {A semantic prototyping system},
- journal = {SIGPLAN Not.},
- volume = {19},
- issue = {6},
- month = {June},
- year = {1984},
- issn = {0362-1340},
- pages = {213-221},
- numpages = {9},
- doi = {10.1145/502949.502895},
- acmid = {502895},
- publisher = {ACM},
- address = {New York, NY, USA},
-}
 
-@TechReport{Mosses:daimi1979,
-  author = 	 {Peter Mosses},
-  title = 	 {{SIS} -- Semantics Implementation System, Reference
-		  Manual and User's Guide},
-  institution =  {DAIMI (Computer Science Department), Aarhus University},
-  year = 	 1979,
-  number =	 {MD-30},
-  month =	 aug
-}
-
-@Book{BjornerJones:1982,
-  author =       {Bjørner, D. and Jones, C.B.},
-  title =        {Formal Specification and Software Development},
-  publisher =    {Prentice Hall International},
-  year =         1982,
-  isbn = {0-13-880733-7}
-}
-
-@Article{BrandEtal:toplas2002,
- author = "Brand, {M. G. J. van den} and J. Heering and P. Klint and P. A. Olivier",
- title = "{C}ompiling {R}ewrite {S}ystems: {T}he {A}{S}{F}+{S}{D}{F} {C}ompiler",
- journal = "ACM Transactions on Programming Languages and Systems",
- year = 2002,
- volume = 24,
- number = 4,
- pages = {334-368}
-}
 
 @article{DeursenKlintTip:jsc1993,
  author = "Deursen, {A. van} and P. Klint and F. Tip",

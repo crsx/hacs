@@ -30,27 +30,29 @@
 \newcommand\caret{\mathbin{\char`\^}}
 
 %% Units
-\usepackage{amsthm}
-\swapnumbers %style
-\newtheorem{theorem}{Theorem}[section]
-\newtheorem{lemma}[theorem]{Lemma}
-\theoremstyle{definition}
-\newtheorem{definition}[theorem]{Definition}
-\newtheorem{proposition}[theorem]{Proposition}
-\newtheorem{example}[theorem]{Example}
-\newtheorem{practice}[theorem]{Practice}
-\newtheorem{notation}[theorem]{Notation}
-\newtheorem{manual}[theorem]{Manual}
-%\newenvironment{manual}{\small\begin{manual-body}}{\end{manual-body}}
-\newtheorem{invariant}[theorem]{Invariant}
-\newtheorem{requirements}[theorem]{Requirements}
-\newtheorem{limitations}[theorem]{Limitations}
-\newtheorem{commands}[theorem]{Commands}
-\newtheorem{error}[theorem]{Error}
-\newtheorem{note}[theorem]{Note}
-\newtheorem{plan}[theorem]{Plan}
-%\theoremstyle{remark}
-\newtheorem{remark}[theorem]{Remark}
+\ifx\theorem\undefined
+  \usepackage{amsthm}
+  \swapnumbers %style
+  \newtheorem{theorem}{Theorem}[section]
+  \newtheorem{lemma}[theorem]{Lemma}
+  \theoremstyle{definition}
+  \newtheorem{definition}[theorem]{Definition}
+  \newtheorem{proposition}[theorem]{Proposition}
+  \newtheorem{example}[theorem]{Example}
+  \newtheorem{practice}[theorem]{Practice}
+  \newtheorem{notation}[theorem]{Notation}
+  \newtheorem{manual}[theorem]{Manual}
+  %\newenvironment{manual}{\small\begin{manual-body}}{\end{manual-body}}
+  \newtheorem{invariant}[theorem]{Invariant}
+  \newtheorem{requirements}[theorem]{Requirements}
+  \newtheorem{limitations}[theorem]{Limitations}
+  \newtheorem{commands}[theorem]{Commands}
+  \newtheorem{error}[theorem]{Error}
+  \newtheorem{note}[theorem]{Note}
+  \newtheorem{plan}[theorem]{Plan}
+  %\theoremstyle{remark}
+  \newtheorem{remark}[theorem]{Remark}
+\fi
 
 %% Old code listings.
 \usepackage{alltt}
