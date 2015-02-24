@@ -6,6 +6,7 @@ doc/Makefile
 doc/hacs.pdf
 lib/crsx-3.2.2.11.jar
 samples/Bool.hx
+samples/Desk.hx
 samples/First.hx
 samples/IsCat.hx
 samples/WordMap.hx
