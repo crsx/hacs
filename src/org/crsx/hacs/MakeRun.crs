@@ -76,6 +76,7 @@ for arg; do
 	--term=*) if [ -n "$inputoption" ]; then echo "${0}: Only one input allowed." >&2; fail=true; fi; inputoption="${arg#--}" ;;
 	--parsed-file=*) parsedfile="${arg#*=}" ;;
         -v|--verbose) set -x ;;
+        --verbose=*) set -x; options="$options '${arg#--}'" ;;
 	-h|-help|--help) usage ;;
 	--*) options="$options '${arg#--}'" ;;
         *) if [ -n "$inputoption" ]; then echo "${0}: Only one input allowed." >&2; usage; fi; inputoption="input=$arg" ;;

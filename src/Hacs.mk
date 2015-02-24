@@ -139,6 +139,7 @@ realclean::; @rm -f *.run
 			output='$@.tmp' simple-terms max-indent=10 width=255 \
 		&& $(X) mv '$@.tmp' '$@' \
 		) $(LOG)
+.SECONDARY: %.hxraw
 
 # Process (pre-raw-parsed) HACS with Prep to create all files needed by Cook system.
 %.prep : %.hxraw
@@ -155,6 +156,7 @@ realclean::; @rm -f *.run
 		    && $(X) mv '$@.tmp' '$@' ; \
 		  fi \
 		) $(LOG)
+.SECONDARY: %.prep
 
 # Extract template from "PG and sort base".
 %Hx.pgtemplate : %.prep
@@ -212,12 +214,14 @@ realclean::; @rm -f *.run
 	@$(ECHO) -e '\nHACS: Generating JavaCC grammar $@...' $(OUT) && $(SH_EXTRA) \
 	&&	( $(X) $(RUNPG) -source=$(BUILD) $< \
 		) $(LOG)
+.SECONDARY: %.jj
 
 # Compile JavaCC parser to Java.
 %.java: %.jj
 	@$(ECHO) -e '\nHACS: Generating Java parser source $@...' $(OUT) && $(SH_EXTRA) \
 	&&	( $(X) mkdir -p $(dir $<) && $(X) cd $(dir $<) && $(X) $(JAVACC) $(notdir $<) \
 		) $(LOG)
+.SECONDARY: %.java
 
 # Compile Java to class file.
 %.class: %.java
