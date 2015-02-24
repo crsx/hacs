@@ -139,7 +139,6 @@ realclean::; @rm -f *.run
 			output='$@.tmp' simple-terms max-indent=10 width=255 \
 		&& $(X) mv '$@.tmp' '$@' \
 		) $(LOG)
-.SECONDARY: %.hxraw
 
 # Process (pre-raw-parsed) HACS with Prep to create all files needed by Cook system.
 %.prep : %.hxraw
@@ -156,7 +155,6 @@ realclean::; @rm -f *.run
 		    && $(X) mv '$@.tmp' '$@' ; \
 		  fi \
 		) $(LOG)
-.SECONDARY: %.prep
 
 # Extract template from "PG and sort base".
 %Hx.pgtemplate : %.prep

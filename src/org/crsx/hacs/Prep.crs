@@ -1400,13 +1400,13 @@ P-Lexical2Tail[B_FALSE] → %n⟪skip ::= " " .
 P-InlineRegExp[$List[HxRegExpChoice], $String<!--ModuleName-->, $String<!--identifier-->] :: Text ;
 P-InlineRegExp[(#RegExpChoice; #RegExp), #ModuleName, #id]
 →
-%n⟪⟦« P-InlineRegExpChoice[#RegExpChoice, #ModuleName, #id] »⟧ « P-InlineRegExp2[#RegExp, #ModuleName, #id] »⟫
+%n⟪⟦« P-InlineRegExpChoice[#RegExpChoice, #ModuleName, #id, ""] »⟧ « P-InlineRegExp2[#RegExp, #ModuleName, #id] »⟫
 ;
 
 P-InlineRegExp2[$List[HxRegExpChoice], $String<!--ModuleName-->, $String<!--identifier-->] :: Text ;
 P-InlineRegExp2[(#RegExpChoice; #RegExp), #ModuleName, #id]
 →
-%n⟪| ⟦« P-InlineRegExpChoice[#RegExpChoice, #ModuleName, #id] »⟧ « P-InlineRegExp2[#RegExp, #ModuleName, #id] »⟫
+%n⟪⟦« P-InlineRegExpChoice[#RegExpChoice, #ModuleName, #id, "| "] »⟧ « P-InlineRegExp2[#RegExp, #ModuleName, #id] »⟫
 ;
 P-InlineRegExp2[(), #ModuleName, #id]
 →
@@ -1415,15 +1415,18 @@ P-InlineRegExp2[(), #ModuleName, #id]
 
 //
 
-P-InlineRegExpChoice[HxRegExpChoice, $String<!--ModuleName-->, $String] :: Text;
+P-InlineRegExpChoice[HxRegExpChoice, $String<!--ModuleName-->, $String<!--id-->, $String<!--sep-->] :: Text;
 
-P-InlineRegExpChoice[%rawHxRegExpChoice⟪ nested #HxRegExpSimple1# #HxRegExpSimple2# ⟫, #ModuleName, #id]
+P-InlineRegExpChoice[%rawHxRegExpChoice⟪ nested #HxRegExpSimple1# #HxRegExpSimple2# ⟫, #ModuleName, #id, #sep]
 →
-%n⟪NESTED_«P-TokenNameText[#id]»⟫
+$[If, $[Equal,#id,"space$"],
+  %n⟪⟫, // handled by SKIP declaration in nesting
+  %n⟪†«#sep»NESTED_«P-TokenNameText[#id]»⟫
+]
 ;
-P-InlineRegExpChoice[%rawHxRegExpChoice⟪ #HxRegExpUnits# ⟫, #ModuleName, #id]
+P-InlineRegExpChoice[%rawHxRegExpChoice⟪ #HxRegExpUnits# ⟫, #ModuleName, #id, #sep]
 →
-P-InlineRegExpUnits[#HxRegExpUnits#, #ModuleName, #id]
+%n⟪†«#sep»« P-InlineRegExpUnits[#HxRegExpUnits#, #ModuleName, #id] »⟫
 ;
 
 //

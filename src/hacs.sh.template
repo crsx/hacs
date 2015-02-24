@@ -82,6 +82,7 @@ function hacsmake () {
 }
 
 # Generate and load job properties.
+mkdir -p $build
 hacsmake $dirname/$basename.env
 . $dirname/$basename.env
 
@@ -93,14 +94,13 @@ mkdir -p $packagedir
 # Seed package directory with HACS source...
 cp $NAME.hx $packagedir/
 
-if [ -n "$goal" ]; then
-    if [ $goal = ".env" -o $goal = ".run" ]; then
-	hacsmake $dirname/${NAME}${goal}
-    else
-	hacsmake $packagedir/${NAME}${goal}
-    fi
-    exit
-fi
+# Recurse if goal given.
+case "$goal" in
+    ".run") hacsmake $dirname/${NAME}${goal}; exit ;;
+    ".env") hacsmake $dirname/${NAME}${goal}; exit ;;
+    "") ;;
+    *) hacsmake $packagedir/${NAME}${goal}; exit ;;
+esac
 
 # Generate parser.
 if $keep; then
