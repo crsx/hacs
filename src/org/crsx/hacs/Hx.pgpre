@@ -103,8 +103,10 @@
 <HxBindersScopeSorts> ::= {$Cons} <HxBindersScopeSort> (HX_COMMA <HxBindersScopeSorts> | {$Nil}) .
 
 <HxBindersScopeSort> ::= HX_LBRACKET <HxBindersScopeSortInside> | <HxScopeSort> .
-<HxBindersScopeSortInside> ::= <HxSort>:#Sort HX_BINDS:hx {{#Sort}} <HxVariable>!!! <HxBindersScopeSortInsideTail> .
+<HxBindersScopeSortInside> ::= {RawBoundVariable}:hx <HxVariable>!!! <HxBindersScopeSortInsideTail> .
 <HxBindersScopeSortInsideTail> ::= HX_COMMA <HxBindersScopeSortInside> | HX_RBRACKET <HxBindersScopeSort> .
+/// TODO: Use plain HxVariables above (was the below).
+/// <HxBindersScopeSortInside> ::= <HxSort>:#Sort HX_BINDS:hx {{#Sort}} <HxVariable>!!! <HxBindersScopeSortInsideTail> .
 
 <HxScopeSort> ::= {ScopeSort}:hx <HxSort> <HxRepeat> (HX_LBRACKET <HxSubstituteSorts> HX_RBRACKET | {$Nil}) .
 

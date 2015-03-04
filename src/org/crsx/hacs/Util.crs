@@ -1308,7 +1308,7 @@ U-ScopeSortPrecTopSort[HxScopeSortPrec] :: $String;
 U-ScopeSortPrecTopSort[%rawHxScopeSortPrec⟪ #HxScopeSort# #HxFormPrec# ⟫] → U-ScopeSortTopSort[#HxScopeSort#] ;
 
 U-ScopeSortTopSort[HxScopeSort] :: $String;
--[Free[x::HxTerm]]: U-ScopeSortTopSort[%rawHxBindersScopeSort⟪ [ #HxSort# binds x ] #HxBindersScopeSort# ⟫] → U-ScopeSortTopSort[#HxBindersScopeSort#] ;
+-[Free[x::HxTerm]]: U-ScopeSortTopSort[%rawHxBindersScopeSort⟪ [ x ] #HxBindersScopeSort# ⟫] → U-ScopeSortTopSort[#HxBindersScopeSort#] ;
 U-ScopeSortTopSort[%rawHxScopeSort⟪ #HxSort# #HxRepeat# [ #HxSubstituteSorts# ] ⟫] → U-SortNameWithRepeat[#HxSort#, #HxRepeat#] ;
 
 // Convert hx module name string to Java style class name.

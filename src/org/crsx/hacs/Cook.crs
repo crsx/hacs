@@ -347,9 +347,9 @@ C-ParsedForm-ScopeSorts[#ParsedForm] → {}C-ParsedForm-ScopeSorts1[#ParsedForm,
 
     {HxTerm<!--Variable--> : $String} C-ScopeSort-AddBinders[HxScopeSort] :: HxScopeSort ;
 
-    {#VS}C-ScopeSort-AddBinders[{#L}%rawHxBindersScopeSort⟪ [ #HxSort# binds v ] #HxBindersScopeSort# ⟫]
+    {#VS}C-ScopeSort-AddBinders[{#L}%rawHxBindersScopeSort⟪ [ v ] #HxBindersScopeSort# ⟫]
     →
-    {#L}%rawHxBindersScopeSort⟪ [ #HxSort# binds v ] %HxBindersScopeSort« {#VS}C-ScopeSort-AddBinders[#HxBindersScopeSort#] » ⟫
+    {#L}%rawHxBindersScopeSort⟪ [ v ] %HxBindersScopeSort« {#VS}C-ScopeSort-AddBinders[#HxBindersScopeSort#] » ⟫
     ;
 
     {#VS}C-ScopeSort-AddBinders[{#L}%rawHxScopeSort⟪ #HxSort# #HxRepeat# [ #HxSubstituteSorts# ] ⟫]
@@ -373,7 +373,7 @@ C-ParsedForm-ScopeSorts[#ParsedForm] → {}C-ParsedForm-ScopeSorts1[#ParsedForm,
     {#VS}C-ScopeSort-AddBinders3[v, #SubstituteSorts, #ScopeSort, s¹.#[s¹]]
     →
     $[{#VS}IfDef, v,
-      {#VS}C-ScopeSort-AddBinders2[#SubstituteSorts, #ScopeSort, s¹.#[ %rawHxBindersScopeSort⟪ [ %HxSortName« $[{#VS}Get[$String],v] » binds v ] %HxBindersScopeSort«s¹» ⟫ ]],
+      {#VS}C-ScopeSort-AddBinders2[#SubstituteSorts, #ScopeSort, s¹.#[ %rawHxBindersScopeSort⟪ [ v ] %HxBindersScopeSort«s¹» ⟫ ]],
       {#VS}C-ScopeSort-AddBinders2[#SubstituteSorts, #ScopeSort, s¹.#[s¹]]]
     ;
 
@@ -991,7 +991,7 @@ C-CrsxifyScope[%rawHxScope⟪ [ #HxVariableList# ] #HxTerm# ⟫, #ScopeSort, #To
 // Convert a term or token...
 
 C-CrsxifyTermOrToken[HxScopeSort, HxTerm, NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
-C-CrsxifyTermOrToken[Hx_binds[#Sort, #Term, #ScopeSort], #HxTerm#, #TopInherited, #DM, #SM] → C-CrsxifyTermOrToken[#ScopeSort, #HxTerm#, #TopInherited, #DM, #SM] ;
+C-CrsxifyTermOrToken[Hx_RawBoundVariable[#Term, #ScopeSort], #HxTerm#, #TopInherited, #DM, #SM] → C-CrsxifyTermOrToken[#ScopeSort, #HxTerm#, #TopInherited, #DM, #SM] ;
 C-CrsxifyTermOrToken[%rawHxScopeSort⟪ #HxSort# #HxRepeat# [ #HxSubstituteSorts# ] ⟫, #HxTerm#, #TopInherited, {#DM}DM, #SM]
 →
 C-CrsxifyTermOrToken2[ContainsName[{#DM}U-AllTokenNames, U-SortNameWithRepeat[#HxSort#, #HxRepeat#]], U-SortNameWithRepeat[#HxSort#, #HxRepeat#], #HxTerm#, #TopInherited, {#DM}DM, #SM]
@@ -1400,7 +1400,7 @@ C-ScopeSort-WrapPattern[HxScopeSort, $String<!--ModuleName-->, t :: Text . Text,
 C-ScopeSort-WrapPattern[#ScopeSort, #ModuleName, t.#w[t], s.#[s]] → C-ScopeSort-WrapPattern2[#ScopeSort, #ModuleName, "", t.#w[t], s.#[s]] ;
 
 C-ScopeSort-WrapPattern2[HxScopeSort, $String<!--ModuleName-->, $String<!--Sep-->, t :: Text . Text, s :: $String<!--Sort--> . Text] :: Text ;
-C-ScopeSort-WrapPattern2[%rawHxBindersScopeSort⟪ [ #HxSort# binds v ] #HxBindersScopeSort# ⟫, #ModuleName, #sep, t.#w[t], s.#[s]] → %n⟪«v» « C-ScopeSort-WrapPattern2[#HxBindersScopeSort#, #ModuleName, ". ", t.#w[t], s.#[s]] »⟫ ;
+C-ScopeSort-WrapPattern2[%rawHxBindersScopeSort⟪ [ v ] #HxBindersScopeSort# ⟫, #ModuleName, #sep, t.#w[t], s.#[s]] → %n⟪«v» « C-ScopeSort-WrapPattern2[#HxBindersScopeSort#, #ModuleName, ". ", t.#w[t], s.#[s]] »⟫ ;
 C-ScopeSort-WrapPattern2[%rawHxScopeSort⟪ #HxSort# #HxRepeat# [ #HxSubstituteSorts# ] ⟫, #ModuleName, #sep, t.#w[t], s.#[s]] → %n⟪†«#sep»« #w[TextConcat[#[U-SortName[#HxSort#]], WrappedTextJoin[Map[s.C-SubstituteSort-Pattern[s], #HxSubstituteSorts#], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]]] »⟫ ;
 
 C-SubstituteSort-Pattern[HxSubstituteSort] :: Text ;
@@ -1663,17 +1663,30 @@ C-SortMap-then-GetFreeVariableSort[OK, {#SM}SM[#fvs, #mvs], v] → $[{#SM}Get[$S
 {#DM} C-ExtendSortMap-Scopes[( %rawHxScope⟪ [ #HxVariableList# ] #HxTerm# ⟫ ; #Scopes ), ( #ScopeSort ; #ScopeSorts ), #SM]
 →
 {#DM} C-ExtendSortMap-Scopes[#Scopes, #ScopeSorts,
-  {#DM} C-ExtendSortMap-Scopes2[#HxVariableList#, #HxTerm#, #ScopeSort, #SM]]
+  {#DM} C-ExtendSortMap-Scopes1[#HxVariableList#, #HxTerm#, #ScopeSort, #SM, {}VM]]
 ;
-    // Helper to capture local variable sorts before sort checking term. TODO: Repeat.
-    {$String<!--SortName--> : DeclarationMapEntry; HxTerm : $String} C-ExtendSortMap-Scopes2[$List[HxTerm], HxTerm, HxScopeSort, SortMap] :: SortMap ;
-    {#DM} C-ExtendSortMap-Scopes2[(), #Term, %rawHxScopeSort⟪ #HxSort# #HxRepeat# [ #HxSubstituteSorts# ] ⟫, #SM]
+
+    {HxTerm<!--variable--> : HxTerm<!--variable-->}
+    VariableMap ::=( VM; );
+
+    // Helper to get user's variable names and then link them through declaration variables to sorts...
+    {$String<!--SortName--> : DeclarationMapEntry; HxTerm : $String} C-ExtendSortMap-Scopes1[$List[HxTerm], HxTerm, HxScopeSort, SortMap, VariableMap] :: SortMap ;
+    {#DM} C-ExtendSortMap-Scopes1[(x; #xs), #Term, %rawHxBindersScopeSort⟪ [ y ] #HxBindersScopeSort# ⟫, #SM, {#VM}VM]
     →
-    {#DM} C-ExtendSortMap[#Term, U-SortName[#HxSort#], #SM]
+    {#DM} C-ExtendSortMap-Scopes1[#xs, #Term, #HxBindersScopeSort#, #SM, {#VM; y : x}VM]
     ;
-    {#DM} C-ExtendSortMap-Scopes2[(x; #xs), #Term, %rawHxBindersScopeSort⟪ [ #HxSort# binds y ] #HxBindersScopeSort# ⟫, #SM]
+    {#DM} C-ExtendSortMap-Scopes1[(), #Term, %rawHxScopeSort⟪ #HxSort# #HxRepeat# [ #HxSubstituteSorts# ] ⟫, #SM, #VM]
     →
-    C-ExtendSortMap-AddVariable[#SM, x, U-SortName[#HxSort#], B_TRUE]
+    {#DM} C-ExtendSortMap-Scopes2[#HxSubstituteSorts#, #VM, #Term, #HxSort#, #SM]
+    ;
+    {$String<!--SortName--> : DeclarationMapEntry; HxTerm : $String} C-ExtendSortMap-Scopes2[$List[HxSubstituteSort], VariableMap, HxTerm, HxSort, SortMap] :: SortMap ;
+    {#DM} C-ExtendSortMap-Scopes2[(Hx_SubstituteSort[y, #vSort]; #SubstituteSorts), {#VM}VM, #Term, #Sort, #SM]
+    →
+    {#DM} C-ExtendSortMap-Scopes2[#SubstituteSorts, {#VM}VM, #Term, #Sort, C-ExtendSortMap-AddVariable[#SM, $[{#VM}Get, y], U-SortName[#vSort], B_TRUE]]
+    ;
+    {#DM} C-ExtendSortMap-Scopes2[(), #VM, #Term, #Sort, #SM]
+    →
+    {#DM} C-ExtendSortMap[#Term, U-SortName[#Sort], #SM]
     ;
 
 // Handle meta-applications: either they define the meta-application sort arguments in SM (in pattern) or use them (in contractions).

@@ -139,7 +139,8 @@ HxForm ::=(
 
 {$String : $StringEntrySort}
 HxScopeSort ::=(
- Hx_binds[HxSort, HxTerm<!--Variable-->, HxScopeSort];
+ ///Hx_binds[HxSort, HxTerm<!--Variable-->, HxScopeSort];
+ Hx_RawBoundVariable[HxTerm<!--Variable-->, HxScopeSort];
  ///%rawHxBindersScopeSort⟪ [ %HxSort«HxSort» binds %HxVariable«HxTerm» ] %HxBindersScopeSort«HxScopeSort» ⟫;
  %rawHxScopeSort⟪ %HxSort«HxSort» %HxRepeat«HxRepeat» [ %HxSubstituteSorts«$List[HxSubstituteSort]» ] ⟫;
 );
