@@ -15,6 +15,8 @@ module edu.nyu.cs.cc.Desk {
     | ⟦ ⟨E@1⟩ + ⟨E@2⟩ ⟧@1
     ;
 
+  // Evaluation.
+
   sort Computed | scheme Eval(E) ;
   Eval(⟦ ⟨NUM#⟩ ⟧) → ⟦ $# ⟧ ;
 

@@ -470,6 +470,8 @@ net.sf.crsx.Sink N_Attribute« AttributeKindCategory[#Kind] »_†«#Name»(net.
         JJ-Token["HX_NOT"] » « JJ-Construction[%n⟨hx("AttributeNotKey")⟩, JJ-Nonterminal[%n⟨sink⟩, U-SortName[#HxSort#], %n⟨env⟩]]
       »⟧|⟦«
         JJ-Token["HX_COLON"] » « JJ-Construction[%n⟨hx("AttributeCatchAll")⟩, JJ-Nonterminal[%n⟨sink⟩, "HxMetaVariable", %n⟨env⟩]]
+      »⟧|⟦«
+        JJ-Construction[%n⟨hx("AttributeNoKeyValue")⟩, %n⟨⟩]
       »⟧)« JJ-Token["HX_RBRACE"] »⟫
     ;
     P-MetaJJ-AttributeFormSyntax[#ModuleName, %rawHxAttributeForm⟪ { #HxSort1# : #HxSort2# } ⟫, #AttributeOptions]
@@ -481,11 +483,13 @@ net.sf.crsx.Sink N_Attribute« AttributeKindCategory[#Kind] »_†«#Name»(net.
 	    JJ-Token["HX_COLON"];
 	    JJ-Nonterminal[%n⟨sink⟩, U-SortName[#HxSort2#], %n⟨env⟩];
 	)]]
-    »⟧ |⟦«
+      »⟧|⟦«
         JJ-Token["HX_NOT"] » « JJ-Construction[%n⟨hx("AttributeNotKey")⟩, JJ-Nonterminal[%n⟨sink⟩, U-SortName[#HxSort1#], %n⟨env⟩]]
-    »⟧ |⟦«
+      »⟧|⟦«
         JJ-Token["HX_COLON"] » « JJ-Construction[%n⟨hx("AttributeCatchAll")⟩, JJ-Nonterminal[%n⟨sink⟩, "HxMetaVariable", %n⟨env⟩]]
-    »⟧)« JJ-Token["HX_RBRACE"] »⟫
+      »⟧|⟦«
+        JJ-Construction[%n⟨hx("AttributeNoKeyValue")⟩, %n⟨⟩]
+      »⟧)« JJ-Token["HX_RBRACE"] »⟫
     ;
 
 // Sort declaration.
@@ -1105,7 +1109,7 @@ $[If, $[Equal, #word, #word1],
 
 {#DM} P-ProduceBodyWord2[#ModuleName, #SortName, #tagprefix, (), #word, #wordPFKs, #n, #words, #terms, #scopes, #consumer, in after . #[in,after]]
 →
-{#DM} P-ProduceBody0[#ModuleName, #SortName, $[:,#tagprefix,#word], #wordPFKs, #n, Append[#words, (%n⟨†‹#word›⟩;)], #terms, #scopes, #consumer, in1 after1 . #[%n⟪« ProductionWord[#word] »⟦« in1 »⟧⟫, after1]]
+{#DM} P-ProduceBody0[#ModuleName, #SortName, $[:,#tagprefix,#word], #wordPFKs, #n, Append[#words, (%n⟨†‹#word›⟩;)], #terms, #scopes, #consumer, in1 after1 . #[%n⟪ « ProductionWord[#word] » ⟦« in1 »⟧⟫, after1]]
 ;
 
 {#DM} P-ProduceBodyWord2[#ModuleName, #SortName, #tagprefix, (#PFK1;#PFKs), #word, #wordPFKs, #n, #words, #terms, #scopes, #consumer, in after . #[in,after]]
@@ -1117,7 +1121,7 @@ $[If, $[Equal, #word, #word1],
 ;
 
     ProductionWord[$String] :: Text;
-    ProductionWord[#word] → %n⟪†« Stringify[#word] »⟫ ;
+    ProductionWord[#word] → %n⟪†« Stringify[$[Replace, #word,$[:,"}","}"],"}  } "]] »⟫ ; // TODO: fix nesting so }+} can be allowed
 
 // (2) Common Nonterminal: (a) collect productions starting with the nonterminal and...
 

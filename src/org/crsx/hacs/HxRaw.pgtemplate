@@ -85,7 +85,8 @@ inject[<HxEmbedded>] ::=  '%<PRODUCTION_NAME>', '', '' .
 | HX_LBRACE
     ( ( <HxTerm>:# ( {AttributeKeyValue}:hx {{#}} HX_COLON <HxTerm> | {AttributeKey}:hx {{#}} ) )
     | {AttributeCatchAll}:hx HX_COLON <HxMetaVariable>
-    | {AttributeNotKey}:hx HX_NOT <HxTerm> )
+    | {AttributeNotKey}:hx HX_NOT <HxTerm>
+    | {AttributeNoKeyValue}:hx )
   HX_RBRACE
 .
 

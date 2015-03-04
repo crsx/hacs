@@ -260,6 +260,7 @@ HxAttributeValue ::=(
  %rawHxAttributeValue⟪ { %HxTerm«HxTerm» : %HxTerm«HxTerm» } ⟫;
  %rawHxAttributeValue⟪ { ¬ %HxTerm«HxTerm» } ⟫;
  %rawHxAttributeValue⟪ { : %HxMetaVariable«$String» } ⟫;
+ %rawHxAttributeValue⟪ { } ⟫;
 );
 
 
