@@ -15,9 +15,10 @@
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{rcs}
+\usepackage{enumitem}
 
 %% Macros.
-\newcommand{\HAX}{\text{HACS}\xspace}
+\newcommand{\HAX}{\text{H\kern-.1em A\kern-.1em CS}\xspace}
 \newcommand{\CRSX}{\text{CRSX}\xspace}
 \newcommand{\ie}{\textit{i.e.}\xspace}
 \newcommand{\eg}{\textit{e.g.}\xspace}
@@ -66,6 +67,27 @@
 \usepackage{listings}
 \lstset{basicstyle=\ttfamily}
 
+%%  Java.
+\lstloadlanguages{Java}
+\newcommand\inputJava[2][]{\lstinputlisting[language=Java,%
+  basicstyle=\fontfamily{ccr}\selectfont,%
+  extendedchars=true,inputencoding=utf8,sensitive,%
+  commentstyle=\color{blue}\sl,%
+  identifierstyle=\textit,%
+  keywordstyle=\Keyword,%
+  basewidth={.5em,.4em},columns=flexible,numberstyle=\scriptsize,numberblanklines=false,xrightmargin=1pc,%
+  #1]{#2}}
+
+\lstnewenvironment{Java}[1][]{\lstset{language=Java,%
+  basicstyle=\fontfamily{ccr}\selectfont,%
+  extendedchars=true,inputencoding=utf8,sensitive,%
+  commentstyle=\color{blue}\sl,%
+  identifierstyle=\textit,%
+  keywordstyle=\Keyword,%
+  basewidth={.5em,.4em},columns=flexible,numberstyle=\scriptsize,numberblanklines=false,xrightmargin=1pc,%
+  #1}\upshape}{}
+
+
 %% HACS.
 \def\Identifier#1{#1}
 \def\Keyword#1{\textsf{\color{gray}#1}}
@@ -74,10 +96,10 @@
   extendedchars=true,inputencoding=utf8,sensitive,%
   identifierstyle=\Identifier,%
   string=[d]{"},morestring=[d]{'},upquote=true,showstringspaces=false,%
-  comment=[l]{//},morecomment=[s]{/*}{*/},commentstyle=\color{blue}\rm,%
+  comment=[l]{//},morecomment=[s]{/*}{*/},commentstyle=\color{blue}\sl,%
   keywordstyle=\Keyword,%
   keywords={attribute,data,fragment,import,main,module,nested,property,rule,scheme,simplify,sort,%
-    space,static,sugar,symbol,tag,token,default,error,binds,as},%
+    space,static,sugar,symbol,tag,token,default,error,binds,as,template},%
   literate=%
     {⟦}{{\ensuremath{\llbracket}}}1 {⟧}{{\ensuremath{\rrbracket}}}1 {⟨}{{\ensuremath{\langle}}}1 {⟩}{{\ensuremath{\rangle}}}1 %
     {→}{{\ensuremath{\rightarrow}}}2 {↑}{{\ensuremath{\uparrow}}}1 {↓}{{\ensuremath{\downarrow}}}1 {¬}{{\ensuremath{\lnot}}}2 {¶}{{\P}}1 %
@@ -89,7 +111,6 @@
 \newcommand\inputhacs[2][]{\lstinputlisting[language=HACS,basewidth={.53em,.43em},columns=flexible,numberstyle=\scriptsize,numberblanklines=false,xrightmargin=1pc,#1]{#2}}
 \newcommand\hacsc{\lstinline[language=HACS]}
 \lstMakeShortInline[language=HACS,columns=fullflexible]"
-
 
 %%% \usepackage{listings}
 %%% 
@@ -129,6 +150,33 @@
 %%% \lstnewenvironment{tiger}[1][]{\lstset{language=Tiger,basewidth={.5em,.4em},columns=flexible,#1}\upshape}{}
 %%% \newcommand\inputtiger[2][]{\lstinputlisting[language=Tiger,basewidth={.5em,.4em},columns=flexible,#1]{#2}}
 %%% \newcommand\tigerc{\lstinline[language=Tiger]}
+
+%%% From stackoverflow
+%\lstset{
+%         basicstyle=\footnotesize\ttfamily, % Standardschrift
+%         %numbers=left,               % Ort der Zeilennummern
+%         numberstyle=\tiny,          % Stil der Zeilennummern
+%         %stepnumber=2,               % Abstand zwischen den Zeilennummern
+%         numbersep=5pt,              % Abstand der Nummern zum Text
+%         tabsize=2,                  % Groesse von Tabs
+%         extendedchars=true,         %
+%         breaklines=true,            % Zeilen werden Umgebrochen
+%         keywordstyle=\color{red},
+%            frame=b,         
+% %        keywordstyle=[1]\textbf,    % Stil der Keywords
+% %        keywordstyle=[2]\textbf,    %
+% %        keywordstyle=[3]\textbf,    %
+% %        keywordstyle=[4]\textbf,   \sqrt{\sqrt{}} %
+%         stringstyle=\color{white}\ttfamily, % Farbe der String
+%         showspaces=false,           % Leerzeichen anzeigen ?
+%         showtabs=false,             % Tabs anzeigen ?
+%         xleftmargin=17pt,
+%         framexleftmargin=17pt,
+%         framexrightmargin=5pt,
+%         framexbottommargin=4pt,
+%         %backgroundcolor=\color{lightgray},
+%         showstringspaces=false      % Leerzeichen in Strings anzeigen ?        
+% }
 
 %% Identifiers
 \newcommand{\set}[1]{\textit{#1}}

@@ -1,7 +1,10 @@
-module "org.crsx.hacs.samples.Deriv" {
+module org.crsx.hacs.samples.Deriv {
 
-import "Bool.hx";
-
+//// LEXICAL.
+  
+token VAR | [a-z] [A-Za-z0-9]* ;  
+token INT | [0-9]+ ;
+ 
 //// SYNTAX.
 
 // Arithmetic and basic functions.
@@ -11,37 +14,34 @@ sort Exp | ⟦ ⟨Exp@1⟩ + ⟨Exp@2⟩ ⟧@1
          | ⟦ ⟨Exp@2⟩ * ⟨Exp@3⟩ ⟧@2
          | ⟦ ⟨Exp@2⟩ / ⟨Exp@3⟩ ⟧@2
          | ⟦ ⟨Fun⟩ ⟨Exp@4⟩ ⟧@3
-         | ⟦ ⟨Int⟩ ⟧@4
+         | ⟦ ⟨INT⟩ ⟧@4
+         | ⟦ ⟨Var⟩ ⟧@4
 
          | sugar ⟦ ( ⟨Exp#⟩ ) ⟧@4 → Exp#
-         | sugar ⟦ + ⟨Exp#1@2⟩ ⟧@1 → ⟦ 0 + ⟨Exp#1⟩ ⟧ 
-         | sugar ⟦ - ⟨Exp#1@2⟩ ⟧@1 → ⟦ 0 - ⟨Exp#1⟩ ⟧
+  //         | sugar ⟦ + ⟨Exp#1@2⟩ ⟧@1 → ⟦ 0 + ⟨Exp#1⟩ ⟧ 
+  //         | sugar ⟦ - ⟨Exp#1@2⟩ ⟧@1 → ⟦ 0 - ⟨Exp#1⟩ ⟧
          ;
 
-sort Fun | ⟦sin⟧@2 | ⟦cos⟧@2 | ⟦ln⟧@2 | ⟦exp⟧@2 ;
+// Functions. 
+sort Fun | ⟦sin⟧@2 | ⟦cos⟧@2 | ⟦ln⟧@2 | ⟦exp⟧@2
+	| ⟦ [ ⟨Var binds x⟩ ↦ ⟨Exp[x as Exp]⟩ ] ⟧@2 ;
 
-token Int | [0-9]+ ;
-
-// Functionals.
-
-sort Exp | symbol ⟦ ⟨Var⟩ ⟧@4 ;
-token Var | [a-z] [A-Za-z0-9]* ;
-sort Fun | ⟦ [ ⟨[Var#1]⟩ ↦ ⟨Exp[Var#1:Exp]⟩ ] ⟧@2 ;
+sort Var | symbol ⟦⟨VAR⟩⟧ ;
 
 //// SCHEMES.
 
 sort Fun | scheme ⟦d⟨Fun@1⟩⟧@1 ;
 
 ⟦d sin⟧ → ⟦cos⟧ ;
-⟦d cos⟧ → ⟦[a ↦ - sin a]⟧ ;
+⟦d cos⟧ → ⟦[a ↦ 0 - sin a]⟧ ;
 ⟦d ln⟧  → ⟦[z ↦ 1/z]⟧ ;
 ⟦d exp⟧ → ⟦exp⟧ ;
 
 ⟦d[x ↦ ⟨Exp#1[x]⟩]⟧ → ⟦[y ↦ D(y)[z↦⟨Exp#1[z]⟩]]⟧ ;
 
-sort Exp | scheme ⟦ D ⟨Exp⟩ [⟨[Var#1]⟩↦⟨Exp[Var#1:Exp]⟩] ⟧@3 ;
+sort Exp | scheme ⟦ D ⟨Exp⟩ [⟨Var binds x⟩↦⟨Exp[x as Exp]⟩] ⟧@3 ;
 
-⟦ D⟨Exp#1⟩[x↦⟨Int#2⟩] ⟧ → ⟦0⟧ ;
+⟦ D⟨Exp#1⟩[x↦⟨INT#2⟩] ⟧ → ⟦0⟧ ;
 
 ⟦ D⟨Exp#1⟩[x↦x] ⟧ → ⟦1⟧ ;
 ⟦ D⟨Exp#1⟩[x↦y] ⟧ → ⟦0⟧ ;

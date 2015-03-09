@@ -1063,8 +1063,7 @@ P-ProductionConstructionText[#ModuleName, #SortName, #Prec, FK_ALIAS, #tag, #wor
 P-ProductionConstructionText[#ModuleName, #SortName, #Prec, FK_SYMBOL[#isStatic, #t], #tag, #words, #terms, #scopes]
 →
 %n⟪ {{<!--SYMBOL--> /***EMBEDPG: †« P-hx[#ModuleName, "VariableUseSorted"] »["†« U-Local[#SortName] »", †« P-hx[#ModuleName, "RepeatSingle"] », ***/ « WrappedTextJoin[#terms, %n⟨⟩, %n⟨ ⟩, %n⟨⟩] » /***EMBEDPG: , ()]***/ }}
-⟫
-;
+⟫;
 
     /// ∀ a . IfAliasKind[FormKind, a, a] :: a;
     /// IfAliasKind[FK_ALIAS, #1, #2] → #1 ;
@@ -1260,7 +1259,7 @@ P-ProduceBodyTerm3[$String<!--ModuleName-->, $String<!--HostSort-->, $String<!--
   #terms,
   #scopes,
   #consumer,
-  in after . #[%n⟪⟦( <†« U-Local[U-SortName[#HxSort#]] »>« WrappedTextJoin[Map[s.P-ExtractSubstitutedSort[s], #HxSubstituteSorts#], %n⟨[⟩, %n⟨,⟩, %n⟨]⟩] »^«x» ⟦« in »⟧ ) ⟧⟫, after]]
+  in after . #[%n⟪⟦( <†« {#DM} U-SymbolSortTokenName[U-SortName[#HxSort#]] »>^«x» ⟦« in »⟧ ) ⟧⟫, after]]
 ;
 
     // P special production name for non-terminals with precedence and repeat...

@@ -6,7 +6,7 @@
 \usepackage{catchfile}
 \CatchFileDef{\VERSION}{../VERSION}{}
 \def\setversion VERSION=#1\relax{\def\version{#1\xspace}}\expandafter\setversion\VERSION\relax
-\usepackage[draft]{showlabels}
+%\usepackage[draft]{showlabels}
 
 %% Style.
 \usepackage[margin=1in]{geometry}
@@ -108,11 +108,17 @@ and Appendix~\ref{app:limits} lists some current limitations.
 
 \paragraph*{Acknowledgements.} The author would like to thank my coteacher at NYU, Eva Rose, our
 graders, Ma Weicheng and José Pablo Cambronero, as well as our students in the compiler construction
-class, for constructive comments and insightful questions. A special shout-out goes to John Downs
-for starting the Emacs \texttt{M-x hacs-mode} syntax highligting mode~\cite{git:hacsel}. Finally, \HAX would not be
-remotely possible without the CRSX team at IBM: Morris Matsa, Scott Boag, and especially Lionel
-Villard, who suffered through understanding and then programming with the CRSX system that is still
-used underneath \HAX!
+class, for constructive comments to and insightful questions on \HAX.\footnote{A special shout-out
+  goes to John Downs for starting the Emacs \texttt{M-x hacs-mode} syntax highligting
+  mode~\cite{git:hacsel}.}
+%%
+The implementation of \HAX would not have been remotely possible without the CRSX team at IBM:
+Morris Matsa, Scott Boag, and especially Lionel Villard, who suffered through understanding and then
+programming both core fragments of and using the CRSX system that is still used underneath \HAX.
+%%
+An finally \HAX owes its sanity to a collaboration with Cynthia Kop, both as an intern with the
+Watson team in 2011, which created the polymorphic sort checker, and in her thesis
+work~\cite{Kop:2012} and our continuing collaboration.
 
 
 \section{Getting Started}
@@ -206,7 +212,7 @@ module org.crsx.hacs.samples.First
   // Sections.
   $\text{\it Lexical Analysis (Section~\ref{sec:tokens})}$
   $\text{\it Syntax Analysis (Section~\ref{sec:syntax})}$
-  $\text{\it Semantic Analysis (Sections \ref{sec:schemes}, \ref{sec:env}, \ref{sec:collect} and \ref{sec:sdd})}$
+  $\text{\it Semantic Analysis (Sections \ref{sec:schemes}, \ref{sec:collect} and \ref{sec:sdd})}$
   $\text{\it Code Generator (Section~\ref{sec:examples})}$
   $\text{\it Main (Section~\ref{sec:schemes})}$
 }
