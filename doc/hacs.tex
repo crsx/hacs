@@ -58,7 +58,7 @@ suitable for that stage of the compiler. Specifically, \HAX supports the followi
   \emph{tokens}. The regular expressions of \HAX follows common
   conventions~\cite{Aho+:2006}. Section~\ref{sec:tokens} gives details of this notation.
 
-\item[Context Free Grammars.] \HAX uses a form of BNF~\cite{NaurEtal:cacm1960} \emph{context free
+\item[Context Free Grammars.] \HAX uses a form of BNF~\cite{NaurEtal:cacm1960} \emph{context-free
     grammars}; the notation has been tweaked to look more like \emph{templates} to allow for reuse
   of the notation in rewrite rules later. \HAX includes simple mechanisms for automatic resolution
   of operator precedence and productions using immediate recursion such that the transformation from
@@ -70,15 +70,17 @@ suitable for that stage of the compiler. Specifically, \HAX supports the followi
   for defining auxiliary so-called ``semantic sorts,'' detailed in Section~\ref{sec:schemes}.
 
 \item[Attribute Grammars.] Analyses can often be conveniently described in the style of
-  \emph{Syntax-Directed Definitions}~\cite{Aho+:2006}, originally introduced as \emph{attribute
+  \emph{syntax-directed definitions}~\cite{Aho+:2006}, originally introduced as \emph{attribute
     grammars}~\cite{Knuth:mst1968}, which describe how properties propagate through the abstract
   syntax tree.  Section~\ref{sec:collect} details how the basic propagation rules work for
   synthesized attributes, Section~\ref{sec:sdd} explains how inherited atributes are integrated such
   that full syntax-directed definitions can be encoded.
 
-%%% TODO: blurb on symbol tables/higher order syntax.
-%%%  Section~\ref{sec:advanced} summarizes the special considerations needed when managing scoped
-%%%  symbols and binders using \emph{higher-order abstract syntax}.
+\item[Higher-order Abstract Syntax.] Most programming languages use \emph{lexical scoping}, and more
+  and more compiler internal and target representations manipulate lexical scopes as part of their
+  normal operation~\cite{MarlowPeyton-Jones:2010,Morrisett+:popl1998}. \HAX supports this by
+  providing explicit support for \emph{higher-order abstract syntax}, and integrating this with
+  support for attributes with mappings from variables to values for modeling \emph{symbol tables}.
 
 \end{description}
 %%
@@ -96,7 +98,8 @@ We explain lexical analysis in Section~\ref{sec:tokens}, %
 syntax analysis in Section~\ref{sec:syntax}, %
 basic semantic sorts and recursive translation schemes in Section~\ref{sec:schemes}, %
 bottom-up semantic analysis in Section~\ref{sec:collect}, %
-and general syntax-directed definitions in Section~\ref{sec:sdd}. %
+general syntax-directed definitions in Section~\ref{sec:sdd}. %
+and higher order abstract syntax in Section~\ref{sec:hoas}. %
 In Section~\ref{sec:comp} we explain how primitive values can be manipulated, %
 and in Section~\ref{sec:examples} we give several examples of how everything can be combined.
 
@@ -110,7 +113,8 @@ and Appendix~\ref{app:limits} lists some current limitations.
 graders, Ma Weicheng and José Pablo Cambronero, as well as our students in the compiler construction
 class, for constructive comments to and insightful questions on \HAX.\footnote{A special shout-out
   goes to John Downs for starting the Emacs \texttt{M-x hacs-mode} syntax highligting
-  mode~\cite{git:hacsel}.}
+  mode~\cite{git:hacsel} and Tyler Palsulich for a \HAX mode for Sublime
+  Text~\cite{git:hacs-sublime}.}
 %%
 The implementation of \HAX would not have been remotely possible without the CRSX team at IBM:
 Morris Matsa, Scott Boag, and especially Lionel Villard, who suffered through understanding and then
