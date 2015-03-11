@@ -1,0 +1,759 @@
+\documentclass[letterpaper]{llncs}
+\input{setup}
+
+%% Style.
+\bibliographystyle{splncs03}
+\usepackage{cite}
+
+%% Topmatter.
+\title{ Higher-order Attribute Contraction Schemes }
+\author{ Kristoffer H. Rose }
+\institute{ Two Sigma Investments, LLC \& Courant, New York University }
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+  Higher-order Attribute Contraction Schemes---or \HAX---is a practical formal language for
+  specifying executable compilers and other program manipulation tools. \HAX achieves this by
+  allowing programming directly with source code constructs that are very close to the standard
+  formal notations used in compiler teaching and research, and by combining these with native
+  support for variable scope management that exploits the full power of the underlying higher-order
+  rewriting engine.  In this paper we present the special notations that \HAX provides to make
+  compiler writers more productive, and we outline how they translate into the underlying rewriting
+  platform.
+\end{abstract}
+
+%------------------------------------------------------------------------
+
+\section{Introduction}\label{sec:intro}
+
+Many systems for writing programs that manipulate other programs, so-called \emph{meta-programming},
+have emerged over the years, ranging from generic specification languages, where the goal is to not
+define how but only declare the semantics of the program manipulation, all the way to tools that
+support specific aspects of program execution or compiler generation (we comment on several in the
+conclusion).
+
+One such system was the CRSX system~\cite{Rose:1996} developed for industrial use at IBM Research by
+a team led by the author~\cite{Rose:hor2007,Rose:hor2010,Rose:rta2011,crsx} .  CRSX is a language
+based on \emph{higher-order rewriting}~\cite{Jouannaud:klop2005} combined with \emph{higher-order
+  abstract syntax} (HOAS) \cite{PfenningElliot:pldi1988} and extensions for handling environments
+and using pluggable parsers.  The programming of the IBM Data\-Power XQuery
+compiler~\cite{dp60:ibm2013} using CRSX proved that the approach can drastically reduce the
+development time of a compiler (the cited XQuery compiler was estimated to be developed in a quarter
+of the traditional development time) as well as resulting in a rather more compact and high level
+source program.
+
+However, the CRSX notation, based on combinatory reduction systems~\cite{Klop:1980,Klop+:tcs1993},
+which combines λ calculus~\cite{Church:1941,Barendregt:1984} and term rewriting
+systems~\cite{Klop:1992:Handbook}, has proven to be unwieldy for several reasons, first of all by
+being quite different from standard notations used in compiler construction reference
+works~\cite{Aho+:2006}. Adding a polymorphic type system to CRSX (effectively changing them to
+\emph{contraction systems}~\cite{Aczel:1978} and be similar to Inductive-type-systems
+\cite{BlanquiJouannaudOkada:tcs2002}) helped but did not make the system easy enough to, for
+example, teach compiler programming.
+
+\HAX stands for \emph{Higher-order Attribute Contraction Schemes}, and is an attempt to remedy this
+by providing a front-end for CRSX that allows the use of standard notations and concepts of (formal)
+programming language descriptions to directly program compilers and other systems for manipulating
+code. As the name suggests, the notation combines HOAS with concepts from attribute
+grammars~\cite{Knuth:mst1968} and other common compiler specification
+notations~\cite{Aho+:2006}. \HAX has been successfully used to teach the graduate computer science
+compiler construction class at New York University~\cite{RoseRose:cims2015}.
+
+In this paper we illustrate how \HAX is used in practice through an annotated example, and for each
+stage we explain how the involved \HAX notations are translated into the underlying higher-order
+rewriting formalisms.
+Section~\ref{sec:parse} explains how to write parsers, %
+Section~\ref{sec:analysis} explains mechanisms for semantic analysis, %
+Section~\ref{sec:cogen} explains mechanisms for code generation, %
+Section~\ref{sec:run} completes and demonstrates the sample compiler, %
+Section~\ref{sec:further} discusses aspects of \HAX that we have not discussed and that need further
+development, %
+and finally Section~\ref{sec:conc} concludes and compares to related work.
+
+%------------------------------------------------------------------------
+
+\section{Parser}
+\label{sec:parse}
+
+Parser generators have been automated for more than fourty years~\cite{GruneJacobs:2008}, and \HAX
+follows this tradition and uses a generic LL(1) parser generation mechanism on top of
+JavaCC~\cite{JavaCC}, with four extensions that are by now pretty standard in parser generators:
+%%
+\begin{itemize}
+
+\item \emph{Precedence} of operators is handled automatically by allowing ``@\textit{precedence}''
+  marks on individual productions and nonterminal references.
+
+\item \emph{Direct left recursion} is eliminated using the standard technique~\cite{Aho+:2006}.
+
+\item \emph{Left factoring} is performed to permit common prefixes of alternative productions.
+
+\item \emph{Syntactic sugar} allows notation that serves to disambiguate or provide convenient forms
+  of the input but is removed when constructing the output tree.
+
+\end{itemize}
+%%
+In addition, \HAX supports a variant of HOAS for safe handling of scoped and global variable
+symbols.
+%%
+All this is best illustrated with an example. We have chosen the most canonical example we could
+think of as our example language, namely a simply typed λ calculus, as it exhibits the aspects of
+\HAX that we wish to discuss.
+
+\begin{figure}[t]\small
+  \begin{hacs}[texcl,xleftmargin=2em,numbers=left,firstnumber=3]
+// Tokens.
+token ID | [a-z] [a-z0-9_]*  ;
+token NUM | [0-9]+ ([.] [0-9]+)? ([Ee] [-+]? [0-9]+)? ;
+token ADDOP | [-+] ;
+
+// Variables.
+sort V  | symbol ⟦⟨ID⟩⟧ ;
+
+// Simple types (with numbers).
+sort T  | ⟦⟨T@1⟩ → ⟨T⟩⟧  | ⟦num⟧@1   | sugar ⟦(⟨T#⟩)⟧@1 →   T# ;
+
+// Simply typed λ terms (with numeric operations and tests).
+main sort L
+| ⟦ λ ⟨V binds x⟩ : ⟨T⟩ . ⟨L[x as L]⟩ ⟧
+| ⟦ ⟨L@2⟩ ? ⟨L⟩ : ⟨L@1⟩ ⟧@1
+| ⟦ ⟨L@2⟩ ⟨ADDOP⟩ ⟨L@3⟩ ⟧@2
+| ⟦ ⟨L@3⟩ ⟨L@4⟩ ⟧@3
+| ⟦ ⟨V⟩ ⟧@4
+| ⟦ ⟨NUM⟩ ⟧@4
+| sugar ⟦ ( ⟨L#⟩ ) ⟧@4  →  L#
+;
+  \end{hacs}
+  \caption{\HAX input grammar for simply typed λ calculus.}
+  \label{fig:parser}
+\end{figure}
+
+\begin{example}[input grammar]
+  %%
+  Our example language is a simply typed λ calculus with numbers, additive operators, and a ternary
+  ``positive number'' test operator.  The \HAX specification of the grammar for our example language
+  is given in Figure~\ref{fig:parser}. Notice the following:
+  %%
+  \begin{enumerate}
+
+  \item Tokens are specified with standard regular expressions~\cite{man:regex} in lines 3--6 (as
+    well as ``words'' used in the grammar productions) .
+
+  \item Grammars are specified by declaring the ``sorts'' that correspond to node types to be used
+    in the abstract syntax tree (AST); for all declarations each alternative is introduced by a
+    vertical bar~"|".
+
+  \item The special body form "symbol ⟦⟨ID⟩⟧" in line 9 makes the "V" sort special, allowing
+    automatic management of scoping for variables (more on this below).
+
+  \item In general, all concrete syntax is enclosed in "⟦…⟧", which can be seen as syntactic
+    ``quasi-quotes''~\cite{Quine:1940} with "⟨…⟩" supplying the corresponding ``unquotes.'' (The
+    notation may seem overly symbol-heavy for parsers but we shall see how it generalizes nicely in
+    the subsequent stages.)
+
+  \item The "sort T" declaration in line 12 illustrates the use of precedence annotations and
+    syntactic sugar. We first define the usual right-recursive λ calculus function type notation,
+    and then allow parenthesis for explicit grouping, which is then discarded by the parser.  Note
+    that there are two uses of $→$: the first (inside $⟦…⟧$) is interpreted literally as the
+    function type arrow that is part of the syntax of types. The second is part of the "sugar"
+    declaration that identifies what part of the syntax should be preserved (the "T#" part; the "#"
+    marks the "T" part as copyable).
+
+  \item The "sort L" declarations in lines 15--23 define standard syntax for simply typed λ calculus
+    with arithmetic. The only added notation is the HOAS binding in line~16: we here declare the
+    usual rule that each λ-bound variable is scoped over the λ-body. This is achieved by two
+    annotations: "binds x" on the "V" reference establishes that the "V" is a binder symbol, and the
+    "[x as L]" annotation on the "L" λ-body declares this to be the scope of it and that the
+    bound occurrences of the "V" token inside the "L" subterm occur as sort "L", consistent with the
+    syntax in line~20. (The "x" is merely a placeholder to link the two, in case there are multiple
+    binders in a single production.)
+
+  \item The "@"-precedence markers reveal that the abstraction in line 16 and ternary operator in
+    line 17 are right recursive, whereas additive expressions in line 18 and application in line 19
+    are left recursive.
+
+  \end{enumerate}
+  %%
+  \HAX input specifications are Unicode (UTF-8) files, and the manual gives the encodings of all
+  special characters used (along with instructions for entering them conveniently).
+  %%
+\end{example}
+
+For generating the user's parser, the implementation consists of a translation into a
+JavaCC~\cite{JavaCC} grammar that generates the abstract syntax tree (with sugar and precedence
+information removed) using standard techniques~\cite{Aho+:2006}. (To check the internal consistency
+of the specification, \HAX also generates two further internal parsers, which we discuss in the next
+section.)
+
+%------------------------------------------------------------------------
+
+\section{Analysis \& Rewriting}
+\label{sec:analysis}
+
+\HAX supports the specification of analysis and rewriting of HOAS~\cite{PfenningElliot:pldi1988}
+abstract syntax trees as defined in the previous section using a variation of higher-order
+rewriting~\cite{Jouannaud:klop2005} extended with special support for attribute grammars and
+recursive translation schemes.  Specifically, the programmer has access to
+%%
+\begin{itemize}
+
+\item \emph{syntax-directed} patterns over the defined syntax;
+
+\item rules that \emph{synthesize attributes};
+
+\item rules that \emph{recursively pass parameters}, both usual positional and implicit named
+  parameters (that also cover the rôle of \emph{inherited attributes});
+
+\item there is special notation for \emph{immutable symbol table management}; and
+
+\item special care is taken to allow natural use of HOAS with a corresponding \emph{polymorphic sort
+    system}.
+
+\end{itemize}
+
+\begin{figure}[p]\small
+  \begin{hacs}[texcl,xleftmargin=2em,numbers=left,firstnumber=25]
+attribute ↑t(T); // assigned type
+sort L | ↑t ; // type assigned to every (sub)term
+
+// Scheme to assign types.
+sort L | scheme AddTypes(L) ;
+{
+  AddTypes(#L) → WaitForType(Lte(#L)) ;
+
+  // First pass: Distribute declared types to all variables.
+  attribute ↓te{V:T}; // type environment
+  sort L | scheme Lte(L) ↓te ; // carrier scheme
+
+  Lte(⟦ λ x : ⟨T#tx⟩ . ⟨L#L[⟦x⟧]⟩ ⟧)
+     →   ⟦ λ v : ⟨T#tx⟩ . ⟨L Lte(#L[⟦v⟧]) ↓te{⟦v⟧ : #tx}⟩ ⟧ ;
+
+  Lte(⟦ ⟨L#1⟩ ? ⟨L#2⟩ : ⟨L#3⟩ ⟧)
+     →   ⟦ ⟨L Lte(#1)⟩ ? ⟨L Lte(#2)⟩ : ⟨L Lte(#3)⟩ ⟧ ;
+  Lte(⟦ ⟨L#1⟩ ⟨ADDOP#op⟩ ⟨L#2⟩ ⟧)
+     →   ⟦ ⟨L Lte(#1)⟩ ⟨ADDOP#op⟩ ⟨L Lte(#2)⟩ ⟧ ;
+  Lte(⟦ ⟨L#1⟩ ⟨L#2⟩ ⟧)		→   ⟦ ⟨L Lte(#1)⟩ ⟨L Lte(#2)⟩ ⟧ ;
+  Lte(⟦ ⟨NUM#n⟩ ⟧)		→   ⟦ ⟨NUM#n⟩ ⟧ ;
+
+  Lte(⟦ v ⟧) ↓te{⟦v⟧ : #t}	→   ⟦ v ⟧ ↑t(#t) ;
+  Lte(⟦ v ⟧) ↓te{¬⟦v⟧}		→   error⟦Undeclared variable ⟨v⟩.⟧ ;
+
+  // Second pass: populate all types.
+  sort L | scheme WaitForType(L) ;
+  WaitForType(#L ↑t(#t)) →     #L ;
+
+  // Rules to synthesize ↑t (after variables have been assigned).
+  ⟦λ x : ⟨T#tx⟩ . ⟨L#L[⟦x⟧] ↑t(#tL)⟩⟧		↑t(⟦ ⟨T#tx⟩ → ⟨T#tL⟩ ⟧) ;
+  ⟦⟨L#1↑t(#t1)⟩ ⟨L#2 ↑t(#t2)⟩⟧			↑t(ApType(#t1, #t2)) ;
+  ⟦⟨L#1↑t(#t1)⟩?⟨L#2↑t(#t2)⟩:⟨L#3↑t(#t3)⟩⟧ ↑t(IfType(#t1,#t2,#t3)) ;
+  ⟦⟨L#1↑t(#t1)⟩ ⟨ADDOP#op⟩ ⟨L#2 ↑t(#t2)⟩⟧ ↑t(OpType(#t1, #t2)) ;
+  ⟦⟨NUM#n⟩⟧	↑t(⟦num⟧) ;
+
+  sort T | ApType(T, T) ;
+  ApType(⟦ ⟨T#ta⟩ → ⟨T#tr⟩ ⟧, #ta) →     #tb ;
+  default ApType(#t1, #t2)→  error⟦Function not applied to proper argument⟧ ;
+
+  sort T | IfType(T, T, T) ;
+  IfType(⟦num⟧, #t, #t) →   #t ;
+  default IfType(#t1, #t2, #t3)→  error⟦Bad test or divergent case types⟧ ;
+
+  sort T | OpType(T, T) ;
+  OpType(⟦num⟧, ⟦num⟧) →     ⟦num⟧ ;
+  default OpType(#t1, #t2)→  error⟦Numeric operator on non-numeric types⟧ ;
+}
+  \end{hacs}
+  \caption{Type checker for typed λ calculus.}
+  \label{fig:check}
+\end{figure}
+
+\begin{example}[analysis]
+  Figure~\ref{fig:check} demonstrates how a standard type checker for our λ calculus is specified in
+  \HAX.
+  %%
+  \begin{enumerate}
+
+  \item Line 25 declares the "t" (type) attribute as \emph{synthesized}, indicated by the "↑", and
+    with values of the sort~"T".
+
+  \item Line 26 declares that every "L" (λ term) can have a synthesized "t" attribute.
+
+  \item Line 29 declares the type checking scheme, "AddTypes", to take one argument λ term and
+    return another. (We have opted for the simpler variant that any type error immediately reports a
+    fatal error instead of doing the more realistic thing of synthesizing a proper result state with
+    error messages; our example also ignores reporting line numbers.)
+
+  \item The rest of the fragment is enclosed in "{}"s, localizing the following declarations.
+
+  \item Line 31 gives the rule for the "AddTypes" scheme, which will be done in \emph{two passes},
+    expressed as two nested calls. The first pass is represented by the inner call, "Lte", which
+    will serve to annotate all variables occurrences with their declared type. The second pass, the
+    outer call, is "WaitForType", which is responsible for making sure everything else is type
+    annotated.
+
+  \item Lines 33--48 detail the first pass. It starts with line 34, which declares the "te"
+    inherited ($↓$) attribute as a map from "V" to "T" values. As mentioned above, \HAX requires
+    that inherited attributes are realized as named parameters, and this association is declared in
+    line 35, where we state that the scheme "Lte" takes an "L" parameter and "te" map.
+
+  \item "Lte" is a \emph{syntax-directed} scheme, which we realize by giving a \emph{rule} for each
+    form of the "L" argument abstract syntax. A rule consists of a \emph{pattern}, an $→$, and a
+    \emph{replacement}, much like one of the cases of a case-defined function in a modern functional
+    language.
+
+  \item Line 40, has the pattern for the ternary case of "Lte": a copy of the grammar production
+    without precedence markers but where each non-terminal subtree has been named with a
+    ``meta-variable'' like "#1", which can the be used to refer to the subtree in the replacement.
+
+  \item Line 41 has (the "→" and) the replacement for the ternary operator. In this case we just
+    return the same ternary operation, except each of the fragments have been replaced with a
+    recursive call of the scheme, \eg, the "⟨L#1⟩" part of the pattern is replaced with %
+    "⟨L Lte(#1)⟩" in the replacement, which specifies that the "L" fragment is computed by a recursive
+    call.
+
+  \item Line 41 also illustrates another point: \emph{there is no mention of the inherited
+      attribute} (or \emph{named parameter}). The rule is that each inherited attribute passed on
+    the defined scheme is implicitly copied to all recursive calls of schemes carrying the same
+    inherited attribute.
+
+  \item Lines 42--45 have similar rules for the other syntax cases, except variables and
+    abstractions.
+
+  \item Lines 47--48 have the rules for variables. First notice that the variable is \emph{not}
+    wrapped as "⟨V#v⟩": this is another consequence of "V" being declared a "symbol" sort back in
+    line~7: for symbols, \HAX allows using actual parsed instances of the variable as
+    meta-variables.
+
+  \item Lines 47--48 are also special because the two otherwise identical patterns are each equipped
+    with a \emph{map constraint}: line 47 will only be applied when the matched variable is mapped
+    by the "te" inherited attribute/named parameter, and we can match the type it maps to to "#t"
+    (which is always possible). Line 48 only matches when there is no map for "v" in the map. Note
+    that since "v" is parsed, it is \emph{always} specified inside "⟦…⟧".
+
+  \item The replacement in line 47 gives the same variable occurrence but now with an associated
+    \emph{synthesized} ("↑") attribute "t", which was the purpose of the pass.
+
+  \item Finally, we can explain the first "Lte" rule in lines 37--38, which involves HOAS
+    matching. The pattern in line 37 clearly matches a λ abstraction with no further constraints:
+    any (parsed) variable "x", any type "#tx", and any body expression with "x"s bound inside,
+    written "#L[⟦x⟧]" (since "x" must be parsed).
+
+  \item In the replacement in line 38 we construct a new λ abstraction, except it has different
+    components:
+    \begin{itemize}
+    \item We refer to the parsed variable symbol as "v".
+    \item The type component is the same.
+    \item The "L" component it obtained by a recursive call, as in the other cases.
+    \item The main term to recurse over is "#L[⟦v⟧]", which is just the original body modified to
+      use the "v" parsed variable.
+    \item The recursive call has an \emph{extended} "te" mapping, where the binding "⟦v⟧ : #tx" has
+      been added.
+    \end{itemize}
+
+  \item Lines 50--71 define the subsequent synthesis of types on all nodes. Line 51 defines the sort
+    of the top scheme, with the rule in line 52 defining that when applied it just waits for a "#L"
+    subterm where the synthesized ("↑") attribute "t" has a value, and then just returns the
+    subterm.
+
+  \item A pattern like the one in line 52 will induce \HAX to search for a way to synthesize
+    "t". This is provided by the \emph{synthesis rules} in lines 54--59. These do \emph{not} have an
+    ``$→$'' in them but just a data argument pattern followed by "↑t" with a value to
+    synthesize. The patterns are just like the previous case: one for each production \emph{except}
+    variable occurrences, as these are assumed to have already been equipped with a synthesized "t"
+    value.  For example, a numeric token synthesizes a numeric type in line 59 and the λ abstraction
+    synthesizes the right function type in line~55.
+
+  \item Lines 56--58 all invoke \emph{helper schemes} in lines 61--71 to synthesize a type. These
+    each have one good case and a ``fall-back'' case, marked "default". Line 66, for example,
+    encodes that test for positive must have a numeric type and two case types that are the same
+    type to succeed, otherwise it fails; the other helpers should be equally self-explanatory.
+
+  \end{enumerate}
+\end{example}
+
+To implement rule systems such as the above, \HAX uses the following techniques:
+%%
+\begin{itemize}
+
+\item To check that the user uses sorts and attributes correctly, \HAX builds two special parsers
+  based on the user's specification:
+  \begin{itemize}
+
+  \item A variant of the \HAX parser itself tweaked to understand what the sort is for every place
+    where "⟦…⟧" can occur and restricted to only accept declared semantic constructors and
+    attributes in their proper locations.
+
+  \item A version of the user syntax parser extended so it can parse all the contents of "⟦…⟧"
+    fragments for each sort.
+
+  \end{itemize}
+  In practice this means that \emph{sort checking is done by the parser}, which is necessary when
+  custom syntax is involved. (A similar approach is used by the Rascal
+  language~\cite{Bos+:eptcs2011}.)
+
+\item When a pattern in a rule requires the value of a particular synthesized attribute for a
+  subterm then that kicks off a recursive pass of the subterm. The rule in line 33 of
+  Figure~\ref{fig:check}, for example, is transformed internally to a pair of platform rules similar
+  to
+  \begin{hacs}
+      WaitForType(#L)  →    WaitForType2(Needs_t(#L)) ;
+      WaitForType2(#L{"t"=#t}) →       #L ;
+  \end{hacs}
+  where the second rule is now guaranteed to be applicable once the "Needs_t" traversal finishes and
+  has populated the ``annotation field'' "t" of the subtree.  It is worth noting that this only
+  works efficiently because the underlying CRSX platform optimizes the reduction strategy to have
+  good locality, so if multiple passes are requested, and show up as nested ``"Needs_"$a$''
+  wrappers, then these are evaluated together, effectively using lazy evaluation to avoid multiple
+  traversals of the argument subtree. Multiple passes are only required when a wrapper like
+  "WaitForType2" with an explicit dependency is inserted.
+
+\item Every recursive scheme is internally carrying a record with all inherited attributes, and this
+  record is populated for every rule with the values from the context call, which is what gives the
+  implicit passing of inherited attributes. Environment constraints (in the pattern) are just
+  conditionals on the incoming value, and environment extensions (in the replacement) are just
+  wrapped around the value passed on.
+
+\end{itemize}
+%%
+While the above transformations are rather naïve, they tend to work very well when the underlying
+formalism is pure term rewriting: because there is no fixed evaluation strategy, the CRSX system can
+(and does) decide to use more efficient strategies than the usual innermost (call-by-value)
+mechanism. It is also essential that the formalism is proper higher-order rewriting, because this
+permits evaluation under binders, something that HOAS implementations usually do not permit.
+
+%------------------------------------------------------------------------
+
+\section{Code Generation}
+\label{sec:cogen}
+
+Next we show how \HAX permits code generation using the same mechanisms as above. The trick is to
+define the target language in the same way as the source and any intermediate languages. Symbol
+management can be used to allocate labels and other internal names safely.
+
+\begin{figure}[p]%[t]\scriptsize
+  \begin{hacs}[texcl,xleftmargin=2em,numbers=left,firstnumber=74]
+  // Generate Java types.
+
+  sort JT | ⟦Fun < ⟨JT⟩, ⟨JT⟩ > ⟧    | ⟦Double⟧ ;
+  | scheme T2JT(T) ;
+  T2JT(⟦num⟧) →    ⟦Double⟧ ;
+  T2JT(⟦⟨T#1⟩→⟨T#2⟩⟧) →     ⟦Fun<⟨JT T2JT(#1)⟩, ⟨JT T2JT(#2)⟩>⟧ ;
+
+  // Java expression templates.
+
+  sort J | template EmitJFun(JT#tx, JT#tb, [a]J#[a as J])
+    → ⟦ new Fun <⟨JT#tx⟩,⟨JT#tb⟩> ( ) {
+          public ⟨JT#tb⟩ ap ( ⟨JT#tx⟩ ⟨V binds arg⟩ ) { return ⟨J#[arg as J]⟩; }
+         } ⟧;
+
+  sort J | template EmitJApp(J#1, J#2) →     ⟦ ⟨J#1⟩ . ap (⟨J#2⟩) ⟧ ;
+
+  sort J | template EmitJIf(J#1, J#2, J#3)
+    → ⟦ ( ⟨J#1⟩ > 0.0 ? ⟨J#2⟩ : ⟨J#3⟩ ) ⟧ ;
+  
+  sort JOp | ⟦⟨ADDOP⟩⟧ ;
+  sort J | template EmitJOp EmitJOp(JOp#op, J#1, J#2)
+    → ⟦ ( ⟨J#1⟩ ⟨JOp#op⟩ ⟨J#2⟩ ) ⟧ ;
+
+  sort J | template EmitJNum(NUM#n) →       ⟦ ( double ) ⟨NUM#n⟩ ⟧ ;
+
+  sort J | template EmitJRef(V#) →    ⟦ ⟨V#⟩ ⟧ ;
+
+  // Generate expression code.
+
+  sort J | scheme L2J(L) ;
+
+  L2J(⟦ λ x : ⟨T#tx⟩ . ⟨L#L[⟦x⟧] ↑t(#tb)⟩ ⟧)
+    → EmitJFun(T2JT(#tx), T2JT(#tb), [a]L2J(#L[a])) ;
+
+  L2J(⟦ ⟨L#1⟩ ⟨L#2⟩ ⟧)→  EmitJApp(L2J(#1), L2J(#2)) ;
+
+  L2J(⟦ ⟨L#1⟩ ? ⟨L#2⟩ : ⟨L#3⟩ ⟧)→   EmitJIf(L2J(#1), L2J(#2), L2J(#3)) ;
+
+  L2J(⟦ ⟨L#1⟩ ⟨ADDOP#op⟩ ⟨L#2⟩ ⟧)
+    → EmitJOp(⟦⟨ADDOP#op⟩⟧, L2J(#1), L2J(#2)) ;
+
+  L2J(⟦ ⟨NUM#n⟩ ⟧) →     EmitJNum(#n) ;
+
+  L2J(⟦ v ⟧) →  EmitJRef(⟦v⟧) ;
+  \end{hacs}
+  \caption{Java expression code generation.}
+  \label{fig:cogen}
+\end{figure}
+
+\begin{example}
+  Figure~\ref{fig:cogen} shows our main Java code generator, which translates a λ term to a Java
+  expression, with the following points:
+  %%
+  \begin{enumerate}
+
+  \item The first few lines, 76--79, define a syntax-directed translation scheme "T2JT" from simple
+    λ types to the Java generic representation "JT" of the type that we will use.
+
+  \item The next lines, 83--99, define the shapes of Java code that we will generate. This uses the
+    new construct "template", which is merely a shorthand for new syntax with an associated scheme:
+    ``$|~"template"~A→B$'' is the same as ``$|~"scheme"~A \mid B ; A→B $,'' where the first
+    instances have been cleared of "#"s. (Templates help eliminate typing mistakes in the output
+    syntax.)
+
+  \item The following block, lines 103--116, defines the syntax-directed scheme "L2J" for
+    translating λ expressions to Java ones.
+
+  \item Line 88, for example, contains a simple template "EmitJApp" expressing that a λ application
+    is translated to a Java use of the ".ap" method on the function (object). The template is used
+    in line~108, which translates a λ application to method invocation of the translated subterms.
+
+  \item Similarly, lines 90--91 and 110 handle positive number tests, 93--95 and 112--113 handle
+    binary operators, 97 and 115 handle numeric constants, and 99 and 117 handle variable
+    references.
+
+  \item The one case that uses HOAS in a non-trivial way is the translation of λ abstractions. Line
+    83 defines the template "EmitJFun" with three arguments: two Java types and one special higher
+    order argument: the notation "[a]J#[a as J]" means a "J"-sorted value with an unbound (also
+    called ``free'') variable (also of sort "J"). This is also reflected by the template in lines
+    84--86, which also captures the HOAS binding of the used Java argument, "arg", in the usual way.
+    The "L2J" rule in lines 105--106 translates a λ abstraction; notice how this captures both of
+    the argument and return types of the abstraction -- the latter from the synthesized attribute --
+    and then emits the function template with a third argument that invokes the "L2J" scheme
+    \emph{under} the passed binder by writing it as "[a]L2J(#L[a])". (The variable is here unparsed
+    and should not be in "⟦…⟧".)
+
+  \end{enumerate}
+  %%
+  Notice that we have chosen to use recursive syntax-directed schemes for the translation to Java in
+  the example, however, the scheme could equally well have been specified as a synthesized attribute
+  on the λ terms. Semantically, they are equivalent. The advantage to this is that the code then
+  becomes ``memoized,'' which ensures that it only gets computed once. The advantage of a recursive
+  scheme is that the new structure is indepedent from the old, which both allows and may require
+  multiple computations.
+\end{example}
+
+All the code generation rules discussed here translate directly into the underlying higher order
+rewriting mechanism~\cite{crsx}, so require no new implementation tricks.
+
+%------------------------------------------------------------------------
+
+\section{Completing the Compiler}
+\label{sec:run}
+
+To run the compiler, we just need to pack it up as a ``module'' and provide a top-level scheme.
+
+\begin{figure}[p]
+  \begin{hacs}[texcl,xleftmargin=2em,numbers=left,firstnumber=1]
+module org.crsx.hacs.samples.LambdaJava {
+  \end{hacs}
+  \begin{center}
+  \fbox{Code from Figures~\ref{fig:parser}, \ref{fig:check}, and \ref{fig:cogen}.}
+  \end{center}
+  \vspace*{-1em}
+  \begin{hacs}[texcl,xleftmargin=2em,numbers=left,firstnumber=119,deletekeywords={static,main}]
+  // Java output program template.
+  sort JClass | template EmitJClass(J#) →    ⟦
+    package org.crsx.hacs.samples;
+    public class Sample {
+      public abstract class Fun<A,R> { abstract public R ap(A arg); }
+      public static void main ( String [ ] args ) { System.out.println(⟨J#⟩) ; }
+    }
+  ⟧ ;
+
+  // Main.
+  sort JClass | Compile(L) ;
+  Compile(#L) →    EmitJClass(L2J(AddTypes(#L))) ;
+}
+  \end{hacs}
+  \caption{Complete compiler module.}
+  \label{fig:module}
+  \vspace*{2em}
+
+  %\scriptsize
+  \inputJava[texcl,xleftmargin=2em,numbers=left,tabsize=4]{Sample.java}
+
+  \caption{Result of compiling $(λ f:\text{num}→\text{num}.f\,2)(λ a:\text{num} . a \mathbin{?} a : 0-a) $.}
+  \label{fig:java}\end{figure}
+
+\begin{example}
+  Figure~\ref{fig:module} shows the completed compiler, wrapped as a module and with a top-level
+  scheme "Compile", which emits a Java class with the result of first adding types, translating to
+  Java expressions, and finally wrapping in a Java class, corresponding to the previous sections.
+
+  Storing this into a \HAX file called \emph{LambdaJava.hx}, we can compile and run it as follows:
+  \begin{code}
+    $ hacs LambdaJava.hx
+    …
+    $ ./LambdaJava.run --scheme=Compile \\
+            --term="(λ f:num→num.f 2)(λ a:num . a ? a : 0-a)"
+  \end{code}
+  %%$
+  which will result in output that we can reformat to what shown in Figure~\ref{fig:java}, a program
+  that will print \texttt{2.0}. The (evolving) example is included in the \HAX release.
+\end{example}
+
+%------------------------------------------------------------------------
+
+\section{Possible Extensions}
+\label{sec:further}
+
+While \HAX serves its purpose, there are still many things that can be improved, essentially
+supporting further features of formal notation. As we are engaging our students, we also hope to
+engage the community in finding what the best notation is for working with compilers in this way.
+
+In this section we mention some \HAX features that we have not covered, and some that we have
+planned but not yet fully implemented.
+%%
+\begin{enumerate}
+
+\item \HAX used to permit Kleene operators ("*", "+", "?") in grammar rules but it turns out that
+  this is no big help given that attribute and propagation rules have to be specified explicitly in
+  any case.
+
+\item Similarly to the way inheritance rules can be inferred for missing cases, we have experimented
+  with doing the same for synthesis rules. For synthesis rules with a single subterm with the
+  synthesized attribute this is not a problem, however, when more than one synthesized subattribute
+  has to be combined, such as in lines 54--56 in Figure~\ref{fig:check}, then the combining
+  operation is needed. We have experimented with definitions of a default ``join and unit'' style of
+  semantic operators, but have not found this clear enough for general use.
+
+\item We have experimented with allowing the use of \emph{inference rules} in the style of
+  \emph{Centaur}~\cite{Borras+:sde1988} but with higher-order matching instead of Prolog unification
+  (with its notorious ``non-occur check'' semantics). This provides an alternative to the attribute
+  grammar style used in this presentation, which is sometimes more convenient.
+
+\item \HAX also permits specifying \emph{evaluation semantics} by giving rules for actual
+  evaluation, essentially generating an \emph{interpreter} for the language, using the underlying
+  higher-order rewriting platform as the implementation language. We could, for example,
+  ``implement'' our example language by translating all syntactic applications to semantic ones,
+  like
+  \begin{hacs}
+  sort L | scheme Load(L);
+  Load(⟦⟨L#F⟩ ⟨L#A⟩⟧ → Ap(Load(#F),Load(#A));
+  …
+  \end{hacs}
+  (with ``"…"'' meaning simple recursive cases for the rest of "Load"), and then evaluate the
+  semantic applications:
+  \begin{hacs}
+  sort L | scheme Ap(L,L);
+  Ap(⟦λx:⟨T#tx⟩.⟨L#B[⟦x⟧]⟩⟧, #A⟧ →     #B[#A] ;
+  \end{hacs}
+  which uses the full higher order rewriting mechanism to implement the simply typed λ calculus with
+  the usual β reduction rule: "#B[#A]" denotes the body of the λ abstraction except all the
+  occurrences of the matched bound variable, "x", are replaced with a full copy of the "#A" term.
+
+\end{enumerate}
+%%
+Here are some notations that we are considering:
+%%
+\begin{enumerate}[resume]
+
+\item The current notation requires that vacuous recursive scheme rules, like those in line 42--47
+  of Figure~\ref{fig:check}, are explicitly given. Since recursive (syntax directed) schemes must be
+  fully defined over their (syntactic) sort, these rules could be automatically derived from the
+  fact that the scheme ("Lte") is declared as carrying an inherited attribute, which makes it syntax
+  directed by definition.
+
+\item We are considering following the ASF+SDF family and permit also direct use of inherited
+  attribute rules. In our notation, the inheritance corresponding to line 39--40 in
+  Figure~\ref{fig:check} would look something like this:
+  \begin{hacs}
+      ⟦ λ x : ⟨T#tx⟩ . ⟨L#L[⟦x⟧]  ↓te{⟦x⟧ : #tx}⟩ ⟧   ↓te ;
+  \end{hacs}
+  This essentially shifts to an implicit carrier scheme. The difficulty with rules like this is that
+  they mix the pattern and replacement parts in a more complex manner than the synthesis rules, and
+  it is not clear how to explain this well. Of course this also moves the burden of calculating the
+  strategy for sequencing the attribute propagation onto the system.
+
+\item A trend in the language specification culture is to express parts of the semantics using
+  constraints. We would like \HAX to be able to support specifications involving constraints, which
+  would allow a much simpler notation for such things as type inference algorithms, for
+  example. This would require that the runtime includes an SMT solver.
+
+\end{enumerate}
+%%
+There are many more mundane issues, such as allowing the user to omit unused "#"-markers in patterns
+that are not used.
+
+%------------------------------------------------------------------------
+
+\section{Conclusion}
+\label{sec:conc}
+
+We have presented \HAX as a compiler programming language through a small but hopefully illustrative
+example, and we have shown how the compiler-specific notations translate into existing rewrite
+notations. \HAX is available from the NYU compiler construction class web
+site~\cite{RoseRose:cims2015} and all source code is in the CRSX github project~\cite{crsx}.
+
+Compiler generation is a long and proud tradition in computer science
+\cite{GilbertMcLellan:sjcp1967,%
+  FeldmanGries:cacm1968,%
+  Mosses:daimi1979,%
+  Gaudel:fpc1981,%
+  BjornerJones:1982,%
+  CameronIto:toplas1984,%
+  Wand:sn1984,%
+  Borras+:sde1988,%
+  Brand+:toplas2002,%
+  Bos+:eptcs2011}, and \HAX truly stands on the shoulders of giants. What \HAX does differently is
+combining the state of the art in compiler generation with the full power of higher-order rewriting,
+integrating the parsing and sort systems tightly.
+
+We would like to give credit to SIS~\cite{Mosses:daimi1979}, which shares the use of
+\emph{simplification} to a λ-calculus based formalism with \HAX, as illustrated, for example, by how
+the interpretation rule can be encoded (as shown in the previous section).
+
+The most prominent system that supports implementation of compilers in formal (attribute grammar)
+form is ASF+SDF~\cite{Brand+:toplas2002}, which is based on first order rewriting. While modules
+have been added for symbol table management, these lack the full integration and easy way to handle
+scoped intermediate languages. The successor, Rascal~\cite{Bos+:eptcs2011} adds a module for HOAS,
+but Rascal specifications operate in a world of side effects, which we find hard to reconcile with
+higher-order term structures (with scopes).
+
+The notion of ``higher-order'' used by \HAX is similar to but not quite the same as in higher-order
+attribute grammars (HAG)~\cite{VogtSwierstraKuiper:pldi1989}. Like HAGs, \HAX specifications permit
+constructing and passing of abstract syntax fragments in attributes -- indeed our example uses this
+in the type synthesis rules -- but the ``higher order'' aspect of \HAX also covers the rewriting
+side, where we can build parameterized abstractions over any part of a specification, including with
+attributes. Indeed, one can use substitution inside attributes, have synthetic attributes block
+schemes (as we have seen), have lack of substitution block synthesis (leave ``unsynthesizable
+variables'' in a term), \etc
+
+\HAX supports full HOAS, even with nested reductions under unevaluated binders, yet the applications
+we consider are quite close to the examples presented for PHOAS by
+Chlipala~\cite{Chlipala:icfp2008}. We are hoping to understand how many of the results of Chlipala
+carry over to \HAX.
+
+Finally, it is clear that the formal foundation of \HAX, while based in the solid culture of higher
+order rewriting, still needs to be fully qualified and categorized in this world, so we can express
+precisely (and hopefully also implement) standard tools such as termination checking for the
+language. This is the subject of our upcoming EU-funded Marie Skłodowska-Curie ``HORIP'' action
+collaboration with Cynthia Kop.
+
+\paragraph*{Acknowledgements.} The author would like to thank my coteacher at NYU, Eva Rose, our
+graders, Ma Weicheng and José Pablo Cambronero, as well as our students in the compiler construction
+class, for constructive comments to and insightful questions on \HAX.\footnote{A special shout-out
+  goes to John Downs for starting the Emacs \texttt{M-x hacs-mode} syntax highligting
+  mode~\cite{git:hacsel}.}
+%%
+The implementation of \HAX would not have been remotely possible without the CRSX team at IBM:
+Morris Matsa, Scott Boag, and especially Lionel Villard, who suffered through understanding and then
+programming both core fragments of and using the CRSX system that is still used underneath \HAX.
+%%
+And finally \HAX owes its sanity to a collaboration with Cynthia Kop, both as an intern with the
+Watson team in 2011, which created the polymorphic sort checker, in her thesis work~\cite{Kop:2012}
+and our continuing collaboration.
+
+
+%------------------------------------------------------------------------
+
+\bibliography{crs}
+
+\end{document}
+
+
+%------------------------------------------------------------------------
+% Tell Emacs that this is a LaTeX document and how it is formatted:
+% Local Variables:
+% mode:latex
+% fill-column:100
+% TeX-master: t
+% TeX-auto-untabify: nil
+% End:
