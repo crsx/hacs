@@ -98,7 +98,7 @@ We explain lexical analysis in Section~\ref{sec:tokens}, %
 syntax analysis in Section~\ref{sec:syntax}, %
 basic semantic sorts and recursive translation schemes in Section~\ref{sec:schemes}, %
 bottom-up semantic analysis in Section~\ref{sec:collect}, %
-general syntax-directed definitions in Section~\ref{sec:sdd}. %
+general syntax-directed definitions in Section~\ref{sec:sdd}, %
 and higher order abstract syntax in Section~\ref{sec:hoas}. %
 In Section~\ref{sec:comp} we explain how primitive values can be manipulated, %
 and in Section~\ref{sec:examples} we give several examples of how everything can be combined.
@@ -120,7 +120,7 @@ The implementation of \HAX would not have been remotely possible without the CRS
 Morris Matsa, Scott Boag, and especially Lionel Villard, who suffered through understanding and then
 programming both core fragments of and using the CRSX system that is still used underneath \HAX.
 %%
-An finally \HAX owes its sanity to a collaboration with Cynthia Kop, both as an intern with the
+And finally \HAX owes its sanity to a collaboration with Cynthia Kop, both as an intern with the
 Watson team in 2011, which created the polymorphic sort checker, and in her thesis
 work~\cite{Kop:2012} and our continuing collaboration.
 
@@ -309,9 +309,10 @@ The example illustrates the following particulars of \HAX lexical expressions.
   \item A regular expressions is a sequence of units, corresponding to the concatenation of
     sequences of characters that match each one.  Each unit can be a \emph{character class} such as
     "[a-z]", which matches a single character in the indicated range (or, more generally, in one of
-    a sequence of individual characters and ranges), a \emph{string} such as \hacsc|"."|, or a
-    \emph{reference} to a token or fragment such as "⟨Lower⟩", enclosed in the special Unicode
-    mathematical angle brackets (see Table~\ref{tab:unicode}).
+    a sequence of individual characters and ranges), a \emph{string} such as \hacsc|"."| or
+    \hacsc|'foo'| (either kind of quotes is allowed), or a \emph{reference} to a token or fragment
+    such as "⟨Lower⟩", enclosed in the special Unicode mathematical angle brackets (see
+    Table~\ref{tab:unicode}).
 
   \item A "token fragment" declaration means that the defined token can only be used in other token
     declarations, and not in syntax productions.
@@ -815,9 +816,34 @@ Unif(Unif(Int, Float), Int) → Unif(Float, Int) → Float
   %%
   Note how overlaps are allowed but please do verify determinacy, \ie, if a particular combination
   of arguments can be subjected to two rules then they should give the same result! In this example
-  i happens because the term "Unif(Float,Float)" can be rewritten by both the rule in line 7 and 8,
+  it happens because the term "Unif(Float,Float)" can be rewritten by both the rule in line 7 and 8,
   but it does not matter, because the result is the same.
   %% 
+\end{example}
+
+\begin{figure}[p]
+  \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/SZ.hx}
+  \caption{Peano numbers with addition and lists (\emph{SZ.hx}).}
+  \label{fig:sz}
+\end{figure}
+
+\begin{example}
+  Consider the complete \HAX script in Figure~\ref{fig:sz}. Lines 3--12 define a syntax of
+  expressions with lists, sums, external references, and the Peano convention that "0" stands for
+  itself and "s"$n$ stands for $n+1$. Line 15 defines a new semantic data sort, "Value", which
+  represents the same information but outside of syntax brackets. Line 18 defines a scheme as
+  before, except now it is defined in lines 19--23 also over the data forms with arguments. In lines
+  25--31 we give a traditional syntax directed translation from the syntactic "Exp" format to the
+  semantic "Value" form. When we try to run the script on a single example:
+  \begin{code}[commandchars=\\\{\}]
+$ \textcolor{blue}{hacs SZ.hx}
+…
+$ \textcolor{blue}{./SZ.run --scheme=Trans --term="s0+s0"}
+« $Print2-SZ$Value[SZ$Value_Succ[SZ$Value_Succ[SZ$Value_Zero]], 0] »
+  \end{code}
+  we get the right result, which is the Peano numeral for $2$, however, \emph{it is not printed
+    properly}: the "Succ" constructors show up in internal form. This is because \emph{semantic data
+    structures have no syntax so cannot be printed}.
 \end{example}
 
 
@@ -895,7 +921,7 @@ in the appendix Manual~\ref{man:attributes}.
 \begin{notation}[value synthesis rules]\leavevmode
   \begin{enumerate}
 
-  \item Synthesized simple attributes are declared with deckarations like $"attribute"↓a(S);$ with
+  \item Synthesized simple attributes are declared with declarations like $"attribute"↑a(S);$ with
     $a$ a lower case attribute name and $S$ the sort name.
 
   \item The synthesized attribute $a$ is associated with a sort by adding the pseudo-production
@@ -982,7 +1008,7 @@ We have now described how to use ``top-down'' recursive schemes with positional 
 traditional compiler specification is the use of \emph{inherited} named attributes, which are
 distributed top-down, like parameters. \HAX supports this with a hybrid combination of implicit
 named parameters for recursive schemes, that we describe here. The section introduces features of
-\HAX covered in the appendix Manual~\ref{man:attributes},
+\HAX covered in the appendix Manual~\ref{man:attributes}.
 
 One of the main uses of inherited attributes in formal compiler specifications is \emph{symbol
   management}. We shall focus here on the \HAX notion of \emph{environment}, which fills this niche
@@ -1039,22 +1065,21 @@ Here are the steps to follow to translate the above SDD fragment to \HAX.
 \item The first thing to do is to encode the grammar (assuming an existing $T$ sort of types and
   "ID" tokens as before):
 \begin{hacs}
-   main sort S  | ⟦ ⟨T⟩ ⟨Name⟩ = ⟨E⟩ ; ⟨S⟩ ⟧ ;
-   sort E  | ⟦ ⟨E⟩ + ⟨E@1⟩ ⟧   | ⟦ ⟨Name⟩ ⟧@1 ;
-   sort Name | ⟦⟨ID⟩⟧ ;
+   main sort S  | ⟦ ⟨T⟩ ⟨ID⟩ = ⟨E⟩ ; ⟨S⟩ ⟧ ;
+   sort E  | ⟦ ⟨E⟩ + ⟨E@1⟩ ⟧   | ⟦ ⟨ID⟩ ⟧@1 ;
 \end{hacs}
   %%
-  The "Name" sort is declared as a "symbol" sort so we can use it in maps next; the rest of the
+  The "ID" sort is declared as a "symbol" sort so we can use it in maps next; the rest of the
   syntax specification follows the rules given previously. We assume that the "T" sort is defined
   elsewhere with the possible types.
 
 \item Once the grammar is defined, we can declare the new attribute:
 \begin{hacs}
-   attribute ↓e{Name : T} ;
+   attribute ↓e{ID : T} ;
 \end{hacs}
   Like synthesized attributes, inherited attributes are always given lower case names.
-  The "{Name : T}" part declares the value of the attribute to be a \emph{mapping} from values of
-  "Name" sort to values of "T" sort. Such mappings take the rôle of symbol tables from traditional
+  The "{ID : T}" part declares the value of the attribute to be a \emph{mapping} from values of
+  "ID" sort to values of "T" sort. Such mappings take the rôle of symbol tables from traditional
   compilers.
 
 \item The second thing to do is to associate the inherited attribute to one or more \emph{recursive
@@ -1098,7 +1123,7 @@ Here are the steps to follow to translate the above SDD fragment to \HAX.
   using a ``Lookup'' meta-function that is meant to suggest that we extract the mapping from the
   $E.e$ environment inherited from the context. We start with a template like this:
 \begin{hacs}
-   Ee(⟦⟨Name#1⟩⟧)  →  ⟦⟨Name#1⟩⟧ ;
+   Ee(⟦⟨ID#1⟩⟧)  →  ⟦⟨ID#1⟩⟧ ;
 \end{hacs}
   which just states that the $e$ attribute is inherited ``into'' a name subterm (through "Ee"),
   essentially making $E.e$ available, but the rule does not use the inherited attribute.
@@ -1106,38 +1131,39 @@ Here are the steps to follow to translate the above SDD fragment to \HAX.
   the ``Lookup'' in the inherited environment. \HAX has a special notation for this: write the
   pattern as follows:
 \begin{hacs}
-   Ee(⟦⟨Name#1⟩⟧) ↓e{#1 : #t}  →     …
+   Ee(⟦⟨ID#1⟩⟧) ↓e{#1 : #t}  →     …
 \end{hacs}
   The pattern of this rule is equipped with a \emph{mapping constraint} on the "e" inherited
   attribute, which corresponds to the "Lookup" notation of \thetag{3} above. It will match when "Ee"
   is applied to a name, called "#1", which is \emph{also} mapped by the associated "e" attribute
   to a type, which we call~"#t". After we have captured the mapped type this way, we can complete
-  the rule by explicitly associating it to the "t" attribute associated with "Namet".
+  the rule by explicitly associating it to the "t" attribute associated with "ID" expressions.
 \begin{hacs}
-   Ee(⟦⟨Name#1⟩⟧) ↓e{#1 : #t}  →     ⟦⟨Name#1⟩⟧ ↑t(#t) ;
+   Ee(⟦⟨ID#1⟩⟧) ↓e{#1 : #t}  →     ⟦⟨ID#1⟩⟧ ↑t(#t) ;
 \end{hacs}
   Notice how mappings like "e" use "{}" notation for both declarations and constraints, and simply
   valued attributes like "t" use~"()".
 
 \item Finally, we can encode \thetag{1}. It starts as
 \begin{hacs}
-   Se(⟦⟨T#1⟩ ⟨Name#2⟩ = ⟨E#3⟩; ⟨S#4⟩⟧)  →      ⟦⟨T#1⟩ ⟨Name#2⟩ = ⟨E Ee(#3)⟩; ⟨S Se(#4)⟩⟧ ;
+   Se(⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E#3⟩; ⟨S#4⟩⟧)  →      ⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E Ee(#3)⟩; ⟨S Se(#4)⟩⟧ ;
 \end{hacs}
   which merely establish  the basic rules that the $S.e$ attribute inherited from the context (through
   the left hand "Se") is passed to both $E_3$ and $S_4$ through the right "Ee" and "Se",
   respectively. This captures everything except the ``Extend'' notation. \HAX supports this by
   allowing mapping constraints also on the right side of the "→" acting as \emph{extensions} of the
   map.
-\begin{hacs}
-   Se(⟦⟨T#1⟩ ⟨Name#2⟩ = ⟨E#3⟩; ⟨S#4⟩⟧)
-   →   ⟦⟨T#1⟩ ⟨Name#2⟩ = ⟨E Ee(#3)⟩; ⟨S Se(#4) ↓e{#2 : #1}⟩⟧ ;
-\end{hacs}
-  We recommend that you study carefully how the "⟦…⟧" and "⟨…⟩" nest: the first wrap syntax fragments, and the
-  second wrap raw (non-syntax) fragments inside syntax. Attribute constraints are always in the raw fragments.
+  \begin{hacs}
+   Se(⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E#3⟩; ⟨S#4⟩⟧)
+   →   ⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E Ee(#3)⟩; ⟨S Se(#4) ↓e{#2 : #1}⟩⟧ ;
+  \end{hacs}
+  We recommend that you study carefully how the "⟦…⟧" and "⟨…⟩" nest: the first wrap syntax
+  fragments, and the second wrap raw (non-syntax) fragments inside syntax. Attribute constraints are
+  always in the raw fragments.
 
 \end{enumerate}
 
-\begin{figure}[t]
+\begin{table}[h]
   \begin{displaymath}\small
     \begin{array}{c|p{.4\textwidth}|p{.4\textwidth}}
       \hline\hline
@@ -1191,8 +1217,8 @@ Here are the steps to follow to translate the above SDD fragment to \HAX.
       \hline
     \end{array}
   \end{displaymath}
-  \caption{Attribute constraints.}\label{fig:attributes}
-\end{figure}
+  \caption{Attribute constraints.}\label{tab:attributes}
+\end{table}
 
 \begin{notation}[attributes]\leavevmode
   \begin{enumerate}
@@ -1214,8 +1240,8 @@ Here are the steps to follow to translate the above SDD fragment to \HAX.
       \left\{
       \begin{matrix}
         (\,S\,) \\
-        \{\,S\,\} \\
-        \{\,S : S'\,\}
+        \{\,S'\,\} \\
+        \{\,S' : S\,\}
       \end{matrix}
       \right\}
       \,;
@@ -1228,36 +1254,24 @@ Here are the steps to follow to translate the above SDD fragment to \HAX.
       attribute.
     \item $a$ is the attribute name, a lower case indentifier.
     \item The last unit gives the category and sort(s) of the attribute: $(S)$ is a simply valued
-      attribute of sort $S$, $\{S\}$ an attribute with a set of $S$-members, and $\{S:S'\}$ an
-      attribute with a map from $S$-values to $S'$-values, where $S$ must be a token sort.
+      attribute of sort $S$, $\{S'\}$ an attribute with a set of $S'$-members, and $\{S':S\}$ is an
+      attribute with a map from $S'$-values to $S$-values. For sets and maps, the $S'$ sort must be
+      either a token sort or a sort with a single "symbol" case.
     \end{itemize}
 
   \item With $D$ denoting data terms and $F$ ``function'' terms, \ie, applied schemes, we have the
-    conventions of Figure~\ref{fig:attributes} in \HAX rules.  Note that one can have several
+    conventions of Table~\ref{tab:attributes} in \HAX rules.  Note that one can have several
     constraints on a single (data or function) term, as long as they are all properly declared (for
     the appropriate sort or scheme, respectively.
 
   \end{enumerate}
 \end{notation}
 
-\begin{figure}[t!]
+\begin{figure}[p]
   \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/LetrecMap.hx}
   \caption{Synthesizing and then inheriting an environment.}
   \label{fig:letrec}
-\end{figure}
-
-\begin{example}
-  Figure~\ref{fig:letrec} illustrates how an environment can be synthesized and then inherited. The
-  \HAX script implements variable substitutions of mutually recursive bindings, which is essentially achieved
-  by two ``passes,'' one for synthesizing an environment that contains the collected bindings, and a
-  second pass that actually distributes and applies the collected (now inherited) environment to the
-  target variable.
-\end{example}
-
-The examples we have shown so far have very simple attribute dependencies. Let us finish with an
-example with more complicated attribute dependencies.
-
-\begin{figure}[t]
+  \vspace*{2em}
   \begin{equation*}
     \begin{array}{r@{\,}l|lr}
       \hline
@@ -1287,6 +1301,17 @@ example with more complicated attribute dependencies.
   \label{fig:sdd}
 \end{figure}
 
+\begin{example}
+  Figure~\ref{fig:letrec} illustrates how an environment can be synthesized and then inherited. The
+  \HAX script implements variable substitutions of mutually recursive bindings, which is essentially achieved
+  by two ``passes,'' one for synthesizing an environment that contains the collected bindings, and a
+  second pass that actually distributes and applies the collected (now inherited) environment to the
+  target variable.
+\end{example}
+
+The examples we have shown so far have very simple attribute dependencies. Let us finish with an
+example with more complicated attribute dependencies.
+
 \begin{figure}[p]
 \begin{hacs}[numbers=right,texcl]
 sort Type  | Int | Float | TypeError
@@ -1306,7 +1331,7 @@ sort Exp | ↑t;
 ⟦ ⟨FLOAT#⟩ ⟧ ↑t(Float);
 // Missing case: variables -- handled by Ee below.
 
-attribute↓e{Name:Type};  // inherited type environment
+attribute↓e{ID:Type};  // inherited type environment
 sort Exp | scheme Ee(Exp) ↓e ;  // propagates e over Exp
 
 // These rules associate t attribute with variables (missing case above).
@@ -1357,7 +1382,7 @@ Se (⟦ ⟧ ↑#syn) → ⟦ ⟧ ↑#syn ;
     there are two cases for identifier, line 22 and 23, corresponding to whether the identifier is
     defined in the environment or not, with the latter resulting in an "error" message in special
     \HAX form. Also notice how the recursive rules in lines 25--28 take care to preserve all
-    synthesized attributes on the termss that are traversed by using a catch-all "↑#syn" constraint.
+    synthesized attributes on the terms that are traversed by using a catch-all "↑#syn" constraint.
 
   \item In total, lines 9--28 fully capture rules \thetag{E1--E5}. The \HAX specification adds the
     condition on evaluation that we must first apply the environment and then synthesize the type.
@@ -1392,7 +1417,7 @@ Se (⟦ ⟧ ↑#syn) → ⟦ ⟧ ↑#syn ;
   symbols that are part of the formalism, like "S" and "Se": "v" is always enclosed in $⟦⟧$s
 
   The environment helpers get translated to native \HAX environment patterns from
-  Figure~\ref{fig:attributes} as follows:
+  Table~\ref{tab:attributes} as follows:
   %% 
   \begin{itemize}
 
@@ -1602,7 +1627,7 @@ representation.  In this section we work through some examples of this.
       "token SYMBOL | [a-z]+ ('_'"~"[0-9]+)* ;"
     \end{displaymath}
     When you do this then you are allowed to use symbols of the specified kind in patterns, \ie, a
-    rule lile
+    rule like
     \begin{displaymath}
       "F(⟦x_1⟧) →   ⟦ x_1 + x_2 ⟧ ;"
     \end{displaymath}
@@ -1709,7 +1734,7 @@ Check( ⟦ ⟨WORD#w⟩ in ⟨List#rest ↑z{¬#w}⟩ ⟧ ) → ⟦No, the list 
   \item Line 11 has a few more notations in play.  First, the \emph{pattern} part of the rule
     includes the inner pattern "↑z{:#ws}". This specifies that the special meta-variable ``":#ws"''
     captures all the existing members of the "z" set.  Second, the result of the rule is to add
-    \emph{two} new things to the top level of the rule: "↑z{:ws} ↑z{#w}". This adds \emph{both} the
+    \emph{two} new things to the top level of the rule: "↑z{:#ws} ↑z{#w}". This adds \emph{both} the
     existing members (just matched) \emph{and} the one new member "#w" to the result set.
 
   \item Lines 24 and 25 are almost the same: the one difference is that 24 matches sets that contain
@@ -2209,7 +2234,7 @@ space [ \t\f\r\n] | nested "/*" "*/" | "//" .* ;
     \begin{enumerate}
     \item by immediately prefixing with the sort (as in "Exp⟦1+2⟧"), or
     \item by using as the argument of a defined constructor (as "IsType(⟦mytype⟧)"), or
-    \item by usng as an attribute value, or
+    \item by using as an attribute value, or
     \item by using as a top level rule pattern or replacement term with a defined current sort.
     \end{enumerate}
 
@@ -2450,7 +2475,7 @@ mycompiler.crs: Parse error in embedded myDecSome term at line 867, column 42:
   This indicates a concrete syntax error in some parsed syntax---inside "⟦…⟧"---in the \emph{.hx}
   file. The offending fragment is given in double angles in the message. Check that it is correctly
   entered in the \HAX specification in a way that corresponds to a syntax production. Note that the
-  line/column numbers refer to the generated \emph{build/…Rules.crs} file, which us not immediately
+  line/column numbers refer to the generated \emph{build/…Rules.crs} file, which is not immediately
   helpful (this is a known bug). In error messages a sort is typically referenced as a lower case
   prefix followed by the sort name---here "myDecSome" indicates that the problem is with parsing the
   "DecSome" sort of the "My" parser.
@@ -2619,8 +2644,6 @@ sort ThenB | ⟦ then ⟨B⟩ ⟧;
   lower case letter.
 
 \item Special terms like "error⟦…⟧" cannot be used as raw subterms.
-
-\item The "default" and "priority" rule qualifiers are rather fragile and do not yet always work.
 
 \item Synthesized attribute patterns with pattern matching in the attributes may not always work.
 
