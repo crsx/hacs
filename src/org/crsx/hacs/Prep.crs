@@ -723,17 +723,22 @@ net.sf.crsx.Sink N_†« U-Local[#SortName] »(net.sf.crsx.Sink sink, net.sf.crs
 
     {$String<!--SortName--> : DeclarationMapEntry} P-MetaJJ-Production-HxScopeSort[$String<!--ModuleName-->, HxScopeSort, $String<!--SortName-->, Text<!--Environment-->, $Numeric<!--ArgCount-->] :: Text;
 
+    -[Data[#n]]:
     {#DM} P-MetaJJ-Production-HxScopeSort[#ModuleName, %rawHxBindersScopeSort⟪ [ v ] #HxBindersScopeSort# ⟫, #SortName, #env, #n]
     →
-    %n⟪{ b = new net.sf.crsx.util.Buffer(sink); s = b.sink(); }
+    %n⟪« $[If, $[NumericEqual,0,#n], %n⟨<T_HX_LBRACKET>⟩, %n⟨<T_HX_COMMA>⟩] »
+{ b = new net.sf.crsx.util.Buffer(sink); s = b.sink(); }
 N_HxVariable(s, env)
 { String ‹v› = net.sf.crsx.util.Util.symbol(b.term(true)); bs.add(‹v›); vs.add(sink.makeVariable(‹v›, true)); }
 « {#DM} P-MetaJJ-Production-HxScopeSort[#ModuleName, #HxBindersScopeSort#, #SortName, %n⟨‹#env›.extend(bs.get(†‹ $[FormatNumber,#n] ›), vs.get(†‹ $[FormatNumber,#n] ›))⟩, $[Plus,#n,1]]
     »⟫;
 
+    -[Data[#n]]:
     {#DM} P-MetaJJ-Production-HxScopeSort[#ModuleName, %rawHxScopeSort⟪ #HxSort# #HxRepeat# [ #HxSubstituteSorts# ] ⟫, #SortName, #env, #n]
     →
-    JJ-Construction[%n⟪hx("Scope")⟫, %n⟪« JJ-Construction[%n⟨"$Nil"⟩, %n⟨⟩] »¶{sink=sink.binds(vs.toArray(new net.sf.crsx.Variable[vs.size()]));} ¶« JJ-Nonterminal[%n⟨sink⟩, U-SortName[#HxSort#], #env] »⟫]
+    TextConcat[« $[If, $[NumericEqual,0,#n], %n⟨(<T_HX_LBRACKET><T_HX_RBRACKET>)?⟩, %n⟨<T_HX_RBRACKET>¶⟩] »,
+      JJ-Construction[%n⟪hx("Scope")⟫, %n⟪« JJ-Construction[%n⟨"$Nil"⟩, %n⟨⟩] »¶{sink=sink.binds(vs.toArray(new net.sf.crsx.Variable[vs.size()]));} ¶« JJ-Nonterminal[%n⟨sink⟩, U-SortName[#HxSort#], #env] »⟫]
+    ]
     ;
     // TODO: should not ignore #Repeat.
 

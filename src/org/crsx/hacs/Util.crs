@@ -362,11 +362,16 @@ U-GetConstructorScopeSorts2[#Constructor,{#C2SS}N2SS] → $[{#C2SS}Get[$List[HxS
 -[Data[#SortName]]:
 {#DM}U-SymbolSortTokenName[#SortName]
 →
-U-SymbolSortTokenName2[$[{#DM}Get[DeclarationMapEntry],#SortName,DME_NONE]]
-;
-    U-SymbolSortTokenName2[DeclarationMapEntry] :: $String ;
-    U-SymbolSortTokenName2[DME_SORT[(D_FORM[#Form, FK_SYMBOL[#static, #TokenName]];), #Name, #Precs, #Wrapper, #IsMain]] → #TokenName ;
-    ///U-SymbolSortTokenName2[$[NotMatch,DME_SORT[(D_FORM[#Form, FK_SYMBOL[#static, #TokenName]];), #Name, #Precs, #Wrapper, #IsMain], #_]] → "" ;
+///$[Trace, {#DM} U-SymbolSortTokenName1[#SortName]]
+///;
+///{$String<!--SortName--> : DeclarationMapEntry} U-SymbolSortTokenName1[$String<!--SortName-->] :: $String ;
+///{#DM} U-SymbolSortTokenName1[#SortName]
+///→
+U-SymbolSortTokenName2[$[{#DM}Get[DeclarationMapEntry],#SortName,DME_NONE], #SortName] ;
+
+    U-SymbolSortTokenName2[DeclarationMapEntry, $String] :: $String ;
+    U-SymbolSortTokenName2[DME_SORT[(D_FORM[#Form, FK_SYMBOL[#static, #TokenName]];), #Name, #Precs, #Wrapper, #IsMain], #SortName] → #TokenName ;
+    U-SymbolSortTokenName2[$[NotMatch,DME_SORT[(D_FORM[#Form, FK_SYMBOL[#static, #TokenName]];), #Name, #Precs, #Wrapper, #IsMain], #_], #SortName] → #SortName ;
 
 // Extract constructors-sorts relationship.
 
