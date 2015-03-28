@@ -971,23 +971,24 @@ U-MakeDM-ExtraInformation[$String<!--ModuleName-->, DeclarationMap] :: Declarati
 U-MakeDM-ExtraInformation1[$String<!--ModuleName-->, DeclarationMap] :: DeclarationMap ;
 U-MakeDM-ExtraInformation1[#ModuleName, {#DM}DM]
 →
-{#DM} U-MakeDM-ExtraInformation2[{#DM} U-MakeAllNames, {#DM} U-MakeSortNames, {#DM} U-MakeTokenNames,
+{#DM} U-MakeDM-ExtraInformation2[#ModuleName, {#DM} U-MakeAllNames, {#DM} U-MakeSortNames, {#DM} U-MakeTokenNames,
   {#DM} U-MakeInheritedNames, {#DM} U-MakeInheritedMapNames, {#DM} U-MakeSynthesizedNames, {#DM} U-MakeSynthesizedMapNames,
   {#DM} U-MakeAttribute2Form[#ModuleName], {#DM} U-MakeAttribute2KeySort[#ModuleName], {#DM} U-MakeAttribute2ValueSort[#ModuleName],
   {#DM} U-MakeConstructor2Sort[#ModuleName], {#DM} U-MakeConstructor2ScopeSorts[#ModuleName],
   {#DM} U-MakeSort2Synthesized[#ModuleName], {#DM} U-MakeFunction2Inherited[#ModuleName], {#DM} U-MakeSort2UserConstructors[#ModuleName]]
 ;
     {$String<!--SortName--> : DeclarationMapEntry}
-    U-MakeDM-ExtraInformation2[NameSet<!--AllNames-->, NameSet<!--Sorts-->, NameSet<!--Tokens-->,
+    U-MakeDM-ExtraInformation2[$String<!--ModuleName-->, NameSet<!--AllNames-->, NameSet<!--Sorts-->, NameSet<!--Tokens-->,
       NameSet<!--Inherited-->, NameSet<!--InheritedMaps-->, NameSet<!--Synthesized-->, NameSet<!--SynthesizedMaps-->,
       AttributeFormMap, NameMap<!--Attribute2KeySort-->, NameMap<!--Attribute2ValueSort-->,
       NameMap<!--Constructor2Sort-->, Name2ScopeSorts<!--Constructor2ScopeSorts-->,
       Name2NamesMap<!--Sort2Synthesized-->, Name2NamesMap<!--Function2Inherited-->, Name2NamesMap<!--Sort2UserConstructors-->] :: DeclarationMap ;
 
     -[Data[#AllNames,#SortNames,#TokenNames,#InheritedNames,#InheritedMapNames,#SynthesizedNames,#SynthesizedMapNames,#Attribute2Form,#Attribute2KeySort,#Attribute2ValueSort,#Constructor2Sort,#Constructor2ScopeSorts,#Sort2Synthesized,#Function2Inherited,#Sort2UserConstructors]]:
-    {#DM} U-MakeDM-ExtraInformation2[#AllNames, #SortNames, #TokenNames, #InheritedNames, #InheritedMapNames, #SynthesizedNames, #SynthesizedMapNames, #Attribute2Form, #Attribute2KeySort, #Attribute2ValueSort, #Constructor2Sort, #Constructor2ScopeSorts, #Sort2Synthesized, #Function2Inherited, #Sort2UserConstructors]
+    {#DM} U-MakeDM-ExtraInformation2[#ModuleName, #AllNames, #SortNames, #TokenNames, #InheritedNames, #InheritedMapNames, #SynthesizedNames, #SynthesizedMapNames, #Attribute2Form, #Attribute2KeySort, #Attribute2ValueSort, #Constructor2Sort, #Constructor2ScopeSorts, #Sort2Synthesized, #Function2Inherited, #Sort2UserConstructors]
     →
     {#DM;
+       "Module$Name" : DME_STRING[#ModuleName];
        "All$Names" : DME_NAMES[#AllNames];
        "All$SortNames" : DME_NAMES[#SortNames];
        "All$TokenNames" : DME_NAMES[#TokenNames];
@@ -1005,6 +1006,10 @@ U-MakeDM-ExtraInformation1[#ModuleName, {#DM}DM]
        "All$Sort2UserConstructors" : DME_N2NM[#Sort2UserConstructors]}
     DM
     ;
+
+{$String<!--SortName--> : DeclarationMapEntry}
+U-ModuleName :: $String;
+{#DM; "Module$Name" : DME_STRING[#ModuleName]} U-ModuleName → #ModuleName ;
 
 // Generate all names!
 
@@ -1482,7 +1487,7 @@ U-DefineString2[D_RULE[#rule, #sort, #isdata]] → U-RuleString[#rule] ;
     U-RuleString[%rawHxRule⟪ #HxRulePrefix# #HxTopPattern# → #HxTopTerm# ⟫] → StringJoin[(U-RulePrefixString[#HxRulePrefix#]; U-TermString[#HxTopPattern#]; "→"; U-TermString[#HxTopTerm#];), " "] ;
 
     U-RulePrefixString[HxRulePrefix] :: $String ;
-    U-RulePrefixString[%rawHxRulePrefix⟪ #HxRulePriority# [ #HxRuleOptions# ] ⟫] → StringConcat[U-RulePriorityString[#HxRulePriority#], WrappedStringJoin[#HxRuleOptions#, " [", ", ", "]"]] ;
+    U-RulePrefixString[%rawHxRulePrefix⟪ #HxRulePriority# [ #HxRuleOptions# ] ⟫] → StringConcat[U-RulePriorityString[#HxRulePriority#], WrappedStringJoin[Map[t."o", #HxRuleOptions#], " [", ", ", "]"]] ;
 
     U-RulePriorityString[HxRulePriority] :: $String ;
     U-RulePriorityString[%rawHxRulePriority⟪ priority ⟫] → "priority" ;

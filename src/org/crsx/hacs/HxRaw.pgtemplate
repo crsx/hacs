@@ -4,7 +4,7 @@
 class org.crsx.hacs.HxRaw :
 %%%HXNONTERMINALS%%%
 <HxTopTerm>, <HxTopPattern>, <HxAttributes>, <HxSortName>, <HxConstructor>, 
-<HxTerms>, <HxTerm>, <HxVariables>, <HxAttribute>, <HxAttributeValue>, <HxScopes>, <HxScope>, <HxConcrete>, <HxConcreteText>
+<HxTerms>, <HxTerm>, <HxAttribute>, <HxAttributeValue>, <HxScopes>, <HxScope>, <HxConcrete>, <HxConcreteText>
 
 prefix "raw"
 
@@ -70,9 +70,6 @@ inject[<HxEmbedded>] ::=  '%<PRODUCTION_NAME>', '', '' .
 
 <HxScopes> ::= {$Cons} <HxScope> (HX_COMMA <HxScopes> | {$Nil}) .
 <HxScope> ::= {Scope}:hx (HX_LBRACKET (<HxVariableList> | {$Nil}) HX_RBRACKET | {$Nil}) <HxTerm> .
-
-<HxVariables> ::= {$Cons} <HxVariable>!!! <HxVariables> | {$Nil} .
-<HxVariableList> ::= {$Cons} <HxVariable>!!! ( HX_COMMA <HxVariableList> | {$Nil} ) .
 
 <HxTerms> ::= {$Cons} <HxTerm> (HX_COMMA <HxTerms> | {$Nil}) .
 

@@ -105,9 +105,9 @@
 <HxBindersScopeSort> ::= HX_LBRACKET <HxBindersScopeSortInside> | <HxScopeSort> .
 <HxBindersScopeSortInside> ::= {RawBoundVariable}:hx <HxVariable>!!! <HxBindersScopeSortInsideTail> .
 <HxBindersScopeSortInsideTail> ::= HX_COMMA <HxBindersScopeSortInside> | HX_RBRACKET <HxBindersScopeSort> .
-/// TODO: Use plain HxVariables above (was the below).
-/// <HxBindersScopeSortInside> ::= <HxSort>:#Sort HX_BINDS:hx {{#Sort}} <HxVariable>!!! <HxBindersScopeSortInsideTail> .
 
+<HxVariableList> ::= {$Cons} <HxVariable>!!! ( HX_COMMA <HxVariableList> | {$Nil} ) .
+		 
 <HxScopeSort> ::= {ScopeSort}:hx <HxSort> <HxRepeat> (HX_LBRACKET <HxSubstituteSorts> HX_RBRACKET | {$Nil}) .
 
 <HxSubstituteSorts> ::= {$Cons} <HxSubstituteSort> ( HX_COMMA <HxSubstituteSorts> | {$Nil} ) | {$Nil}  . 
@@ -139,8 +139,10 @@
 
 <HxRulePriority> ::=( HX_DEFAULT:hx | HX_PRIORITY:hx | {Normal}:hx ).
 
-<HxRuleOptions> ::= {$Cons} <HxTopPattern> ( HX_COMMA <HxRuleOptions> | {$Nil} ) .
+<HxRuleOptions> ::= {$Cons} <HxRuleOption> ( HX_COMMA <HxRuleOptions> | {$Nil} ) .
 
+<HxRuleOption> ::= HX_GLOBAL:hx <HxVariable>!!! .
+// TODO: more options
 
 //// JavaCC HACKS.
 

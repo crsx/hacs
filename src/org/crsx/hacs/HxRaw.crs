@@ -203,7 +203,7 @@ HxRule ::=(
 
 {$String : $StringEntrySort}
 HxRulePrefix ::=(
- %rawHxRulePrefix⟪ %HxRulePriority«HxRulePriority» [ %HxRuleOptions«$List[$String]» ] ⟫;
+ %rawHxRulePrefix⟪ %HxRulePriority«HxRulePriority» [ %HxRuleOptions«$List[HxRuleOption]» ] ⟫;
 );
 
 {$String : $StringEntrySort}
@@ -211,6 +211,11 @@ HxRulePriority ::=(
  %rawHxRulePriority⟪ priority ⟫;
  %rawHxRulePriority⟪ default ⟫;
  %rawHxRulePriority⟪ ⟫;
+);
+
+{$String : $StringEntrySort}
+HxRuleOption ::=(
+ %rawHxRuleOption⟪ global %HxVariable«HxTerm» ⟫;
 );
 
 

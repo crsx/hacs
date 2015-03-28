@@ -1,5 +1,5 @@
 //// Hx.pgpost: HX PARSER POST TERM PRODUCTIONS.
-//// Copyright © 2012,2014 Kristoffer H. Rose <krisrose@rcsx.org>
+//// Copyright © 2012,2015 Kristoffer H. Rose <krisrose@rcsx.org>
 
 
 //// TOKENS.
@@ -67,24 +67,25 @@ token HX_AT ::= "@" .
 token HX_DOTTEDNAME ::= ( [a-z] [A-Za-z0-9_$]* HX_DOT )+ [A-Z] [A-Za-z0-9_$]* .
 
 // Normal keywords.
-token HX_MODULE ::= "module" .
-token HX_SORT ::= "sort" .
-token HX_MAIN ::= "main" .
-token HX_DATA ::= "data" .
-token HX_SCHEME ::= "scheme" .
-token HX_AUTOMATIC ::= "automatic" .
-token HX_SYMBOL ::= "symbol" .
-token HX_STATIC ::= "static" .
-token HX_ATTRIBUTE ::= "attribute" .
-token HX_COMPOSE ::= "compose" .
-token HX_SUGAR ::= "sugar" .
-token HX_RULE ::= "rule" .
-token HX_PRIORITY ::= "priority" .
-token HX_DEFAULT ::= "default" .
-token HX_IMPORT ::= "import" .
-token HX_TAG ::= "tag" .
-token HX_BINDS ::= "binds" .
 token HX_AS ::= "as" .
+token HX_ATTRIBUTE ::= "attribute" .
+token HX_AUTOMATIC ::= "automatic" .
+token HX_BINDS ::= "binds" .
+token HX_COMPOSE ::= "compose" .
+token HX_DATA ::= "data" .
+token HX_DEFAULT ::= "default" .
+token HX_GLOBAL ::= "global" .
+token HX_IMPORT ::= "import" .
+token HX_MAIN ::= "main" .
+token HX_MODULE ::= "module" .
+token HX_PRIORITY ::= "priority" .
+token HX_RULE ::= "rule" .
+token HX_SCHEME ::= "scheme" .
+token HX_SORT ::= "sort" .
+token HX_STATIC ::= "static" .
+token HX_SUGAR ::= "sugar" .
+token HX_SYMBOL ::= "symbol" .
+token HX_TAG ::= "tag" .
 
 // Regular Expression introduction keywords.
 token HX_SPACE (DEFAULT : HX_RE) ::= "space" .
