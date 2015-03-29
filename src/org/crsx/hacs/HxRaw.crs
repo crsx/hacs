@@ -215,7 +215,7 @@ HxRulePriority ::=(
 
 {$String : $StringEntrySort}
 HxRuleOption ::=(
- %rawHxRuleOption⟪ global %HxVariable«HxTerm» ⟫;
+ %rawHxRuleOption⟪ global %HxTerm«HxTerm» ⟫;
 );
 
 

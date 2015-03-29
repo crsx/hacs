@@ -141,7 +141,7 @@
 
 <HxRuleOptions> ::= {$Cons} <HxRuleOption> ( HX_COMMA <HxRuleOptions> | {$Nil} ) .
 
-<HxRuleOption> ::= HX_GLOBAL:hx <HxVariable>!!! .
+<HxRuleOption> ::= HX_GLOBAL:hx <HxTopTerm> .
 // TODO: more options
 
 //// JavaCC HACKS.
