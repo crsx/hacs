@@ -92,7 +92,7 @@
 | HX_SUGAR:hx <HxForm> HX_ARROW <HxTopTerm>
 | HX_SYMBOL:hx <HxForm>
 | HX_STATIC:hx (HX_SYMBOL)? <HxForm>
-| {data}:hx (HX_DATA)? <HxForm>
+| {Form}:hx (HX_DATA)? <HxForm>
 ).
 
 <HxForm> ::=
@@ -141,7 +141,7 @@
 
 <HxRuleOptions> ::= {$Cons} <HxRuleOption> ( HX_COMMA <HxRuleOptions> | {$Nil} ) .
 
-<HxRuleOption> ::= HX_GLOBAL:hx <HxTopTerm> .
+<HxRuleOption> ::= HX_GLOBAL:hx <HxTopTerm> | HX_DATA:hx <HxTopTerm> .
 // TODO: more options
 
 //// JavaCC HACKS.

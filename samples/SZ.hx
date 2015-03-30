@@ -30,4 +30,14 @@ module org.crsx.hacs.samples.SZ {
   Load(⟦ 0 ⟧) → Zero ;
   Load(⟦ ⟨ID#id⟩ ⟧) →  Ref(#id) ;
 
+  // External translation.
+  sort Exp | scheme Calc(Exp) ;
+  Calc(#) → Unload(Load(#)) ;
+  | scheme Unload(Value) ;
+  Unload(Zero) →  ⟦ 0 ⟧ ;
+  Unload(Succ(#)) →  ⟦ s ⟨Exp Unload(#)⟩ ⟧ ;
+  Unload(Plus(#1, #2)) →  ⟦ ⟨Exp Unload(#1)⟩ + ⟨Exp Unload(#2)⟩ ⟧ ;
+  Unload(Pair(#1, #2)) →  ⟦ ⟨Exp Unload(#1)⟩ : ⟨Exp Unload(#2)⟩ ⟧ ;
+  Unload(Ref(#)) →  ⟦ ⟨ID#⟩ ⟧ ;
+  Unload(Succ(#)) →  ⟦ s ⟨Exp Unload(#)⟩ ⟧ ;
 }
