@@ -5,7 +5,7 @@
 
 \usepackage{catchfile}
 \CatchFileDef{\VERSION}{../VERSION}{}
-\def\setversion VERSION=#1\relax{\def\version{#1\xspace}}\expandafter\setversion\VERSION\relax
+\def\setversion VERSION=#1 #2\relax{\def\version{#1\xspace}}\expandafter\setversion\VERSION\relax
 %\usepackage[draft]{showlabels}
 
 %% Style.
@@ -97,16 +97,16 @@ We first show in Section~\ref{sec:run} how to install \HAX and run the example, 
 how to write specifications. %
 We explain lexical analysis in Section~\ref{sec:tokens}, %
 syntax analysis in Section~\ref{sec:syntax}, %
-basic semantic sorts and recursive translation schemes in Section~\ref{sec:schemes}, %
+basic recursive translation schemes in Section~\ref{sec:schemes}, %
+semantic sorts, operations, and data, in Section~\ref{sec:eval}, %
 bottom-up semantic analysis in Section~\ref{sec:collect}, %
 general syntax-directed definitions in Section~\ref{sec:sdd}, %
 and higher order abstract syntax in Section~\ref{sec:hoas}. %
 In Section~\ref{sec:comp} we explain how primitive values can be manipulated, %
 and in Section~\ref{sec:examples} we give several examples of how everything can be combined.
-
-%%and advanced features in Section~\ref{sec:advanced}. %
+%%
+Finally, %
 Appendix~\ref{app:manual} has a reference manual, %
-%% Appendix~\ref{app:bonus} has some bonus examples, %
 Appendix~\ref{app:errors} explains some of the (still) cryptic error messages, %
 and Appendix~\ref{app:limits} lists some current limitations.
 
@@ -180,16 +180,16 @@ energon1[~]$ ^textcolor{blue}{^texttt{cp $HOME/.hacs/share/doc/hacs/examples/Fir
 energon1[~]$ ^textcolor{blue}{^texttt{$HOME/.hacs/bin/hacs First.hx}}
 energon1[~]$ ^textcolor{blue}{^texttt{./First.run --scheme=Compile \}}
            ^textcolor{blue}{^texttt{--term="^{initial := 1; rate := 1.0; position := initial + rate * 60;^}"}}
-    LDF T_2,  #1 
-    STF initial, T_2
-    LDF T_2_69,  #1.0 
-    STF rate, T_2_69
-    LDF T_3,  initial 
-    LDF T_3_28,  rate 
-    LDF T_4,  #60 
-    MULF  T_4_29 ,  T_3_28 ,  T_4 
-    ADDF  T_2_63 ,  T_3 ,  T_4_29 
-    STF position, T_2_63
+  LDF T,  #1 
+    STF initial, T
+    LDF T_77,  #1.0 
+    STF rate, T_77
+    LDF T_1,  initial 
+    LDF T_1_60,  rate 
+    LDF T_2,  #60 
+    MULF  T_2_21 ,  T_1_60 ,  T_2 
+    ADDF  T_96 ,  T_1 ,  T_2_21 
+    STF position, T_96
 \end{code}
   %%
   Congratulations---you just built your first compiler!\footnote{Please do not mind the spacing --
@@ -811,7 +811,7 @@ $ \textcolor{blue}{./Stack.run --scheme=Compile --term="(1+2)*(3+4)"}
 \label{sec:eval}
 
 For most compilers, simple recursive translations such as presented above, do not suffice. We shall
-need more complex programming tools to support more sofisticated analysis and transformations.
+need more complex programming tools to support more sophisticated analysis and transformations.
 
 Specifically, note that rules for syntax-directed schemes are similar to definitions by case as in
 functional programming. However, there are important differences that we shall detail here, which
@@ -856,7 +856,8 @@ Unif(Unif(Int, Float), Int) → Unif(Float, Int) → Float
   Note how overlaps are allowed but please do verify determinacy, \ie, if a particular combination
   of arguments can be subjected to two rules then they should give the same result! In this example
   it happens because the term "Unif(Float,Float)" can be rewritten by both the rule in line 7 and 8,
-  but it does not matter, because the result is the same.
+  but it does not matter, because the result is the same. Also note that \emph{the order of the
+    rules does not matter}: the three rules in lines 6--8 above can be given in any order.
   %% 
 \end{example}
 
@@ -1158,146 +1159,147 @@ One of the main uses of inherited attributes in formal compiler specifications i
   management}. We shall focus here on the \HAX notion of \emph{environment}, which fills this niche
 and cannot be easily achieved with usual positional arguments to recursive schemes.
 
-In compiler construction formalization we express this using an SDD with an inherited attribute that
-for each node in the AST associates the appropriate symbol table for that node. Consider the
-following three simple semantic rules, which demonstrate this approach:
-%% 
-\begin{equation*}
-  \begin{array}{l|ll}
-    \hline
-    \hline
-    \textsc{Production}  & \textsc{Semantic Rules} \Bigstrut&\\
-    \hline
-    S → T_1 ~ \textbf{id}_2 = E_3; S_4
-    &
-    E_3.e = S.e; 
-    S_4.e = \op{Extend}(S.e, \textbf{id}_2.sym, T_1) \Bigstrut\quad
-    &\thetag{1}
-    \\[\jot]
-    E → E_1 + E_2
-    &
-    E_1.e=E.e; E_2.e=E.e
-    &\thetag{2}
-    \\[1pt]
-    \quad~\mid \textbf{id}_1
-    &
-    E.t = \op{Lookup}(E.e, \textbf{id}_1.sym)
-    &\thetag{3}
-    \\[\jot]
-    \hline
-  \end{array}
-\end{equation*}
-%%
-Rule \thetag{1} handles declarations in our toy language: it creates a new environment (or symbol
-table) that \emph{extends} the environment from the context, the \emph{inherited} environment~$S.e$,
-with a new coupling from the symbol of $\textbf{id}_2$ to the type~$T_1$: the notation means that
-the new environment $S_4.e$ contains the new mapping as well as all the bindings from $S.e$
-(\emph{except} any previous mapping of the symbol $\textbf{id}_2$).
-%%
-Rule \thetag{2} merely expresses that the $e$ attribute is inherited from the context to both
-subexpressions of addition expresions.
-%%
-Finally, rule \thetag{3} uses the environment to attach a synthesized attribute $t$ onto an $E$
-which contains an \textbf{id} token (but is not otherwise used in these rules). Specifically, the
-notation is meant to suggest that the type value is obtained by a \emph{lookup} of the mapping for
-the symbol of $\textbf{id}_1$.
+\begin{example}
+  In compiler construction formalization we express this using an SDD with an inherited attribute that
+  for each node in the AST associates the appropriate symbol table for that node. Consider the
+  following three simple semantic rules, which demonstrate this approach:
+  %% 
+  \begin{equation*}
+    \begin{array}{l|ll}
+      \hline
+      \hline
+      \textsc{Production}  & \textsc{Semantic Rules} \Bigstrut&\\
+      \hline
+      S → T_1 ~ \textbf{id}_2 = E_3; S_4
+      &
+      E_3.e = S.e; 
+      S_4.e = \op{Extend}(S.e, \textbf{id}_2.sym, T_1) \Bigstrut\quad
+      &\thetag{1}
+      \\[\jot]
+      E → E_1 + E_2
+      &
+      E_1.e=E.e; E_2.e=E.e
+      &\thetag{2}
+      \\[1pt]
+      \quad~\mid \textbf{id}_1
+      &
+      E.t = \op{Lookup}(E.e, \textbf{id}_1.sym)
+      &\thetag{3}
+      \\[\jot]
+      \hline
+    \end{array}
+  \end{equation*}
+  %% 
+  Rule \thetag{1} handles declarations in our toy language: it creates a new environment (or symbol
+  table) that \emph{extends} the environment from the context, the \emph{inherited} environment~$S.e$,
+  with a new coupling from the symbol of $\textbf{id}_2$ to the type~$T_1$: the notation means that
+  the new environment $S_4.e$ contains the new mapping as well as all the bindings from $S.e$
+  (\emph{except} any previous mapping of the symbol $\textbf{id}_2$).
+  %% 
+  Rule \thetag{2} merely expresses that the $e$ attribute is inherited from the context to both
+  subexpressions of addition expresions.
+  %% 
+  Finally, rule \thetag{3} uses the environment to attach a synthesized attribute $t$ onto an $E$
+  which contains an \textbf{id} token (but is not otherwise used in these rules). Specifically, the
+  notation is meant to suggest that the type value is obtained by a \emph{lookup} of the mapping for
+  the symbol of $\textbf{id}_1$.
 
-Here are the steps to follow to translate the above SDD fragment to \HAX.
-%%
-\begin{enumerate}
+  Here are the steps to follow to translate the above SDD fragment to \HAX.
+  %% 
+  \begin{enumerate}
 
-\item The first thing to do is to encode the grammar (assuming an existing $T$ sort of types and
-  "ID" tokens as before):
-\begin{hacs}
+  \item The first thing to do is to encode the grammar (assuming an existing $T$ sort of types and
+    "ID" tokens as before):
+    \begin{hacs}
    main sort S  | ⟦ ⟨T⟩ ⟨ID⟩ = ⟨E⟩ ; ⟨S⟩ ⟧ ;
    sort E  | ⟦ ⟨E⟩ + ⟨E@1⟩ ⟧   | ⟦ ⟨ID⟩ ⟧@1 ;
 \end{hacs}
-  %%
-  The "ID" sort is declared as a "symbol" sort so we can use it in maps next; the rest of the
-  syntax specification follows the rules given previously. We assume that the "T" sort is defined
-  elsewhere with the possible types.
+%% 
+The "ID" sort is declared as a "symbol" sort so we can use it in maps next; the rest of the
+syntax specification follows the rules given previously. We assume that the "T" sort is defined
+elsewhere with the possible types.
 
 \item Once the grammar is defined, we can declare the new attribute:
-\begin{hacs}
+  \begin{hacs}
    attribute ↓e{ID : T} ;
 \end{hacs}
-  Like synthesized attributes, inherited attributes are always given lower case names.
-  The "{ID : T}" part declares the value of the attribute to be a \emph{mapping} from values of
-  "ID" sort to values of "T" sort. Such mappings take the rôle of symbol tables from traditional
-  compilers.
+Like synthesized attributes, inherited attributes are always given lower case names.
+The "{ID : T}" part declares the value of the attribute to be a \emph{mapping} from values of
+"ID" sort to values of "T" sort. Such mappings take the rôle of symbol tables from traditional
+compilers.
 
 \item The second thing to do is to associate the inherited attribute to one or more \emph{recursive
     schemes}, which will be responsible for propagating that inherited attribute over values of a
   certain sort.  This has to be done by inventing a separate scheme for each combination of a sort
   and an inherited attribute:
-\begin{hacs}
+  \begin{hacs}
    sort S | scheme Se(S) ↓e ;
    sort E | scheme Ee(E) ↓e ;
 \end{hacs}
-  As can be seen, the scheme generates results of the "S" and "E" sorts, in each case taking a
-  single argument of the same sort, and for each indicating with a "↓" that the scheme
-  \emph{carries} the associated inherited attribute. Notice that, unlike for synthesized
-  declarations, there is no "|" in front because of the attribute itself because it is specific to
-  the scheme, not a declaration for the sort.
+As can be seen, the scheme generates results of the "S" and "E" sorts, in each case taking a
+single argument of the same sort, and for each indicating with a "↓" that the scheme
+\emph{carries} the associated inherited attribute. Notice that, unlike for synthesized
+declarations, there is no "|" in front because of the attribute itself because it is specific to
+the scheme, not a declaration for the sort.
 
 \item Next we encode the simplest rule, \thetag{2}. As in the previous section, we observe that
   \thetag{2} operates on sums, which leads to a pattern like the following, using the subscripts
   from~\thetag{2}:
-\begin{hacs}
+  \begin{hacs}
    ⟦ ⟨E#1⟩ + ⟨E#2⟩ ⟧
 \end{hacs}
-   We can now insert the pattern into the scheme, similarly to how we did for recursive
-   syntax-directed schemes:
+We can now insert the pattern into the scheme, similarly to how we did for recursive
+syntax-directed schemes:
 \begin{hacs}
    Ee(⟦⟨E#1⟩ + ⟨E#2⟩⟧)
 \end{hacs}
-  This clearly respects the sort constraints we defined above, with "Ee" being applied to an "E"
-  expression. Since there are no complicated dependencies in \thetag{2}, we are almost done: we just
-  have to create a rule where we on the right side of the "→" apply the "Ee" scheme recursively to
-  the subexpressions that should inherit the "e" attribute, which are the two marked subexpression,
-  \emph{inside the syntax markers}:
+This clearly respects the sort constraints we defined above, with "Ee" being applied to an "E"
+expression. Since there are no complicated dependencies in \thetag{2}, we are almost done: we just
+have to create a rule where we on the right side of the "→" apply the "Ee" scheme recursively to
+the subexpressions that should inherit the "e" attribute, which are the two marked subexpression,
+\emph{inside the syntax markers}:
 \begin{hacs}
    Ee(⟦⟨E#1⟩ + ⟨E#2⟩⟧)  →   ⟦⟨E Ee(#1)⟩ + ⟨E Ee(#2)⟩⟧ ;
 \end{hacs}
-  Notice that there is no explicit mention of the "e" attribute, only the \emph{implicit} copying
-  that follows from the use of the "Ee" scheme. The recursive  arrangement of the "Ee" wrappers
-  implies the two attribute equations $E_1.e=E.e$ and $E_2.e=E.e$ from \thetag{2}.
+Notice that there is no explicit mention of the "e" attribute, only the \emph{implicit} copying
+that follows from the use of the "Ee" scheme. The recursive  arrangement of the "Ee" wrappers
+implies the two attribute equations $E_1.e=E.e$ and $E_2.e=E.e$ from \thetag{2}.
 
 \item Let us do \thetag{3}. It defines the synthesized attribute $t$ on \textbf{id}-expressions
   using a ``Lookup'' meta-function that is meant to suggest that we extract the mapping from the
   $E.e$ environment inherited from the context. We start with a template like this:
-\begin{hacs}
+  \begin{hacs}
    Ee(⟦⟨ID#1⟩⟧)  →  ⟦⟨ID#1⟩⟧ ;
 \end{hacs}
-  which just states that the $e$ attribute is inherited ``into'' a name subterm (through "Ee"),
-  essentially making $E.e$ available, but the rule does not use the inherited attribute.
-  In particular, this rule fails to actually set the $t$ attribute. To fix it, we first have to capture
-  the ``Lookup'' in the inherited environment. \HAX has a special notation for this: write the
-  pattern as follows:
+which just states that the $e$ attribute is inherited ``into'' a name subterm (through "Ee"),
+essentially making $E.e$ available, but the rule does not use the inherited attribute.
+In particular, this rule fails to actually set the $t$ attribute. To fix it, we first have to capture
+the ``Lookup'' in the inherited environment. \HAX has a special notation for this: write the
+pattern as follows:
 \begin{hacs}
    Ee(⟦⟨ID#1⟩⟧) ↓e{#1 : #t}  →     …
 \end{hacs}
-  The pattern of this rule is equipped with a \emph{mapping constraint} on the "e" inherited
-  attribute, which corresponds to the "Lookup" notation of \thetag{3} above. It will match when "Ee"
-  is applied to a name, called "#1", which is \emph{also} mapped by the associated "e" attribute
-  to a type, which we call~"#t". After we have captured the mapped type this way, we can complete
-  the rule by explicitly associating it to the "t" attribute associated with "ID" expressions.
+The pattern of this rule is equipped with a \emph{mapping constraint} on the "e" inherited
+attribute, which corresponds to the "Lookup" notation of \thetag{3} above. It will match when "Ee"
+is applied to a name, called "#1", which is \emph{also} mapped by the associated "e" attribute
+to a type, which we call~"#t". After we have captured the mapped type this way, we can complete
+the rule by explicitly associating it to the "t" attribute associated with "ID" expressions.
 \begin{hacs}
    Ee(⟦⟨ID#1⟩⟧) ↓e{#1 : #t}  →     ⟦⟨ID#1⟩⟧ ↑t(#t) ;
 \end{hacs}
-  Notice how mappings like "e" use "{}" notation for both declarations and constraints, and simply
-  valued attributes like "t" use~"()".
+Notice how mappings like "e" use "{}" notation for both declarations and constraints, and simply
+valued attributes like "t" use~"()".
 
 \item Finally, we can encode \thetag{1}. It starts as
-\begin{hacs}
+  \begin{hacs}
    Se(⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E#3⟩; ⟨S#4⟩⟧)  →      ⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E Ee(#3)⟩; ⟨S Se(#4)⟩⟧ ;
 \end{hacs}
-  which merely establish  the basic rules that the $S.e$ attribute inherited from the context (through
-  the left hand "Se") is passed to both $E_3$ and $S_4$ through the right "Ee" and "Se",
-  respectively. This captures everything except the ``Extend'' notation. \HAX supports this by
-  allowing mapping constraints also on the right side of the "→" acting as \emph{extensions} of the
-  map.
-  \begin{hacs}
+which merely establish  the basic rules that the $S.e$ attribute inherited from the context (through
+the left hand "Se") is passed to both $E_3$ and $S_4$ through the right "Ee" and "Se",
+respectively. This captures everything except the ``Extend'' notation. \HAX supports this by
+allowing mapping constraints also on the right side of the "→" acting as \emph{extensions} of the
+map.
+\begin{hacs}
    Se(⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E#3⟩; ⟨S#4⟩⟧)
    →   ⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E Ee(#3)⟩; ⟨S Se(#4) ↓e{#2 : #1}⟩⟧ ;
   \end{hacs}
@@ -1306,6 +1308,7 @@ Here are the steps to follow to translate the above SDD fragment to \HAX.
   always in the raw fragments.
 
 \end{enumerate}
+\end{example}
 
 \begin{table}[h]
   \begin{displaymath}\small

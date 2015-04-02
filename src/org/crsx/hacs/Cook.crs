@@ -897,8 +897,7 @@ C-CrsxifyRule1[#RulePrefix, #TopPattern, #TopTerm, #Sort, {#DM}DM, {#DM}C-Extend
     C-CrsxifyRule2[#RulePrefix, #TopPattern, #TopTerm, #Sort, {#DM}DM, #SM1, #SM2, #TopInherited]
     →
 %n⟪« C-CrsxifyRulePrefix[#RulePrefix, #Sort, {#DM}DM, #SM1, #SM2, #TopPattern, #TopTerm] »
-⟦<!--SM1=«#SM1»-->
-«
+⟦«
   C-CrsxifyTerm[#TopPattern, #TopInherited, {#DM}DM, #SM1]
 »⟧
 →
@@ -1049,8 +1048,8 @@ C-CrsxifyTermOrToken2[ContainsName[{#DM}U-AllTokenNames, U-SortNameWithRepeat[#H
 ;
 
 C-CrsxifyTermOrToken2[Boolean<!--IsToken-->, $String, HxTerm, NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
--[Data[#name]]: C-CrsxifyTermOrToken2[B_TRUE, #name, #HxTerm#, #TopInherited, {#DM}DM, #SM] → C-CrsxifyToken[#HxTerm#, #TopInherited, {#DM}DM, #SM] ;
--[Data[#name]]: C-CrsxifyTermOrToken2[B_FALSE, #name, #HxTerm#, #TopInherited, {#DM}DM, #SM] → C-CrsxifyTerm[#HxTerm#, #TopInherited, {#DM}DM, #SM] ;
+-[Data[#name]]: C-CrsxifyTermOrToken2[B_TRUE, #name, #HxTerm#, #TopInherited, {#DM}DM, #SM] → %n⟪<!--TOKEN:--> « C-CrsxifyToken[#HxTerm#, #TopInherited, {#DM}DM, #SM] »⟫ ;
+-[Data[#name]]: C-CrsxifyTermOrToken2[B_FALSE, #name, #HxTerm#, #TopInherited, {#DM}DM, #SM] → %n⟪<!--TERM:--> « C-CrsxifyTerm[#HxTerm#, #TopInherited, {#DM}DM, #SM] »⟫ ;
 
 // Convert a token.
 

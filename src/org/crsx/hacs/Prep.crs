@@ -892,8 +892,10 @@ IfEmpty[#LeftRecursivePFKs,
   // There is no left recursion -- use the plain expansion.
   {#DM} P-Produce[#ModuleName, #SortName, #Prec, #Last?, #OtherPFKs, C_BUFFER[#SortName, #Prec]],
   // There is left recursion...
-  {#DM} P-ProduceBody[#ModuleName, #SortName, #SortName, #LeftRecursivePFKs, 2, (), (%n⟨#1⟩;), (%n⟨/***EMBEDPG: C-UnravelScope_0[***/#1/***EMBEDPG:]***/⟩;), C_LEFTRECURSIVE[#SortName, #Prec], in after .
-    %n⟪
+  {#DM} P-ProduceBody[#ModuleName, #SortName, #SortName, #LeftRecursivePFKs, 2, (), (%n⟨#1⟩;),
+  	(%n⟨/***EMBEDPG: <!--1--> C-UnravelScope_0[***/#1/***EMBEDPG:]***/⟩;),
+	C_LEFTRECURSIVE[#SortName, #Prec],
+	in after . %n⟪
 /***USERPG&EMBEDPG:
 /* Handle left recursion. */
 <«P-ProductionNameWithPrecText[#SortName, #Prec]»LR #1> ::= ⟦
@@ -1284,8 +1286,8 @@ P-ProduceBodyTerm3[$String<!--ModuleName-->, $String<!--HostSort-->, $String<!--
     -[Data[#Name,#HxSeparator#]]:        P-RegExpSubNameText[#Name, %rawHxRegExpSub⟪ #HxSeparator# ⟫] → %n⟪†«#Name»_SomeW†« $[Mangle,#HxSeparator#] »⟫ ;
 
     P-CRSX-ArgumentWrapper[$List[HxSubstituteSort], $String<!--MetaVar-->, FormKind] :: Text ;
-    P-CRSX-ArgumentWrapper[#HxSubstituteSorts, #MetaVar, FK_DATA[#tag]] → %n⟪/***EMBEDPG: 'C-UnravelScope_†« NumericToString[Length[#HxSubstituteSorts]] »'[***/†«#MetaVar»/***EMBEDPG:]***/⟫ ;
-    P-CRSX-ArgumentWrapper[#HxSubstituteSorts, #MetaVar, FK_SCHEME[#tag]] → %n⟪/***EMBEDPG: 'C-UnravelScope_†« NumericToString[Length[#HxSubstituteSorts]] »'[***/†«#MetaVar»/***EMBEDPG:]***/⟫ ;
+    P-CRSX-ArgumentWrapper[#HxSubstituteSorts, #MetaVar, FK_DATA[#tag]] → %n⟪/***EMBEDPG: <!--2--> 'C-UnravelScope_†« NumericToString[Length[#HxSubstituteSorts]] »'[***/†«#MetaVar»/***EMBEDPG:]***/⟫ ;
+    P-CRSX-ArgumentWrapper[#HxSubstituteSorts, #MetaVar, FK_SCHEME[#tag]] → %n⟪/***EMBEDPG: <!--3--> 'C-UnravelScope_†« NumericToString[Length[#HxSubstituteSorts]] »'[***/†«#MetaVar»/***EMBEDPG:]***/⟫ ;
     P-CRSX-ArgumentWrapper[#HxSubstituteSorts, #MetaVar, FK_SYMBOL[#stat, #token]] → %n⟪†«#MetaVar»⟫ ;
     P-CRSX-ArgumentWrapper[#HxSubstituteSorts, #MetaVar, FK_SUGAR[#term]] → %n⟪†«#MetaVar»⟫ ;
     P-CRSX-ArgumentWrapper[#HxSubstituteSorts, #MetaVar, FK_ALIAS] → %n⟪†«#MetaVar»⟫ ;
