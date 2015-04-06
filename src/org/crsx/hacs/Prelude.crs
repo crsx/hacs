@@ -1,5 +1,5 @@
 // Prelude.crs: CRSX3 SUPPORT LIBRARY FOR HACS OPERATIONS.
-// Copyright © 2012,2014 Kristoffer H. Rose <krisrose@crsx.org>
+// Copyright © 2012,2015 Kristoffer H. Rose <krisrose@crsx.org>
 
 // NOTE: This file needs to be in sync with Prelude.pg as well as Util/Prep/Cook.crs.
 

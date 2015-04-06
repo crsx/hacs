@@ -1682,6 +1682,26 @@ to bugs in compilers.)
 The use of HOAS in \HAX in fact allows the full range of methods used in higher-order
 rewriting~\cite{Jouannaud:klop2005,Klop+:tcs1993}, and is a very powerful mechanism.
 
+\begin{figure}[p]
+  \inputhacs[texcl,mathescape,xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/CPS.hx}
+  \caption{Definitions of Call-by-Value Continuation Passing Style}
+  \label{fig:cps}
+\end{figure}
+
+\begin{example}
+  Let us take a real example from the literature~\cite{DanvyRose:rta1998}.  Figure~\ref{fig:cps}
+  shows two systems for transforming λ-terms to continuation-passing style with call-by-value
+  evaluation semantics. The grammar uses higher-order binding to define the two forms of abstraction
+  (with "λ" and "λ̅") using specific unicode characters. The overlined application is a scheme
+  because it can be evaluated, which is specified by the rule in line 16 (where the outermost
+  operator is the overlined application). The two blocks of rules in lines 18--24 and 26--33 specify
+  two variants of continuation style conversion: the traditional form and a one-pass variant,
+  respectively. The two systems are equivalent but the second never constructs overlined redices
+  (which is what makes it one pass, as no so-called ``administrative'' (overlined) redices need to
+  be simplified. Notice how each transformation defines helper schemes, which are syntactic schemes,
+  to make the recursive composition easier to express.
+\end{example}
+
 Finally, we sometimes use symbols as \emph{labels} or for some other purpose, where we wish to have
 globally unique symbols. This creates a dilemma: when we write "⟦x⟧" for some symbol sort, how do we
 distinguish between the actual variable written "x" and a variable which is automatically renamed to

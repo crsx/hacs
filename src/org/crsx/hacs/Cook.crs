@@ -598,9 +598,9 @@ C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllN
         D_FORM[%rawHxForm⟪ %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Delayed_", U-Local[#HxConstructor#]]] » ( %HxSortName« #SortName » ) %HxInheritedRefs« NameSetList[{#DM} U-GetFunctionInherited[#HxConstructor#]] » ⟫,
           FK_SCHEME[U-QN[#ModuleName, #SortName, StringConcat["Delayed_", U-Local[#HxConstructor#]]]]];
         D_RULE[{#L}%rawHxRule⟪
-	  #HxConstructor# ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, #Needy, NoNames, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}U-GetConstructorScopeSorts[#HxConstructor#]] » ) %HxAttributes« C-JustInherited[#HxAttributes#]  »
+	  #HxConstructor# ( %HxScopes« Map2x[s ss.C-UnsynthesizeScope[s, ss, #Needy, NoNames, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}U-GetConstructorScopeSorts[#HxConstructor#], NoScopeSort] » ) %HxAttributes« C-JustInherited[#HxAttributes#]  »
 	  →
-	  %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Delayed_", U-Local[#HxConstructor#]]] » ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, NoNames, #Needy, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}U-GetConstructorScopeSorts[#HxConstructor#]] » ) #HxAttributes#
+	  %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Delayed_", U-Local[#HxConstructor#]]] » ( %HxScopes« Map2x[s ss.C-UnsynthesizeScope[s, ss, NoNames, #Needy, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}U-GetConstructorScopeSorts[#HxConstructor#], NoScopeSort] » ) #HxAttributes#
 	⟫, #SortName, B_FALSE];
         D_RULE[{#L}%rawHxRule⟪
 	  %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Delayed_", U-Local[#HxConstructor#]]] » ( #HxScopes# ) #HxAttributes#
@@ -630,14 +630,14 @@ C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllN
     C-UnsynthesizeTerm[{#L}%rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #SortName, #Remove, #Needy, #ModuleName, {#DM}DM, #SM]
     →
     C-UnsynthesizeAttributes[#HxAttributes#, #SortName,
-      as¹ . {#L}%rawHxTerm⟪ #HxConstructor# ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, #Remove, #Needy, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}U-GetConstructorScopeSorts[#HxConstructor#]] » ) %HxAttributes«as¹» ⟫,
+      as¹ . {#L}%rawHxTerm⟪ #HxConstructor# ( %HxScopes« Map2x[s ss.C-UnsynthesizeScope[s, ss, #Remove, #Needy, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}U-GetConstructorScopeSorts[#HxConstructor#], NoScopeSort] » ) %HxAttributes«as¹» ⟫,
       #Remove, #Needy, #ModuleName, {#DM}DM, #SM]
     ;
 
     C-UnsynthesizeTerm[{#L}%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #SortName, #Remove, #Needy, #ModuleName, {#DM}DM, #SM]
     →
     C-UnsynthesizeAttributes[#HxAttributes#, #SortName,
-      as¹ . {#L}%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( %HxScopes« Map2[s ss.C-UnsynthesizeScope[s, ss, #Remove, #Needy, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}U-GetConstructorScopeSorts[#HxConstructor#]] » ) %HxAttributes«as¹» ⟫,
+      as¹ . {#L}%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( %HxScopes« Map2x[s ss.C-UnsynthesizeScope[s, ss, #Remove, #Needy, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}U-GetConstructorScopeSorts[#HxConstructor#], NoScopeSort] » ) %HxAttributes«as¹» ⟫,
       #Remove, #Needy, #ModuleName, {#DM}DM, #SM]
     ;
 
@@ -1097,17 +1097,17 @@ C-CrsxifyToken1[%rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫,
 →
 %n⟪« C-CrsxifyAttributes[#HxAttributes#, {#DM}U-GetFunctionInherited[#HxConstructor#], #TopInherited, {#DM}DM, #SM]
   »« C-CrsxifyConstructor[#HxConstructor#]
-  »⟦« WrappedTextJoin[Map2[s ss.C-CrsxifyScope[s, ss, #TopInherited, {#DM}DM, #SM], #HxScopes#, {#DM}U-GetConstructorScopeSorts[#HxConstructor#]], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]
+  »⟦« WrappedTextJoin[Map2x[s ss.C-CrsxifyScope[s, ss, #TopInherited, {#DM}DM, #SM], #HxScopes#, {#DM}U-GetConstructorScopeSorts[#HxConstructor#], NoScopeSort], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]
   »⟧⟫
 ;
 C-CrsxifyToken1[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #TopInherited, {#DM}DM, #SM]
 →
 %n⟪« C-CrsxifyAttributes[#HxAttributes#, {#DM}U-GetFunctionInherited[#HxConstructor#], #TopInherited, {#DM}DM, #SM]
   »« C-CrsxifyConstructor[#HxConstructor#]
-  »⟦« WrappedTextJoin[Map2[s ss.C-CrsxifyScope[s, ss, #TopInherited, {#DM}DM, #SM], #HxScopes#, {#DM}U-GetConstructorScopeSorts[#HxConstructor#]], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]
+  »⟦« WrappedTextJoin[Map2x[s ss.C-CrsxifyScope[s, ss, #TopInherited, {#DM}DM, #SM], #HxScopes#, {#DM}U-GetConstructorScopeSorts[#HxConstructor#], NoScopeSort], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]
   »⟧⟫
 ;
-///WrappedTextJoin[Map2[s ss.C-CrsxifyScope[s, ss, #TopInherited, {#DM}DM, #SM], #HxScopes#, (%rawHxScopeSort⟨Computed⟩;)], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]
+///WrappedTextJoin[Map2x[s ss.C-CrsxifyScope[s, ss, #TopInherited, {#DM}DM, #SM], #HxScopes#, (%rawHxScopeSort⟨Computed⟩;), NoScopeSort], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]
 
 // Convert a term, optionally with environment-capturing meta-variable. TODO: Respect Repeat.
 
@@ -1117,14 +1117,14 @@ C-CrsxifyTerm[%rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #
 →
 %n⟪« C-CrsxifyAttributes[#HxAttributes#, {#DM}U-GetFunctionInherited[#HxConstructor#], #TopInherited, {#DM}DM, #SM]
   »« C-CrsxifyConstructor[#HxConstructor#]
-  »⟦« WrappedTextJoin[Map2[s ss.C-CrsxifyScope[s, ss, #TopInherited, {#DM}DM, #SM], #HxScopes#, {#DM}U-GetConstructorScopeSorts[#HxConstructor#]], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]
+  »⟦« WrappedTextJoin[Map2x[s ss.C-CrsxifyScope[s, ss, #TopInherited, {#DM}DM, #SM], #HxScopes#, {#DM}U-GetConstructorScopeSorts[#HxConstructor#], NoScopeSort], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]
   »⟧⟫
 ;
 C-CrsxifyTerm[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #TopInherited, {#DM}DM, #SM]
 →
 %n⟪« C-CrsxifyAttributes[#HxAttributes#, {#DM}U-GetFunctionInherited[#HxConstructor#], #TopInherited, {#DM}DM, #SM]
   »« C-CrsxifyConstructor[#HxConstructor#]
-  »⟦« WrappedTextJoin[Map2[s ss.C-CrsxifyScope[s, ss, #TopInherited, {#DM}DM, #SM], #HxScopes#, {#DM}U-GetConstructorScopeSorts[#HxConstructor#]], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]
+  »⟦« WrappedTextJoin[Map2x[s ss.C-CrsxifyScope[s, ss, #TopInherited, {#DM}DM, #SM], #HxScopes#, {#DM}U-GetConstructorScopeSorts[#HxConstructor#], NoScopeSort], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]
   »⟧⟫
 ;
 C-CrsxifyTerm[%rawHxTerm⟪ #HxLiteral# #HxAttributes# ⟫, #TopInherited, #DM, #SM]
