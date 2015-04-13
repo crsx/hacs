@@ -212,22 +212,6 @@ U-then-ExtendDeclarationMap[OK, #DM, #Key, #Entry, dm¹.#[dm¹]] → U-ExtendDec
 
 // Get the ScopeSorts of a constructor (assumes DM has been "Unparsed").
 
-/// {$String<!--SortName--> : DeclarationMapEntry} U-GetConstructorScopeSorts[$String] :: $List[HxScopeSort] ;
-/// {#DM} U-GetConstructorScopeSorts[#Constructor] → {#DM} U-GetConstructorScopeSorts1[{#DM} U-GetConstructorSort[#Constructor], #Constructor] ;
-/// 
-/// {$String<!--SortName--> : DeclarationMapEntry} U-GetConstructorScopeSorts1[$String, $String] :: $List[HxScopeSort] ;
-/// -[Data[#Sort]]: {#DM} U-GetConstructorScopeSorts1[#Sort, #Constructor] → {#DM} U-GetConstructorScopeSorts2[$[{#DM}Get[DeclarationMapEntry], #Sort, DME_NONE], #Sort, #Constructor] ;
-/// 
-/// {$String<!--SortName--> : DeclarationMapEntry} U-GetConstructorScopeSorts2[DeclarationMapEntry, $String, $String] :: $List[HxScopeSort] ;
-/// {#DM} U-GetConstructorScopeSorts2[DME_SORT[#Defines, #Name, #Precs, #Wrapper, #IsMain], #Sort, #Constructor] → {#DM} U-GetConstructorScopeSorts3[OK, #Defines, #Constructor] ;
-/// {#DM} U-GetConstructorScopeSorts2[DME_NONE, #Sort, #Constructor] → () ;
-/// 
-/// {$String<!--SortName--> : DeclarationMapEntry} U-GetConstructorScopeSorts3[Ok, $List[Define], $String] :: $List[HxScopeSort] ;
-/// {#DM} U-GetConstructorScopeSorts3[OK, (D_FORM[Hx_FormConstruction[#Constructor1, #ScopeSorts1, #InheritedRefs1], #FormKind]; #Defines), #Constructor] → IfThen[SameString[U-Local[#Constructor1], U-Local[#Constructor]], ok.#ScopeSorts1, ok.{#DM}U-GetConstructorScopeSorts3[ok, #Defines, #Constructor]] ;
-/// {#DM} U-GetConstructorScopeSorts3[OK, ($[NotMatch,D_FORM[Hx_FormConstruction[#Constructor, #ScopeSorts, #InheritedRefs], #FormKind],#_]; #Defines), #Constructor] → {#DM} U-GetConstructorScopeSorts3[OK, #Defines, #Constructor] ;
-/// 
-/// {#DM} U-GetConstructorScopeSorts3[OK, (), #Constructor] → Error[$[:,"Missing internal definition of constructor: ",#Constructor,"."]] ;
-
 {$String<!--Name--> : DeclarationMapEntry} U-GetConstructorScopeSorts[$String<!--Constructor-->] :: $List[HxScopeSort] ;
 -[Data[#Constructor]]: {"All$Constructor2ScopeSorts" : DME_N2SS[#C2SS]} U-GetConstructorScopeSorts[#Constructor] → U-GetConstructorScopeSorts2[#Constructor, #C2SS] ;
 
@@ -354,24 +338,6 @@ U-GetConstructorScopeSorts2[#Constructor,{#C2SS}N2SS] → $[{#C2SS}Get[$List[HxS
     U-Defines-NoSyntax[(D_SYNTHESIZES[#AttributeName1]; #Defines)] → U-Defines-NoSyntax[#Defines] ;
     U-Defines-NoSyntax[(D_NONE; #Defines)] → U-Defines-NoSyntax[#Defines] ;
     U-Defines-NoSyntax[()] → B_TRUE ;
-
-// Extract token name 
-
-{$String<!--SortName--> : DeclarationMapEntry} U-SymbolSortTokenName[$String<!--SortName-->] :: $String ;
-
--[Data[#SortName]]:
-{#DM}U-SymbolSortTokenName[#SortName]
-→
-///$[Trace, {#DM} U-SymbolSortTokenName1[#SortName]]
-///;
-///{$String<!--SortName--> : DeclarationMapEntry} U-SymbolSortTokenName1[$String<!--SortName-->] :: $String ;
-///{#DM} U-SymbolSortTokenName1[#SortName]
-///→
-U-SymbolSortTokenName2[$[{#DM}Get[DeclarationMapEntry],#SortName,DME_NONE], #SortName] ;
-
-    U-SymbolSortTokenName2[DeclarationMapEntry, $String] :: $String ;
-    U-SymbolSortTokenName2[DME_SORT[(D_FORM[#Form, FK_SYMBOL[#static, #TokenName]];), #Name, #Precs, #Wrapper, #IsMain], #SortName] → #TokenName ;
-    U-SymbolSortTokenName2[$[NotMatch,DME_SORT[(D_FORM[#Form, FK_SYMBOL[#static, #TokenName]];), #Name, #Precs, #Wrapper, #IsMain], #_], #SortName] → #SortName ;
 
 // Extract constructors-sorts relationship.
 

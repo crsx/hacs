@@ -1,4 +1,4 @@
-module org.crsx.hacs.samples.SZ {
+module org.crsx.hacs.samples.SZ { //-*-hacs-*-
 
   // Input syntax.
   token ID | [a-z]+ [0-9]* ;

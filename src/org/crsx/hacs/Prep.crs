@@ -1266,8 +1266,25 @@ P-ProduceBodyTerm3[$String<!--ModuleName-->, $String<!--HostSort-->, $String<!--
   #terms,
   #scopes,
   #consumer,
-  in after . #[%n⟪⟦( <†« {#DM} U-SymbolSortTokenName[U-SortName[#HxSort#]] »>^«x» ⟦« in »⟧ ) ⟧⟫, after]]
+  in after . #[%n⟪⟦( <†« {#DM} P-SymbolSortTokenName[#ModuleName, U-SortName[#HxSort#]] »>^«x» ⟦« in »⟧ ) ⟧⟫, after]]
 ;
+
+    // Extract token name 
+
+    {$String<!--SortName--> : DeclarationMapEntry} P-SymbolSortTokenName[$String<!--ModuleName-->, $String<!--SortName-->] :: $String ;
+    {#DM} P-SymbolSortTokenName[#ModuleName, #SortName]
+    →
+    {#DM} P-SymbolSortTokenName1[U-QN[#ModuleName, "", #SortName], #ModuleName, #SortName]
+    ;
+    {$String<!--SortName--> : DeclarationMapEntry} P-SymbolSortTokenName1[$String<!--QualifiedSortName-->, $String<!--ModuleName-->, $String<!--SortName-->] :: $String ;
+    -[Data[#QualifiedSortName]]:
+    {#DM}P-SymbolSortTokenName1[#QualifiedSortName, #ModuleName, #SortName]
+    →
+    P-SymbolSortTokenName2[$[{#DM}Get[DeclarationMapEntry],#QualifiedSortName,DME_NONE], #SortName]
+    ;
+    P-SymbolSortTokenName2[DeclarationMapEntry, $String] :: $String ;
+    P-SymbolSortTokenName2[DME_SORT[(D_FORM[#Form, FK_SYMBOL[#static, #TokenName]];), #Name, #Precs, #Wrapper, #IsMain], #SortName] → #TokenName ;
+    P-SymbolSortTokenName2[$[NotMatch,DME_SORT[(D_FORM[#Form, FK_SYMBOL[#static, #TokenName]];), #Name, #Precs, #Wrapper, #IsMain], #_], #SortName] → #SortName ;
 
     // P special production name for non-terminals with precedence and repeat...
 
