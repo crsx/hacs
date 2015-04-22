@@ -124,7 +124,9 @@ C-AddComputedSort2[#Name, #Entry, {#DM}DM] → {#DM; #Name : #Entry}DM ;
 
 // Use dummy alias to avoid dispatchify optimization.
 C-AttributeWrapperSorted[$String<!--SortName-->, HxTerm, $List[HxAttribute]] :: HxTerm ;
-C-AttributeWrapperSorted[#SortName, #Term, #OuterAttributes] → C-AttributeWrapperSorted1[#SortName, #Term, #OuterAttributes] ;
+-[Data[#Term]]:
+C-AttributeWrapperSorted[#SortName, #Term, #OuterAttributes] → $[If, $[Literal,#Term], #Term, C-AttributeWrapperSorted1[#SortName, #Term, #OuterAttributes]] ;
+// HACK: pass through terms that are literal tokens.
 
 C-AttributeWrapperSorted1[$String<!--SortName-->, HxTerm, $List[HxAttribute]] :: HxTerm ;
 
@@ -531,7 +533,7 @@ C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllN
     // * When all attributes processed we switch to emitting the attributes.
     {#AS} C-UnsynthesizeRule-Data[#HxConstructor#, #HxScopes#, (), #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
     →
-    {#AS} C-UnsynthesizeRule-Data2[NameSetList[NamesFrom[$[{#AS}Keys[$String]]]], #HxConstructor#, #HxScopes#, #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
+    {#AS} C-UnsynthesizeRule-Data2[$[{#AS}Keys[$String]], #HxConstructor#, #HxScopes#, #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
     ;
 
         // Helper to output map/set attribute synthesis rules.
@@ -563,12 +565,14 @@ C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllN
 	      →
 	      %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Collect_", #HxAttributeName#]]
 	      » ( #HxConstructor# ( %HxScopes« Map2x[s ss.C-UnsynthesizeScope[s, ss, NoNames, #NeededSynthetic, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}U-GetConstructorScopeSorts[#HxConstructor#], NoScopeSort] » ) ↑#synthesized )
-	    ⟫, #SortName, B_FALSE];
+	    ⟫, #SortName, B_FALSE]
+	    ;
 	    D_RULE[%rawHxRule⟪ #HxRulePrefix#
 	      %HxConstructor« U-QN[#ModuleName, #SortName, StringConcat["Collect_", #HxAttributeName#]] » ( #HxConstructor# ( #HxScopes# ) ↑#synthesized )
 	      →
 	      #HxConstructor# ( %HxScopes« Map2x[s ss.C-UnsynthesizeScope[s, ss, #NeededSynthetic, NoNames, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}U-GetConstructorScopeSorts[#HxConstructor#], NoScopeSort] » ) ↑#synthesized #HxAttributes#
-	    ⟫, #SortName, B_FALSE];
+	    ⟫, #SortName, B_FALSE]
+	    ;
 	    {#AS} C-UnsynthesizeRule-Data2[#AttributeNames, #HxConstructor#, #HxScopes#, #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
 	  ),
 	  // Simple synthetic attribute creation rule.
@@ -578,7 +582,9 @@ C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllN
 	      » ( #HxConstructor# ( %HxScopes« Map2x[s ss.C-UnsynthesizeScope[s, ss, AddName[NoNames, #HxAttributeName#], NoNames, #ModuleName, {#DM}DM, #SM], #HxScopes#, {#DM}U-GetConstructorScopeSorts[#HxConstructor#], NoScopeSort] » ) ↑#synthesized )
 	      →
 	      #HxConstructor# ( #HxScopes# ) ↑#synthesized #HxAttributes#
-	    ⟫, #SortName, B_FALSE];
+	      
+	    ⟫, #SortName, B_FALSE]
+	    ;
 	    {#AS} C-UnsynthesizeRule-Data2[#AttributeNames, #HxConstructor#, #HxScopes#, #HxRulePrefix#, #NeededSynthetic, #IsDataEquiv, #SortName, #ModuleName, {#DM}DM, #SM]
 	  )
 	];
@@ -1018,8 +1024,11 @@ C-CrsxifyRuleVars0[#DM, #SM1, #SM2, #Globals, $[FreeVariables,#Pattern], $[FreeV
     C-CrsxifyRuleVars3[#DM, #SM, #vs]
     →
     If[Empty[#vs], (),
-      ( WrappedTextJoin[MapWhen[ok v.%n⟪«v»::†« C-SortMap-then-GetFreeVariableSort[ok, #SM, v] »⟫, #vs], %n⟪Fresh[⟫, %n⟪,⟫, %n⟪]⟫]; )
+      ( WrappedTextJoin[MapWhen[ok v.%n⟪«v»::†« C-SortMap-then-GetFreeVariableSort[ok, #SM, v] »⟫, C-Not-Error[#vs]], %n⟪Fresh[⟫, %n⟪,⟫, %n⟪]⟫]; )
     ];
+	C-Not-Error[$List[HxTerm]] :: $List[HxTerm] ;
+	C-Not-Error[()] → () ;
+	-[Free[v::HxTerm]]: C-Not-Error[(v;#rest)] → $[If, $[Equal,$[Symbol,v],"error"], C-Not-Error[#rest], (v ; C-Not-Error[#rest])] ;
 
 ///    C-CrsxifyRuleVars2[DeclarationMap, SortMap<!--Rule-->, $List[HxTerm]<!--Globals-->, $List[HxTerm]<!--Pattern-->, $List[HxTerm]<!--OnlyRule-->] :: $List[Text] ;
 ///    C-CrsxifyRuleVars2[#DM, #SM, #vs1, #vs2]

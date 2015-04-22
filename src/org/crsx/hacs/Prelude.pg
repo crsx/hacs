@@ -28,6 +28,7 @@ prefix "prelude_"
        | "|" <ComputedMult>:#2 <ComputedAdd2 {{ PreludeBinary["BitOr", #1,#2] }}>
        | "^" <ComputedMult>:#2 <ComputedAdd2 {{ PreludeBinary["BitXor", #1,#2] }}>
        | "\\" <ComputedMult>:#2 <ComputedAdd2 {{ PreludeBinary["BitMinus", #1,#2] }}>
+       | "@" <ComputedMult>:#2 <ComputedAdd2 {{ PreludeBinary["StringConcat", #1,#2] }}>
        | {{#1}}
        .
 

@@ -1743,9 +1743,10 @@ expressions in ⟦⟧s, which include
 %%
 \begin{itemize}
 \item References to meta-variables of sort "Computed".
-\item Integers in decimal and "0x"-hexadecimal notation.
+\item Integers in decimal and \texttt{0x}-hexadecimal notation.
+\item Strings enclosed in \texttt{"…"}.
 \item Standard operators and parentheses.
-\item Meta-variables denoting tokens prefixed with "$". %$
+\item Conversion of tokens to integers.
 \end{itemize}
 %%
 Notice that meta-variables are part of the syntax: essentially "⟨Computed#x⟩" and "#x" mean the same
@@ -1759,6 +1760,7 @@ inside the special syntax.  The allowed operators are summarized in Figure~\ref{
       \hline
       \texttt{+}~\texttt{-} & \text{addition, subtraction} \\
       \texttt{|}~\verb|^|~\verb|\| & \text{bitwise or, exclusive or, clear} \\
+      \texttt{@} & \text{string concatenation} \\
       \hline
       \texttt{*}~\texttt{/}~\texttt{\%} & \text{multiplication, divison, modulo} \\
       \texttt{\&} & \text{bitwise and} \\
@@ -1766,6 +1768,8 @@ inside the special syntax.  The allowed operators are summarized in Figure~\ref{
       \hline
       \texttt{+}~\texttt{-} & \text{unary plus and minus}\\
       \verb|~| & \text{bitwise not} \\
+      \texttt{escape~unescape} & \text{unary function that insert/remove C string escapes} \\
+      \texttt{length} & \text{unary function that returns length of string} \\
       \hline
     \end{array}
   \end{displaymath}
@@ -1794,7 +1798,7 @@ ListLength2(⟦ ⟧, #n) → #n ;
 Notice that it is \emph{not} presently possible to nest computations, \ie, insert a value in a
 "Computed" expression which is computed by user functions (this will change). However, it is still
 possible to use helpers to achieve nested computations, as illustrated by the simple desk calculator
-in Figure~\ref{fig:desk}, which also shows the use of "$" to import token values. %$
+in Figure~\ref{fig:desk}, which also shows the use of "$" to import a token as an integer value. %$
 
 
 \section{Examples}
@@ -2013,7 +2017,7 @@ ListE( ⟦ ⟧ ↑#syn ) → ⟦ ⟧ ↑#syn ;
 energon1[~]$ ^textcolor{blue}{^texttt{hacs WordMap.hx}}
 energon1[~]$ ^textcolor{blue}{^texttt{./WordMap.run --scheme=Substitute --term="a:b in a b b a"}}
 b b b b
-energon1[~]$ ^textcolor{blue}{^texttt{./WordSet.run --scheme=Substitute --term="k:v in a b c"}}
+energon1[~]$ ^textcolor{blue}{^texttt{./WordMap.run --scheme=Substitute --term="k:v in a b c"}}
 a b c
 \end{code}
 %%$
