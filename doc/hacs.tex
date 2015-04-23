@@ -1754,7 +1754,7 @@ inside the special syntax.  The allowed operators are summarized in Figure~\ref{
 
 \begin{table}[h]
   \begin{displaymath}
-    \begin{array}{c|p{.33\linewidth}}
+    \begin{array}{c|p{.55\linewidth}}
       \hline
       \textit{Operators} & \textit{Explanation} \\
       \hline
@@ -1768,7 +1768,7 @@ inside the special syntax.  The allowed operators are summarized in Figure~\ref{
       \hline
       \texttt{+}~\texttt{-} & \text{unary plus and minus}\\
       \verb|~| & \text{bitwise not} \\
-      \texttt{escape~unescape} & \text{unary function that insert/remove C string escapes} \\
+      \texttt{escape~unescape} & \text{unary function that inserts/removes C string escapes} \\
       \texttt{length} & \text{unary function that returns length of string} \\
       \hline
     \end{array}
@@ -1778,7 +1778,8 @@ inside the special syntax.  The allowed operators are summarized in Figure~\ref{
 \end{table}
 
 \begin{example}[count]\label{ex:count}
-  Consider the list from Example~\ref{ex:flatten}. The following computes the length of the list, using a helper.
+  Consider the list from Example~\ref{ex:flatten}. The following computes the length of the list,
+  using a helper.
   %%
 \begin{hacs}
 sort Computed | scheme ListLength(List) | scheme ListLength2(List, Computed) ;
@@ -1789,16 +1790,51 @@ ListLength2(⟦ ⟧, #n) → #n ;
   %%
 \end{example}
 
+\begin{figure}[t]
+  \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../tests/MakeToken.hx}
+  \caption{\emph{tests/MakeToken.hx}.}
+  \label{fig:maketoken}
+\end{figure}
+
+\begin{example}[string operations]
+  Figure~\ref{fig:maketoken} illustrates working with strings. Notice the following:
+  \begin{itemize}
+
+  \item We distinguish strictly between the token "WORD" and the sort "Word". We can write something
+    of sort "Word" in syntax brackets -- like ⟦X⟧ in the "Test" rule.
+
+  \item A map attribute -- called "dup" in the example -- can have a token sort as the key sort,
+    here "WORD".
+
+  \item The "Test2" rules have two cases for processing a word: one for a word that is previously
+    unmapped, and one for a word that was already mapped.
+
+  \item For each word we \emph{construct a new token}. This is achieved with a variant of the
+    "⟨WORD…⟩" notation: normally, in such a construction, the "…" must be something of token sort
+    "WORD", however, as a special case, you can use an expression of "Computed" sort, as we do in
+    lines 18 and 21 here.
+
+  \item Lines 26--27 define our ``word concatenation helper'' of sort "Computed" with an expression
+    that concatenates the two tokens as strings. This only works with arguments of token sort.
+
+  \end{itemize}
+\end{example}
+
+Notice that it is \emph{not} presently possible to nest computations, \ie, insert a value in a
+"Computed" expression which is computed by user functions (this will change). However, it is still
+possible to use helpers to achieve nested computations, as illustrated by the simple desk calculator
+in the following example.
+
 \begin{figure}[p]
   \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/Desk.hx}
   \caption{\emph{samples/Desk.hx}.}
   \label{fig:desk}
 \end{figure}
 
-Notice that it is \emph{not} presently possible to nest computations, \ie, insert a value in a
-"Computed" expression which is computed by user functions (this will change). However, it is still
-possible to use helpers to achieve nested computations, as illustrated by the simple desk calculator
-in Figure~\ref{fig:desk}, which also shows the use of "$" to import a token as an integer value. %$
+\begin{example}
+  Figure~\ref{fig:desk} implements a simple integer desk calculator. Notice how it uses the "$"
+  marker to import a token as an integer value. %$
+\end{example}
 
 
 \section{Examples}

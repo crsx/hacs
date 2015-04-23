@@ -212,7 +212,7 @@ PreludeHex[$String] :: HxTerm ;
 PreludeHex[#HxString#] → %rawHxTerm⟪ Computed HexToNumeric ( #HxString# ) ⟫ ;
 
 PreludeString[$String] :: HxTerm ;
-PreludeString[#HxString#] → %rawHxTerm⟪ Computed #HxString# ⟫ ;
+PreludeString[#HxString#] → %rawHxTerm⟪ Computed UnString ( #HxString# ) ⟫ ;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1121,46 +1121,52 @@ C-CrsxifyToken1[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( #Hx
 // Convert a term, optionally with environment-capturing meta-variable. TODO: Respect Repeat.
 
 C-CrsxifyTerm[HxTerm, NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
+C-CrsxifyTerm[#Term, #TopInherited, #DM, #SM]
+→
+$[If, $[Literal, #Term], %n⟪†« $[Escape,$[Symbol,#Term]] »⟫, C-CrsxifyTerm1[#Term, #TopInherited, #DM, #SM]]
+;
 
-C-CrsxifyTerm[%rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #TopInherited, {#DM}DM, #SM]
+C-CrsxifyTerm1[HxTerm, NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
+
+C-CrsxifyTerm1[%rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #TopInherited, {#DM}DM, #SM]
 →
 %n⟪« C-CrsxifyAttributes[#HxAttributes#, {#DM}U-GetFunctionInherited[#HxConstructor#], #TopInherited, {#DM}DM, #SM]
   »« C-CrsxifyConstructor[#HxConstructor#]
   »⟦« WrappedTextJoin[Map2x[s ss.C-CrsxifyScope[s, ss, #TopInherited, {#DM}DM, #SM], #HxScopes#, {#DM}U-GetConstructorScopeSorts[#HxConstructor#], NoScopeSort], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]
   »⟧⟫
 ;
-C-CrsxifyTerm[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #TopInherited, {#DM}DM, #SM]
+C-CrsxifyTerm1[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #TopInherited, {#DM}DM, #SM]
 →
 %n⟪« C-CrsxifyAttributes[#HxAttributes#, {#DM}U-GetFunctionInherited[#HxConstructor#], #TopInherited, {#DM}DM, #SM]
   »« C-CrsxifyConstructor[#HxConstructor#]
   »⟦« WrappedTextJoin[Map2x[s ss.C-CrsxifyScope[s, ss, #TopInherited, {#DM}DM, #SM], #HxScopes#, {#DM}U-GetConstructorScopeSorts[#HxConstructor#], NoScopeSort], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]
   »⟧⟫
 ;
-C-CrsxifyTerm[%rawHxTerm⟪ #HxLiteral# #HxAttributes# ⟫, #TopInherited, #DM, #SM]
+C-CrsxifyTerm1[%rawHxTerm⟪ #HxLiteral# #HxAttributes# ⟫, #TopInherited, #DM, #SM]
 →
 %n⟪« C-CrsxifyAttributes[#HxAttributes#, NoNames, #TopInherited, #DM, #SM] »« C-CrsxifyLiteral[#HxLiteral#] »⟫
 ;
-C-CrsxifyTerm[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxLiteral# #HxAttributes# ⟫, #TopInherited, #DM, #SM]
+C-CrsxifyTerm1[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxLiteral# #HxAttributes# ⟫, #TopInherited, #DM, #SM]
 →
 %n⟪« C-CrsxifyAttributes[#HxAttributes#, NoNames, #TopInherited, #DM, #SM] »« C-CrsxifyLiteral[#HxLiteral#] »⟫
 ;
-C-CrsxifyTerm[%rawHxTerm⟪ variable #HxAttributes# ⟫, #TopInherited, #DM, #SM]
+C-CrsxifyTerm1[%rawHxTerm⟪ variable #HxAttributes# ⟫, #TopInherited, #DM, #SM]
 →
 %n⟪« C-CrsxifyAttributes[#HxAttributes#, NoNames, #TopInherited, #DM, #SM] »« C-CrsxifyVariable[variable] »⟫
 ;
-C-CrsxifyTerm[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# variable #HxAttributes# ⟫, #TopInherited, #DM, #SM]
+C-CrsxifyTerm1[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# variable #HxAttributes# ⟫, #TopInherited, #DM, #SM]
 →
 %n⟪« C-CrsxifyAttributes[#HxAttributes#, NoNames, #TopInherited, #DM, #SM] »« C-CrsxifyVariable[variable] »⟫
 ;
-C-CrsxifyTerm[%rawHxTerm⟪ #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫, #TopInherited, #DM, #SM]
+C-CrsxifyTerm1[%rawHxTerm⟪ #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫, #TopInherited, #DM, #SM]
 →
 %n⟪« C-CrsxifyAttributes[#HxAttributes#, NoNames, #TopInherited, #DM, #SM] »« C-CrsxifyMetaApplication[#HxMetaVariable#, #HxTerms#, #TopInherited, #DM, #SM] »⟫
 ;
-C-CrsxifyTerm[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫, #TopInherited, #DM, #SM]
+C-CrsxifyTerm1[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫, #TopInherited, #DM, #SM]
 →
 %n⟪« C-CrsxifyAttributes[#HxAttributes#, NoNames, #TopInherited, #DM, #SM] »« C-CrsxifyMetaApplication[#HxMetaVariable#, #HxTerms#, #TopInherited, #DM, #SM] »⟫
 ;
-C-CrsxifyTerm[%rawHxTerm⟪ special #HxConcreteText# #HxAttributes# ⟫, #TopInherited, #DM, #SM]
+C-CrsxifyTerm1[%rawHxTerm⟪ special #HxConcreteText# #HxAttributes# ⟫, #TopInherited, #DM, #SM]
 →
 %n⟪« C-CrsxifyAttributes[#HxAttributes#, NoNames, #TopInherited, #DM, #SM] »« C-CrsxifySpecial[special, #HxConcreteText#] »⟫
 ;

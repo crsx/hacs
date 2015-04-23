@@ -286,9 +286,6 @@ UnString[$String] :: $String ;
 StringTrim[$String] :: $String ;
 -[Data[#]]: StringTrim[#] → $[Trim, #] ;
 
-StringOrd[$String] :: $Numeric ;
--[Data[#]]: StringOrd[#] → 0 ; ///$[DecodePoint, #] ;
-
 StringEscape[$String] :: $String ;
 -[Data[#]]: StringEscape[#] → $[Escape, #] ;
 
