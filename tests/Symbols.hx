@@ -1,47 +1,74 @@
 module org.crsx.hacs.tests.Symbols { //-*-hacs-*-
 
-  // Usual tokens.
-  token ID | [A-Za-z0-9_]+ ;
+  // Upper case words are tokens.
+  token UP | [A-Z]+ ;
 
-  // Symbol sort based on a token.
-  sort S | symbol ⟦⟨ID⟩⟧ ;
+  // Symbol sort based on a (lower case) token (with required index).
+  token LO | [a-z]+ [0-9_]* ;
+  sort S | symbol ⟦⟨LO⟩⟧ ;
 
+  // Integers and Counts.
+  token INT | [0-9]+ ;
+  
   // A word of the input or output.
   sort W
-    | ⟦⟨ID⟩⟧	// literal token
-    | ⟦?⟨S⟩⟧	// specific symbol
+    | ⟦⟨UP⟩⟧	// literal token
+    | ⟦⟨S⟩⟧		// specific symbol
     | ⟦*⟧		// random symbol
+    | ⟦⟨INT⟩⟧	// count
     ;
 
   // Input and output is list of words.
   main sort L | ⟦⟨W⟩ ⟨L⟩⟧ | ⟦⟧ ;
-
-  // Main scheme, passing list of tokens and symbols!
+  
+  // Main scheme!
   sort L | scheme Test(L) ;
+  Test(#) → Emit(#) ;
 
-  // Rule for tokens.
-  Test(⟦ ⟨ID#id⟩ ⟨L#⟩⟧) → ⟦ ⟨ID#id⟩ ⟨L Test(#)⟩⟧ ;
+  // Inherited attribute to pass token counts.
+  attribute ↓ups{UP : Computed} ;
 
-  // Rule for symbols.
-  Test(⟦ ?s ⟨L#⟩⟧) → ⟦ ?s ⟨L Test(#)⟩⟧ ;
+  // How to initialie counters.
+  sort Computed | scheme Two ; Two → ⟦2⟧ ;
 
-  // Rule to generate a random symbol!
-  Test(⟦ * ⟨L#⟩⟧) → ⟦ ?s ⟨L Test(#)⟩⟧ ;
+  // Inerited attribute with symbol membership.
+  attribute ↓syms{S} ;
 
-  // Rule to finish off with thrice End and a symbol.
-  Test(⟦⟧) → ⟦ End End End ?s ?s ?s ⟧ ;
+  // Helper scheme, passing counts of tokens and symbols!
+  sort L | scheme Emit(L) ↓ups ↓syms ;
+
+  // Rule for tokens not seen before.
+  Emit(⟦ ⟨UP#id⟩ ⟨L#⟩ ⟧) ↓ups{¬#id} → ⟦ ⟨UP#id⟩ ⟨L Emit(#) ↓ups{#id : Two}⟩ ⟧ ;
+
+  // Rule for tokens already seen - add count!
+  Emit(⟦ ⟨UP#id⟩ ⟨L#⟩ ⟧) ↓ups{#id : #n} → ⟦ ⟨UP#id⟩ ⟨INT#n⟩ ⟨L Emit(#) ↓ups{#id : ⟦ #n + 1 ⟧}⟩ ⟧ ;
+
+  // Rule for symbols not seen before - note how an exemplar symbol is used.
+  Emit(⟦ s ⟨L#⟩ ⟧) ↓syms{¬⟦s⟧} → ⟦ s ⟨L Emit(#) ↓syms{⟦s⟧}⟩ ⟧ ;
+
+  // Rule for symbols already seen - add *!
+  Emit(⟦ s ⟨L#⟩ ⟧) ↓syms{⟦s⟧} → ⟦ s * ⟨L Emit(#)⟩ ⟧ ;
+
+  // Rule to generate a random symbol.
+  Emit(⟦ * ⟨L#⟩ ⟧) → ⟦ s ⟨L Emit(#)⟩ ⟧ ;
+
+  // Rule to skip existing counts.
+  Emit(⟦ ⟨INT#n⟩ ⟨L#⟩ ⟧) → Emit(#) ;
+
+  // Rule to finish off with thrice END and a symbol.
+  Emit(⟦⟧) → ⟦ END END END s s s ⟧ ;
 
 /*
   Try to run as follows:
-  $ ./Symbols.run --scheme=Test --term="A A * * ?a ?a"
+  $ ./Symbols.run --scheme=Test --term="A A a a * A * a"
 
   You get:
-  A A ?s ?s_59 ?a ?a End End End ?s_51 ?s_51 ?s_51 
+  A A 2 a a * s A 3 s_39 a * END END END s_46 s_46 s_46 
   Notice:
   - input tokens and symbols passed through(A, a),
-  - rule symbols generated fresh for each replacement (s, s_59),
-  - generated symbols consistent within each replacement (s_51).
+  - repeated input tokens followed by count (A 2, A 3),
+  - repeated input symbols followed by star (a *),
+  - rule symbols generated fresh for each replacement (s ≠ s_30 ≠ s_46),
+  - generated symbols consistent within each replacement (s_46).
 */
 }
-
-  
