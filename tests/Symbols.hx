@@ -25,13 +25,13 @@ module org.crsx.hacs.tests.Symbols { //-*-hacs-*-
   sort L | scheme Test(L) ;
   Test(#) → Emit(#) ;
 
-  // Inherited attribute to pass token counts.
+  // Inherited attribute to pass map of next token counts.
   attribute ↓ups{UP : Computed} ;
 
-  // How to initialie counters.
+  // How to initialize counters.
   sort Computed | scheme Two ; Two → ⟦2⟧ ;
 
-  // Inerited attribute with symbol membership.
+  // Inerited attribute with set of seen symbols.
   attribute ↓syms{S} ;
 
   // Helper scheme, passing counts of tokens and symbols!
