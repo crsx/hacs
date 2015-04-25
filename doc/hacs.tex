@@ -1791,8 +1791,8 @@ ListLength2(⟦ ⟧, #n) → #n ;
 \end{example}
 
 \begin{figure}[t]
-  \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../tests/MakeToken.hx}
-  \caption{\emph{tests/MakeToken.hx}.}
+  \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/MakeToken.hx}
+  \caption{\emph{samples/MakeToken.hx}.}
   \label{fig:maketoken}
 \end{figure}
 
@@ -1869,6 +1869,33 @@ representation.  In this section we work through some examples of this.
 
   \end{itemize}
 \end{remark}
+
+\begin{figure}[p]
+  \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right,texcl]{../samples/Symbols.hx}
+  \caption{\emph{samples/Symbols.hx}.}
+  \label{fig:symbols}
+\end{figure}
+
+\begin{example}
+  Figure~\ref{fig:symbols} illustrates the different conventions for using plain tokens---here upper
+  case words---and using symbols---here lower case words. Look at the comments, and notice the
+  difference in use in rule cases and as map keys and set members.
+  \begin{code}[commandchars=\\\{\}]
+$ \textcolor{blue}{hacs Symbols.hx}
+...
+$ \textcolor{blue}{./Symbols.run --scheme=Test --term="A A a a * A * a"}
+A A 2 a a * s A 3 s_39 a * END END END s_46 s_46 s_46 
+\end{code}
+%%$
+  Notice:
+  \begin{itemize}
+  \item input tokens and symbols passed through, \eg, \texttt{A} and \texttt{a};
+  \item repeated input tokens followed by count, \eg, \texttt{A 2} and \texttt{A 3},
+  \item repeated input symbols followed by star, \eg,  \texttt{a *},
+  \item rule symbols generated fresh for each use of a rule replacement, \eg, \texttt{s $≠$ s\_30 $≠$ s\_46},
+  \item generated symbols consistent within each replacement, \eg, \texttt{s\_46}.
+  \end{itemize}
+\end{example}
 
 \begin{figure}[t]
 \begin{hacs}[numbers=right,texcl]
