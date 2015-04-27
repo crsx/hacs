@@ -1749,8 +1749,9 @@ expressions in ⟦⟧s, which include
 \item Conversion of tokens to integers.
 \end{itemize}
 %%
-Notice that meta-variables are part of the syntax: essentially "⟨Computed#x⟩" and "#x" mean the same
-inside the special syntax.  The allowed operators are summarized in Figure~\ref{fig:ops}.
+Notice that for "Computed", meta-variables are part of the syntax: essentially "#x" is used instead
+of ``"⟨Computed#x⟩",'' which is not permitted, inside the special syntax.  The allowed operators are
+summarized in Figure~\ref{fig:ops}.
 
 \begin{table}[h]
   \begin{displaymath}
@@ -2914,13 +2915,15 @@ sort ThenB | ⟦ then ⟨B⟩ ⟧;
 \item When using the "symbol" qualifier on a reference to a token then the token \emph{must} allow
   ending with a sequence of "_"$n$ for $n$ any natural numbers.
 
-\item When using the same name for a symbol inside of "⟦…⟧" and the corresponding raw variable
-  outside of the ⟦⟧, then the common symbol and variable name must be a plain word starting with a
-  lower case letter.
+\item Symbols inside of "⟦…⟧" and raw variables outside the ⟦⟧ must still have different names or
+  they will be identified.
 
 \item Special terms like "error⟦…⟧" cannot be used as raw subterms.
 
 \item Synthesized attribute patterns with pattern matching in the attributes may not always work.
+
+\item The "Computed" sort only works if there is at least one data or scheme constructor that
+  \emph{returns} a value of "Computed" sort.
 
 \end{itemize}
 
