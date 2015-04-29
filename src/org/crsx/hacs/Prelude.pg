@@ -5,17 +5,24 @@ class org.crsx.hacs.Prelude : <Computed>
 
 prefix "prelude_"
 
-<Computed> ::= <ComputedRel> .
+<Computed> ::= <ComputedTest> .
 
-// Pattern expressions (tests).
+// Choice.
+
+<ComputedTest> ::= <ComputedRel>:#1
+       ( "?" <ComputedRel>:#2 ":" <ComputedTest>:#3 {{ PreludeTest[#1, #2, #3] }}
+       | {{#1}}
+       ).
+
+// Pattern expressions (comparisons).
 
 <ComputedRel> ::= <ComputedAdd>:#1
-       ( "=" <ComputedPrim>:#2 {{ PreludeCompare["NumericEqual", #1, #2] }}
-       | ("!="|"/="|"≠") <ComputedPrim>:#2 {{ PreludeCompare["NumericNotEqual", #1, #2] }}
-       | "<" <ComputedPrim>:#2 {{ PreludeCompare["LessThan", #1, #2] }}
-       | ">" <ComputedPrim>:#2 {{ PreludeCompare["GreaterThan", #1, #2] }}
-       | ("<="|"≤") <ComputedPrim>:#2 {{ PreludeCompare["LessThatOrEqual", #1, #2] }}
-       | (">="|"≥") <ComputedPrim>:#2 {{ PreludeCompare["GreaterThanOrEqual", #1, #2] }}
+       ( "=" <ComputedAdd>:#2 {{ PreludeCompare["Eq2", #1, #2] }}
+       | ("!="|"/="|"≠") <ComputedAdd>:#2 {{ PreludeCompare["NotEq2", #1, #2] }}
+       | "<" <ComputedAdd>:#2 {{ PreludeCompare["Less2", #1, #2] }}
+       | ">" <ComputedAdd>:#2 {{ PreludeCompare["Less2", #2, #1] }}
+       | ("<="|"≤") <ComputedAdd>:#2 {{ PreludeCompare["LessEq2", #1, #2] }}
+       | (">="|"≥") <ComputedAdd>:#2 {{ PreludeCompare["LessEq2", #2, #1] }}
        | {{#1}}
        ).
 
@@ -52,6 +59,7 @@ prefix "prelude_"
        | "escape" <ComputedPrim>:# {{ PreludeUnary["StringEscape", #] }}
        | "unescape" <ComputedPrim>:# {{ PreludeUnary["StringUnescape", #] }}
        | "length" <ComputedPrim>:# {{ PreludeUnary["StringLength", #] }}
+       | NAME$:# <ComputedPrim>:#1 {{ PreludeCast[#, #1] }}
        | <ComputedPrim>
        .
 
@@ -60,6 +68,7 @@ prefix "prelude_"
        | {PreludeDecimal} DECIMAL$
        | {PreludeString} STRING$
        | "$" <ComputedRef>:# {{ PreludeUnary["StringToNumeric", #] }}
+       | "%" <ComputedRef>:# {{ PreludeUnary["NumericToString", #] }}
        | <ComputedRef>
        .
 

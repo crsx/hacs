@@ -104,11 +104,14 @@ NumericToStringWhen[Ok, $Numeric] :: $String;
 Less2[$Numeric, $Numeric] :: Boolean ;
 -[Data[#1,#2]]: Less2[#1, #2] → $[If, $[LessThan, #1, #2], B_TRUE, B_FALSE] ;
 
-LessEqual2[$Numeric, $Numeric] :: Boolean ;
--[Data[#1,#2]]: LessEqual2[#1, #2] → $[If, $[LessThan, #1, #2], B_TRUE, B_FALSE] ;
+LessEq2[$Numeric, $Numeric] :: Boolean ;
+-[Data[#1,#2]]: LessEq2[#1, #2] → $[If, $[LessThan, #2, #1], B_FALSE, B_TRUE] ;
 
 Eq2[$Numeric, $Numeric] :: Boolean ;
 -[Data[#1,#2]]: Eq2[#1, #2] → $[If, $[Equal, $[Plus,#1,0], $[Plus,#2,0]], B_TRUE, B_FALSE] ;
+
+NotEq2[$Numeric, $Numeric] :: Boolean ;
+-[Data[#1,#2]]: Eq2[#1, #2] → $[If, $[Equal, $[Plus,#1,0], $[Plus,#2,0]], B_FALSE, B_TRUE] ;
 
 // Computations.
 

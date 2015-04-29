@@ -193,6 +193,9 @@ C-UnravelScope_0[#] → Hx_Scope[(), #] ;
 -[Fresh[x1::HxTerm,x2::HxTerm,x3::HxTerm,x4::HxTerm,x5::HxTerm,x6::HxTerm,x7::HxTerm,x8::HxTerm,x9::HxTerm]]: C-UnravelScope_9[x1 x2 x3 x4 x5 x6 x7 x8 x9 . #[x1,x2,x3,x4,x5,x6,x7,x8,x9]] → Hx_Scope[(x1; x2; x3; x4; x5; x6; x7; x8; x9;), #[x1,x2,x3,x4,x5,x6,x7,x8,x9]] ;
 -[Fresh[x1::HxTerm,x2::HxTerm,x3::HxTerm,x4::HxTerm,x5::HxTerm,x6::HxTerm,x7::HxTerm,x8::HxTerm,x9::HxTerm,x10::HxTerm]]: C-UnravelScope_10[x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 . #[x1,x2,x3,x4,x5,x6,x7,x8,x9,x10]] → Hx_Scope[(x1; x2; x3; x4; x5; x6; x7; x8; x9; x10;), #[x1,x2,x3,x4,x5,x6,x7,x8,x9,x10]] ;
 
+PreludeTest[HxTerm, HxTerm, HxTerm] :: HxTerm ;
+PreludeTest[#HxTerm#, #HxTerm1#, #HxTerm2#] → %rawHxTerm⟪ Computed If ( #HxTerm#, #HxTerm1#, #HxTerm2# ) ⟫ ;
+
 PreludeCompare[$String, HxTerm, HxTerm] :: HxTerm ;
 PreludeCompare[#HxConstructor#, #HxTerm1#, #HxTerm2#] → %rawHxTerm⟪ Computed #HxConstructor# ( #HxTerm1#, #HxTerm2# ) ⟫ ;
 
@@ -213,6 +216,14 @@ PreludeHex[#HxString#] → %rawHxTerm⟪ Computed HexToNumeric ( #HxString# ) �
 
 PreludeString[$String] :: HxTerm ;
 PreludeString[#HxString#] → %rawHxTerm⟪ Computed UnString ( #HxString# ) ⟫ ;
+
+PreludeCast[$String, HxTerm] :: HxTerm ;
+PreludeCast[#HxConstructor1#, %rawHxTerm⟪ #HxConstructor2# #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫] → %rawHxTerm⟪ #HxConstructor1# #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫ ;
+PreludeCast[#HxConstructor1#, %rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫] → %rawHxTerm⟪ #HxConstructor1# #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫ ;
+PreludeCast[#HxConstructor1#, %rawHxTerm⟪ #HxConstructor2# #HxLiteral# #HxAttributes# ⟫] → %rawHxTerm⟪ #HxConstructor1# #HxLiteral# #HxAttributes# ⟫ ;
+PreludeCast[#HxConstructor1#, %rawHxTerm⟪ #HxLiteral# #HxAttributes# ⟫] → %rawHxTerm⟪ #HxConstructor1# #HxLiteral# #HxAttributes# ⟫ ;
+PreludeCast[#HxConstructor1#, %rawHxTerm⟪ #HxConstructor2# #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫] → %rawHxTerm⟪ #HxConstructor1# #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫ ;
+PreludeCast[#HxConstructor1#, %rawHxTerm⟪ #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫] → %rawHxTerm⟪ #HxConstructor1# #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫ ;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
