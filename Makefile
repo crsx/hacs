@@ -47,11 +47,18 @@ gitclean ::; rm -fr lib
 
 $(eval HACS$(shell cat VERSION))
 
-hacs.zip : all
-	$(MAKE) $(shell cat ziplist)
+hacs.zip : ziplist
+	$(MAKE) clean
+	$(MAKE)
 	$(MAKE) clean
 	rm -f *.zip
 	cd .. && zip -r hacs/hacs-$(HACSVERSION).zip $(addprefix hacs/,$(shell cat ziplist))
 	ln -fs hacs-$(HACSVERSION).zip hacs.zip
+
+.PHONY : release
+release : ziplist
+	$(MAKE) gitclean
+	$(MAKE) hacs.zip
+	scp hacs.zip krisrose.net:/var/www/crsx/hacs-$(HACSVERSION).zip; scp hacs.zip doc/hacs.pdf krisrose.net:/var/www/crsx/
 
 realclean ::; rm -f *.zip

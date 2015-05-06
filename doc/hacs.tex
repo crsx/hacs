@@ -1732,7 +1732,7 @@ be globally unique? By default, \HAX follows the following rules:
 %%\end{example}
 
 
-\section{Compile-time Computations}
+\section{Compile-time Computations and Errors}
 \label{sec:comp}
 
 We may sometimes need to compute helper values, most commonly for counting. \HAX supports this
@@ -1752,6 +1752,10 @@ expressions in ⟦⟧s, which include
 Notice that for "Computed", meta-variables are part of the syntax: essentially "#x" is used instead
 of ``"⟨Computed#x⟩",'' which is not permitted, inside the special syntax.  The allowed operators are
 summarized in Figure~\ref{fig:ops}.
+
+Also remember that \emph{all} computed parts of a rule are evaluated as soon as the rule is
+expanded, so only use this for calculuations that can be safely computed in any case where the
+\emph{pattern} of the rule matches.
 
 \begin{table}[h]
   \begin{displaymath}
@@ -2504,10 +2508,11 @@ space [ \t\f\r\n] | nested "/*" "*/" | "//" .* ;
     nested raw terms \emph{must} have an explicit sort prefix.
 
   \item The special term "error⟦…⟧" will print the error message embedded in "⟦…⟧", where one is
-    permitted to embed "symbol"-declared variables in "⟨…⟩".
+    permitted to embed "symbol"-declared variables in "⟨…⟩". Note that "error" terms will be
+    evaluated \emph{when the rule is expanded}, thus only use "error" when the \emph{pattern} of the
+    rule guarantees that you want the error.
 
   \end{enumerate}
-
 \end{manual}
 
 \begin{manual}[raw terms, schemes, and rules]\label{man:raw}

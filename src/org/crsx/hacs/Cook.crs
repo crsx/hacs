@@ -942,7 +942,7 @@ C-CrsxifyRule1[#RulePrefix, #TopPattern, #TopTerm, #Sort, {#DM}DM, {#DM}C-Extend
     C-ExtendWithTopInheritedMeta2[#SM, ()] → #SM ;
 
     C-ExtendWithInheritedMeta[SortMap, $String<!--AttributeName-->, HxAttributeValue] :: SortMap ;
-    C-ExtendWithInheritedMeta[{#SM}SM[#fvs, #mvs], #HxAttributeName#, %rawHxAttributeValue⟪ ( #HxTerm# ) ⟫] → {#SM; #HxAttributeName# : ($[Show,#HxTerm#];)}SM[#fvs, #mvs] ; //TODO: clean up...
+    C-ExtendWithInheritedMeta[{#SM}SM[#fvs, #mvs], #HxAttributeName#, %rawHxAttributeValue⟪ ( #HxMetaVariable# ) ⟫] → {#SM; #HxAttributeName# : (#HxMetaVariable#;)}SM[#fvs, #mvs] ;
     C-ExtendWithInheritedMeta[{#SM}SM[#fvs, #mvs], #HxAttributeName#, %rawHxAttributeValue⟪ { : #HxMetaVariable# } ⟫] → {#SM; #HxAttributeName# : (#HxMetaVariable#;)}SM[#fvs, #mvs] ;
     C-ExtendWithInheritedMeta[#SM, #HxAttributeName#, $[NotMatch, %rawHxAttributeValue⟪ ( #HxMetaVariable1# ) ⟫, $[NotMatch, %rawHxAttributeValue⟪ { : #HxMetaVariable2# } ⟫, #Attribute]]] → #SM ;
 
@@ -1027,19 +1027,19 @@ C-CrsxifyRuleVars0[#DM, #SM1, #SM2, #Globals, $[FreeVariables,#Pattern], $[FreeV
     C-CrsxifyRuleVars2[DeclarationMap, SortMap<!--Rule-->, $List[HxTerm]<!--Pattern-->, $List[HxTerm]<!--OnlyRule-->] :: $List[Text] ;
     C-CrsxifyRuleVars2[#DM, #SM, #vs1, #vs2]
     →
-    If[Empty[#vs1], C-CrsxifyRuleVars3[#DM, #SM, #vs2],
-      ( WrappedTextJoin[MapWhen[ok v.%n⟪«v»::†« C-SortMap-then-GetFreeVariableSort[ok, #SM, v] »⟫, #vs1], %n⟪Free[⟫, %n⟪,⟫, %n⟪]⟫]; C-CrsxifyRuleVars3[#DM, #SM, #vs2] )
+    If[Empty[#vs1], C-CrsxifyRuleVars3[#DM, #SM, C-Not-Error[#vs2]],
+      ( WrappedTextJoin[MapWhen[ok v.%n⟪«v»::†« C-SortMap-then-GetFreeVariableSort[ok, #SM, v] »⟫, #vs1], %n⟪Free[⟫, %n⟪,⟫, %n⟪]⟫]; C-CrsxifyRuleVars3[#DM, #SM, C-Not-Error[#vs2]] )
     ];
+	C-Not-Error[$List[HxTerm]] :: $List[HxTerm] ;
+	C-Not-Error[()] → () ;
+	-[Free[v::HxTerm]]: C-Not-Error[(v;#rest)] → $[If, $[Equal,$[Symbol,v],"error"], C-Not-Error[#rest], (v ; C-Not-Error[#rest])] ;
 
     C-CrsxifyRuleVars3[DeclarationMap, SortMap<!--Rule-->, $List[HxTerm]<!--OnlyContractum-->] :: $List[Text] ;
     C-CrsxifyRuleVars3[#DM, #SM, #vs]
     →
     If[Empty[#vs], (),
-      ( WrappedTextJoin[MapWhen[ok v.%n⟪«v»::†« C-SortMap-then-GetFreeVariableSort[ok, #SM, v] »⟫, C-Not-Error[#vs]], %n⟪Fresh[⟫, %n⟪,⟫, %n⟪]⟫]; )
+      ( WrappedTextJoin[MapWhen[ok v.%n⟪«v»::†« C-SortMap-then-GetFreeVariableSort[ok, #SM, v] »⟫, #vs], %n⟪Fresh[⟫, %n⟪,⟫, %n⟪]⟫]; )
     ];
-	C-Not-Error[$List[HxTerm]] :: $List[HxTerm] ;
-	C-Not-Error[()] → () ;
-	-[Free[v::HxTerm]]: C-Not-Error[(v;#rest)] → $[If, $[Equal,$[Symbol,v],"error"], C-Not-Error[#rest], (v ; C-Not-Error[#rest])] ;
 
 ///    C-CrsxifyRuleVars2[DeclarationMap, SortMap<!--Rule-->, $List[HxTerm]<!--Globals-->, $List[HxTerm]<!--Pattern-->, $List[HxTerm]<!--OnlyRule-->] :: $List[Text] ;
 ///    C-CrsxifyRuleVars2[#DM, #SM, #vs1, #vs2]
@@ -1127,7 +1127,6 @@ C-CrsxifyToken1[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( #Hx
   »⟦« WrappedTextJoin[Map2x[s ss.C-CrsxifyScope[s, ss, #TopInherited, {#DM}DM, #SM], #HxScopes#, {#DM}U-GetConstructorScopeSorts[#HxConstructor#], NoScopeSort], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]
   »⟧⟫
 ;
-///WrappedTextJoin[Map2x[s ss.C-CrsxifyScope[s, ss, #TopInherited, {#DM}DM, #SM], #HxScopes#, (%rawHxScopeSort⟨Computed⟩;), NoScopeSort], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]
 
 // Convert a term, optionally with environment-capturing meta-variable. TODO: Respect Repeat.
 
@@ -1625,7 +1624,7 @@ C-AddAttributeTopInherited[(), #Names] → #Names ;
 C-AddAttributeTopInherited[(%rawHxAttribute⟪ ↑ #HxAttributeName# #HxAttributeValue# ⟫; #Attributes), #Names] → C-AddAttributeTopInherited[#Attributes, #Names] ;
 C-AddAttributeTopInherited[(%rawHxAttribute⟪ ↓ #HxAttributeName# #HxAttributeValue# ⟫; #Attributes), #Names] → AddName[C-AddAttributeTopInherited[#Attributes, #Names], #HxAttributeName#] ;
 
-// List of free variables + meta-application argument , with their sorts...also abused to contain attribute name to meta-variable binding.
+// List of free variables + meta-application arguments, with their sorts...also abused to contain attribute name to meta-variable binding.
 
 {HxTerm : $String; $String : $List[$String]}
 SortMap ::=( SM[$List[HxTerm], $List[$String]]; );
@@ -1688,12 +1687,12 @@ C-SortMap-then-GetFreeVariableSort[OK, {#SM}SM[#fvs, #mvs], v] → $[{#SM}Get[$S
 -[Free[v::HxTerm]] :
 {#DM} C-ExtendSortMap-Terms2[%rawHxTerm⟪ v #HxAttributes# ⟫, #Terms, #Sort, #Sorts, #SM]
 →
-{#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, {#DM} C-ExtendSortMap-Attributes[#HxAttributes#, C-ExtendSortMap-AddVariable[#SM, v, #Sort, $[{#DM}IfDef[$String], v, B_FALSE, B_TRUE]]]]
+{#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, {#DM} C-ExtendSortMap-Attributes[#HxAttributes#, C-ExtendSortMap-AddVariable[#SM, v, #Sort, $[{#DM}IfDef[Boolean], v, B_FALSE, B_TRUE]]]]
 ;
 -[Free[v::HxTerm]] :
 {#DM} C-ExtendSortMap-Terms2[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# v #HxAttributes# ⟫, #Terms, #Sort, #Sorts, #SM]
 →
-{#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, {#DM} C-ExtendSortMap-Attributes[#HxAttributes#, C-ExtendSortMap-AddVariable[#SM, v, #Sort, $[{#DM}IfDef[$String], v, B_FALSE, B_TRUE]]]]
+{#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, {#DM} C-ExtendSortMap-Attributes[#HxAttributes#, C-ExtendSortMap-AddVariable[#SM, v, #Sort, $[{#DM}IfDef[Boolean], v, B_FALSE, B_TRUE]]]]
 ;
 
     C-ExtendSortMap-AddVariable[SortMap, HxTerm, $String, Boolean<!--Include?-->] :: SortMap ;
@@ -1731,7 +1730,8 @@ C-SortMap-then-GetFreeVariableSort[OK, {#SM}SM[#fvs, #mvs], v] → $[{#SM}Get[$S
 {#DM} C-ExtendSortMap-Terms2[Hx_Special[#v, #Concrete, #Attributes], #Terms, #Sort, #Sorts, #SM] → {#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, {#DM} C-ExtendSortMap-Attributes[#Attributes, #SM]] ;
 {#DM} C-ExtendSortMap-Terms2[Hx_Unparsed[#Unparsed, #Attributes], #Terms, #Sort, #Sorts, #SM] → {#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, {#DM} C-ExtendSortMap-Attributes[#Attributes, #SM]] ;
 {#DM} C-ExtendSortMap-Terms2[Hx_UnparsedSorted[#SortName, #Repeat, #Unparsed, #Attributes], #Terms, #Sort, #Sorts, #SM] → {#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, {#DM} C-ExtendSortMap-Attributes[#Attributes, #SM]] ;
-{#DM} C-ExtendSortMap-Terms2[Hx_NullTerm, #Terms, #Sort, #Sorts, #SM] → {#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, #SM] ;
+
+-[Fallback]: {#DM} C-ExtendSortMap-Terms2[#Term, #Terms, #Sort, #Sorts, #SM] → {#DM} C-ExtendSortMap-Terms[#Terms, #Sorts, #SM] ;
 
 // Accumulate sort map over scopes.
 
@@ -1782,7 +1782,7 @@ C-SortMap-then-GetFreeVariableSort[OK, {#SM}SM[#fvs, #mvs], v] → $[{#SM}Get[$S
 →
 $[{#SM}IfDef, #MetaVariable,
   {#DM} C-ExtendSortMap-Terms[#SubTerms, $[{#SM}Get[$List[$String]],#MetaVariable], {#SM}SM[#fvs, #mvs]],
-  {#DM} C-ExtendSortMap-MetaApplication2[#MetaVariable, #SubTerms, ss¹.ss¹, {#SM}SM[#fvs, #mvs]]]
+    {#DM} C-ExtendSortMap-MetaApplication2[#MetaVariable, #SubTerms, ss¹.ss¹, {#SM}SM[#fvs, #mvs]]]
 ;
     // Helper to instantiate from pattern meta-application.
     {$String<!--SortName--> : DeclarationMapEntry; HxTerm : $String} C-ExtendSortMap-MetaApplication2[$String<!--HxMetaVariable-->, $List[HxTerm], ss :: $List[$String] . $List[$String], SortMap] :: SortMap ;
@@ -1792,9 +1792,9 @@ $[{#SM}IfDef, #MetaVariable,
     -[Free[v::HxTerm]] :
     {#DM} C-ExtendSortMap-MetaApplication2[#MetaVariable, ( {#L}%rawHxTerm⟪ v #HxAttributes1# ⟫ ; #Terms), ss¹.#[ss¹], {#SM}SM[#fvs, #mvs]]
     →
-    $[{#DM}IfDef, v,
+    $[{#DM}IfDef[SortMap], v,
       {#DM} C-ExtendSortMap-MetaApplication2[#MetaVariable, #Terms, ss¹.#[($[{#DM}Get[$String],v]; ss¹)], {#SM}SM[#fvs, #mvs]],
-      $[{#SM}IfDef, v,
+      $[{#SM}IfDef[SortMap], v,
         {#DM} C-ExtendSortMap-MetaApplication2[#MetaVariable, #Terms, ss¹.#[($[{#SM}Get[$String],v]; ss¹)], {#SM}SM[#fvs, #mvs]],
         {#L}Error[$[:,"Undefined symbol ",$[Show,v]," used in ",#MetaVariable,"-meta-application."]]]]
     ;
@@ -1802,15 +1802,15 @@ $[{#SM}IfDef, #MetaVariable,
     -[Free[v::HxTerm]] :
     {#DM} C-ExtendSortMap-MetaApplication2[#MetaVariable, ( {#L}%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# v #HxAttributes1# ⟫ ; #Terms), ss¹.#[ss¹], {#SM}SM[#fvs, #mvs]]
     →
-    $[{#DM}IfDef, v,
+    $[{#DM}IfDef[SortMap], v,
       {#DM} C-ExtendSortMap-MetaApplication2[#MetaVariable, #Terms, ss¹.#[($[{#DM}Get[$String],v]; ss¹)], {#SM}SM[#fvs, #mvs]],
-      $[{#SM}IfDef, v,
+      $[{#SM}IfDef[SortMap], v,
         {#DM} C-ExtendSortMap-MetaApplication2[#MetaVariable, #Terms, ss¹.#[($[{#SM}Get[$String],v]; ss¹)], {#SM}SM[#fvs, #mvs]],
         {#L}Error[$[:,"Undefined symbol ",$[Show,v]," used in ",#MetaVariable,"-meta-application."]]]]
     ;
 
     {#DM} C-ExtendSortMap-MetaApplication2[#MetaVariable, (
-                     $[NotMatch, %rawHxTerm⟪ #HxConstructor1# #HxRepeat1# v1 #HxAttributes1# ⟫,
+                     $[NotMatch, %rawHxTerm⟪ v1 #HxAttributes1# ⟫,
 		      $[NotMatch, %rawHxTerm⟪ #HxConstructor2# #HxRepeat2# v2 #HxAttributes2# ⟫,
 		       #Term1]] ; #Terms), ss¹.#[ss¹], {#SM}SM[#fvs, #mvs]]
     →
