@@ -125,7 +125,7 @@ DeclarationMap ::=( DM; );
 
 {$String : $StringEntrySort}
 DeclarationMapEntry ::=(
- DME_TOKEN[$String<!--SortName-->];
+ DME_TOKEN[$String<!--FullSortName-->];
  DME_ATTRIBUTE[HxAttributeKind, $String<!--AttributeName-->, HxAttributeForm, $List[HxAttributeOption]];
  DME_SORT[$List[Define], $String<!--FullSortName-->, NameSet<!--precs-->, Wrapper, Boolean<!--IsMainSort-->];
  DME_NONE;
@@ -409,7 +409,7 @@ U-MakeDM[{}DM, #Declarations, #ModuleName, "", NoNames, dm¹ s ss.U-MakeDM-Finis
 
     {#DM} U-MakeDM1[%rawHxDeclarations⟪ token #HxTokenName# | #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, dm¹ s ss.#[dm¹, s, ss]]
     →
-    {#DM} U-MakeDM2[#HxTokenName#, DME_TOKEN[#HxTokenName#], #HxDeclarations#, #ModuleName, "", AddName[#Names, #HxTokenName#], dm¹ s ss.#[dm¹, s, ss]]
+    {#DM} U-MakeDM2[U-QN[#ModuleName, "", #HxTokenName#], DME_TOKEN[U-QN[#ModuleName, "", #HxTokenName#]], #HxDeclarations#, #ModuleName, "", AddName[#Names, #HxTokenName#], dm¹ s ss.#[dm¹, s, ss]]
     ;
 
     {#DM} U-MakeDM1[%rawHxDeclarations⟪ fragment #HxTokenName# | #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #LastSortName, #Names, dm¹ s ss.#[dm¹, s, ss]]
@@ -1268,9 +1268,11 @@ U-QN2[$String<!--LastName-->, $String<!--Kind+Name-->] :: $String ;
 
 {$String<!--Name--> : DeclarationMapEntry} U-TokenOrQN[$String<!--ModuleName-->, $String<!--Kind-->, $String<!--LocalName-->] :: $String ;
 -[Data[#ModuleName, #Kind, #Name]]:
-{#DM; "All$TokenNames" : DME_NAMES[#TokenNames]}U-TokenOrQN[#ModuleName, #Kind, #Name]
+///{#DM; "All$TokenNames" : DME_NAMES[#TokenNames]}U-TokenOrQN[#ModuleName, #Kind, #Name]
+U-TokenOrQN[#ModuleName, #Kind, #Name]
 →
-If[ContainsName[#TokenNames, #Name], #Name, U-QN[#ModuleName, #Kind, #Name]]
+///If[ContainsName[#TokenNames, #Name], #Name, U-QN[#ModuleName, #Kind, #Name]]
+U-QN[#ModuleName, #Kind, #Name]
 ;
 
 // Local name.
