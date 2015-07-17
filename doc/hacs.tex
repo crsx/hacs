@@ -85,10 +85,9 @@ suitable for that stage of the compiler. Specifically, \HAX supports the followi
 
 \end{description}
 %%
-A typical compiler written with \HAX will typically involve multiple instances of each of the above,
-as each used language, including intermediate and target languages, are typically specified using
-grammars and have language-specific analyses, with the transformations between them specified as
-translation schemes.
+A typical compiler written with \HAX involves multiple instances of each of the above, as each used
+language, including intermediate and target languages, are specified using grammars and have
+language-specific analyses, with the transformations between them specified as translation schemes.
 
 In the remainder of this document we introduce the most important features of the \HAX language by
 explaining the relevant parts of the included \emph{First.hx} example, inspired by
@@ -111,19 +110,19 @@ Appendix~\ref{app:errors} explains some of the (still) cryptic error messages, %
 and Appendix~\ref{app:limits} lists some current limitations.
 
 \paragraph*{Acknowledgements.} The author would like to thank my coteacher at NYU, Eva Rose, our
-graders, Ma Weicheng and José Pablo Cambronero, as well as our students in the compiler construction
-class, for constructive comments to and insightful questions on \HAX.\footnote{A special shout-out
-  goes to John Downs for starting the Emacs \texttt{M-x hacs-mode} syntax highligting
-  mode~\cite{git:hacsel} and Tyler Palsulich for a \HAX mode for Sublime
-  Text~\cite{git:hacs-sublime}.}
+grader, José Pablo Cambronero, as well as our students in the compiler construction class, for
+constructive comments to and insightful questions on \HAX.\footnote{A special shout-out goes to John
+  Downs for starting the Emacs \texttt{M-x hacs-mode} syntax highligting mode~\cite{git:hacsel} and
+  Tyler Palsulich for a \HAX mode for Sublime Text~\cite{git:hacs-sublime}.}
 %%
 The implementation of \HAX would not have been remotely possible without the CRSX team at IBM:
-Morris Matsa, Scott Boag, and especially Lionel Villard, who suffered through understanding and then
-programming both core fragments of and using the CRSX system that is still used underneath \HAX.
+Morris Matsa, Scott Boag, and especially Lionel Villard, who suffered through understanding and
+programming core fragments of the CRSX system that is still used underneath \HAX; in the process
+they proposed many improvements and clarifications to the formalism.
 %%
 And finally \HAX owes its sanity to a collaboration with Cynthia Kop, both as an intern with the
-Watson team in 2011, which created the polymorphic sort checker, and in her thesis
-work~\cite{Kop:2012}, which led to our continuing collaboration.
+Watson team in 2011, which created the polymorphic sort checker, in her thesis work~\cite{Kop:2012},
+and in our continuing collaboration on keeping the formal basis for the system up to date.
 
 
 \section{Getting Started}
@@ -176,10 +175,10 @@ energon1[hacs]$ ^textcolor{blue}{^texttt{make FROMZIP=1 install install-support}
 energon1[hacs]$ ^textcolor{blue}{^texttt{cd}}
 energon1[~]$ ^textcolor{blue}{^texttt{mkdir myfirst}}
 energon1[~]$ ^textcolor{blue}{^texttt{cd myfirst}}
-energon1[~]$ ^textcolor{blue}{^texttt{cp $HOME/.hacs/share/doc/hacs/examples/First.hx .}}
+energon1[~]$ ^textcolor{blue}{^texttt{cp $HOME/.hacs/share/doc/hacs/samples/First.hx .}}
 energon1[~]$ ^textcolor{blue}{^texttt{$HOME/.hacs/bin/hacs First.hx}}
 energon1[~]$ ^textcolor{blue}{^texttt{./First.run --scheme=Compile \}}
-           ^textcolor{blue}{^texttt{--term="^{initial := 1; rate := 1.0; position := initial + rate * 60;^}"}}
+               ^textcolor{blue}{^texttt{--term="^{initial := 1; rate := 1.0; position := initial + rate * 60;^}"}}
   LDF T,  #1 
     STF initial, T
     LDF T_77,  #1.0 
@@ -3039,4 +3038,5 @@ sort ThenB | ⟦ then ⟨B⟩ ⟧;
 % Local Variables:
 % mode:latex
 % fill-column:100
+% TeX-master: t
 % End:

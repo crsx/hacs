@@ -8,7 +8,7 @@ module org.crsx.hacs.samples.CPS {
   // λ Calculus Grammar.
   sort V | symbol ⟦⟨ID⟩⟧ ;
   main sort E
-  |  ⟦  λ ⟨V binds x⟩ . ⟨E[x as E]⟩ ⟧ | ⟦ ⟨E@1⟩ ⟨E@2⟩ ⟧@1
+  |  ⟦  λ ⟨V binds x⟩ . ⟨E[x as V]⟩ ⟧ | ⟦ ⟨E@1⟩ ⟨E@2⟩ ⟧@1
   |  ⟦ ⟨V⟩ ⟧@2 | sugar ⟦ ( ⟨E#⟩ ) ⟧@2→# ;
 
   // Static (or ``administrative'') reduction support.

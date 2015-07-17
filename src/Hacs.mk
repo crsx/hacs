@@ -332,3 +332,6 @@ crsx.o crsx_scan.o :
 
 %.crsd : %.crs
 	$(RUNCRSX) rules='$<' sortify dispatchify dump-rules='$@' omit-linear-variables canonical-variables
+
+%.crsE : %.crs
+	$(RUNCRSX) rules='$<' sortify dump-rules='$@' omit-linear-variables canonical-variables

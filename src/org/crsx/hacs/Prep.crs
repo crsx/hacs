@@ -891,7 +891,7 @@ CONSUMPTION_SORT ::=( C_BUFFER[$String<!--SortName-->, $Numeric<!--precedence-->
 IfEmpty[#LeftRecursivePFKs,
   // There is no left recursion -- use the plain expansion.
   {#DM} P-Produce[#ModuleName, #SortName, #Prec, #Last?, #OtherPFKs, C_BUFFER[#SortName, #Prec]],
-  // There is left recursion...
+  // There is left recursion...hack the expansion directly.
   {#DM} P-ProduceBody[#ModuleName, #SortName, #SortName, #LeftRecursivePFKs, 2, (), (%n⟨#1⟩;),
   	(%n⟨/***EMBEDPG: <!--1--> C-UnravelScope_0[***/#1/***EMBEDPG:]***/⟩;),
 	C_LEFTRECURSIVE[#SortName, #Prec],
@@ -959,7 +959,7 @@ P-ProduceBody[$String<!--ModuleName-->, $String<!--HostSort-->, $String<!--tagpr
 -[Data[#PFKs]]:
 {#DM} P-ProduceBody[#ModuleName, #SortName, #tagprefix, (PFK[#Form, #Kind]; #Rest), #n, #words, #terms, #scopes, #consumer, in after . #[in,after]]
 →
-{#DM} P-ProduceBody1[#ModuleName, #SortName, P-RepairLeftRecursiveConsumerFormTag[#n, #consumer, U-Local[#SortName]], #Form, #Kind, #Rest, #n, #words, #terms, #scopes, #consumer, in after . #[in,after]]
+  {#DM} P-ProduceBody1[#ModuleName, #SortName, P-RepairLeftRecursiveConsumerFormTag[#n, #consumer, U-Local[#SortName]], #Form, #Kind, #Rest, #n, #words, #terms, #scopes, #consumer, in after . #[in,after]]
 ;
     // Hack to repair tag of forms that have been truncated by the left recursion logic: truncated form is always the second.
     P-RepairLeftRecursiveConsumerFormTag[$Numeric<!--ArgIndex-->, CONSUMPTION_SORT, $String<!--SortName-->] :: $String ;
@@ -982,42 +982,55 @@ P-ProduceBody0[$String<!--ModuleName-->, $String<!--HostSort-->, $String<!--tagp
 {#DM} P-ProduceBody1[#ModuleName, #SortName, #tagprefix, #Form, #Kind, #Rest, #n, #words, #terms, #scopes, #consumer, in after . #[in,after]]
 ;
 
-// Pick branching kind.
+// Extract simple symbol references.
 
 {$String<!--SortName--> : DeclarationMapEntry} P-ProduceBody1[$String<!--ModuleName-->, $String<!--HostSort-->, $String<!--tagprefix-->, HxParsedForm, FormKind, $List[PFK_SORT], $Numeric<!--ArgIndex-->, $List[Text]<!--Words-->, $List[Text]<!--Terms-->, $List[Text]<!--Scopes-->, CONSUMPTION_SORT, in::Text after::TextMapSort.Text] :: Text;
 
-{#DM} P-ProduceBody1[#ModuleName, #SortName, #tagprefix, Hx_ParsedFormTerm[#ScopeSortPrec, #ParsedForm], #Kind, #Rest, #n, #words, #terms, #scopes, #consumer, in after . #[in,after]]
+{#DM} P-ProduceBody1[#ModuleName, #SortName, #tagprefix, #Form, #Kind, #Rest, #n, #words, #terms, #scopes, #consumer, in after . #[in,after]]
+→
+{#DM}U-IfSymbolForm[#Form, #ModuleName,
+  t . {#DM} P-ProduceBody0[#ModuleName, #SortName, StringJoin[(#tagprefix; "_"; #SortName; "_";), ""], #Rest, $[Plus,#n,1], #words, #terms, #scopes, #consumer,
+    in after . #[%n⟪⟦( <†« t »>:#_†«$[FormatNumber,#n]»
+{{<!--USE--> /***EMBEDPG: †« P-hx[#ModuleName, "VariableUseSorted"] »["†« U-Local[#SortName] »", †« P-hx[#ModuleName, "RepeatSingle"] », ***/ #_†«$[FormatNumber,#n]» /***EMBEDPG: , ()]***/ }} ⟦« in »⟧ ) ⟧⟫, after]],
+  {#DM} P-ProduceBody2[#ModuleName, #SortName, #tagprefix, #Form, #Kind, #Rest, #n, #words, #terms, #scopes, #consumer, in after . #[in,after]]
+];
+
+// Pick branching kind.
+
+{$String<!--SortName--> : DeclarationMapEntry} P-ProduceBody2[$String<!--ModuleName-->, $String<!--HostSort-->, $String<!--tagprefix-->, HxParsedForm, FormKind, $List[PFK_SORT], $Numeric<!--ArgIndex-->, $List[Text]<!--Words-->, $List[Text]<!--Terms-->, $List[Text]<!--Scopes-->, CONSUMPTION_SORT, in::Text after::TextMapSort.Text] :: Text;
+
+{#DM} P-ProduceBody2[#ModuleName, #SortName, #tagprefix, Hx_ParsedFormTerm[#ScopeSortPrec, #ParsedForm], #Kind, #Rest, #n, #words, #terms, #scopes, #consumer, in after . #[in,after]]
 →
 {#DM} P-ProduceBodyTerm1[#ModuleName, #SortName, #tagprefix, #Rest, (), #ScopeSortPrec, #Kind, (PFK[#ParsedForm, #Kind];), #n, #words, #terms, #scopes, #consumer, in after . #[in,after]]
 ;
 
-{#DM} P-ProduceBody1[#ModuleName, #SortName, #tagprefix, Hx_ParsedFormWord[#word, #ParsedForm], #Kind, #Rest, #n, #words, #terms, #scopes, #consumer, in after . #[in,after]]
+{#DM} P-ProduceBody2[#ModuleName, #SortName, #tagprefix, Hx_ParsedFormWord[#word, #ParsedForm], #Kind, #Rest, #n, #words, #terms, #scopes, #consumer, in after . #[in,after]]
 →
 {#DM} P-ProduceBodyWord1[#ModuleName, #SortName, #tagprefix, #Rest, (), #word, (PFK[#ParsedForm, #Kind];), #n, #words, #terms, #scopes, #consumer, in after . #[in,after]]
 ;
 
-{#DM} P-ProduceBody1[#ModuleName, #SortName, #tagprefix, Hx_ParsedFormSpace[#space, #ParsedForm], #Kind, #Rest, #n, #words, #terms, #scopes, #consumer, in after . #[in,after]]
+{#DM} P-ProduceBody2[#ModuleName, #SortName, #tagprefix, Hx_ParsedFormSpace[#space, #ParsedForm], #Kind, #Rest, #n, #words, #terms, #scopes, #consumer, in after . #[in,after]]
 →
-{#DM} P-ProduceBody1[#ModuleName, #SortName, #tagprefix, #ParsedForm, #Kind, #Rest, #n, #words, #terms, #scopes, #consumer, in after . #[in,after]]
+{#DM} P-ProduceBody2[#ModuleName, #SortName, #tagprefix, #ParsedForm, #Kind, #Rest, #n, #words, #terms, #scopes, #consumer, in after . #[in,after]]
 ;
 
-{#DM} P-ProduceBody1[#ModuleName, #SortName, #tagprefix, Hx_ParsedFormDone, #Kind, #Rest, #n, #words, #terms, #scopes, C_BUFFER[#SortName, #Prec], in after . #[in,after]]
+{#DM} P-ProduceBody2[#ModuleName, #SortName, #tagprefix, Hx_ParsedFormDone, #Kind, #Rest, #n, #words, #terms, #scopes, C_BUFFER[#SortName, #Prec], in after . #[in,after]]
 →
-{#DM} P-ProduceBody2[#ModuleName, #SortName, #tagprefix, #Rest, #n, #words, #terms, #scopes, C_BUFFER[#SortName, #Prec], in after . #[in,after],
+{#DM} P-ProduceBody3[#ModuleName, #SortName, #tagprefix, #Rest, #n, #words, #terms, #scopes, C_BUFFER[#SortName, #Prec], in after . #[in,after],
   P-AttributeCollection[#ModuleName, #Kind, #SortName, #Prec, {#DM}P-ProductionConstructionText[#ModuleName, #SortName, #Prec, #Kind, #tagprefix, #words, #terms, #scopes], B_FALSE],
   P-AttributeProduction[#ModuleName, #Kind, #SortName, #Prec, B_FALSE]]
 ;
 
-{#DM} P-ProduceBody1[#ModuleName, #SortName, #tagprefix, Hx_ParsedFormDone, #Kind, #Rest, #n, #words, #terms, #scopes, C_LEFTRECURSIVE[#SortName, #Prec], in after . #[in,after]]
+{#DM} P-ProduceBody2[#ModuleName, #SortName, #tagprefix, Hx_ParsedFormDone, #Kind, #Rest, #n, #words, #terms, #scopes, C_LEFTRECURSIVE[#SortName, #Prec], in after . #[in,after]]
 →
-{#DM} P-ProduceBody2[#ModuleName, #SortName, #tagprefix, #Rest, #n, #words, #terms, #scopes, C_LEFTRECURSIVE[#SortName, #Prec], in after . #[in,after],
+{#DM} P-ProduceBody3[#ModuleName, #SortName, #tagprefix, #Rest, #n, #words, #terms, #scopes, C_LEFTRECURSIVE[#SortName, #Prec], in after . #[in,after],
   P-AttributeCollection[#ModuleName, #Kind, #SortName, #Prec, {#DM}P-ProductionConstructionText[#ModuleName, #SortName, #Prec, #Kind, #tagprefix, #words, #terms, #scopes], B_TRUE],
   P-AttributeProduction[#ModuleName, #Kind, #SortName, #Prec, B_TRUE]]
 ;
 
-{$String<!--SortName--> : DeclarationMapEntry} P-ProduceBody2[$String<!--ModuleName-->, $String<!--HostSort-->, $String<!--tagprefix-->, $List[PFK_SORT], $Numeric, $List[Text]<!--Words-->, $List[Text]<!--Terms-->, $List[Text]<!--Scopes-->, CONSUMPTION_SORT, in::Text after::TextMapSort.Text, Text, TextMapSort] :: Text;
+{$String<!--SortName--> : DeclarationMapEntry} P-ProduceBody3[$String<!--ModuleName-->, $String<!--HostSort-->, $String<!--tagprefix-->, $List[PFK_SORT], $Numeric, $List[Text]<!--Words-->, $List[Text]<!--Terms-->, $List[Text]<!--Scopes-->, CONSUMPTION_SORT, in::Text after::TextMapSort.Text, Text, TextMapSort] :: Text;
 -[Data[#in2,#sort2,#after2]]:
-{#DM} P-ProduceBody2[#ModuleName, #SortName, #tagprefix, #Rest, #n, #words, #terms, #scopes, #consumer, in after . #[in,after], #in2, #after2]
+{#DM} P-ProduceBody3[#ModuleName, #SortName, #tagprefix, #Rest, #n, #words, #terms, #scopes, #consumer, in after . #[in,after], #in2, #after2]
 →
 {#DM} P-ProduceBody[#ModuleName, #SortName, #tagprefix, #Rest, #n, #words, #terms, #scopes, #consumer, in after . #[%n⟪« #in2 »«in»⟫, JoinTextMaps[#after2, after]]]
 ;
@@ -1050,9 +1063,10 @@ P-ProductionConstructionText[$String<!--ModuleName-->, $String, $Numeric, FormKi
     {$String<!--Name--> : DeclarationMapEntry} P-CRSX-GenerateConstructionTerm[$String<!--ModuleName-->, $String<!--SortName-->, $Numeric, $String<!--Tag-->, $List[Text]<!--Scopes-->] :: Text ;
     {#DM}P-CRSX-GenerateConstructionTerm[#ModuleName, #SortName, #Prec, #tag, #scopes]
     →
-    %n⟪/***USERPG: '†« U-QN[#ModuleName, #SortName, #tag] »'« WrappedTextJoin[#scopes, %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩] » ***/
-    /***EMBEDPG: †« P-hx[#ModuleName, "ConstructionSorted"] »["†« U-QN[#ModuleName, "", #SortName] »", '†« P-hx[#ModuleName, "RepeatSingle"] »',
-      "†« U-QN[#ModuleName, #SortName, #tag] »", (« TextJoin[Map[t.%n⟨‹t›;⟩, #scopes], %n⟨ ⟩] »), ()] ***/
+    %n⟪<!-- †«#SortName» - †«#tag» -->
+      /***USERPG: '†« U-QN[#ModuleName, #SortName, #tag] »'« WrappedTextJoin[#scopes, %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩] » ***/
+      /***EMBEDPG: †« P-hx[#ModuleName, "ConstructionSorted"] »["†« U-QN[#ModuleName, "", #SortName] »", '†« P-hx[#ModuleName, "RepeatSingle"] »',
+	"†« U-QN[#ModuleName, #SortName, #tag] »", (« TextJoin[Map[t.%n⟨‹t›;⟩, #scopes], %n⟨ ⟩] »), ()] ***/
     ⟫;
 
 P-ProductionConstructionText[#ModuleName, #SortName, #Prec, FK_SUGAR[#Inh], #tag, #words, #terms, #scopes]

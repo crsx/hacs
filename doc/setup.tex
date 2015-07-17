@@ -18,7 +18,7 @@
 \usepackage{enumitem}
 
 %% Macros.
-\newcommand{\HAX}{\text{H\kern-.1em A\kern-.1em CS}\xspace}
+\newcommand{\HAX}{\text{H\kern-.1em A\kern-.1em C\kern-.05em S}\xspace}
 \newcommand{\CRSX}{\text{CRSX}\xspace}
 \newcommand{\ie}{\textit{i.e.}\xspace}
 \newcommand{\eg}{\textit{e.g.}\xspace}
@@ -29,6 +29,7 @@
 %% Misc.
 \def\Bigstrut{\ensuremath{\vphantom{\Bigm|}}}
 \newcommand\caret{\mathbin{\char`\^}}
+\newcommand{\ov}[1]{\ensuremath{\mkern1mu\overline{\mkern-.8mu{#1}\mkern-.8mu}\mkern1mu}}
 
 %% Units
 \ifx\theorem\undefined
@@ -74,7 +75,7 @@
   extendedchars=true,inputencoding=utf8,sensitive,%
   commentstyle=\color{blue}\sl,%
   identifierstyle=\textit,%
-  keywordstyle=\Keyword,%
+  keywordstyle=\kw,%
   basewidth={.5em,.4em},columns=flexible,numberstyle=\scriptsize,numberblanklines=false,xrightmargin=1pc,%
   #1]{#2}}
 
@@ -83,16 +84,15 @@
   extendedchars=true,inputencoding=utf8,sensitive,%
   commentstyle=\color{blue}\sl,%
   identifierstyle=\textit,%
-  keywordstyle=\Keyword,%
+  keywordstyle=\kw,%
   basewidth={.5em,.4em},columns=flexible,numberstyle=\scriptsize,numberblanklines=false,xrightmargin=1pc,%
   #1}\upshape}{}
 
 %% HACS.
 
-\def\Keyword#1{\kw{#1}}
 %% Inside listings \Identifier handles these cases:
 %% - #xx_n → \mv{xx}\ensuremath{_{\text{n}}}
-%% - $xx_n → \Keyword{xx}\ensuremath{_{\text{n}}}
+%% - $xx_n → \kw{xx}\ensuremath{_{\text{n}}}
 %% - Xx_n → \con{xx}\ensuremath{_{\text{n}}}
 %% - xx_n → \var{xx}\ensuremath{_{\text{n}}}
 %% - x_n → \ensuremath{x_{n}}
@@ -110,11 +110,11 @@
   \fi
   \ifx\1\justh@sh              \mv{\expandafter\def\csname lst@um-\endcsname{\text{-}}\2\3}%g
   \else\ifx\1\justd@llar
-    \ifx\2\empty               \Keyword{\$\3}%
-    \else                      \Keyword{\expandafter\def\csname lst@um-\endcsname{\text{-}}\2\3}%
+    \ifx\2\empty               \kw{\$\3}%
+    \else                      \kw{\expandafter\def\csname lst@um-\endcsname{\text{-}}\2\3}%
     \fi
   \else\ifx\1\just@at
-    \Keyword{\expandafter\def\csname lst@um-\endcsname{\text{-}}\1\2\3}%
+    \kw{\expandafter\def\csname lst@um-\endcsname{\text{-}}\1\2\3}%
   \else\ifx\1\just@nder
     \con{\expandafter\def\csname lst@um-\endcsname{\text{-}}\1\2\3}%
   \else
@@ -126,7 +126,8 @@
 \gdef\Identifier@subscript!1\lst@um_ @{\def\3{\ensuremath{\sb{\textup{!1}}}}}
 }%$
 \newcommand{\mv}[1]{\textsc{#1}}
-\newcommand{\kw}[1]{\textbf{\color{gray}#1}}
+%\newcommand{\kw}[1]{\text{\rm\textbf{\color{gray}#1}}}
+\newcommand{\kw}[1]{\textsf{\bf\color{gray}#1}}
 \newcommand{\con}[1]{\textup{#1}}
 \newcommand{\var}[1]{\textit{#1}}
 
@@ -134,15 +135,16 @@
   extendedchars=true,inputencoding=utf8,sensitive,%
   identifierstyle=\Identifier,%
   string=[d]{"},morestring=[d]{'},upquote=true,showstringspaces=false,%
-  comment=[l]{//},morecomment=[s]{/*}{*/},commentstyle=\color{blue}\sl,%
-  keywordstyle=\Keyword,%
+  comment=[l]{//},morecomment=[s]{/*}{*/},commentstyle=\color{blue}\rm,%
+  keywordstyle=\kw,%
   keywords={attribute,data,fragment,import,main,module,nested,property,rule,scheme,simplify,sort,%
-    space,static,sugar,symbol,tag,token,default,error,binds,as,template,@},%
+    space,static,sugar,symbol,tag,token,default,error,binds,as,template,@,data,variable},%
   literate=%
     {⟦}{{\ensuremath{\llbracket}}}1 {⟧}{{\ensuremath{\rrbracket}}}1 {⟨}{{\ensuremath{\langle}}}1 {⟩}{{\ensuremath{\rangle}}}1 %
     {→}{{\ensuremath{\rightarrow}}}2 {↑}{{\ensuremath{\uparrow}}}1 {↓}{{\ensuremath{\downarrow}}}1 {¬}{{\ensuremath{\lnot}}}2 {¶}{{\P}}1 %
     {ε}{{\ensuremath{\varepsilon}}}1 {…}{{\ensuremath{\dots}}}2 {∧}{{\ensuremath{\!\wedge}}}2 {∨}{{\ensuremath{\!\vee}}}2 {↦}{{\ensuremath{\mapsto}}}2 %
-    {α}{{\ensuremath{\alpha}}}1 {β}{{\ensuremath{\beta}}}1 {γ}{{\ensuremath{\gamma}}}1 {λ}{{\ensuremath{\lambda}}}1 %
+    {α}{{\ensuremath{\alpha}}}1 {β}{{\ensuremath{\beta}}}1 {γ}{{\ensuremath{\gamma}}}1 %
+    {λ}{{\ensuremath{\lambda}}}1 {Λ}{{\ensuremath{\Lambda}}}1 %
     {σ}{{\ensuremath{\sigma}}}1 {Σ}{{\ensuremath{\Sigma}}}1 {π}{{\ensuremath{\pi}}}1 {Π}{{\ensuremath{\Pi}}}1 %
     {λ̅}{{\ensuremath{\overline{\lambda}}}}1 {‾}{{\ensuremath{\overline{\phantom{x}}}}}1 %
     {¹}{{\ensuremath{^1}}}1 {²}{{\ensuremath{^2}}}2 %
@@ -151,6 +153,7 @@
 \lstnewenvironment{hacs}[1][]{\lstset{language=HACS,basewidth={.53em,.43em},columns=flexible,numberstyle=\scriptsize,numberblanklines=false,firstnumber=auto,xrightmargin=1pc,#1}\upshape}{}
 \newcommand\inputhacs[2][]{\lstinputlisting[language=HACS,basewidth={.53em,.43em},columns=flexible,numberstyle=\scriptsize,numberblanklines=false,xrightmargin=1pc,#1]{#2}}
 \newcommand\hacsc{\lstinline[language=HACS]}
+\newcommand\h{\lstinline[language=HACS]}
 \lstMakeShortInline[language=HACS,columns=fullflexible]"
 
 %%% \usepackage{listings}
@@ -237,4 +240,12 @@
     \def\contentslineAsection##1##2##3{\fresh,##1~(##2)\ignorespaces}%
     \def\contentslineAsubsection##1##2##3{\ignorespaces}%
     \@starttoc{toc}.\endquotation}}
+\makeatother
+
+%% WORKING \Cases{...} (based on \cases from plain TeX -- the one in
+%% AMS-LaTeX is seriously buggy):
+\makeatletter
+\def\Cases#1{\mbox{$
+  \left\{\,\vcenter{\let\\=\cr \normalbaselines\m@th
+    \ialign{$\vphantom(##\hfil$&\quad##\hfil\crcr#1\crcr}}\right.$}}
 \makeatother

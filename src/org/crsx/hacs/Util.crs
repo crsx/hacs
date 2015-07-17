@@ -247,6 +247,44 @@ U-GetConstructorScopeSorts2[#Constructor,{#C2SS}N2SS] → $[{#C2SS}Get[$List[HxS
 {$String : DeclarationMapEntry} U-then-SortHasUserHx[Ok, $String<!--SortName-->] :: Boolean ;
 {"All$Sort2UserConstructors" : DME_N2NM[#S2UC]} U-then-SortHasUserHx[OK, #Sort] → HasNames[LookupName2Names[#S2UC, #Sort]] ;
 
+{$String<!--SortName--> : DeclarationMapEntry}U-IfSymbolForm[HxParsedForm, $String<!--ModuleName-->, in::$String.Text, Text] :: Text;
+{#DM}U-IfSymbolForm[Hx_ParsedFormTerm[#HxScopeSortPrec, #ParsedForm], #ModuleName, t.#[t], #text] → {#DM}U-IfSymbolFormScopeSortPrec[#HxScopeSortPrec, #ModuleName, t.#[t], #text] ;
+{#DM}U-IfSymbolForm[Hx_ParsedFormSpace[#space, #ParsedForm], #ModuleName, t.#[t], #text] → {#DM}U-IfSymbolForm[#ParsedForm, #ModuleName, t.#[t], #text] ;
+{#DM}U-IfSymbolForm[Hx_ParsedFormWord[#word, #ParsedForm], #ModuleName, t.#[t], #text] → #text ;
+{#DM}U-IfSymbolForm[Hx_ParsedFormDone, #ModuleName, t.#[t], #text] → #text ;
+
+    {$String<!--SortName--> : DeclarationMapEntry}U-IfSymbolFormScopeSortPrec[HxScopeSortPrec, $String<!--ModuleName-->, in::$String.Text, Text] :: Text;
+    {#DM}U-IfSymbolFormScopeSortPrec[Hx_ScopeSortPrecBind[#ScopeSort, #Variable], #ModuleName, t.#[t], #text] → #text ;
+    {#DM}U-IfSymbolFormScopeSortPrec[%rawHxScopeSortPrec⟪ #HxScopeSort# #HxFormPrec# ⟫, #ModuleName, t.#[t], #text] → {#DM}U-IfSymbolFormScopeSort[#HxScopeSort#, #ModuleName, t.#[t], #text] ;
+
+    {$String<!--SortName--> : DeclarationMapEntry}U-IfSymbolFormScopeSort[HxScopeSort, $String<!--ModuleName-->, in::$String.Text, Text] :: Text;
+    {#DM}U-IfSymbolFormScopeSort[Hx_RawBoundVariable[#Variable, #ScopeSort], #ModuleName, t.#[t], #text] → #text ;
+    {#DM}U-IfSymbolFormScopeSort[%rawHxScopeSort⟪ #HxSort# #HxRepeat# [ #HxSubstituteSorts# ] ⟫, #ModuleName, t.#[t], #text] → {#DM}U-IfSymbolFormSort[#HxSort#, #ModuleName, t.#[t], #text] ;
+
+    {$String<!--SortName--> : DeclarationMapEntry}U-IfSymbolFormSort[HxSort, $String<!--ModuleName-->, in::$String.Text, Text] :: Text;
+    {#DM}U-IfSymbolFormSort[%rawHxSort⟪ #HxSimpleSort# #HxSimpleSorts# ⟫, #ModuleName, t.#[t], #text] → {#DM}U-IfSymbolFormSort[#HxSimpleSort#, #ModuleName, t.#[t], #text] ;
+    {#DM}U-IfSymbolFormSort[%rawHxSimpleSort⟪ #HxSortName# #HxMetaVariables# ⟫, #ModuleName, t.#[t], #text] → If[{#DM}U-IsSymbolSort[U-QN[#ModuleName, "", #HxSortName#]], #[#HxSortName#], #text] ;
+    {#DM}U-IfSymbolFormSort[%rawHxSimpleSort⟪ #HxSortParam# ⟫, #ModuleName, t.#[t], #text] → #text ;
+
+    {$String : DeclarationMapEntry} U-IsSymbolSort[$String<!--SortName-->] :: Boolean ;
+    -[Data[#SortName]]: {#DM} U-IsSymbolSort[#SortName] → U-IsSymbolSort2[$[{#DM}Get[DeclarationMapEntry], #SortName, DME_NONE]] ;
+
+    U-IsSymbolSort2[DeclarationMapEntry] :: Boolean ;
+    U-IsSymbolSort2[DME_SORT[#Defines, #Name, #Precs, #Wrapper, #isMain]] → U-IsSymbolDefines[#Defines] ;
+    -[Data[#_]]: U-IsSymbolSort2[$[NotMatch,DME_SORT[#_Defines, #_Name, #_Precs, #_Wrapper, #_isMain],#_]] → B_FALSE ;
+
+    U-IsSymbolDefines[$List[Define]] :: Boolean ;
+    U-IsSymbolDefines[()] → B_FALSE ;
+    U-IsSymbolDefines[(#Define; #Defines)] → Or[ U-IsSymbolDefine[#Define], U-IsSymbolDefines[#Defines] ] ;
+    
+    U-IsSymbolDefine[Define] :: Boolean ;
+    U-IsSymbolDefine[D_FORM[#Form, #Kind]] → U-IsSymbolKind[#Kind] ;
+    -[Data[#_]]: U-IsSymbolDefine[$[NotMatch,D_FORM[#_Form, #_Kind],#_]] → B_FALSE ;
+
+    U-IsSymbolKind[FormKind] :: Boolean ;
+    U-IsSymbolKind[FK_SYMBOL[#bool, #tok]] → B_TRUE ;
+    -[Data[#_]]: U-IsSymbolKind[$[NotMatch,FK_SYMBOL[#_bool, #_tok],#_]] → B_FALSE ;
+
 // Extract main sort name.
 
 {$String<!--SortName--> : DeclarationMapEntry} U-MainSymbol :: $String ;
@@ -490,7 +528,9 @@ U-MakeDM[{}DM, #Declarations, #ModuleName, "", NoNames, dm¹ s ss.U-MakeDM-Finis
 
     {#DM} U-MakeDM-SortAbstraction[#SortAbstraction, #IsMain, #ModuleName, #Name, #Names, dm¹ s ss.#[dm¹, s, ss]]
     →
+    $[Trace, $[:,"**ABSTRACTION:",$[Show,#SortAbstraction],"**"],
     {#DM} U-InsertDefines[U-MakeDM-SortAbstractionDefines[#SortAbstraction], #IsMain, U-QN[#ModuleName, "", #Name], #Names, dm¹ s ss.#[dm¹, s, ss]]
+    ]
     ;
     
     {$String<!--SortName--> : DeclarationMapEntry}
@@ -505,8 +545,10 @@ U-MakeDM[{}DM, #Declarations, #ModuleName, "", NoNames, dm¹ s ss.U-MakeDM-Finis
     -[Data[#Name]]:
     {#DM} U-MakeDM-SortAlternatives[(#sa;#sas), #ModuleName, #Name, #Names, dm¹ s ss.#[dm¹, s, ss]]
     →
+    $[Trace, $[:,"**ALTERNATIVE:",$[Show,#sa],"**"],
     $[IfEmpty, #Name, U-MakeDM-SortAlternatives-Error,
       {#DM} U-InsertDefines[U-MakeDM-SortAlternativesDefines[(#sa;#sas)], B_FALSE, U-QN[#ModuleName, "", #Name], #Names, dm¹ s ss.#[dm¹, s, ss]]]
+    ]
     ;
     U-MakeDM-SortAlternatives-Error :: DeclarationMap;
     U-MakeDM-SortAlternatives-Error → $[Error,"Error: cannot process stand-alone SortAlternatives with no current sort."];
@@ -686,9 +728,7 @@ U-MakeDM[{}DM, #Declarations, #ModuleName, "", NoNames, dm¹ s ss.U-MakeDM-Finis
 	    -[Data[#IsMain]]:
 	    {#DM} U-InsertDefinesMain1[#existingDefines1, #Name1, #Precs1, #Wrapper1, #IsMain, #Name, #Names, dm¹ s ss.#[dm¹, s, ss]]
 	    →
-	    ///$[Trace, $[:,"InsertSortMain1: ",#Name],
 	    #[{#DM; #Name : DME_SORT[#existingDefines1, #Name1, #Precs1, #Wrapper1, #IsMain]}DM, #Name, #Names]
-	    ///]
 	    ;
 
 	-[Data[#_]]:
@@ -1073,7 +1113,7 @@ U-ModuleName :: $String;
     {#DM} U-MakeSort2Synthesized2[#ModuleName, (#Sort; #Sorts), #S2S] → U-MakeSort2Synthesized3[#ModuleName, $[{#DM}Get[DeclarationMapEntry], #Sort], {#DM} U-MakeSort2Synthesized2[#ModuleName, #Sorts, #S2S]] ;
 
     U-MakeSort2Synthesized3[$String<!--ModuleName-->, DeclarationMapEntry, Name2NamesMap] :: Name2NamesMap ;
-    U-MakeSort2Synthesized3[#ModuleName, DME_SORT[#Defines, #Name, #Precs, #Wrapper, #IsMain], #S2S] → AddName2Names[#S2S, StringConcat3[U-LastName[#ModuleName], "$", #Name], U-MakeSort2Synthesized4[#Defines, NoNames]] ;
+    U-MakeSort2Synthesized3[#ModuleName, DME_SORT[#Defines, #Name, #Precs, #Wrapper, #IsMain], #S2S] → AddName2Names[#S2S, U-QN[#ModuleName, "", #Name], U-MakeSort2Synthesized4[#Defines, NoNames]] ;
 
     U-MakeSort2Synthesized4[$List[Define], NameSet] :: NameSet ;
     U-MakeSort2Synthesized4[(), #Synthesized] → #Synthesized ;
