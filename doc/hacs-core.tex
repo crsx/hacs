@@ -1,0 +1,789 @@
+\documentclass[letterpaper,11pt]{article}
+\input{setup}
+\usepackage{cite}
+\usepackage{stmaryrd}
+
+%% Style.
+\bibliographystyle{plain}
+\usepackage{charter}
+\usepackage{geometry}
+
+%% Topmatter.
+\title{ Higher-order Attribute Contraction Schemes \\ Core Calculus }
+\author{ Kristoffer H. Rose \\
+ Two Sigma Investments, LLC \& Courant, New York University
+ \and
+ Cynthia Kop \\
+ Institute of Computer Science, University of Innsbruck \\
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}\noindent
+  Higher-order Attribute Contraction Schemes---or \HAX---is a practical formal language for
+  specifying executable compilers and other program manipulation tools.
+  %%
+  Formally, \HAX is a general higher order rewriting formalism with extensions for managing the
+  special data structures used by compilers, notably custom syntax with regular expressions, symbol
+  tables (\aka environments), attribute grammars, and recursive translation schemes.
+  %%
+  This paper presents a the \emph{core} calculus of \HAX, called $\hslash$ (or ``the plank calculus''),
+  which encodes the low-level operational properties of \HAX into a small formal system.
+\end{abstract}
+
+%------------------------------------------------------------------------
+
+\section{Introduction}\label{sec:intro}
+
+Several systems that manipulate programs, so-called \emph{meta-programming} systems, have emerged
+over the years, ranging from generic specification languages, where the goal is not to define how
+but only declare the semantics of the program manipulation, all the way to tools that support
+specific aspects of program execution or compiler generation (we comment on several in the
+conclusion).
+
+One such system was the CRSX system~\cite{Rose:1996} developed for industrial use at IBM Research by
+a team led by the author~\cite{Rose:hor2010,Rose:rta2011,crsx} .  CRSX is a language based on
+\emph{higher-order rewriting}~\cite{Jouannaud:klop2005} combined with \emph{higher-order abstract
+  syntax} (HOAS) \cite{PfenningElliot:pldi1988} and extensions for handling environments and using
+pluggable parsers.  The programming of the IBM Data\-Power XQuery compiler~\cite{dp60:ibm2013} using
+CRSX proved that the approach can drastically reduce the development time of a compiler (the cited
+XQuery compiler was estimated to be developed in a quarter of the traditional development time) as
+well as resulting in a rather more compact and high level source program.
+
+However, the CRSX notation, based on combinatory reduction systems~\cite{Klop:1980,Klop+:tcs1993},
+which combines λ calculus~\cite{Church:1941,Barendregt:1984} and term rewriting
+systems~\cite{Klop:1992:Handbook}, has proven to be unwieldy for several reasons, first of all by
+being quite different from standard notations used in compiler construction reference
+works~\cite{Aho+:2006}. Adding a polymorphic type system to CRSX (effectively changing them to
+\emph{contraction systems}~\cite{Aczel:1978} and be similar to Inductive-type-systems
+\cite{BlanquiJouannaudOkada:tcs2002}) helped but did not make the system easy enough to, for
+example, teach compiler programming.
+
+\HAX stands for \emph{Higher-order Attribute Contraction Schemes}, and started as an attempt to
+remedy this by providing a front-end to CRSX that allows the use of standard notations and concepts
+of (formal) programming language descriptions to more directly program compilers and other systems
+for manipulating code. As the name suggests, the notation combines HOAS with concepts from attribute
+grammars~\cite{Knuth:mst1968} as well as other common compiler specification
+notations~\cite{Aho+:2006}. \HAX has been successfully used to teach the graduate computer science
+compiler construction class at New York University~\cite{RoseRose:cims2015}.
+
+In this paper we specify \HAX through a ``core calculus'' as is common for functional languages, and
+give a semantics for this core language.
+
+
+
+and finally Section~\ref{sec:conc} concludes and compares to related work.
+
+
+%------------------------------------------------------------------------
+
+\section{Raw \HAX Syntax}
+\label{sec:hacs}
+
+In this section we define the \HAX source language (without user-specified higher order abstract
+syntax, hence ``raw'').
+
+\begin{definition}[raw \HAX]
+  The \HAX grammar is shown in Figure~\ref{fig:hacs}. (We call this the ``raw'' grammar because it
+  does not include the \HAX custom syntax notations.) The top level of a \HAX script is a sequence
+  of declarations $D^*$. In addition, the grammar assumes that we have three categories of tokens
+  defined:
+  %%
+  \begin{itemize}
+
+  \item $s,f,c ∈ \mathbb{C}$ stands for \emph{constructor} tokens, which are capitalized words like
+    "Integer" or "A" or "CamelCaseWord", used for sort names and function and data symbols.
+
+  \item $a,v ∈ \mathbb{V}$ stands for \emph{variable} tokens, which are lower case words like "x" or
+    "foo" or even "lowWord", used for variables and attributes.
+
+  \item $m ∈ \mathbb{M}$ stands for \emph{meta-variable} tokens, which are tokens that start with
+    "#" like "#arg" or "#BigFoot" or even just "#1" or merely~"#".
+
+  \end{itemize}
+  %%
+  The ``$A^{*\kw,}$'' notation means zero or more $A$s separated by commas.
+\end{definition}
+
+\begin{figure*}[p]
+  \begin{align}
+    \tag{Declaration}
+    D &::= \kw{sort}~c\,\kw[\,v^{*\kw,}\,\kw]\,\kw;
+    \bigm| \kw{\texttt{|}}~C\,\kw;
+    \bigm| \kw{attribute}~a~\set{AF}\,\kw;
+    \bigm| \kw{rule}~P~\kw{$→$}~T\,\kw;
+    \\[\jot]
+    \tag{Case}
+    C &::= \kw{data}~c\,\kw(\,\set{BS}^{*\kw,}\,\kw)
+    \bigm| \kw{scheme}~f\,\kw(\,\set{BS}^{*\kw,}\,\kw)~\set{AI}^*
+    \bigm| \kw{variable}
+    \bigm| \kw{$↑$}\,a
+    \\
+    \tag{BindersSort}
+    \set{BS} &::= \kw[\,S^{*\kw,}\,\kw]\,S
+    \\
+    \tag{AttributeInherit}
+    \set{AI} &::= \kw{$↓$}\,a
+    \\
+    S &::= s\,\kw(\,S^{*\kw,}\,\kw)
+    \bigm| v
+    \tag{Sort}
+    \\[\jot]
+    \tag{AttributeForm}
+    \set{AF} &::= \kw(\,S\,\kw)
+    \bigm| \kw\{\,S\,\kw:\,S\,\kw\}
+    \\[\jot]
+    \tag{Pattern}
+    P &::= c\,\kw(\,\set{PB}^{*\kw,}\,\kw)~\set{PA}^*
+    \bigm| v ~ \set{PA}^*
+    \bigm| m\,\kw[\,v^{*\kw,}\,\kw]~\set{PA}^*
+    \\
+    \tag{PatternBinders}
+    \set{PB} &::= \kw[\,v^{*\kw,}\,\kw]\,P
+    \\
+    \tag{PatternAttribute}
+    \set{PA} &::= \kw{$↑$}\,a~\set{AP}
+    \bigm| \kw{$↓$}\,a~\set{AP}
+    \\
+    \tag{AttributePattern}
+    \set{AP} &::= \kw(\,P\,\kw)
+    \bigm| \kw\{\,P\,\kw:\,P\,\kw\}
+    \bigm| \kw\{\,\kw{$¬$}\,P\,\kw\}
+    \bigm| \kw\{\kw:\,m\,\kw\}
+    \\[\jot]
+    \tag{Term}
+    T &::= c\,\kw(\,B^{*\kw,}\,\kw)~A^*
+    \bigm| v ~ A^*
+    \bigm| m\,\kw[\,T^{*\kw,}\,\kw]~A^*
+    \\
+    \tag{Binders}
+    B &::= \kw[\,v^{*\kw,}\,\kw]\,T
+    \\
+    A &::= \kw{$↑$}\,a~\set{AV}
+    \bigm| \kw{$↓$}\,a~\set{AV}
+    \tag{Attribute}
+    \\
+    \set{AV} &::= \kw(\,T\,\kw)
+    \bigm| \kw\{\,T\,\kw:\,T\,\kw\}
+    \bigm| \kw\{\kw\}
+    \bigm| \kw\{\kw:\,m\,\kw\}
+    \tag{AttributeValue}
+  \end{align}
+  \caption{Raw \HAX grammar.}
+  \label{fig:hacs}
+
+  \vspace{1em}
+  \begin{hacs}[numbers=right,texcl]
+    sort N() ;                                                // natural number sort
+    | data Z() ;                                              // zero
+    | data S(N()) ;                                           // successor
+    | scheme Plus(N(), N()) ;                                // $+$ operator
+    rule Plus(Z(), #2[]) →  #2[] ;                           // $0+x = x$
+    rule Plus(S(#1[]), #2[]) →  S(Plus(#1[], #2[])) ;       // $(1+x)+y=1+(x+y)$
+  \end{hacs}
+  \caption{Peano numerals in raw \HAX.}
+  \label{fig:peano}
+
+  \vspace{1em}
+  \begin{hacs}[numbers=right,texcl]
+    sort Λ() ;                                                      // sort of λ terms
+    | variable ;                                                    // permit variables
+    | scheme Ap(Λ(), Λ()) ;                                        // application
+    | data Lm([Λ()]Λ()) ;                                          // abstraction
+    rule Ap(Lm([x]#body[x]), #arg[]) → #body[#arg[]] ;       // β-reduction
+  \end{hacs}
+  \caption{Untyped λ calculus in raw \HAX.}
+  \label{fig:lambda}
+\end{figure*}
+
+\begin{example}[Peano]\label{ex:peano}
+  The classical first order Peano arithmetic rules are a simple raw \HAX system, shown in
+  Figure~\ref{fig:peano}.  The example illustrates how a sort is defined with data constructors and
+  a scheme for rewriting, essentially following standard notations for many-sorted term rewriting,
+  except for the slightly unusual (meta)variable notation with "#"s. The example illustrates the
+  following points:
+  %%
+  \begin{itemize}
+
+  \item All cases and rules are implicitly associated with the most recent \kw{sort}
+    declaration.
+
+  \item You can only define rules for function symbols declared with \kw{scheme}.
+
+  \end{itemize}
+  %%
+  A sample rewriting using this system, corresponding to the computation $1+1=2$, is
+  %%
+  \begin{displaymath}
+    "Plus(S(Z()), S(Z()))" →
+    "S(Plus(Z(), S(Z())))" →
+    "S(S(Z()))"
+  \end{displaymath}
+\end{example}
+
+\begin{example}[untyped λ calculus]\label{ex:lambda}
+  The untyped λ calculus is shown in Figure~\ref{fig:lambda} in raw \HAX.  The declarations can be
+  explained as follows:
+  %%
+  \begin{itemize}
+
+  \item The defined sort is "Λ", written "Λ()" as it has no sort parameters.
+
+  \item The "Λ" sort includes a special "variable" case to indicate that variables can occur in
+    terms.
+
+  \item "Λ" also includes a usual case for application construction, which is a "scheme" because it
+    can (sometimes) be rewritten.
+
+  \item "Λ" includes an abstraction construction, which is a "data" case, and which includes a
+    subterm with a single binder scoped over that subterm. The scoped subterm is written as
+    "[Λ()]Λ()", which should be read as ``a subterm with a locally bound variable of sort "Λ" and a
+    body of sort "Λ" in which it can occur.''
+
+  \item We specify one rewrite "rule" for "Λ": β-reduction. As usual, the rule specifies how an
+    application of an abstraction is simplified. The interesting aspect of the pattern is how the
+    abstraction is matched: the part of the pattern "[x]#body[x]" means ``the scoped subterm with
+    binder "x" and subterm "#bind" wherein "x" may occur.'' Note the similarity to the declaration
+    of the subterm of the "Lm" constructor.
+
+  \item Once an application of an abstraction is matched, the "rule" gives the result of
+    simplification as "#body[#arg[]]", which means that we construct a copy of "#body" except all
+    occurrences of the variable we matched in the pattern "#body[x]" is substituted with what
+    "#arg[]" matched.
+
+  \end{itemize}
+  %%
+  A usual λ term like $(λx.x x)(λy.y)$ is represented as "Ap(Lm([x]Ap(x, x)), Lm([y]y))", and
+  simplifies like this:
+  %%
+  \begin{displaymath}
+    "Ap(Lm([x]Ap(x, x)), Lm([y]y))" →
+    "Ap(Lm([y]y), Lm([y]y))" →
+    "Lm([y]y))"
+  \end{displaymath}
+  %%
+\end{example}
+
+As the example shows, binding and substitution are in the style of CRS
+systems~\cite{Klop+:tcs1993}.\footnote{The notation differs from the original CRS notation in that
+  we use ``\#'' as a marker for meta-variables instead of the original reserved use of $Z$, and we
+  use square brackets for substitution variables instead of round.}
+
+\begin{notation}
+  We will use \emph{vector notation} with $\ov{X}$ denoting $X_1,…,X_n$ for some $n≥0$; $ε$ denotes
+  all empty vectors. We use $·$ (dot) for vector \emph{catenation}, including adding single new
+  elements, and will freely abuse this notation and in particular write $\ov{[\ov{x}]x}$ as an
+  abbreviation of $[x_{11}…x_{1m_1}]x_1…[x_{n1}…x_{nm_n}]x_n$ for suitable $n,m_1,…,m_n ≥ 0$.
+\end{notation}
+
+In order to present examples with attributes, we first need to define some syntactic sugar to make
+the notation less unwieldy.
+
+\begin{notation}
+  %% 
+  \HAX permits some syntactic sugar:
+  %% 
+  \begin{itemize}
+
+  \item Empty parenthesis and brackets can be omitted.
+
+  \item We can omit the \kw; just before the \kw{\texttt{|}} of sort cases.
+
+  \item The \kw{data} and \kw{rule} keywords can be omitted.
+
+  \item "attribute" declarations can be combined: $"attribute"~a_1~\set{AF}_1,…, a_n~\set{AF}_n ;$
+    is an abbreviation of $"attribute"~a_1~\set{AF}_1;…; "attribute"~a_n~\set{AF}_n;$.
+
+  \end{itemize}
+\end{notation}
+
+\begin{example}
+  With syntactic sugar, we can simplify the Peano example to
+  %%
+  \begin{hacs}[numbers=right]
+    sort N | Z | S(N) | scheme Plus(N, N) ;
+    Plus(Z, S(#2)) → #2 ; 
+    Plus(S(#1), #2) → S(Plus(#1, #2)) ;
+  \end{hacs}
+\end{example}
+
+\begin{example}[untyped λ calculus]
+  The untyped λ calculus is specified as follows in raw \HAX with syntactic sugar:
+  %%
+  \begin{hacs}
+    sort L | variable | Lm([x]Lam[x as L]) | scheme Ap(L, L) | x ;
+    rule Ap(Lm([x]#body[x]), #arg) →  #body[#arg] ;
+  \end{hacs}
+  %%
+  The example shows how binding is declared and used for substitution in the style of CRS
+  systems~\cite{Klop+:tcs1993}:\footnote{The notation differs from the original CRS notation in that
+    we use ``\#'' as a marker for meta-variables instead of the original reserved use of $Z$, and we
+    use square brackets for substitution variables instead of round.}
+  %%
+  (Note that the same example in the (non-raw) full \HAX notation can include a parser for the
+  native custom λ calculus syntax:
+  %%
+  \begin{hacs}
+    token ID | [a-z] [a-z0-9_]* ;
+    sort V | symbol ⟦⟨ID⟩⟧ ;
+    sort L | ⟦λ⟨V binds x⟩.⟨L[x as L]⟩⟧ | scheme ⟦⟨L@1⟩⟨L@2⟩⟧@1
+           | ⟦⟨V⟩⟧@2 | sugar ⟦(⟨L#⟩)⟧@2 →  #;
+    ⟦ (λx.⟨L#body[x]⟩) ⟨L#arg⟩ ⟧ →  #body[#arg] ;
+  \end{hacs}
+  %%
+  including precedence markers, syntactic sugar, \etc; for details see the full \HAX
+  manual. Essentially the syntax-rich example translates to a parser and the former.)
+\end{example}
+
+%------------------------------------------------------------------------
+
+\section{\HAX Typing}
+\label{sec:typing}
+
+\begin{definition}[sort environment]
+  Figure~\ref{fig:sortenv} gives the rules for construction of the sort environment, which has the
+  following structure:
+  \begin{align*}
+    Γ &::= \bigl(\mathbb{C} ↦ α × (∀S^*.\,\set{BS}^*) × \set{DF}\bigr)
+         + \bigl(\mathbb{V}↦(\set{AF}+ε, \mathbb{C}^*)\bigr)
+    \tag{SortEnvironment}
+    \\
+    α &::= ∀\ov{v}.\,S
+    \tag{SortScheme}
+    \\
+    \set{DF} &≡ \op{fun}(\mathbb{V}^*) + \op{data}
+    \tag{DataOrFunction}
+  \end{align*}
+  We use usual map notation for $Γ$, with $Γ(x)$ denoting what $x$ maps to and $Γ[x↦X]$ standing for
+  the map obtained from $Γ$ by adding (or changing) the binding of $x$ to map to~$X$.
+\end{definition}
+
+\begin{figure*}[p]
+  \begin{gather*}
+    \intertext{\shoveright{\hfil\fbox{$ Γ, c[\ov{v}] ⊢ \ov{D} $}}}\\
+    %
+    \tag{Sort}
+    \dfrac
+    { Γ, s'[\ov{w}] ⊢ \ov{D} }
+    { Γ, s[\ov{v}] ⊢ \kw{sort}~s'[\ov{w}] ; \ov{D} }
+    \\[1ex]
+    % 
+    \tag{Data}
+    \dfrac
+    { Γ, s[\ov{v}] ⊢ \ov{D} }
+    { Γ, s[\ov{v}] ⊢ \,\texttt{|}\; \kw{data}~c(\ov{[\ov{S}]S}) ; \ov{D} }
+    \quad\Cases{
+      Γ(c) = α\\
+      \op{con}(α) = ∀\ov{v}.\bigl( \ov{[\ov{S}]S} → s[\ov{v}] \bigr)
+    }
+    \\[1ex]
+    %
+    \tag{Scheme}
+    \dfrac
+    { Γ, s[\ov{v}] ⊢ \ov{D} }
+    { Γ, s[\ov{v}] ⊢ \,\texttt{|}\; \kw{scheme}~f(\ov{[\ov{S}]S})~{↓}a_1…{↓}a_n ; \ov{D} }
+    \quad\Cases{
+        Γ(f) = α\\
+        \op{con}(α) = ∀\ov{v}.\bigl( \ov{[\ov{S}]S} → s[\ov{v}] \bigr)\\
+        \op{atts}(α) = {↓}a_1…{↓}a_n
+    }
+%      ⇒ Γ[f ↦ ⟨∀\ov{v}\ov{v}.s, .s[\ov{v}], ∀\ov{v}.\ov{\set{BS}}, \op{fun}(\ov{a})⟩] }
+    \\[1ex]
+    \qquad
+    \dfrac
+    { Γ, s[\ov{v}] ⊢ \ov{D} ⇒ Γ }
+    { Γ, s[\ov{v}] ⊢ \kw{attribute}~a~\set{AF}; \, \ov{D} ⇒ Γ[a ↦ ⟨\set{AF}, \ov{s}⟩] }
+    \quad Γ(a)=⟨ε,\ov{s}⟩
+    \tag{Attribute1}
+    \\[1ex]
+    \qquad
+    \dfrac
+    { Γ, s[\ov{v}] ⊢ \ov{D} ⇒ Γ }
+    { Γ, s[\ov{v}] ⊢ \,\texttt{|}\; {↑}a; \ov{D} ⇒ Γ[a ↦ ⟨\set{AF}, \ov{s}·s⟩] }
+    \quad Γ(a)=⟨\set{AF},\ov{s}⟩
+    \tag{Synthesize1}
+    \\[1ex]
+    \dfrac
+    { s[\ov{v}] ⊢ \ov{D} ⇒ Γ }
+    { s[\ov{v}] ⊢ \kw{rule}~P→T; \, \ov{D} ⇒ Γ }
+    \tag{Ignore1}
+    \\[1ex]
+    \dfrac
+    { }
+    { s[\ov{v}] ⊢ ε ⇒ \emptyset }
+    \tag{Done1}
+  \end{gather*}
+  \caption{\HAX Sort Environment Construction (``Pass 1'').}
+  \label{fig:sortenv}
+
+  \begin{gather*}
+    \hbox to\textwidth{\hfil\fbox{$Γ, S ⊢ \ov{D}$}}
+    \\
+    \dfrac
+    { Γ ⊢ P : S ⇒ Δ
+      \quad Γ, Δ ⊢ T : S \quad Γ, S ⊢ \ov{D} }
+    { Γ, S ⊢ \kw{rule}~P→T; \, \ov{D} }
+    \tag{Rule2}
+    \\[1ex]
+    \dfrac
+    { Γ, S ⊢ \ov{D} }
+    { Γ, S ⊢ \kw{sort}~s'[\ov{v'}] ; \ov{D} }
+    \quad
+    \dfrac
+    { Γ, S ⊢ \ov{D} }
+    { Γ, S ⊢ \,\texttt{|}\;C ; \ov{D} }
+    \quad
+    \dfrac
+    { Γ, S ⊢ \ov{D} }
+    { Γ, S ⊢ \kw{attribute}~a~\set{AF}; \, \ov{D} }
+    \tag{Ignore2}
+    \\[1ex]
+    \dfrac
+    { }
+    { Γ, S ⊢ ε }
+    \tag{Done2}
+    \\[1ex]
+    \hbox to\textwidth{\hfil\fbox{$Γ ⊢ P : α ⇒ Δ$}}
+    \\
+    \dfrac
+    { ∀i\bigl[\, Γ[\ov{v_i}↦\ov{S_i}],Δ_{i-1} ⊢ P_i : S_i ⇒ Δ_i \,\bigr]
+      \quad Γ,Δ_n ⊢ \ov{\set{PA}} : \ov{\set{AA}} ⇒ Δ }
+    { Γ ⊢ c\bigl(\ov{[\ov{v}]P}\bigr)~\ov{\set{PA}} : ∀\ov{w}.S ⇒ Δ }
+    \tag{PatternCons}
+    \\[-3ex]
+    \intertext{\shoveright{\hfil
+    where $
+    Δ_0 = \emptyset,
+    Γ(c) = ⟨∀\ov{w}.S, ∀\ov{w}.\,\ov{[\ov{S}]S}, \set{DF}⟩,
+    $\qquad}}
+    %%
+    \dfrac
+    { Γ ⊢ P : s ⇒ Δ }
+    { Γ ⊢ v~\ov{\set{PA}} : s ⇒ Δ }
+    \tag{PatternVar}
+    \\[1ex]
+    \dfrac
+    { Γ ⊢ P : s ⇒ Δ }
+    { Γ ⊢ m\,[\ov{P}]~\ov{\set{PA}} : s ⇒ Δ }
+    \tag{PatternMeta}
+  \end{gather*}
+  \caption{\HAX Sorting Rules (``Pass 2'').}
+  \label{fig:sorting}
+
+
+
+
+\end{figure*}
+
+The intent with the $Γ$ structure is to map each defined symbol as follows:
+%%
+\begin{itemize}
+
+\item Every constructor and function symbol is mapped to a triple
+  $⟨s, ∀\ov{v}.\,\set{BS}, \set{DF}⟩$, which contains
+  \begin{itemize}
+  \item the \emph{sort} $s$ of the constructor;
+  \item the \emph{parameter sort scheme} $∀\ov{v}.\,\set{BS}$ with the sorts of all parameters (more
+    on that below);
+  \item the \emph{constructor category} of the symbol (function with specific synthesized
+    attributes, or data).
+  \end{itemize}
+
+\item Every attribute name is mapped to a pair $⟨\set{AF},\ov{s}⟩$, which contains
+  \begin{itemize}
+  \item the \emph{attribute form} that determines if the attribute is a simple value or a map;
+  \item the \emph{synthesis sorts} of the attribute, with the sorts for which the attribute is
+    synthesized on all data.
+  \end{itemize}
+
+\end{itemize}
+%%
+Constructors belong to a sort $s$, which may be a \emph{parametric sort}. This shows up in the sorts
+of the subterms of the constructor, which are specified as $∀\ov{v}.\,\set{BS}$. Note that this 
+
+\begin{definition}[sort check]
+  Figure~\ref{fig:sorting} gives rules for sorting…
+\end{definition}
+
+\begin{figure*}[t]
+\end{figure*}
+
+
+
+
+
+
+
+
+%------------------------------------------------------------------------
+
+\section{Conclusion}
+\label{sec:conc}
+
+
+
+We would like to give credit to SIS~\cite{Mosses:daimi1979}, which shares the use of
+\emph{simplification} to a λ-calculus based formalism with \HAX, as illustrated, for example, by how
+the interpretation rule can be encoded (as shown in the previous section).
+
+The most prominent system that supports implementation of compilers in formal (attribute grammar)
+form is ASF+SDF~\cite{Brand+:toplas2002}, which is based on first order rewriting. While modules
+have been added for symbol table management, these lack the full integration and easy way to handle
+scoped intermediate languages. The successor, Rascal~\cite{Bos+:eptcs2011} adds a module for HOAS,
+but Rascal specifications operate in a world of side effects, which we find hard to reconcile with
+higher-order term structures (with scopes).
+
+The notion of ``higher-order'' used by \HAX is similar to but not quite the same as in higher-order
+attribute grammars (HAG)~\cite{VogtSwierstraKuiper:pldi1989}. Like HAGs, \HAX specifications permit
+constructing and passing of abstract syntax fragments in attributes -- indeed our example uses this
+in the type synthesis rules -- but the ``higher order'' aspect of \HAX also covers the rewriting
+side, where we can build parameterized abstractions over any part of a specification, including with
+attributes. Indeed, one can use substitution inside attributes, have synthetic attributes block
+schemes (as we have seen), have lack of substitution block synthesis (leave ``unsynthesizable
+variables'' in a term), \etc
+
+\HAX supports full HOAS, even with nested reductions under unevaluated binders, yet the applications
+we consider are quite close to the examples presented for PHOAS by
+Chlipala~\cite{Chlipala:icfp2008}. We are hoping to understand how many of the results of Chlipala
+carry over to \HAX.
+
+Finally, it is clear that the formal foundation of \HAX, while based in the solid culture of higher
+order rewriting, still needs to be fully qualified and categorized in this world, so we can express
+precisely (and hopefully also implement) standard tools such as termination checking for the
+language. This is the subject of our upcoming EU-funded Marie Skłodowska-Curie ``HORIP'' action
+collaboration with Cynthia Kop.
+
+\paragraph*{Acknowledgements.} The author would like to thank my coteacher at NYU, Eva Rose, our
+grader José Pablo Cambronero, as well as our students in the compiler construction class, for
+constructive comments to and insightful questions on \HAX.
+%%
+The initial implementation of \HAX would not have been remotely possible without the CRSX team at
+IBM: Morris Matsa, Scott Boag, and especially Lionel Villard, who suffered through understanding and
+then programming both core fragments of and using the CRSX system that still provides the
+implementation of \HAX.
+%%
+And finally \HAX owes its sanity to a collaboration with Cynthia Kop, both as an intern with the
+Watson team in 2011, which created the polymorphic sort checker in her thesis work~\cite{Kop:2012},
+and our continuing collaboration.
+
+
+%------------------------------------------------------------------------
+
+\bibliography{crs}
+
+
+\appendix
+\section{More Sugar}
+
+\begin{notation}
+  %% 
+  \HAX permits some additional syntactic sugar:
+  %% 
+  \begin{itemize}
+
+  \item An additional SortCase contruct is allowed:
+    \begin{displaymath}
+      \kw{template}~P~\kw{$→$}~T\,\kw;  \quad⇒\quad
+      \kw{scheme}~P'\,\kw; ~ \kw{\texttt{|}} ~ \kw{data} ~ T'\,\kw; ~ \kw{rule} ~ P~\kw{$→$}~T\,\kw;
+    \end{displaymath}
+    where $P'$ and $T'$ are variants of $P$ and $P$ that have been cleared of "#"s.
+
+  \item Finally, we rewrite special \emph{synthesis rules}:
+    \begin{displaymath}
+      c(\,\ov{\set{PB}}\,)~→~\ov{↑a~\set{AV}}\,\kw;
+      \quad⇒\quad
+      \kw{rule}~c(\,\ov{\set{PB}}\,)~→~c(\,\ov{\set{PB}'}\,)~\ov{↑a~\set{AV}}\,\kw;
+    \end{displaymath}
+    where $\set{PB}_i'$ is $\set{PB}_i$ with negative attribute patterns $\{¬{…}\}$ removed.
+
+  \item We rewrite special \emph{inheritance rules}:
+    \begin{displaymath}
+      c(\,\ov{\set{PB}}\,)~→~\ov{↓v~\set{AV}}\,\kw;
+      \quad⇒\quad
+      \kw{rule}~c(\,\ov{\set{PB'}}\,)~\ov{↓v~\set{AV}}~→~c(\,\ov{\set{PB}'}\,)\,\kw;
+    \end{displaymath}
+    where 
+
+  \item As defined below, every term $f(…)\ov{A}$ for a symbol $f$ defined with
+    \begin{displaymath}
+      \kw{\texttt{|} scheme}~f\,\kw(…\kw)~\ov{\set{AI}}
+    \end{displaymath}
+    must include an $A_i$ instance for every attribute defined by some $\set{AI}_i$.  The system
+    automatically includes missing inherited attributes as follows:
+    \begin{itemize}
+    \item In patterns, a missing attribute is inserted as "↓a(#a)" or "↓a{:#a}" as appropriate.
+    \item Missing attributes that were defined in the pattern are inserted the same.
+    \item Remaining missing attributes must be of a map type and are inserted as~"↓a{}".
+    \end{itemize}
+
+  \item We allow two more forms of \set{PA}:
+    \begin{displaymath}
+      \set{PA} ::= {…} \bigm| \kw{$↑$}\,m \bigm| \kw{$↓$}\,m
+    \end{displaymath}
+    They expand to all relevant synthesized and inherited attributes, respectively.
+
+  \end{itemize}
+\end{notation}
+
+\section{Inference Systems}
+\label{sec:infer}
+
+A common notation for specifying program analysis and …
+
+A set of of inference rules is ...
+
+\begin{definition}
+  %%
+  A \HAX \emph{ground sequential inference rule} has the form
+  %%
+  \begin{equation}
+    \dfrac{ T_1 ⇒ P_1 \quad\cdots\quad T_n ⇒ P_n }{ P_0 ⇒ T_{n+1} }
+    \label{eq:infer}
+  \end{equation}
+  %%
+  where $n≥0$ and
+  %%
+  \begin{enumerate}
+  \item $P_0$ (the \emph{initial} pattern) can be any \HAX pattern.
+  \item $T_i$ (the \emph{tests}, $1≤i≤n$) are \HAX terms, and are allowed occurrences of meta-variables from $P_0…P_{i-1}$.
+  \item $P_i$ (the \emph{constraints}, $i>0$) must be \HAX subpatterns.
+  \item $T_{n+1}$ (the \emph{conclusion}) is allowed occurrences of all meta-variables.
+  \end{enumerate}
+  %%
+  An inference rule with $n=0$ is called an \emph{axiom}, with $n>0$ a \emph{proper inference}.
+  %%
+  The $T_i⇒P_i$ over the line are called \emph{premise judgments}. The $P_0⇒T_{n+1}$ under the line
+  is called the \emph{conclusion judgment}.
+  %%
+  Below we will vary the indexing scheme to capture various enumerations of sets of inference rules.
+\end{definition}
+
+\begin{definition}[pattern family]\label{def:patfam}
+  Consider a set of ground sequential inference rules.  Such a set can obviously be indexed by the
+  distinct initial patterns into families of rules
+  \begin{displaymath}
+    \dfrac{ T_{ij1} ⇒ P_{ij1} \cdots T_{ijn_{ij}} ⇒ P_{ijn_{ij}} }{ P_i ⇒ T_{ij} } ~(L_{ij})
+  \end{displaymath}
+  where all the $P_i$ used to index the family are pairwise distinct.  The groups obtained in this
+  way are a \emph{pattern family}.
+\end{definition}
+
+\begin{definition}[leftmost matching]
+  Consider a pattern family as in Definition~\ref{def:patfam}.  The family is said to be
+  \emph{leftmost matching} if the group of rules for each $P_i$ satisfies one of the following
+  conditions:
+  \begin{itemize}
+  \item either the family contains a single axiom, \ie, $1≤j≤1$ with $n_{ij}=0$,
+  \item or the family contains only proper inferences, \ie, $1≤j≤m_i$ with $n_{ij}>0$.
+  \end{itemize}
+\end{definition}
+
+%% Sub-index each non-axiom $P_i$-group by leftmost premise construction into sub-families of
+%%    the form
+%%    \begin{displaymath}
+%%      \dfrac{ T_{ij} ⇒ P_{ijk1} \quad T_{ijk2} ⇒ P_{ijk2} \quad\cdots\quad T_{ijkn_{ijk}} ⇒ P_{ijkn_{ijk}} }{ P_i ⇒ T_{ijk} }
+%%    \end{displaymath}
+%%    where all the $T_{ij}$ used to index the sub-family within a $P_i$-group are pairwise disjoint.
+
+\begin{definition}[left-operations]
+  Given a leftmost-matching pattern family. Each $P$-indexed group of proper inference rules will
+  have the following form:
+  \begin{displaymath}
+    \dfrac{ T_{j1} ⇒ P_{j1} \quad T_{j2} ⇒ P_{j2} \quad\cdots\quad T_{jn_j} ⇒ P_{jn_j} }{ P ⇒ T_j } ~ (L_j)
+  \end{displaymath}
+  with one $j$ per rule in the family, which is by definition non-empty ($1≤j≤n$) and contains only
+  proper inferences ($n_j≥1$).
+  %%
+  \begin{enumerate}
+
+  \item Given a label $L$, the \emph{left-flattening} rewrite rules of the group are
+    %% 
+    \begin{align*}
+      L(P) &→ L'(T_{11}, …,T_{n1}, P) \\[\jot]
+      L'(P_{11}, m_2, …, m_n, P) &→ L_1(P, P_{11}) \\[-\jot]
+      &~\vdots\\
+      L'(m_1, …, m_{n-1}, P_{n1}, P) &→ L_n(P, P_{n1})
+    \end{align*}
+    %% 
+    with $L'$ a fresh symbol associated with the group and the $m_j$ fresh meta-variables.
+
+  \item The \emph{left-eliminated} rules for the group are the rules
+    \begin{displaymath}
+      \dfrac{ T_{j2} ⇒ P_{j2} \quad\cdots\quad T_{jn_j} ⇒ P_{jn_j} }{ L_j(P, P_{j1}) ⇒ T_j } ~ (L'_j)
+    \end{displaymath}
+    with the $L'_j$ fresh labels derived from the $L_j$ labels.
+
+  \end{enumerate}
+\end{definition}
+
+\begin{definition}[left-unfolded]
+  Given a leftmost-matching pattern family and consider the proper inference rule group indexed by
+  $P$. The following system is the \emph{left-unfolded} inference system for the $P$-indexed group:
+  \begin{enumerate}
+
+  \item The left-flattening rewrite rules of the group for a fresh~$L$.
+
+  \item The new inference rule (which refers to the rewrite rules)
+    \begin{displaymath}
+      \dfrac{ L(P) → m \quad m ⇒ m' }{ P ⇒ m } ~ (L)
+    \end{displaymath}
+
+  \item The left-eliminated inference rules (which may be axioms or proper inferences).
+
+  \end{enumerate}
+\end{definition}
+
+\begin{proposition}
+  Given a set of ground sequential inference rules, which is a leftmost-matching pattern
+  family. Pick one group of proper inference rules, indexed by the initial pattern $P$. The original
+  system and the system where the group has been replaced with the left-unfolded group have the same
+  normal forms.
+\end{proposition}
+\begin{proof}
+  Easy: full proof tree before corresponds to proof tree after with simple conversion of the
+  eliminated eliminated premise to an application of the new rule and a single use of the rewrite
+  rule.
+\end{proof}
+
+Note that we can only prove that full ``big-step'' evaluations are equivalent: the new rules may
+``get stuck'' in interesting ways (\TBD{example with overlapping patterns}).
+
+\begin{lemma}
+  Start with any leftmost matching ground sequential inference rule system and apply left-unfolding
+  repeatedly except on axioms and the introduced inference rules
+  \begin{displaymath}
+    \dfrac{ L(P) → m \quad m ⇒ m' }{ P ⇒ m }
+  \end{displaymath}
+  The resulting system has the same normal forms as the original system.
+\end{lemma}
+
+To finish the transform from inference rules to \HAX rules we need two additional notions.
+
+\begin{definition}
+  An inference system is \emph{rooted} if it has one rule that occurs as the root rule of every
+  proof tree.
+\end{definition}
+
+\begin{definition}
+  A leftmost-matching ground sequential inference rule system is \emph{left deterministic} if the
+  left-flattening 
+\end{definition}
+
+\begin{theorem}
+  A rooted and leftmost matching ground sequential inference system can be implemented by a 
+\end{theorem}
+
+
+
+\end{document}
+
+
+%------------------------------------------------------------------------
+% Tell Emacs that this is a LaTeX document and how it is formatted:
+% Local Variables:
+% mode:latex
+% fill-column:100
+% TeX-master: t
+% TeX-auto-untabify: nil
+% End:
