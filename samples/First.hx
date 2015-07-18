@@ -60,11 +60,11 @@ attribute ↓e{Name:Type};  // inherited type environment
 
 sort Stat | scheme ⟦ TA ⟨Stat⟩ ⟧ ↓e ;
 
-⟦ TA ⟨Name id⟩ := ⟨Exp#2⟩; ⟨Stat#3⟩ ⟧ → ⟦ TA2 ⟨Name id⟩ := TA ⟨Exp#2⟩; ⟨Stat#3⟩ ⟧;
+⟦ TA id := ⟨Exp#2⟩; ⟨Stat#3⟩ ⟧ → ⟦ TA2 id := TA ⟨Exp#2⟩; ⟨Stat#3⟩ ⟧;
 {
   | scheme ⟦ TA2 ⟨Stat⟩ ⟧ ↓e;
-  ⟦ TA2 ⟨Name id⟩ := ⟨Exp#2 ↑t(#t2)⟩; ⟨Stat#3⟩ ⟧ →
-    ⟦ ⟨Name id⟩ := ⟨Exp#2⟩; ⟨Stat ⟦TA {⟨Stat#3⟩}⟧ ↓e{⟦id⟧:#t2}⟩ ⟧;
+  ⟦ TA2 id := ⟨Exp#2 ↑t(#t2)⟩; ⟨Stat#3⟩ ⟧ →
+    ⟦ id := ⟨Exp#2⟩; ⟨Stat ⟦TA {⟨Stat#3⟩}⟧ ↓e{⟦id⟧:#t2}⟩ ⟧;
 }
 ⟦ TA {⟨Stat#1⟩} ⟨Stat#2⟩ ⟧ → ⟦ {TA ⟨Stat#1⟩} TA ⟨Stat#2⟩ ⟧;
 
@@ -185,6 +185,6 @@ Leftmost(⟦⟨Exp#1⟩ + ⟨Exp#2⟩⟧)  →  Leftmost(Exp#1) ;
 Leftmost(⟦⟨Exp#1⟩ * ⟨Exp#2⟩⟧)  →  Leftmost(Exp#1) ;
 Leftmost(⟦⟨INT#⟩⟧)  →  ⟦⟨INT#⟩⟧ ;
 Leftmost(⟦⟨FLOAT#⟩⟧)  →  ⟦⟨FLOAT#⟩⟧ ;
-Leftmost(⟦⟨Name#⟩⟧)  →  ⟦⟨Name#⟩⟧ ;
+Leftmost(⟦id⟧)  →  ⟦id⟧ ;
 
 }
