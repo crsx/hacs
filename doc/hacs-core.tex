@@ -78,14 +78,14 @@ and finally Section~\ref{sec:conc} concludes and compares to related work.
 
 %------------------------------------------------------------------------
 
-\section{Raw \HAX Syntax}
+\section{\hax Syntax}
 \label{sec:hacs}
 
-In this section we define the \HAX source language (without user-specified higher order abstract
-syntax, hence ``raw'').
+In this section we define the \hax source language (without user-specified higher order abstract
+syntax, hence also known as ``raw \HAX'').
 
-\begin{definition}[raw \HAX]
-  The \HAX grammar is shown in Figure~\ref{fig:hacs}. (We call this the ``raw'' grammar because it
+\begin{definition}[\hax]
+  The \hax grammar is shown in Figure~\ref{fig:rawhacs}. (We call this the ``raw'' grammar because it
   does not include the \HAX custom syntax notations.) The top level of a \HAX script is a sequence
   of declarations $D^*$. In addition, the grammar assumes that we have three categories of tokens
   defined:
@@ -95,7 +95,7 @@ syntax, hence ``raw'').
   \item $s,f,c ∈ \mathbb{C}$ stands for \emph{constructor} tokens, which are capitalized words like
     "Integer" or "A" or "CamelCaseWord", used for sort names and function and data symbols.
 
-  \item $a,v ∈ \mathbb{V}$ stands for \emph{variable} tokens, which are lower case words like "x" or
+  \item $a,v,α ∈ \mathbb{V}$ stands for \emph{variable} tokens, which are lower case words like "x" or
     "foo" or even "lowWord", used for variables and attributes.
 
   \item $m ∈ \mathbb{M}$ stands for \emph{meta-variable} tokens, which are tokens that start with
@@ -109,49 +109,30 @@ syntax, hence ``raw'').
 \begin{figure*}[p]
   \begin{align}
     \tag{Declaration}
-    D &::= \kw{sort}~c\,\kw[\,v^{*\kw,}\,\kw]\,\kw;
-    \bigm| \kw{\texttt{|}}~C\,\kw;
-    \bigm| \kw{attribute}~a~\set{AF}\,\kw;
-    \bigm| \kw{rule}~P~\kw{$→$}~T\,\kw;
-    \\[\jot]
-    \tag{Case}
-    C &::= \kw{data}~c\,\kw(\,\set{BS}^{*\kw,}\,\kw)
-    \bigm| \kw{scheme}~f\,\kw(\,\set{BS}^{*\kw,}\,\kw)~\set{AI}^*
-    \bigm| \kw{variable}
-    \bigm| \kw{$↑$}\,a
+    D &::= \kw{sort}~S \,\kw\{\, C^{*\kw,} \,\kw\}
+    \bigm| \kw{attribute}~a~\set{AVS}\,\kw;
     \\
+    \tag{Case}
+    C &::= \kw{data}~c\,\kw(\,\set{BS}^{*\kw,}\,\kw)~a^*\,\kw;
+    \bigm| \kw{scheme}~f\,\kw(\,\set{BS}^{*\kw,}\,\kw)~a^*\,\kw;
+    \bigm| \kw{variable}~a^*\,\kw;
+    \bigm| \kw{rule}~T~\kw{$→$}~T\,\kw;
+    \\[\jot]
     \tag{BindersSort}
     \set{BS} &::= \kw[\,S^{*\kw,}\,\kw]\,S
     \\
-    \tag{AttributeInherit}
-    \set{AI} &::= \kw{$↓$}\,a
-    \\
-    S &::= s\,\kw(\,S^{*\kw,}\,\kw)
-    \bigm| v
-    \tag{Sort}
-    \\[\jot]
-    \tag{AttributeForm}
-    \set{AF} &::= \kw(\,S\,\kw)
+    \tag{AttributeValueSort}
+    \set{AVS} &::= \kw(\,S\,\kw)
     \bigm| \kw\{\,S\,\kw:\,S\,\kw\}
     \\[\jot]
-    \tag{Pattern}
-    P &::= c\,\kw(\,\set{PB}^{*\kw,}\,\kw)~\set{PA}^*
-    \bigm| v ~ \set{PA}^*
-    \bigm| m\,\kw[\,v^{*\kw,}\,\kw]~\set{PA}^*
-    \\
-    \tag{PatternBinders}
-    \set{PB} &::= \kw[\,v^{*\kw,}\,\kw]\,P
-    \\
-    \tag{PatternAttribute}
-    \set{PA} &::= \kw{$↑$}\,a~\set{AP}
-    \bigm| \kw{$↓$}\,a~\set{AP}
-    \\
-    \tag{AttributePattern}
-    \set{AP} &::= \kw(\,P\,\kw)
-    \bigm| \kw\{\,P\,\kw:\,P\,\kw\}
-    \bigm| \kw\{\,\kw{$¬$}\,P\,\kw\}
-    \bigm| \kw\{\kw:\,m\,\kw\}
+%%%    \tag{AttributeInherit}
+%%%    \set{AI} &::= \kw{$↓$}\,a
+%%%    \\
+    S &::= s\,\kw[\,S^{*\kw,}\,\kw]
+    \bigm| α
+    \tag{Sort}
     \\[\jot]
+%
     \tag{Term}
     T &::= c\,\kw(\,B^{*\kw,}\,\kw)~A^*
     \bigm| v ~ A^*
@@ -160,45 +141,101 @@ syntax, hence ``raw'').
     \tag{Binders}
     B &::= \kw[\,v^{*\kw,}\,\kw]\,T
     \\
-    A &::= \kw{$↑$}\,a~\set{AV}
-    \bigm| \kw{$↓$}\,a~\set{AV}
+    A &::= a~\set{AV}
+%%%    A &::= \kw{$↑$}\,a~\set{AV}
+%%%    \bigm| \kw{$↓$}\,a~\set{AV}
     \tag{Attribute}
     \\
     \set{AV} &::= \kw(\,T\,\kw)
     \bigm| \kw\{\,T\,\kw:\,T\,\kw\}
     \bigm| \kw\{\kw\}
+    \bigm| \kw\{\,\kw{$¬$}\,T\,\kw\}
     \bigm| \kw\{\kw:\,m\,\kw\}
     \tag{AttributeValue}
+%
+%%%    \\[\jot]
+%%%    \tag{Pattern}
+%%%    P &::= c\,\kw(\,\set{PB}^{*\kw,}\,\kw)~\set{PA}^*
+%%%    \bigm| v ~ \set{PA}^*
+%%%    \bigm| m\,\kw[\,v^{*\kw,}\,\kw]~\set{PA}^*
+%%%    \\
+%%%    \tag{PatternBinders}
+%%%    \set{PB} &::= \kw[\,v^{*\kw,}\,\kw]\,P
+%%%    \\
+%%%    \tag{PatternAttribute}
+%%%    \set{PA} &::= \kw{$↑$}\,a~\set{AP}
+%%%    \bigm| \kw{$↓$}\,a~\set{AP}
+%%%    \\
+%%%    \tag{AttributePattern}
+%%%    \set{AP} &::= \kw(\,P\,\kw)
+%%%    \bigm| \kw\{\,P\,\kw:\,P\,\kw\}
+%%%    \bigm| \kw\{\,\kw{$¬$}\,P\,\kw\}
+%%%    \bigm| \kw\{\kw:\,m\,\kw\}
+%%%    \\[\jot]
+%%%    \tag{Term}
+%%%    T &::= c\,\kw(\,B^{*\kw,}\,\kw)~A^*
+%%%    \bigm| v ~ A^*
+%%%    \bigm| m\,\kw[\,T^{*\kw,}\,\kw]~A^*
+%%%    \\
+%%%    \tag{Binders}
+%%%    B &::= \kw[\,v^{*\kw,}\,\kw]\,T
+%%%    \\
+%%%    A &::= \kw{$↑$}\,a~\set{AV}
+%%%    \bigm| \kw{$↓$}\,a~\set{AV}
+%%%    \tag{Attribute}
+%%%    \\
+%%%    \set{AV} &::= \kw(\,T\,\kw)
+%%%    \bigm| \kw\{\,T\,\kw:\,T\,\kw\}
+%%%    \bigm| \kw\{\kw\}
+%%%    \bigm| \kw\{\kw:\,m\,\kw\}
+%%%    \tag{AttributeValue}
   \end{align}
-  \caption{Raw \HAX grammar.}
+  \caption{\hax grammar.}
   \label{fig:hacs}
+
+  \small
 
   \vspace{1em}
   \begin{hacs}[numbers=right,texcl]
-    sort N() ;                                                // natural number sort
-    | data Z() ;                                              // zero
-    | data S(N()) ;                                           // successor
-    | scheme Plus(N(), N()) ;                                // $+$ operator
-    rule Plus(Z(), #2[]) →  #2[] ;                           // $0+x = x$
-    rule Plus(S(#1[]), #2[]) →  S(Plus(#1[], #2[])) ;       // $(1+x)+y=1+(x+y)$
+    sort N[] {                                                // natural number sort
+      data Z() ;                                              // zero
+      data S([]N[]) ;                                           // successor
+      scheme Plus([]N[], []N[]) ;                                // $+$ operator
+      rule Plus([]Z(), []#2[]) →  #2[] ;                           // $0+x = x$
+      rule Plus([]S([]#1[]), []#2[]) →  S([]Plus([]#1[], []#2[])) ; // $(1+x)+y=1+(x+y)$
+    }
   \end{hacs}
-  \caption{Peano numerals in raw \HAX.}
+  \caption{Peano numerals in \hax.}
   \label{fig:peano}
 
   \vspace{1em}
   \begin{hacs}[numbers=right,texcl]
-    sort Λ() ;                                                      // sort of λ terms
-    | variable ;                                                    // permit variables
-    | scheme Ap(Λ(), Λ()) ;                                        // application
-    | data Lm([Λ()]Λ()) ;                                          // abstraction
-    rule Ap(Lm([x]#body[x]), #arg[]) → #body[#arg[]] ;       // β-reduction
+    sort List[α] {
+      data Nil() ;
+      data Cons([]α, []List[α]) ;
+      scheme Append([]List[α], []List[α]) ;
+      rule Append([]Nil(), []#2[]) →  #2[] ;
+      rule Append([]Cons([]#11[], []#12[]), []#2[]) →  Cons([]#11[], Append([]#12[], []#2[])) ;
+    }
   \end{hacs}
-  \caption{Untyped λ calculus in raw \HAX.}
+  \caption{Polymorphic lists in \hax.}
+  \label{fig:list}
+
+  \vspace{1em}
+  \begin{hacs}[numbers=right,texcl]
+    sort Λ[] {                                                      // sort of λ terms
+      variable ;                                                    // permit variables
+      scheme Ap(Λ[], Λ[]) ;                                        // application
+      data Lm([Λ[]]Λ[]) ;                                          // abstraction
+      rule Ap(Lm([x]#body[x]), #arg[]) → #body[#arg[]] ;       // β-reduction
+    }
+  \end{hacs}
+  \caption{Untyped λ calculus in \hax.}
   \label{fig:lambda}
 \end{figure*}
 
 \begin{example}[Peano]\label{ex:peano}
-  The classical first order Peano arithmetic rules are a simple raw \HAX system, shown in
+  The classical first order Peano arithmetic rules are a simple \hax system, shown in
   Figure~\ref{fig:peano}.  The example illustrates how a sort is defined with data constructors and
   a scheme for rewriting, essentially following standard notations for many-sorted term rewriting,
   except for the slightly unusual (meta)variable notation with "#"s. The example illustrates the
@@ -223,12 +260,12 @@ syntax, hence ``raw'').
 \end{example}
 
 \begin{example}[untyped λ calculus]\label{ex:lambda}
-  The untyped λ calculus is shown in Figure~\ref{fig:lambda} in raw \HAX.  The declarations can be
+  The untyped λ calculus is shown in Figure~\ref{fig:lambda} in \hax.  The declarations can be
   explained as follows:
   %%
   \begin{itemize}
 
-  \item The defined sort is "Λ", written "Λ()" as it has no sort parameters.
+  \item The defined sort is "Λ", written "Λ[]" as it has no sort parameters.
 
   \item The "Λ" sort includes a special "variable" case to indicate that variables can occur in
     terms.
@@ -238,7 +275,7 @@ syntax, hence ``raw'').
 
   \item "Λ" includes an abstraction construction, which is a "data" case, and which includes a
     subterm with a single binder scoped over that subterm. The scoped subterm is written as
-    "[Λ()]Λ()", which should be read as ``a subterm with a locally bound variable of sort "Λ" and a
+    "[Λ[]]Λ[]", which should be read as ``a subterm with a locally bound variable of sort "Λ" and a
     body of sort "Λ" in which it can occur.''
 
   \item We specify one rewrite "rule" for "Λ": β-reduction. As usual, the rule specifies how an
@@ -265,10 +302,19 @@ syntax, hence ``raw'').
   %%
 \end{example}
 
+Let us define some really simple attribute cases.
+
+\begin{hacs}[numbers=right,texcl]
+sort 
+\end{hacs}
+
+
+
+
 As the example shows, binding and substitution are in the style of CRS
-systems~\cite{Klop+:tcs1993}.\footnote{The notation differs from the original CRS notation in that
-  we use ``\#'' as a marker for meta-variables instead of the original reserved use of $Z$, and we
-  use square brackets for substitution variables instead of round.}
+systems~\cite{Klop+:tcs1993}.\footnote{The notation does differ from the original CRS notation in
+  that we use ``\#'' as a marker for meta-variables instead of the original reserved use of $Z$, and
+  we use square brackets for substitution variables instead of round.}
 
 \begin{notation}
   We will use \emph{vector notation} with $\ov{X}$ denoting $X_1,…,X_n$ for some $n≥0$; $ε$ denotes
@@ -309,7 +355,7 @@ the notation less unwieldy.
 \end{example}
 
 \begin{example}[untyped λ calculus]
-  The untyped λ calculus is specified as follows in raw \HAX with syntactic sugar:
+  The untyped λ calculus is specified as follows in \hax with syntactic sugar:
   %%
   \begin{hacs}
     sort L | variable | Lm([x]Lam[x as L]) | scheme Ap(L, L) | x ;
