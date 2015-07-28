@@ -25,7 +25,7 @@
 \newcommand{\eg}{\textit{e.g.}\xspace}
 \newcommand{\etc}{\textit{etc.}\xspace}
 \newcommand{\aka}{\textit{aka.}\xspace}
-\newcommand{\TBD}[1][]{\textit{To Be Done…#1}\marginpar{\bf\color{red} TBD}}
+\newcommand{\TBD}[2][]{\textit{To Be Done: #2~}\marginpar{\bf\color{red} TBD #1}}
 
 %% Misc.
 \def\Bigstrut{\ensuremath{\vphantom{\Bigm|}}}
@@ -142,6 +142,7 @@
     space,static,sugar,symbol,tag,token,default,error,binds,as,template,@,data,variable},%
   literate=%
     {⟦}{{\ensuremath{\llbracket}}}1 {⟧}{{\ensuremath{\rrbracket}}}1 {⟨}{{\ensuremath{\langle}}}1 {⟩}{{\ensuremath{\rangle}}}1 %
+    {[}{{\ensuremath{[\mkern.5mu}}}1 {]}{{\ensuremath{\mkern.5mu]}}}1 {⟨}{{\ensuremath{\langle}}}1 {⟩}{{\ensuremath{\rangle}}}1 %
     {→}{{\ensuremath{\rightarrow}}}2 {↑}{{\ensuremath{\uparrow}}}1 {↓}{{\ensuremath{\downarrow}}}1 {¬}{{\ensuremath{\lnot}}}2 {¶}{{\P}}1 %
     {ε}{{\ensuremath{\varepsilon}}}1 {…}{{\ensuremath{\dots}}}2 {∧}{{\ensuremath{\!\wedge}}}2 {∨}{{\ensuremath{\!\vee}}}2 {↦}{{\ensuremath{\mapsto}}}2 %
     {α}{{\ensuremath{\alpha}}}1 {β}{{\ensuremath{\beta}}}1 {γ}{{\ensuremath{\gamma}}}1 %
@@ -151,7 +152,7 @@
     {¹}{{\ensuremath{^1}}}1 {²}{{\ensuremath{^2}}}2 %
 }[comments,strings,keywords]
 %%
-\lstnewenvironment{hacs}[1][]{\lstset{language=HACS,basewidth={.53em,.43em},columns=flexible,numberstyle=\scriptsize,numberblanklines=false,firstnumber=auto,xrightmargin=1pc,#1}\upshape}{}
+\lstnewenvironment{hacs}[1][]{\lstset{language=HACS,basewidth={.53em,.43em},columns=flexible,numberstyle=\scriptsize\color{blue},numberblanklines=false,firstnumber=auto,xrightmargin=1pc,#1}\upshape}{}
 \newcommand\inputhacs[2][]{\lstinputlisting[language=HACS,basewidth={.53em,.43em},columns=flexible,numberstyle=\scriptsize,numberblanklines=false,xrightmargin=1pc,#1]{#2}}
 \newcommand\hacsc{\lstinline[language=HACS]}
 \newcommand\h{\lstinline[language=HACS]}

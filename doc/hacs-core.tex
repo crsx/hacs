@@ -11,10 +11,10 @@
 %% Topmatter.
 \title{ Higher-order Attribute Contraction Schemes \\ Core Calculus }
 \author{ Kristoffer H. Rose \\
- Two Sigma Investments, LLC \& Courant, New York University
- \and
- Cynthia Kop \\
- Institute of Computer Science, University of Innsbruck \\
+ Two Sigma Investments, LLC \& New York University
+ % \and
+ % Cynthia Kop \\
+ % Institute of Computer Science, University of Innsbruck \\
 }
 
 \begin{document}
@@ -55,7 +55,7 @@ However, the CRSX notation, based on combinatory reduction systems~\cite{Klop:19
 which combines λ calculus~\cite{Church:1941,Barendregt:1984} and term rewriting
 systems~\cite{Klop:1992:Handbook}, has proven to be unwieldy for several reasons, first of all by
 being quite different from standard notations used in compiler construction reference
-works~\cite{Aho+:2006}. Adding a polymorphic type system to CRSX (effectively changing them to
+works~\cite{Aho+:2006}. Adding a polymorphic sort system to CRSX (effectively changing them to
 \emph{contraction systems}~\cite{Aczel:1978} and be similar to Inductive-type-systems
 \cite{BlanquiJouannaudOkada:tcs2002}) helped but did not make the system easy enough to, for
 example, teach compiler programming.
@@ -70,9 +70,7 @@ compiler construction class at New York University~\cite{RoseRose:cims2015}.
 
 In this paper we specify \HAX through a ``core calculus'' as is common for functional languages, and
 give a semantics for this core language.
-
-
-
+\TBD{Plan}%
 and finally Section~\ref{sec:conc} concludes and compares to related work.
 
 
@@ -81,32 +79,10 @@ and finally Section~\ref{sec:conc} concludes and compares to related work.
 \section{\hax Syntax}
 \label{sec:hacs}
 
-In this section we define the \hax source language (without user-specified higher order abstract
-syntax, hence also known as ``raw \HAX'').
+In this section we define the \hax calculus, with a minimal syntax that supports the \HAX source
+language.
 
-\begin{definition}[\hax]
-  The \hax grammar is shown in Figure~\ref{fig:rawhacs}. (We call this the ``raw'' grammar because it
-  does not include the \HAX custom syntax notations.) The top level of a \HAX script is a sequence
-  of declarations $D^*$. In addition, the grammar assumes that we have three categories of tokens
-  defined:
-  %%
-  \begin{itemize}
-
-  \item $s,f,c ∈ \mathbb{C}$ stands for \emph{constructor} tokens, which are capitalized words like
-    "Integer" or "A" or "CamelCaseWord", used for sort names and function and data symbols.
-
-  \item $a,v,α ∈ \mathbb{V}$ stands for \emph{variable} tokens, which are lower case words like "x" or
-    "foo" or even "lowWord", used for variables and attributes.
-
-  \item $m ∈ \mathbb{M}$ stands for \emph{meta-variable} tokens, which are tokens that start with
-    "#" like "#arg" or "#BigFoot" or even just "#1" or merely~"#".
-
-  \end{itemize}
-  %%
-  The ``$A^{*\kw,}$'' notation means zero or more $A$s separated by commas.
-\end{definition}
-
-\begin{figure*}[p]
+\begin{figure*}[t]
   \begin{align}
     \tag{Declaration}
     D &::= \kw{sort}~S \,\kw\{\, C^{*\kw,} \,\kw\}
@@ -124,15 +100,11 @@ syntax, hence also known as ``raw \HAX'').
     \tag{AttributeValueSort}
     \set{AVS} &::= \kw(\,S\,\kw)
     \bigm| \kw\{\,S\,\kw:\,S\,\kw\}
-    \\[\jot]
-%%%    \tag{AttributeInherit}
-%%%    \set{AI} &::= \kw{$↓$}\,a
-%%%    \\
+    \\
     S &::= s\,\kw[\,S^{*\kw,}\,\kw]
     \bigm| α
     \tag{Sort}
     \\[\jot]
-%
     \tag{Term}
     T &::= c\,\kw(\,B^{*\kw,}\,\kw)~A^*
     \bigm| v ~ A^*
@@ -142,8 +114,6 @@ syntax, hence also known as ``raw \HAX'').
     B &::= \kw[\,v^{*\kw,}\,\kw]\,T
     \\
     A &::= a~\set{AV}
-%%%    A &::= \kw{$↑$}\,a~\set{AV}
-%%%    \bigm| \kw{$↓$}\,a~\set{AV}
     \tag{Attribute}
     \\
     \set{AV} &::= \kw(\,T\,\kw)
@@ -152,86 +122,85 @@ syntax, hence also known as ``raw \HAX'').
     \bigm| \kw\{\,\kw{$¬$}\,T\,\kw\}
     \bigm| \kw\{\kw:\,m\,\kw\}
     \tag{AttributeValue}
-%
-%%%    \\[\jot]
-%%%    \tag{Pattern}
-%%%    P &::= c\,\kw(\,\set{PB}^{*\kw,}\,\kw)~\set{PA}^*
-%%%    \bigm| v ~ \set{PA}^*
-%%%    \bigm| m\,\kw[\,v^{*\kw,}\,\kw]~\set{PA}^*
-%%%    \\
-%%%    \tag{PatternBinders}
-%%%    \set{PB} &::= \kw[\,v^{*\kw,}\,\kw]\,P
-%%%    \\
-%%%    \tag{PatternAttribute}
-%%%    \set{PA} &::= \kw{$↑$}\,a~\set{AP}
-%%%    \bigm| \kw{$↓$}\,a~\set{AP}
-%%%    \\
-%%%    \tag{AttributePattern}
-%%%    \set{AP} &::= \kw(\,P\,\kw)
-%%%    \bigm| \kw\{\,P\,\kw:\,P\,\kw\}
-%%%    \bigm| \kw\{\,\kw{$¬$}\,P\,\kw\}
-%%%    \bigm| \kw\{\kw:\,m\,\kw\}
-%%%    \\[\jot]
-%%%    \tag{Term}
-%%%    T &::= c\,\kw(\,B^{*\kw,}\,\kw)~A^*
-%%%    \bigm| v ~ A^*
-%%%    \bigm| m\,\kw[\,T^{*\kw,}\,\kw]~A^*
-%%%    \\
-%%%    \tag{Binders}
-%%%    B &::= \kw[\,v^{*\kw,}\,\kw]\,T
-%%%    \\
-%%%    A &::= \kw{$↑$}\,a~\set{AV}
-%%%    \bigm| \kw{$↓$}\,a~\set{AV}
-%%%    \tag{Attribute}
-%%%    \\
-%%%    \set{AV} &::= \kw(\,T\,\kw)
-%%%    \bigm| \kw\{\,T\,\kw:\,T\,\kw\}
-%%%    \bigm| \kw\{\kw\}
-%%%    \bigm| \kw\{\kw:\,m\,\kw\}
-%%%    \tag{AttributeValue}
   \end{align}
   \caption{\hax grammar.}
-  \label{fig:hacs}
+  \label{fig:plank}
+\end{figure*}
 
-  \small
+\begin{definition}[\hax]
+  %%
+  The \hax grammar is shown in Figure~\ref{fig:plank}. The top level of a \hax script is a sequence
+  of declarations $D^*$, and the grammar assumes that we have three categories of tokens defined:
+  %%
+  \begin{itemize}
 
-  \vspace{1em}
+  \item $s,f,c ∈ \mathbb{C}$ stands for \emph{constructor} tokens, which are capitalized words like
+    "Integer" or "A" or "CamelCaseWord", used for sort names and function and data symbols.
+
+  \item $a,v,α ∈ \mathbb{V}$ stands for \emph{variable} tokens, which are lower case words like "x"
+    or "foo" or even "lowWord", used for term variables, attributes, and sort variables.
+
+  \item $m ∈ \mathbb{M}$ stands for \emph{meta-variable} tokens, which are tokens that start with
+    "#" like "#arg" or "#BigFoot" or even just "#1" or merely~"#".
+
+  \end{itemize}
+  %%
+  The ``$A^{*\kw,}$'' notation means zero or more $A$s separated by commas.
+  %%
+\end{definition}
+
+\begin{figure*}[p]\small
+
   \begin{hacs}[numbers=right,texcl]
-    sort N[] {                                                // natural number sort
-      data Z() ;                                              // zero
-      data S([]N[]) ;                                           // successor
-      scheme Plus([]N[], []N[]) ;                                // $+$ operator
-      rule Plus([]Z(), []#2[]) →  #2[] ;                           // $0+x = x$
+    sort N[] {                                                        // natural number sort
+      data Z() ;                                                      // zero
+      data S([]N[]) ;                                                // successor
+      scheme Plus([]N[], []N[]) ;                                   // $+$ operator
+      rule Plus([]Z(), []#2[]) →  #2[] ;                            // $0+x = x$
       rule Plus([]S([]#1[]), []#2[]) →  S([]Plus([]#1[], []#2[])) ; // $(1+x)+y=1+(x+y)$
     }
   \end{hacs}
+  \vspace*{-1em}
   \caption{Peano numerals in \hax.}
   \label{fig:peano}
 
   \vspace{1em}
   \begin{hacs}[numbers=right,texcl]
-    sort List[α] {
-      data Nil() ;
-      data Cons([]α, []List[α]) ;
-      scheme Append([]List[α], []List[α]) ;
-      rule Append([]Nil(), []#2[]) →  #2[] ;
-      rule Append([]Cons([]#11[], []#12[]), []#2[]) →  Cons([]#11[], Append([]#12[], []#2[])) ;
+    sort Λ[] {                                                       // sort of λ terms
+      variable ;                                                     // permit variables
+      scheme Ap([]Λ[], []Λ[]) ;                                     // application
+      data Lm([Λ[]]Λ[]) ;                                          // abstraction
+      rule Ap([]Lm([x]#body[x]), []#arg[]) → #body[#arg[]] ;  // β-reduction
     }
   \end{hacs}
+  \vspace*{-1em}
+  \caption{Untyped λ calculus in \hax.}
+  \label{fig:lambda}
+
+  \vspace{1em}
+  \begin{hacs}[numbers=right,texcl]
+    sort List[α] { data Nil(); data Cons([]α, []List[α]);
+      scheme Appnd([]List[α], []List[α]);
+      rule Appnd([]Nil(), []#2[]) →  #2[];
+      rule Appnd([]Cons([]#11[], []#12[]), []#2[]) →  Cons([]#11[], Appnd([]#12[], []#2[]));
+      scheme Map([β]α, []List[β]);
+      rule Map([x]#[x], []Nil()) →  Nil();
+      rule Map([x]#[x], []Cons([]#1[], []#2[])) →  Cons([]#[#1[]], Map([x]#[x], []#2[]));
+    }
+  \end{hacs}
+  \vspace*{-1em}
   \caption{Polymorphic lists in \hax.}
   \label{fig:list}
 
   \vspace{1em}
   \begin{hacs}[numbers=right,texcl]
-    sort Λ[] {                                                      // sort of λ terms
-      variable ;                                                    // permit variables
-      scheme Ap(Λ[], Λ[]) ;                                        // application
-      data Lm([Λ[]]Λ[]) ;                                          // abstraction
-      rule Ap(Lm([x]#body[x]), #arg[]) → #body[#arg[]] ;       // β-reduction
+    sort {
     }
   \end{hacs}
-  \caption{Untyped λ calculus in \hax.}
-  \label{fig:lambda}
+  \vspace*{-1em}
+  \caption{Attributes…}
+  \label{fig:attrib}
+
 \end{figure*}
 
 \begin{example}[Peano]\label{ex:peano}
@@ -243,21 +212,31 @@ syntax, hence also known as ``raw \HAX'').
   %%
   \begin{itemize}
 
-  \item All cases and rules are implicitly associated with the most recent \kw{sort}
-    declaration.
+  \item All cases and rules are implicitly associated with the wrapper \kw{sort} declaration.
 
-  \item You can only define rules for function symbols declared with \kw{scheme}.
+  \item You can only define rules for function symbols declared with \kw{scheme}, \ie, the "Plus"
+    symbol here.
 
   \end{itemize}
   %%
   A sample rewriting using this system, corresponding to the computation $1+1=2$, is
   %%
   \begin{displaymath}
-    "Plus(S(Z()), S(Z()))" →
-    "S(Plus(Z(), S(Z())))" →
-    "S(S(Z()))"
+    "Plus([]S([]Z()), []S([]Z()))" →
+    "S([]Plus([]Z(), []S([]Z())))" →
+    "S([]S([]Z()))"
   \end{displaymath}
 \end{example}
+
+\begin{remark}
+  One difference between the CRSX family of other higher order rewriting formalisms, including \hax,
+  is that the binder mechanism is part of the parent construction, \eg, the sort of the "S"
+  constructor defines that instances must have the shape "S([]…)" with "…" being itself a Peano
+  number.  Binding and substitution are in the style of CRS
+  systems~\cite{Klop+:tcs1993}.\footnote{The notation does differ from the original CRS notation in
+    that we use ``\#'' as a marker for meta-variables instead of the original reserved use of $Z$, and
+    we use square brackets for substitution variables instead of round.}
+\end{remark}
 
 \begin{example}[untyped λ calculus]\label{ex:lambda}
   The untyped λ calculus is shown in Figure~\ref{fig:lambda} in \hax.  The declarations can be
@@ -265,7 +244,7 @@ syntax, hence also known as ``raw \HAX'').
   %%
   \begin{itemize}
 
-  \item The defined sort is "Λ", written "Λ[]" as it has no sort parameters.
+  \item The defined sort is "Λ", written "Λ[]", as it has no sort parameters.
 
   \item The "Λ" sort includes a special "variable" case to indicate that variables can occur in
     terms.
@@ -291,30 +270,44 @@ syntax, hence also known as ``raw \HAX'').
 
   \end{itemize}
   %%
-  A usual λ term like $(λx.x x)(λy.y)$ is represented as "Ap(Lm([x]Ap(x, x)), Lm([y]y))", and
-  simplifies like this:
+  A usual λ term like $(λx.x x)(λy.y)$ is represented as
+  \begin{displaymath}
+    "Ap([]Lm([x]Ap([]x, []x)), []Lm([y]y))"    
+  \end{displaymath}
+  and simplifies like this:
   %%
   \begin{displaymath}
-    "Ap(Lm([x]Ap(x, x)), Lm([y]y))" →
-    "Ap(Lm([y]y), Lm([y]y))" →
+    "Ap([]Lm([x]Ap([]x, []x)), []Lm([y]y))" →
+    "Ap([]Lm([y]y), []Lm([y]y))" →
     "Lm([y]y))"
   \end{displaymath}
   %%
 \end{example}
 
-Let us define some really simple attribute cases.
+\begin{example}[lists]\label{ex:list}
+  Figure~\ref{fig:list} shows a standard definition of polymorphic lists over an arbitrary element
+  sort.
+  %%
+  \begin{itemize}
 
-\begin{hacs}[numbers=right,texcl]
-sort 
-\end{hacs}
+  \item The target sort is "List[α]" which is a usual polymorphic way to express a list of members
+    of an unspecified parameter sort~"α".
 
+  \item Inside the scope of the "sort" declaration, "α" denotes the member sort of the result list
+    of all constructs. So the declaration of "data Cons([]α, []List[α])" means that the "Cons"
+    constructor takes one argument of the same sort as the member of the result list, as well as an
+    argument of the same sort as the result, "List[α]".
 
+  \end{itemize}
+  %%
+\end{example}
 
+\begin{example}[synthesis]\label{ex:attrib}
+  Figure~\ref{fig:attrib} shows attributes…
+\end{example}
 
-As the example shows, binding and substitution are in the style of CRS
-systems~\cite{Klop+:tcs1993}.\footnote{The notation does differ from the original CRS notation in
-  that we use ``\#'' as a marker for meta-variables instead of the original reserved use of $Z$, and
-  we use square brackets for substitution variables instead of round.}
+In order to present more realistic examples, we first need to define some syntactic sugar to make
+the notation less unwieldy.
 
 \begin{notation}
   We will use \emph{vector notation} with $\ov{X}$ denoting $X_1,…,X_n$ for some $n≥0$; $ε$ denotes
@@ -322,9 +315,6 @@ systems~\cite{Klop+:tcs1993}.\footnote{The notation does differ from the origina
   elements, and will freely abuse this notation and in particular write $\ov{[\ov{x}]x}$ as an
   abbreviation of $[x_{11}…x_{1m_1}]x_1…[x_{n1}…x_{nm_n}]x_n$ for suitable $n,m_1,…,m_n ≥ 0$.
 \end{notation}
-
-In order to present examples with attributes, we first need to define some syntactic sugar to make
-the notation less unwieldy.
 
 \begin{notation}
   %% 
@@ -334,9 +324,10 @@ the notation less unwieldy.
 
   \item Empty parenthesis and brackets can be omitted.
 
-  \item We can omit the \kw; just before the \kw{\texttt{|}} of sort cases.
-
   \item The \kw{data} and \kw{rule} keywords can be omitted.
+
+  \item \TBD{Update to simplified syntax.} Sort cases ca be written with \kw{\texttt{|}} and without
+    \kw{\texttt{\{\}}}…
 
   \item "attribute" declarations can be combined: $"attribute"~a_1~\set{AF}_1,…, a_n~\set{AF}_n ;$
     is an abbreviation of $"attribute"~a_1~\set{AF}_1;…; "attribute"~a_n~\set{AF}_n;$.
