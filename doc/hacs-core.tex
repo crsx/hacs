@@ -28,7 +28,7 @@
   special data structures used by compilers, notably custom syntax with regular expressions, symbol
   tables (\aka environments), attribute grammars, and recursive translation schemes.
   %%
-  This paper presents a the \emph{core} calculus of \HAX, called \hax, is the plank on which \HAX is
+  This paper presents a \emph{core} calculus of \HAX, called \hax, a plank on which \HAX can be
   based, which encodes the low-level operational properties of \HAX into a small formal system.
 \end{abstract}
 
@@ -86,10 +86,9 @@ language.
   \begin{align}
     \tag{Declaration}
     D &::= \kw{sort}~S \,\kw\{\, C^{*\kw,} \,\kw\}
-    \bigm| \kw{attribute}~a~\set{AVS}\,\kw;
-    \\
-    \tag{Case}
-    C &::= \kw{data}~c\,\kw(\,\set{BS}^{*\kw,}\,\kw)~a^*\,\kw;
+    \bigm| \kw{attribute}~a~\set{AS}\,\kw;
+    \\[-1pt]\notag~&
+    \bigm| \kw{data}~c\,\kw(\,\set{BS}^{*\kw,}\,\kw)~a^*\,\kw;
     \bigm| \kw{scheme}~f\,\kw(\,\set{BS}^{*\kw,}\,\kw)~a^*\,\kw;
     \bigm| \kw{variable}~a^*\,\kw;
     \bigm| \kw{rule}~T~\kw{$→$}~T\,\kw;
@@ -97,8 +96,8 @@ language.
     \tag{BindersSort}
     \set{BS} &::= \kw[\,S^{*\kw,}\,\kw]\,S
     \\
-    \tag{AttributeValueSort}
-    \set{AVS} &::= \kw(\,S\,\kw)
+    \tag{AttributeSort}
+    \set{AS} &::= \kw(\,S\,\kw)
     \bigm| \kw\{\,S\,\kw:\,S\,\kw\}
     \\
     S &::= s\,\kw[\,S^{*\kw,}\,\kw]
@@ -113,7 +112,7 @@ language.
     \tag{Binders}
     B &::= \kw[\,v^{*\kw,}\,\kw]\,T
     \\
-    A &::= a~\set{AV}
+    A &::= a~\set{V}
     \tag{Attribute}
     \\
     \set{AV} &::= \kw(\,T\,\kw)
@@ -123,7 +122,7 @@ language.
     \bigm| \kw\{\kw:\,m\,\kw\}
     \tag{AttributeValue}
   \end{align}
-  \caption{\hax grammar.}
+  \caption{\hax syntax.}
   \label{fig:plank}
 \end{figure*}
 
@@ -135,10 +134,11 @@ language.
   \begin{itemize}
 
   \item $s,f,c ∈ \mathbb{C}$ stands for \emph{constructor} tokens, which are capitalized words like
-    "Integer" or "A" or "CamelCaseWord", used for sort names and function and data symbols.
+    "Integer" or "A" or "CamelCaseWord", used for sort, function symbol, and data symbol names
+    (respectively).
 
-  \item $a,v,α ∈ \mathbb{V}$ stands for \emph{variable} tokens, which are lower case words like "x"
-    or "foo" or even "lowWord", used for term variables, attributes, and sort variables.
+  \item $v,a,α ∈ \mathbb{V}$ stands for \emph{variable} tokens, which are lower case words like "x"
+    or "foo" or even "lowWord", used for term variables, attributes, and sort variables (respectively).
 
   \item $m ∈ \mathbb{M}$ stands for \emph{meta-variable} tokens, which are tokens that start with
     "#" like "#arg" or "#BigFoot" or even just "#1" or merely~"#".
@@ -212,14 +212,21 @@ language.
   %%
   \begin{itemize}
 
-  \item All cases and rules are implicitly associated with the wrapper \kw{sort} declaration.
+  \item The defined sort is "N", written "N[]", as it has no sort parameters. All the other
+    declarations define artifacts of the "N" sort, so are inside the \kw{sort} declaration's
+    \kw{\{\}}s.
 
-  \item You can only define rules for function symbols declared with \kw{scheme}, \ie, the "Plus"
-    symbol here.
+  \item There are two \kw{data} constructors: "Z" with no parameters, and "S" with a single numeric
+    argument. The single numeric argument is specified as "[]N[]" because it has no locally scoped
+    binders ("[]"$_-$) and the "N" sort has no sort parameters ($_-$"[]").
+
+  \item There is a single function (\kw{scheme}) constructor: "Plus" with two numeric arguments.
+
+  \item There are two \kw{rule}s for the function symbol, implementing the usual Peano addition rules.
 
   \end{itemize}
   %%
-  A sample rewriting using this system, corresponding to the computation $1+1=2$, is
+  A sample rewrite sequence using this system, corresponding to the computation $1+1=2$, is
   %%
   \begin{displaymath}
     "Plus([]S([]Z()), []S([]Z()))" →
@@ -229,13 +236,13 @@ language.
 \end{example}
 
 \begin{remark}
-  One difference between the CRSX family of other higher order rewriting formalisms, including \hax,
-  is that the binder mechanism is part of the parent construction, \eg, the sort of the "S"
-  constructor defines that instances must have the shape "S([]…)" with "…" being itself a Peano
-  number.  Binding and substitution are in the style of CRS
+  One difference between the CRSX family, including \hax, and other higher order rewriting
+  formalisms, is that the binder mechanism is part of the parent construction, \eg, the sort of the
+  "S" constructor defines that instances must have the shape "S([]…)" with "…" being itself a Peano
+  number.  Otherwise, binding and substitution are in the style of CRS higher order rewrite
   systems~\cite{Klop+:tcs1993}.\footnote{The notation does differ from the original CRS notation in
-    that we use ``\#'' as a marker for meta-variables instead of the original reserved use of $Z$, and
-    we use square brackets for substitution variables instead of round.}
+    that we use ``\#'' as a marker for meta-variables instead of the original reserved use of $Z$,
+    and we use square brackets for substitution variables instead of round.}
 \end{remark}
 
 \begin{example}[untyped λ calculus]\label{ex:lambda}
@@ -243,8 +250,6 @@ language.
   explained as follows:
   %%
   \begin{itemize}
-
-  \item The defined sort is "Λ", written "Λ[]", as it has no sort parameters.
 
   \item The "Λ" sort includes a special "variable" case to indicate that variables can occur in
     terms.
@@ -378,6 +383,29 @@ the notation less unwieldy.
 \section{\HAX Typing}
 \label{sec:typing}
 
+
+\begin{definition}
+  %%
+  Given a sequence of declarations $\ov{D}$ and an attribute name~$a$, we define the following
+  notions:
+  %%
+  \begin{enumerate}
+
+  \item $\op{carriers}(\ov{D}, a)$ is the set of all constructors $c$ for which there is a
+    declaration in $\ov{D}$ of the form ``$\kw{data}~c~…~a~…\kw;$'' or
+    ``$\kw{scheme}~c~…~a~…\kw;$.''
+
+  \item $\op{form}(\ov{D}, a)$ is the \set{AS} of the (single!) declaration
+    ``$\kw{attribute}~a~\set{AS}\kw;$.''
+
+  \end{enumerate}
+  %%
+  
+  %%
+\end{definition}
+
+
+
 \begin{definition}[sort environment]
   Figure~\ref{fig:sortenv} gives the rules for construction of the sort environment, which has the
   following structure:
@@ -396,14 +424,27 @@ the notation less unwieldy.
   the map obtained from $Γ$ by adding (or changing) the binding of $x$ to map to~$X$.
 \end{definition}
 
+
+
+
+
+
 \begin{figure*}[p]
   \begin{gather*}
-    \intertext{\shoveright{\hfil\fbox{$ Γ, c[\ov{v}] ⊢ \ov{D} $}}}\\
+    \intertext{\shoveright{\hfil\fbox{$ Γ,S ⊢ \ov{D} ⇒ Γ $}}}\\
     %
-    \tag{Sort}
+    \tag{Sort1}
     \dfrac
-    { Γ, s'[\ov{w}] ⊢ \ov{D} }
-    { Γ, s[\ov{v}] ⊢ \kw{sort}~s'[\ov{w}] ; \ov{D} }
+    { Γ, S' ⊢ \ov{D'} ⇒ Γ' \qquad Γ', S ⊢ \ov{D} ⇒ Γ'' }
+    { Γ, S ⊢ \kw{sort}~S' ~\kw\{\, \ov{D'} \,\kw\}\,\kw; ~ \ov{D} ⇒ Γ'' }
+    \\[1ex]
+    \tag{Attribute1}
+    \qquad
+    \dfrac
+    { Γ, s[\ov{v}] ⊢ \ov{D} ⇒ Γ }
+    { Γ, s[\ov{v}] ⊢ \kw{attribute}~a~\set{AS}; \, \ov{D} ⇒ Γ[a ↦ ⟨\set{AS}, \ov{s}⟩] }
+    \quad Γ(a)=⟨ε,\ov{s}⟩
+%
     \\[1ex]
     % 
     \tag{Data}
@@ -426,13 +467,6 @@ the notation less unwieldy.
         \op{atts}(α) = {↓}a_1…{↓}a_n
     }
 %      ⇒ Γ[f ↦ ⟨∀\ov{v}\ov{v}.s, .s[\ov{v}], ∀\ov{v}.\ov{\set{BS}}, \op{fun}(\ov{a})⟩] }
-    \\[1ex]
-    \qquad
-    \dfrac
-    { Γ, s[\ov{v}] ⊢ \ov{D} ⇒ Γ }
-    { Γ, s[\ov{v}] ⊢ \kw{attribute}~a~\set{AF}; \, \ov{D} ⇒ Γ[a ↦ ⟨\set{AF}, \ov{s}⟩] }
-    \quad Γ(a)=⟨ε,\ov{s}⟩
-    \tag{Attribute1}
     \\[1ex]
     \qquad
     \dfrac
@@ -628,17 +662,17 @@ and our continuing collaboration.
 
   \item Finally, we rewrite special \emph{synthesis rules}:
     \begin{displaymath}
-      c(\,\ov{\set{PB}}\,)~→~\ov{↑a~\set{AV}}\,\kw;
+      c(\,\ov{\set{PB}}\,)~→~\ov{↑a~\set{V}}\,\kw;
       \quad⇒\quad
-      \kw{rule}~c(\,\ov{\set{PB}}\,)~→~c(\,\ov{\set{PB}'}\,)~\ov{↑a~\set{AV}}\,\kw;
+      \kw{rule}~c(\,\ov{\set{PB}}\,)~→~c(\,\ov{\set{PB}'}\,)~\ov{↑a~\set{V}}\,\kw;
     \end{displaymath}
     where $\set{PB}_i'$ is $\set{PB}_i$ with negative attribute patterns $\{¬{…}\}$ removed.
 
   \item We rewrite special \emph{inheritance rules}:
     \begin{displaymath}
-      c(\,\ov{\set{PB}}\,)~→~\ov{↓v~\set{AV}}\,\kw;
+      c(\,\ov{\set{PB}}\,)~→~\ov{↓v~\set{V}}\,\kw;
       \quad⇒\quad
-      \kw{rule}~c(\,\ov{\set{PB'}}\,)~\ov{↓v~\set{AV}}~→~c(\,\ov{\set{PB}'}\,)\,\kw;
+      \kw{rule}~c(\,\ov{\set{PB'}}\,)~\ov{↓v~\set{V}}~→~c(\,\ov{\set{PB}'}\,)\,\kw;
     \end{displaymath}
     where 
 

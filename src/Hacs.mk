@@ -32,7 +32,7 @@ RUNJAVACC = $(JAVA) -cp "$(JAVACCJAR)" javacc
 
 # CRSX tool commands.
 RUNPG = $(JAVA) -ea -cp "$(BUILD):$(HACSJAR):$(CRSXJAR)" net.sf.crsx.pg.PG verbose=1 $(EXTRA)
-RUNCRSX = $(JAVA) -ea -cp "$(BUILD):$(HACSJAR):$(CRSXJAR)" -Dfile.encoding=UTF-8 -Xss20000K -Xmx2000m net.sf.crsx.run.Crsx allow-unnamed-rules allow-missing-cases sortify verbose=1 $(EXTRA)
+RUNCRSX = $(JAVA) -ea -cp "$(BUILD):$(HACSJAR):$(CRSXJAR)" -Dfile.encoding=UTF-8 -Xss80000K -Xmx4000m net.sf.crsx.run.Crsx allow-unnamed-rules allow-missing-cases sortify verbose=1 $(EXTRA)
 
 # Magic...
 X = $(if $(findstring -n,$(MAKE)),$(ECHO))

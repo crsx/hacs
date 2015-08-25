@@ -6,3 +6,8 @@ auto/
 *.log
 *.toc
 *.out
+*.nav
+*.pdf
+*.snm
+*.tex
+*.vrb

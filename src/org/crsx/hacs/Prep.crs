@@ -991,7 +991,8 @@ P-ProduceBody0[$String<!--ModuleName-->, $String<!--HostSort-->, $String<!--tagp
 {#DM}U-IfSymbolForm[#Form, #ModuleName,
   t . {#DM} P-ProduceBody0[#ModuleName, #SortName, StringJoin[(#tagprefix; "_"; #SortName; "_";), ""], #Rest, $[Plus,#n,1], #words, #terms, #scopes, #consumer,
     in after . #[%n⟪⟦( <†« t »>:#_†«$[FormatNumber,#n]»
-{{<!--USE--> /***EMBEDPG: †« P-hx[#ModuleName, "VariableUseSorted"] »["†« U-Local[#SortName] »", †« P-hx[#ModuleName, "RepeatSingle"] », ***/ #_†«$[FormatNumber,#n]» /***EMBEDPG: , ()]***/ }} ⟦« in »⟧ ) ⟧⟫, after]],
+{{<!--USE--> /***EMBEDPG: †« P-hx[#ModuleName, "VariableUseSorted"] »["†« U-Local[#SortName] »", †« P-hx[#ModuleName, "RepeatSingle"] », ***/ #_†«$[FormatNumber,#n]» /***EMBEDPG: , ()]***/ }}
+« If[Empty[#Rest], %n⟨⟩, %n⟨| ⟩] » ⟦« in »⟧ ) ⟧⟫, after]],
   {#DM} P-ProduceBody2[#ModuleName, #SortName, #tagprefix, #Form, #Kind, #Rest, #n, #words, #terms, #scopes, #consumer, in after . #[in,after]]
 ];
 

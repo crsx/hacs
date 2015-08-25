@@ -247,6 +247,9 @@ Fold[x z.#[x,z], (#x;#xs), #z] → #[#x, Fold[x z.#[x,z], #xs, #z]] ;
 FoldWhen[ok x z.#[ok,x,z], (), #z] → #z ;
 FoldWhen[ok x z.#[ok,x,z], (#x;#xs), #z] → #[OK, #x, FoldWhen[ok x z.#[ok,x,z], #xs, #z]] ;
 
+∀ a b . ThenFoldWhen[Ok, ok::Ok x::a z::b.$sort[b], $List[a], b] :: b ;
+ThenFoldWhen[OK, ok x z.#[ok,x,z], #s, #z] → FoldWhen[ok x z.#[ok,x,z], #s, #z] ;
+
 ∀ a b c . Fold2[x::a y::b z::c.$sort[c], $List[a], $List[b], c] ::  c ;
 Fold2[x y z.#[x,y,z], (), #_, #z] → #z ;
 Fold2[x y z.#[x,y,z], #_, (), #z] → #z ;
@@ -455,13 +458,11 @@ MapNames[x.#[x], #NameSet] → Map[x.#[x], NameSetList[#NameSet]] ;
 MapNamesWhen[ok x.#[ok,x], #NameSet] → MapWhen[ok x.#[ok,x], NameSetList[#NameSet]] ;
 
 FilterNamesWhen[ok::Ok n::$String.Boolean, NameSet] :: NameSet ;
-FilterNamesWhen[ok n.#[ok,n], #NameSet] → NAME_SET[FoldWhen[ok n ns.If[#[ok,n], StringConcat3When[ok, ns, n, ";"], ns], NameSetList[#NameSet], ";"]] ;
+FilterNamesWhen[ok n.#[ok,n], #NameSet] → NAME_SET[FoldWhen[ok n ns.IfThen[#[ok,n], ok.StringConcat3When[ok, ns, n, ";"], ok.ns], NameSetList[#NameSet], ";"]] ;
 
 NamesFrom[$List[$String]] :: NameSet ;
 NamesFrom[()] → NoNames ;
 NamesFrom[(#1; #s)] → AddName[NamesFrom[#s], #1] ;
-
-
 
 TraceAddName[$String, NameSet<!--old-->, $String<!--new Name-->] :: NameSet<!--combined-->;
 -[Data[#mess,#,#Name]]:

@@ -69,6 +69,7 @@ Cook4[#ModuleName, #OriginalDeclarations, U-MakeDM-ExtraInformation[#ModuleName,
 
 // Cook4: Assemble file.
 Cook4[$String<!--ModuleName-->, $List[HxDeclaration], DeclarationMap]  :: Text ;
+-[Data[#ModuleName,#OriginalDeclarations, #DM]]:
 Cook4[#ModuleName, #OriginalDeclarations, #DM]
 →
 %n⟪// CRSX RULES FOR †«#ModuleName».
@@ -864,8 +865,14 @@ C-CrsxifyEntry[DME_TOKEN[#Name], #Sort, #DM] → %n⟪⟫ ;
 C-CrsxifyEntry[DME_ATTRIBUTE[#AttributeKind, #AttributeName, #AttributeForm, #HxAttributeOptions], #Sort, #DM] → %n⟪⟫ ;
 C-CrsxifyEntry[DME_SORT[#Defines, #FullSortName, #Precs, #Wrapper, #IsMainSort], #Sort, #DM] → TextJoin[Map[d.C-CrsxifyDefine[d, #Sort, %n⟨⟩, #DM], #Defines], %n⟨
 ⟩] ;
-C-CrsxifyEntry[DME_ALIAS[#Sort2], #Sort, #DM] → %n⟪⟫ ;
 C-CrsxifyEntry[DME_NONE, #Sort, #DM] → %n⟪⟫ ;
+C-CrsxifyEntry[DME_ALIAS[#HxSort], #Sort, #DM] → %n⟪⟫ ;
+C-CrsxifyEntry[DME_STRING[#String], #Sort, #DM] → %n⟪⟫ ;
+C-CrsxifyEntry[DME_NAMES[#NameSet], #Sort, #DM] → %n⟪⟫ ;
+C-CrsxifyEntry[DME_N2N[#NameMap], #Sort, #DM] → %n⟪⟫ ;
+C-CrsxifyEntry[DME_N2NM[#Name2NamesMap], #Sort, #DM] → %n⟪⟫ ;
+C-CrsxifyEntry[DME_AFM[#AttributeFormMap], #Sort, #DM] → %n⟪⟫ ;
+C-CrsxifyEntry[DME_N2SS[#Name2ScopeSorts], #Sort, #DM] → %n⟪⟫ ;
 
 // Convert one Define.
 
@@ -892,7 +899,8 @@ C-CrsxifyRule[#HxRulePrefix#, #HxTopPattern#, #HxTopTerm#, #SortName, #DM]
 
 C-CrsxifyDefine[D_NONE, #Sort, #SortPrefix, #DM]
 →
-%n⟪⟫;
+%n⟪⟫
+;
 
 // Convert one Rule.
 
@@ -923,8 +931,7 @@ C-CrsxifyRule1[#RulePrefix, #TopPattern, #TopTerm, #Sort, {#DM}DM, {#DM}C-Extend
   C-CrsxifyTerm[#TopTerm, #TopInherited, {#DM}DM, #SM2]
 »⟧
 ;
-⟫
-;
+⟫;
     C-ExtendWithTopInheritedMeta[SortMap, HxTerm] :: SortMap ;
     C-ExtendWithTopInheritedMeta[#SM, %rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫] → C-ExtendWithTopInheritedMeta1[#SM, #HxAttributes#] ;
     C-ExtendWithTopInheritedMeta[#SM, %rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫] → C-ExtendWithTopInheritedMeta1[#SM, #HxAttributes#] ;
@@ -964,9 +971,11 @@ C-CrsxifyRule1[#RulePrefix, #TopPattern, #TopTerm, #Sort, {#DM}DM, {#DM}C-Extend
 C-CrsxifyRulePrefix[HxRulePrefix, $String<!--Sort-->, DeclarationMap, SortMap<!--OnlyPattern-->, SortMap<!--Rule-->, HxTerm<!--Pattern-->, HxTerm<!--Contractum-->] :: Text ;
 C-CrsxifyRulePrefix[{#L}%rawHxRulePrefix⟪ #HxRulePriority# [ #HxRuleOptions# ] ⟫, #Sort, #DM, #SM1, #SM2, #Pattern, #Contractum]
 →
+$[Trace, "RULEPREFIX",
 %n⟪¶« {#L}C-CrsxifyRuleName[#HxRulePriority#, #HxRuleOptions#] »«
   WrappedTextJoin[Append[C-CrsxifyRulePriority[#HxRulePriority#, #SM1], C-CrsxifyRuleOptions[#HxRuleOptions#, #DM, #SM1, #SM2, (), (), #Pattern, #Contractum, ss¹.ss¹]], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]
 »:⟫
+]
 ;
 
 {$String : $StringEntrySort} C-CrsxifyRuleName[HxRulePriority, $List[HxRuleOption]] :: Text ;
@@ -1152,7 +1161,9 @@ C-CrsxifyToken1[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( #Hx
 C-CrsxifyTerm[HxTerm, NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
 C-CrsxifyTerm[#Term, #TopInherited, #DM, #SM]
 →
+$[Trace, $[:,"TERM=",$[Show,#Term]],
 $[If, $[Literal, #Term], %n⟪†« $[Escape,$[Symbol,#Term]] »⟫, C-CrsxifyTerm1[#Term, #TopInherited, #DM, #SM]]
+]
 ;
 
 C-CrsxifyTerm1[HxTerm, NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
@@ -1379,16 +1390,27 @@ C-Print-Sort[#ModuleName, #Sort]
 ⟫;
 
 C-Print-Declarations[$List[HxDeclaration], $String<!--ModuleName-->, $String<!--LastSort-->, DeclarationMap] :: Text ;
-C-Print-Declarations[%rawHxDeclarations⟪ module #HxModuleName2# { #HxDeclarations2# } ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM] → %n⟪« C-Print-Declarations[#HxDeclarations2#, #ModuleName, "", #DM] »« C-Print-Declarations[#HxDeclarations#, #ModuleName, #LastSort, #DM] »⟫ ;
-C-Print-Declarations[%rawHxDeclarations⟪ space #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM] → C-Print-Declarations[#HxDeclarations#, #ModuleName, #LastSort, #DM] ;
-C-Print-Declarations[%rawHxDeclarations⟪ token #HxTokenName# | #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM] → %n⟪« C-Print-Token[#ModuleName, #HxTokenName#, #DM] »« C-Print-Declarations[#HxDeclarations#, #ModuleName, "", #DM] »⟫ ;
-C-Print-Declarations[%rawHxDeclarations⟪ fragment #HxTokenName# | #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM] → C-Print-Declarations[#HxDeclarations#, #ModuleName, #LastSort, #DM] ;
-C-Print-Declarations[%rawHxDeclarations⟪ attribute #HxAttributeKind# #HxAttributeName# #HxAttributeForm# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM] → C-Print-Declarations[#HxDeclarations#, #ModuleName, #LastSort, #DM] ;
-C-Print-Declarations[%rawHxDeclarations⟪ #HxMainKind# sort #HxSortName# #HxRepeat# #HxSortAbstraction# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM] → %n⟪« C-Print-Abstraction[#HxSortAbstraction#, #ModuleName, #HxSortName#, #DM] »« C-Print-Declarations[#HxDeclarations#, #ModuleName, #HxSortName#, #DM] »⟫ ;
-C-Print-Declarations[%rawHxDeclarations⟪ #HxSortAlternatives# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM] → %n⟪« C-Print-Alternatives[#HxSortAlternatives#, #ModuleName, #LastSort, #DM] »« C-Print-Declarations[#HxDeclarations#, #ModuleName, #LastSort, #DM] »⟫ ;
-C-Print-Declarations[%rawHxDeclarations⟪ rule #HxRule# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM] → C-Print-Declarations[#HxDeclarations#, #ModuleName, #LastSort, #DM] ;
-C-Print-Declarations[%rawHxDeclarations⟪ { #HxDeclarations1# } #HxDeclarations2# ⟫, #ModuleName, #LastSort, #DM] → %n⟪« C-Print-Declarations[#HxDeclarations1#, #ModuleName, #LastSort, #DM] »« C-Print-Declarations[#HxDeclarations2#, #ModuleName, #LastSort, #DM] »⟫ ;
-C-Print-Declarations[%rawHxDeclarations⟪ ⟫, #ModuleName, #LastSort, #DM] → %n⟪⟫ ;
+
+C-Print-Declarations[%rawHxDeclarations⟪ module #HxModuleName2# { #HxDeclarations2# } ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM]
+→ %n⟪« C-Print-Declarations[#HxDeclarations2#, #ModuleName, "", #DM] »« C-Print-Declarations[#HxDeclarations#, #ModuleName, #LastSort, #DM] »⟫ ;
+C-Print-Declarations[%rawHxDeclarations⟪ space #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM]
+→ C-Print-Declarations[#HxDeclarations#, #ModuleName, #LastSort, #DM] ;
+C-Print-Declarations[%rawHxDeclarations⟪ token #HxTokenName# | #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM]
+→ %n⟪« C-Print-Token[#ModuleName, #HxTokenName#, #DM] »« C-Print-Declarations[#HxDeclarations#, #ModuleName, "", #DM] »⟫ ;
+C-Print-Declarations[%rawHxDeclarations⟪ fragment #HxTokenName# | #HxRegExp# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM]
+→ C-Print-Declarations[#HxDeclarations#, #ModuleName, #LastSort, #DM] ;
+C-Print-Declarations[%rawHxDeclarations⟪ attribute #HxAttributeKind# #HxAttributeName# #HxAttributeForm# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM]
+→ C-Print-Declarations[#HxDeclarations#, #ModuleName, #LastSort, #DM] ;
+C-Print-Declarations[%rawHxDeclarations⟪ #HxMainKind# sort #HxSortName# #HxRepeat# #HxSortAbstraction# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM]
+→ %n⟪« C-Print-Abstraction[#HxSortAbstraction#, #ModuleName, #HxSortName#, #DM] »« C-Print-Declarations[#HxDeclarations#, #ModuleName, #HxSortName#, #DM] »⟫ ;
+C-Print-Declarations[%rawHxDeclarations⟪ #HxSortAlternatives# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM]
+→ %n⟪« C-Print-Alternatives[#HxSortAlternatives#, #ModuleName, #LastSort, #DM] »« C-Print-Declarations[#HxDeclarations#, #ModuleName, #LastSort, #DM] »⟫ ;
+C-Print-Declarations[%rawHxDeclarations⟪ rule #HxRule# ; #HxDeclarations# ⟫, #ModuleName, #LastSort, #DM]
+→ C-Print-Declarations[#HxDeclarations#, #ModuleName, #LastSort, #DM] ;
+C-Print-Declarations[%rawHxDeclarations⟪ { #HxDeclarations1# } #HxDeclarations2# ⟫, #ModuleName, #LastSort, #DM]
+→ %n⟪« C-Print-Declarations[#HxDeclarations1#, #ModuleName, #LastSort, #DM] »« C-Print-Declarations[#HxDeclarations2#, #ModuleName, #LastSort, #DM] »⟫ ;
+C-Print-Declarations[%rawHxDeclarations⟪ ⟫, #ModuleName, #LastSort, #DM]
+→ %n⟪⟫ ;
 // TODO: Respect repeat.
 
 // Print a token.
@@ -1477,13 +1499,11 @@ C-Print-Form[%rawHxForm⟪ #HxConstructor# ( #HxBindersScopeSorts# ) #HxInherite
 C-Print-Form[%rawHxForm⟪ #HxParsedForm# #HxFormPrec# #HxInheritedRefs# ⟫, #ModuleName, #Sort, {#DM}DM]
 →
 {#DM}U-IfSymbolForm[#HxParsedForm#, #ModuleName,
-
   t.%n⟪¶
 <!--SYMBOL REFERENCE FORM-->
 -[Data[#prec],Free[x::'†« U-QN[#ModuleName, #Sort, U-ParsedFormTag[#HxParsedForm#]] »']] :
 '$Print2-†‹U-LastName[#ModuleName]›$†«#Sort»' [ x, #prec] → « C-Text-open »« C-Text-unopen »x« C-Text-unclose »« C-Text-close » ;
 ⟫,
-
   %n⟪¶
 <!--NOT SYMBOL REFERENCE FORM-->
 -[Data[#prec]« WrappedTextJoin[Map[v.%n⟨‹v›::Text⟩,$[FreeVariables,#HxParsedForm#]], %n⟨,Fresh[⟩, %n⟨,⟩, %n⟨]⟩] »] :
@@ -1492,21 +1512,9 @@ C-Print-Form[%rawHxForm⟪ #HxParsedForm# #HxFormPrec# #HxInheritedRefs# ⟫, #M
 $[If, $[GreaterThan, #prec, †«NumericToString[StringToNumericDefault[#HxFormPrec#,0]]»],⟦
 « C-Text-open »(« C-ParsedForm-Text[#HxParsedForm#, #ModuleName, ok s p i t .%n⟨‹ C-PrintWrap[{#DM}DM, #ModuleName, s, t, p] ›⟩, ok s p i .%n⟨‹ C-HashWhen[ok, i] ›⟩] »)« C-Text-close »,
 « C-Text-open »« C-ParsedForm-Text[#HxParsedForm#, #ModuleName, ok s p i t .%n⟨‹ C-PrintWrap[{#DM}DM, #ModuleName, s, t, p] ›⟩, ok s p i .%n⟨‹ C-HashWhen[ok, i] ›⟩] »« C-Text-close »⟧
-]
+];
+⟫]
 ;
-⟫];
-
-// %n⟪¶
-// -[Data[#prec]« WrappedTextJoin[Map[v.%n⟨‹v›::Text⟩,$[FreeVariables,#HxParsedForm#]], %n⟨,Fresh[⟩, %n⟨,⟩, %n⟨]⟩] »] :
-// '$Print2-†‹U-LastName[#ModuleName]›$†«#Sort»' [ '†« U-QN[#ModuleName, #Sort, U-ParsedFormTag[#HxParsedForm#]] »' « WrappedTextJoin[MapIndexWhen[ok bs i.C-ScopeSort-WrapPattern[bs, #ModuleName, t.t, s.%n⟨#†‹ NumericToStringWhen[ok, i] ›⟩], C-ParsedForm-ScopeSorts[#HxParsedForm#]], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩] », #prec ]
-// →
-// $[If, $[GreaterThan, #prec, †«NumericToString[StringToNumericDefault[#HxFormPrec#,0]]»],⟦
-// « C-Text-open »(« C-ParsedForm-Text[#HxParsedForm#, #ModuleName, ok s p i t .%n⟨‹ C-PrintWrap[#DM, #ModuleName, s, t, p] ›⟩, ok s p i .%n⟨‹ C-HashWhen[ok, i] ›⟩] »)« C-Text-close »,
-// « C-Text-open »« C-ParsedForm-Text[#HxParsedForm#, #ModuleName, ok s p i t .%n⟨‹ C-PrintWrap[#DM, #ModuleName, s, t, p] ›⟩, ok s p i .%n⟨‹ C-HashWhen[ok, i] ›⟩] »« C-Text-close »⟧
-// ]
-// ;
-// ⟫;
-
 
 /// TODO: Avoid hard-coding () sugar...
 
