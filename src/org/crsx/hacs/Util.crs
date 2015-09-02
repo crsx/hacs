@@ -1,5 +1,5 @@
 // Util.crs: UTILITIES FOR PROCESSING HACS SPECIFICATIONS.
-// Copyright © 2012,2014 Kristoffer H. Rose <krisrose@crsx.org>
+// Copyright © 2012,2015 Kristoffer H. Rose <krisrose@crsx.org>
 
 Util[(
 
@@ -248,61 +248,64 @@ U-GetConstructorScopeSorts2[#Constructor,{#C2SS}N2SS] → $[{#C2SS}Get[$List[HxS
 {"All$Sort2UserConstructors" : DME_N2NM[#S2UC]} U-then-SortHasUserHx[OK, #Sort] → HasNames[LookupName2Names[#S2UC, #Sort]] ;
 
 {$String<!--SortName--> : DeclarationMapEntry}U-IfSymbolForm[HxParsedForm, $String<!--ModuleName-->, in::$String.Text, Text] :: Text;
-{#DM}U-IfSymbolForm[Hx_ParsedFormTerm[#HxScopeSortPrec, #ParsedForm], #ModuleName, t.#[t], #text] → {#DM}U-IfSymbolFormScopeSortPrec[#HxScopeSortPrec, #ParsedForm, #ModuleName, t.#[t], #text] ;
-{#DM}U-IfSymbolForm[Hx_ParsedFormSpace[#space, #ParsedForm], #ModuleName, t.#[t], #text] → {#DM}U-IfSymbolForm[#ParsedForm, #ModuleName, t.#[t], #text] ;
-{#DM}U-IfSymbolForm[Hx_ParsedFormWord[#word, #ParsedForm], #ModuleName, t.#[t], #text] → #text ;
-{#DM}U-IfSymbolForm[Hx_ParsedFormDone, #ModuleName, t.#[t], #text] → #text ;
+{#DM}U-IfSymbolForm[#ParsedForm, #ModuleName, t.#[t], #text] → #text ;
 
-    {$String<!--SortName--> : DeclarationMapEntry}U-IfSymbolFormScopeSortPrec[HxScopeSortPrec, HxParsedForm, $String<!--ModuleName-->, in::$String.Text, Text] :: Text;
-    {#DM}U-IfSymbolFormScopeSortPrec[Hx_ScopeSortPrecBind[#ScopeSort, #Variable], #ParsedForm, #ModuleName, t.#[t], #text] → #text ;
-    {#DM}U-IfSymbolFormScopeSortPrec[%rawHxScopeSortPrec⟪ #HxScopeSort# #HxFormPrec# ⟫, #ParsedForm, #ModuleName, t.#[t], #text] → {#DM}U-IfSymbolFormScopeSort[#HxScopeSort#, #ParsedForm, #ModuleName, t.#[t], #text] ;
-
-    {$String<!--SortName--> : DeclarationMapEntry}U-IfSymbolFormScopeSort[HxScopeSort, HxParsedForm, $String<!--ModuleName-->, in::$String.Text, Text] :: Text;
-    {#DM}U-IfSymbolFormScopeSort[Hx_RawBoundVariable[#Variable, #ScopeSort], #ParsedForm, #ModuleName, t.#[t], #text] → #text ;
-    {#DM}U-IfSymbolFormScopeSort[%rawHxScopeSort⟪ #HxSort# #HxRepeat# [ #HxSubstituteSorts# ] ⟫, #ParsedForm, #ModuleName, t.#[t], #text] → {#DM}U-IfSymbolFormSort[#HxSort#, #ParsedForm, #ModuleName, t.#[t], #text] ;
-
-    {$String<!--SortName--> : DeclarationMapEntry}U-IfSymbolFormSort[HxSort, HxParsedForm, $String<!--ModuleName-->, in::$String.Text, Text] :: Text;
-    {#DM}U-IfSymbolFormSort[%rawHxSort⟪ #HxSimpleSort# #HxSimpleSorts# ⟫, #ParsedForm, #ModuleName, t.#[t], #text] → {#DM}U-IfSymbolFormSort[#HxSimpleSort#, #ParsedForm, #ModuleName, t.#[t], #text] ;
-    {#DM}U-IfSymbolFormSort[%rawHxSimpleSort⟪ #HxSortParam# ⟫, #ParsedForm, #ModuleName, t.#[t], #text] → #text ;
-    {#DM}U-IfSymbolFormSort[%rawHxSimpleSort⟪ #HxSortName# #HxMetaVariables# ⟫, #ParsedForm, #ModuleName, t.#[t], #text]
-    →
-    U-IfSymbolFormSort2[{#DM}U-IsSymbolSort[U-QN[#ModuleName, "", #HxSortName#]], #ParsedForm, #HxSortName#, t.#[t], #text]
-    ;
-
-    U-IfSymbolFormSort2[Boolean, HxParsedForm, $String<!--SortName-->, in::$String.Text, Text] :: Text;
-    U-IfSymbolFormSort2[B_FALSE, #ParsedForm, #SortName, t.#[t], #text] → #text ;
-    U-IfSymbolFormSort2[B_TRUE, #ParsedForm, #SortName, t.#[t], #text] → U-IfSymbolFormSort3[#ParsedForm, #SortName, t.#[t], #text] ;
-
-    U-IfSymbolFormSort3[HxParsedForm, $String<!--SortName-->, in::$String.Text, Text] :: Text;
-    U-IfSymbolFormSort3[#ParsedForm, #SortName, t.#[t], #text]
-    →
-    U-IfSymbolFormSort4[#ParsedForm, #SortName, t.#[t], #text]
-    ;
-
-    U-IfSymbolFormSort4[HxParsedForm, $String<!--SortName-->, in::$String.Text, Text] :: Text;
-    U-IfSymbolFormSort4[Hx_ParsedFormTerm[#HxScopeSortPrec, #ParsedForm], #SortName, t.#[t], #text] → #text ;
-    U-IfSymbolFormSort4[Hx_ParsedFormSpace[#space, #ParsedForm], #SortName, t.#[t], #text] → U-IfSymbolFormSort3[#ParsedForm, #SortName, t.#[t], #text] ;
-    U-IfSymbolFormSort4[Hx_ParsedFormWord[#word, #ParsedForm], #SortName, t.#[t], #text] → #text ;
-    U-IfSymbolFormSort4[Hx_ParsedFormDone, #SortName, t.#[t], #text] → #[#SortName] ;
-
-    {$String : DeclarationMapEntry} U-IsSymbolSort[$String<!--SortName-->] :: Boolean ;
-    -[Data[#SortName]]: {#DM} U-IsSymbolSort[#SortName] → U-IsSymbolSort2[$[{#DM}Get[DeclarationMapEntry], #SortName, DME_NONE]] ;
-
-    U-IsSymbolSort2[DeclarationMapEntry] :: Boolean ;
-    U-IsSymbolSort2[DME_SORT[#Defines, #Name, #Precs, #Wrapper, #isMain]] → U-IsSymbolDefines[#Defines] ;
-    -[Data[#_]]: U-IsSymbolSort2[$[NotMatch,DME_SORT[#_Defines, #_Name, #_Precs, #_Wrapper, #_isMain],#_]] → B_FALSE ;
-
-    U-IsSymbolDefines[$List[Define]] :: Boolean ;
-    U-IsSymbolDefines[()] → B_FALSE ;
-    U-IsSymbolDefines[(#Define; #Defines)] → Or[ U-IsSymbolDefine[#Define], U-IsSymbolDefines[#Defines] ] ;
-    
-    U-IsSymbolDefine[Define] :: Boolean ;
-    U-IsSymbolDefine[D_FORM[#Form, #Kind]] → U-IsSymbolKind[#Kind] ;
-    -[Data[#_]]: U-IsSymbolDefine[$[NotMatch,D_FORM[#_Form, #_Kind],#_]] → B_FALSE ;
-
-    U-IsSymbolKind[FormKind] :: Boolean ;
-    U-IsSymbolKind[FK_SYMBOL[#bool, #tok]] → B_TRUE ;
-    -[Data[#_]]: U-IsSymbolKind[$[NotMatch,FK_SYMBOL[#_bool, #_tok],#_]] → B_FALSE ;
+/// {$String<!--SortName--> : DeclarationMapEntry}U-IfSymbolForm[HxParsedForm, $String<!--ModuleName-->, in::$String.Text, Text] :: Text;
+/// {#DM}U-IfSymbolForm[Hx_ParsedFormTerm[#HxScopeSortPrec, #ParsedForm], #ModuleName, t.#[t], #text] → {#DM}U-IfSymbolFormScopeSortPrec[#HxScopeSortPrec, #ParsedForm, #ModuleName, t.#[t], #text] ;
+/// {#DM}U-IfSymbolForm[Hx_ParsedFormSpace[#space, #ParsedForm], #ModuleName, t.#[t], #text] → {#DM}U-IfSymbolForm[#ParsedForm, #ModuleName, t.#[t], #text] ;
+/// {#DM}U-IfSymbolForm[Hx_ParsedFormWord[#word, #ParsedForm], #ModuleName, t.#[t], #text] → #text ;
+/// {#DM}U-IfSymbolForm[Hx_ParsedFormDone, #ModuleName, t.#[t], #text] → #text ;
+/// 
+///     {$String<!--SortName--> : DeclarationMapEntry}U-IfSymbolFormScopeSortPrec[HxScopeSortPrec, HxParsedForm, $String<!--ModuleName-->, in::$String.Text, Text] :: Text;
+///     {#DM}U-IfSymbolFormScopeSortPrec[Hx_ScopeSortPrecBind[#ScopeSort, #Variable], #ParsedForm, #ModuleName, t.#[t], #text] → #text ;
+///     {#DM}U-IfSymbolFormScopeSortPrec[%rawHxScopeSortPrec⟪ #HxScopeSort# #HxFormPrec# ⟫, #ParsedForm, #ModuleName, t.#[t], #text] → {#DM}U-IfSymbolFormScopeSort[#HxScopeSort#, #ParsedForm, #ModuleName, t.#[t], #text] ;
+/// 
+///     {$String<!--SortName--> : DeclarationMapEntry}U-IfSymbolFormScopeSort[HxScopeSort, HxParsedForm, $String<!--ModuleName-->, in::$String.Text, Text] :: Text;
+///     {#DM}U-IfSymbolFormScopeSort[Hx_RawBoundVariable[#Variable, #ScopeSort], #ParsedForm, #ModuleName, t.#[t], #text] → #text ;
+///     {#DM}U-IfSymbolFormScopeSort[%rawHxScopeSort⟪ #HxSort# #HxRepeat# [ #HxSubstituteSorts# ] ⟫, #ParsedForm, #ModuleName, t.#[t], #text] → {#DM}U-IfSymbolFormSort[#HxSort#, #ParsedForm, #ModuleName, t.#[t], #text] ;
+/// 
+///     {$String<!--SortName--> : DeclarationMapEntry}U-IfSymbolFormSort[HxSort, HxParsedForm, $String<!--ModuleName-->, in::$String.Text, Text] :: Text;
+///     {#DM}U-IfSymbolFormSort[%rawHxSort⟪ #HxSimpleSort# #HxSimpleSorts# ⟫, #ParsedForm, #ModuleName, t.#[t], #text] → {#DM}U-IfSymbolFormSort[#HxSimpleSort#, #ParsedForm, #ModuleName, t.#[t], #text] ;
+///     {#DM}U-IfSymbolFormSort[%rawHxSimpleSort⟪ #HxSortParam# ⟫, #ParsedForm, #ModuleName, t.#[t], #text] → #text ;
+///     {#DM}U-IfSymbolFormSort[%rawHxSimpleSort⟪ #HxSortName# #HxMetaVariables# ⟫, #ParsedForm, #ModuleName, t.#[t], #text]
+///     →
+///     U-IfSymbolFormSort2[{#DM}U-IsSymbolSort[U-QN[#ModuleName, "", #HxSortName#]], #ParsedForm, #HxSortName#, t.#[t], #text]
+///     ;
+/// 
+///     U-IfSymbolFormSort2[Boolean, HxParsedForm, $String<!--SortName-->, in::$String.Text, Text] :: Text;
+///     U-IfSymbolFormSort2[B_FALSE, #ParsedForm, #SortName, t.#[t], #text] → #text ;
+///     U-IfSymbolFormSort2[B_TRUE, #ParsedForm, #SortName, t.#[t], #text] → U-IfSymbolFormSort3[#ParsedForm, #SortName, t.#[t], #text] ;
+/// 
+///     U-IfSymbolFormSort3[HxParsedForm, $String<!--SortName-->, in::$String.Text, Text] :: Text;
+///     U-IfSymbolFormSort3[#ParsedForm, #SortName, t.#[t], #text]
+///     →
+///     U-IfSymbolFormSort4[#ParsedForm, #SortName, t.#[t], #text]
+///     ;
+/// 
+///     U-IfSymbolFormSort4[HxParsedForm, $String<!--SortName-->, in::$String.Text, Text] :: Text;
+///     U-IfSymbolFormSort4[Hx_ParsedFormTerm[#HxScopeSortPrec, #ParsedForm], #SortName, t.#[t], #text] → #text ;
+///     U-IfSymbolFormSort4[Hx_ParsedFormSpace[#space, #ParsedForm], #SortName, t.#[t], #text] → U-IfSymbolFormSort3[#ParsedForm, #SortName, t.#[t], #text] ;
+///     U-IfSymbolFormSort4[Hx_ParsedFormWord[#word, #ParsedForm], #SortName, t.#[t], #text] → #text ;
+///     U-IfSymbolFormSort4[Hx_ParsedFormDone, #SortName, t.#[t], #text] → #[#SortName] ;
+/// 
+///     {$String : DeclarationMapEntry} U-IsSymbolSort[$String<!--SortName-->] :: Boolean ;
+///     -[Data[#SortName]]: {#DM} U-IsSymbolSort[#SortName] → U-IsSymbolSort2[$[{#DM}Get[DeclarationMapEntry], #SortName, DME_NONE]] ;
+/// 
+///     U-IsSymbolSort2[DeclarationMapEntry] :: Boolean ;
+///     U-IsSymbolSort2[DME_SORT[#Defines, #Name, #Precs, #Wrapper, #isMain]] → U-IsSymbolDefines[#Defines] ;
+///     -[Data[#_]]: U-IsSymbolSort2[$[NotMatch,DME_SORT[#_Defines, #_Name, #_Precs, #_Wrapper, #_isMain],#_]] → B_FALSE ;
+/// 
+///     U-IsSymbolDefines[$List[Define]] :: Boolean ;
+///     U-IsSymbolDefines[()] → B_FALSE ;
+///     U-IsSymbolDefines[(#Define; #Defines)] → Or[ U-IsSymbolDefine[#Define], U-IsSymbolDefines[#Defines] ] ;
+///     
+///     U-IsSymbolDefine[Define] :: Boolean ;
+///     U-IsSymbolDefine[D_FORM[#Form, #Kind]] → U-IsSymbolKind[#Kind] ;
+///     -[Data[#_]]: U-IsSymbolDefine[$[NotMatch,D_FORM[#_Form, #_Kind],#_]] → B_FALSE ;
+/// 
+///     U-IsSymbolKind[FormKind] :: Boolean ;
+///     U-IsSymbolKind[FK_SYMBOL[#bool, #tok]] → B_TRUE ;
+///     -[Data[#_]]: U-IsSymbolKind[$[NotMatch,FK_SYMBOL[#_bool, #_tok],#_]] → B_FALSE ;
 
 // Extract main sort name.
 

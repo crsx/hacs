@@ -7,10 +7,9 @@ module org.crsx.hacs.samples.Beta {
   token ID | [a-z] [_0-9]* ;  // single-letter identifiers
 
   // λ Calculus Grammar.
-  sort V | symbol ⟦⟨ID⟩⟧ ;
   sort E
-  |  ⟦  λ ⟨V binds x⟩ . ⟨E[x as E]⟩ ⟧
-  |  ⟦ ⟨V⟩ ⟧@2 | sugar ⟦ ( ⟨E#⟩ ) ⟧@2→# ;
+  |  ⟦  λ ⟨ID binds x⟩ . ⟨E[x as E]⟩ ⟧
+  |  symbol ⟦ ⟨ID⟩ ⟧@2 | sugar ⟦ ( ⟨E#⟩ ) ⟧@2→# ;
 
   // Applications can reduce.
   | scheme ⟦ ⟨E@1⟩ ⟨E@2⟩ ⟧@1 ;

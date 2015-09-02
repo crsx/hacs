@@ -418,6 +418,7 @@ C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllN
     →
     C-UnsynthesizeSortEntry[#Defines, #SortName, #ModuleName, #DM, ok ds¹.U-then-ExtendDeclarationMap[ok, #DM, #SortName, DME_SORT[ds¹, #Name, #Precs, #Wrapper, #IsMain], dm¹.#[dm¹]]]
     ;
+    -[Data[#_]]:
     C-Unsynthesize2[$[NotMatch,DME_SORT[#_Defines2, #_Name2, #_Precs2, #_Wrapper2, #_IsMain2], #_], #Name, #ModuleName, #DM, dm¹.#[dm¹]] → #[#DM] ;
 
     // Process all Defines of each sort, aggregating the replacement Defines.
@@ -503,11 +504,13 @@ C-Unsynthesize[#ModuleName, {#DM}DM] → C-Unsynthesize1[NameSetList[{#DM}U-AllN
     // TODO: Respect Repeat.
 
     // * Recursive scheme rules that may depend on synthetic attributes in pattern.
-    
+
+    -[Data[#HxTopTerm#]]:
     C-UnsynthesizeRule[#RulePrefix, %rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, $[NotMatch,Hx_NullTerm,#HxTopTerm#], #IsDataEquiv, #SortName, #ModuleName, #DM, #SM]
     →
     C-UnsynthesizeRule2[#HxConstructor#, #HxScopes#, #HxAttributes#, #HxTopTerm#, #RulePrefix, C-AddScopesSynthesized[#HxScopes#, NoNames], #IsDataEquiv, #SortName, #ModuleName, #DM, #SM]
     ;
+    -[Data[#HxTopTerm#]]:
     C-UnsynthesizeRule[#RulePrefix, %rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, $[NotMatch,Hx_NullTerm,#HxTopTerm#], #IsDataEquiv, #SortName, #ModuleName, #DM, #SM]
     →
     C-UnsynthesizeRule2[#HxConstructor#, #HxScopes#, #HxAttributes#, #HxTopTerm#, #RulePrefix, C-AddScopesSynthesized[#HxScopes#, NoNames], #IsDataEquiv, #SortName, #ModuleName, #DM, #SM]
@@ -946,6 +949,7 @@ C-CrsxifyRule1[#RulePrefix, #TopPattern, #TopTerm, #Sort, {#DM}DM, {#DM}C-Extend
     C-ExtendWithTopInheritedMeta2[C-ExtendWithInheritedMeta[#SM, #HxAttributeName#, #HxAttributeValue#], #Attributes]
     ;
 
+    -[Data[#Attribute]]:
     C-ExtendWithTopInheritedMeta2[#SM, ($[NotMatch, %rawHxAttribute⟪ ↓ #HxAttributeName# #HxAttributeValue# ⟫, #Attribute]; #Attributes)]
     →
     C-ExtendWithTopInheritedMeta2[#SM, #Attributes]
@@ -964,6 +968,7 @@ C-CrsxifyRule1[#RulePrefix, #TopPattern, #TopTerm, #Sort, {#DM}DM, {#DM}C-Extend
     C-ExtendWithInheritedMeta1[SortMap, $String<!--AttributeName-->, HxTerm] :: SortMap ;
     C-ExtendWithInheritedMeta1[{#SM}SM[#fvs, #mvs], #HxAttributeName#, %rawHxTerm⟪ #HxMetaVariable# ⟫] → {#SM; #HxAttributeName# : (#HxMetaVariable#;)}SM[#fvs, #mvs] ;
     C-ExtendWithInheritedMeta1[{#SM}SM[#fvs, #mvs], #HxAttributeName#, %rawHxTerm⟪ #HxConstructor# #HxRepeat# #HxMetaVariable# ⟫] → {#SM; #HxAttributeName# : (#HxMetaVariable#;)}SM[#fvs, #mvs] ;
+    -[Data[#Term]]:
     C-ExtendWithInheritedMeta1[{#SM}SM[#fvs, #mvs], #HxAttributeName#, $[NotMatch, %rawHxTerm⟪ #HxMetaVariable1# ⟫, $[NotMatch, %rawHxTerm⟪ #HxConstructor2# #HxRepeat2# #HxMetaVariable2# ⟫, #Term]]] → {#SM}SM[#fvs, #mvs] ;
 
 // Convert rule prefix.
@@ -971,11 +976,9 @@ C-CrsxifyRule1[#RulePrefix, #TopPattern, #TopTerm, #Sort, {#DM}DM, {#DM}C-Extend
 C-CrsxifyRulePrefix[HxRulePrefix, $String<!--Sort-->, DeclarationMap, SortMap<!--OnlyPattern-->, SortMap<!--Rule-->, HxTerm<!--Pattern-->, HxTerm<!--Contractum-->] :: Text ;
 C-CrsxifyRulePrefix[{#L}%rawHxRulePrefix⟪ #HxRulePriority# [ #HxRuleOptions# ] ⟫, #Sort, #DM, #SM1, #SM2, #Pattern, #Contractum]
 →
-$[Trace, "RULEPREFIX",
 %n⟪¶« {#L}C-CrsxifyRuleName[#HxRulePriority#, #HxRuleOptions#] »«
   WrappedTextJoin[Append[C-CrsxifyRulePriority[#HxRulePriority#, #SM1], C-CrsxifyRuleOptions[#HxRuleOptions#, #DM, #SM1, #SM2, (), (), #Pattern, #Contractum, ss¹.ss¹]], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]
 »:⟫
-]
 ;
 
 {$String : $StringEntrySort} C-CrsxifyRuleName[HxRulePriority, $List[HxRuleOption]] :: Text ;
@@ -1161,9 +1164,14 @@ C-CrsxifyToken1[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( #Hx
 C-CrsxifyTerm[HxTerm, NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
 C-CrsxifyTerm[#Term, #TopInherited, #DM, #SM]
 →
-$[Trace, $[:,"TERM=",$[Show,#Term]],
-$[If, $[Literal, #Term], %n⟪†« $[Escape,$[Symbol,#Term]] »⟫, C-CrsxifyTerm1[#Term, #TopInherited, #DM, #SM]]
-]
+$[If, $[Literal, #Term], %n⟪†« $[Escape,$[Symbol,#Term]] »⟫, C-CrsxifyTerm0[#Term, #TopInherited, #DM, #SM]]
+;
+
+C-CrsxifyTerm0[HxTerm, NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
+-[Data[#Term, #TopInherited, #DM, #SM]]:
+C-CrsxifyTerm0[#Term, #TopInherited, #DM, #SM]
+→
+C-CrsxifyTerm1[#Term, #TopInherited, #DM, #SM]
 ;
 
 C-CrsxifyTerm1[HxTerm, NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
@@ -1216,6 +1224,13 @@ C-CrsxifyTerm1[%rawHxTerm⟪ special #HxConcreteText# #HxAttributes# ⟫, #TopIn
 C-CrsxifyAttributes[$List[HxAttribute], NameSet<!--ThisInherited-->, NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
 
 C-CrsxifyAttributes[#Attributes, #ThisInherited, #TopInherited, #DM, #SM]
+→
+C-CrsxifyAttributes1[#Attributes, #ThisInherited, #TopInherited, #DM, #SM]
+;
+
+C-CrsxifyAttributes1[$List[HxAttribute], NameSet<!--ThisInherited-->, NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
+
+C-CrsxifyAttributes1[#Attributes, #ThisInherited, #TopInherited, #DM, #SM]
 →
 If[And[Empty[#Attributes], Not[HasNames[UnionNames[#ThisInherited, #TopInherited]]]],
   %n⟪⟫,
@@ -1885,6 +1900,7 @@ $[{#SM}IfDef[SortMap], #MetaVariable,
         {#L}Error[$[:,"Undefined symbol ",$[Show,v]," used in ",#MetaVariable,"-meta-application."]]]]
     ;
 
+    -[Data[#Term1],Free[v1::HxTerm,v2::HxTerm]]:
     {#DM} C-ExtendSortMap-MetaApplication3[
                      $[NotMatch, %rawHxTerm⟪ v1 #HxAttributes1# ⟫,
 		      $[NotMatch, %rawHxTerm⟪ #HxConstructor2# #HxRepeat2# v2 #HxAttributes2# ⟫,
