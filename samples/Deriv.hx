@@ -15,7 +15,7 @@ sort Exp | ⟦ ⟨Exp@1⟩ + ⟨Exp@2⟩ ⟧@1
          | ⟦ ⟨Exp@2⟩ / ⟨Exp@3⟩ ⟧@2
          | ⟦ ⟨Fun⟩ ⟨Exp@4⟩ ⟧@3
          | ⟦ ⟨INT⟩ ⟧@4
-         | ⟦ ⟨Var⟩ ⟧@4
+         | symbol ⟦ ⟨VAR⟩ ⟧@4
 
          | sugar ⟦ ( ⟨Exp#⟩ ) ⟧@4 → Exp#
   //         | sugar ⟦ + ⟨Exp#1@2⟩ ⟧@1 → ⟦ 0 + ⟨Exp#1⟩ ⟧ 
@@ -24,9 +24,7 @@ sort Exp | ⟦ ⟨Exp@1⟩ + ⟨Exp@2⟩ ⟧@1
 
 // Functions. 
 sort Fun | ⟦sin⟧@2 | ⟦cos⟧@2 | ⟦ln⟧@2 | ⟦exp⟧@2
-	| ⟦ [ ⟨Var binds x⟩ ↦ ⟨Exp[x as Exp]⟩ ] ⟧@2 ;
-
-sort Var | symbol ⟦⟨VAR⟩⟧ ;
+	| ⟦ [ ⟨VAR binds x⟩ ↦ ⟨Exp[x as Exp]⟩ ] ⟧@2 ;
 
 //// SCHEMES.
 
@@ -39,7 +37,7 @@ sort Fun | scheme ⟦d⟨Fun@1⟩⟧@1 ;
 
 ⟦d[x ↦ ⟨Exp#1[x]⟩]⟧ → ⟦[y ↦ D(y)[z↦⟨Exp#1[z]⟩]]⟧ ;
 
-sort Exp | scheme ⟦ D ⟨Exp⟩ [⟨Var binds x⟩↦⟨Exp[x as Exp]⟩] ⟧@3 ;
+sort Exp | scheme ⟦ D ⟨Exp⟩ [⟨VAR binds x⟩↦⟨Exp[x as Exp]⟩] ⟧@3 ;
 
 ⟦ D⟨Exp#1⟩[x↦⟨INT#2⟩] ⟧ → ⟦0⟧ ;
 

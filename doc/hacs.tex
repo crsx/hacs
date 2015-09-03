@@ -1208,15 +1208,13 @@ and cannot be easily achieved with usual positional arguments to recursive schem
   \begin{enumerate}
 
   \item The first thing to do is to encode the grammar (assuming an existing $T$ sort of types and
-    "ID" tokens as before):
+    "ID" tokens as in the previous section):
     \begin{hacs}
    main sort S  | ⟦ ⟨T⟩ ⟨ID⟩ = ⟨E⟩ ; ⟨S⟩ ⟧ ;
    sort E  | ⟦ ⟨E⟩ + ⟨E@1⟩ ⟧   | ⟦ ⟨ID⟩ ⟧@1 ;
 \end{hacs}
 %% 
-The "ID" sort is declared as a "symbol" sort so we can use it in maps next; the rest of the
-syntax specification follows the rules given previously. We assume that the "T" sort is defined
-elsewhere with the possible types.
+We assume that the "T" sort is defined elsewhere with the possible types.
 
 \item Once the grammar is defined, we can declare the new attribute:
   \begin{hacs}
@@ -1590,23 +1588,71 @@ Se (⟦ ⟧ ↑#syn) → ⟦ ⟧ ↑#syn ;
 In the examples so far, we have analyzed and translated abstract syntax trees with structure and
 symbols. However, we have not yet constructed \emph{new} structures with new scopes, or copied
 fragments with scopes inside. These are the features where the ``H'' of \HAX matter.
-%%
-Specifically, \HAX provides support for manipulating scoped terms using \emph{higher-order abstract
+
+\begin{example}[untyped λ calculus]
+  A simple example of a system that does rewriting of ``higher order'' terms is the classic λ
+  calculus. The λ calculus is specified in \HAX as shown in Figure~\ref{fig:lambda}.
+  %%
+  \begin{itemize}
+
+  \item The specification has properties like others we have seen: it is a \emph{module} (lines 1
+    and 12); it has a lexical specification of \emph{spacing} (line 2) and \emph{identifiers} (line
+    3); it has a \emph{main sort} (line 5) of terms "T"; the term grammar uses "@" precedence
+    markers (lines 7--9) and syntactic sugar for grouping (line 9); the term has one \emph{scheme}
+    which means that we may have rules for application (line 8).
+
+  \item The first syntax production (line 6) is different, however:
+    %%
+    ``"| ⟦λ ⟨ID binds x⟩ . ⟨T[x as T]⟩⟧"''
+    %%
+    has several new constructs inside the syntax brackets:
+    %%
+    \begin{itemize}
+
+    \item The first, "⟨ID binds x⟩", is just like "⟨ID⟩" by itself but marks this particular
+      identifier as being a \emph{binder}, which is used in a special way, and for the scope of the
+      production is named "x" (in case there is more than one).
+
+    \item The second, "⟨T[x as T]⟩", is just like "⟨T⟩" by itself but marks this particular instance
+      of "T" as the \emph{scope} for the binder named "x", with the added information that all
+      occurrences of the bound variable should (also) be considered to be of sort~"T".
+
+    \end{itemize}
+
+  \item The third production (line 8) is also special: here we declare that if a term is a simple
+    "ID", then in fact it is a \emph{symbol}, which is required for identifiers to occur bound as
+    sort~"T".
+
+  \item Finally, we use the defined scoping in the classic $β$ rewrite rule for our one scheme in
+    line~12: it expresses that a λ term which is an application (our scheme declared in line~7)
+    where the first subterm is a λ-abstraction (declared in line~6) can be rewritten. The rewriting
+
+  \end{itemize}
+  %%
+\end{example}
+
+\begin{figure}[t]
+  \inputhacs[texcl,mathescape,xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/Lambda.hx}
+  \caption{λ calculus.}
+  \label{fig:lambda}
+\end{figure}
+
+More formally, \HAX provides support for manipulating scoped terms using \emph{higher-order abstract
   syntax} (HOAS) \cite{PfenningElliot:pldi1988} through some new constructs:
 %%
 \begin{itemize}
 
 \item Outside syntax, \HAX recognizes identifiers starting with a lower case letter as \emph{variables}.
 
-\item In grammar productions, for a symbol sort $S$ and a \HAX variable $x$, we can use the special
-  reference $⟨S\,"binds"\,x⟩$ to define that this particular instance of $S$ is a \emph{binder},
+\item In grammar productions, for a token $T$ and a \HAX variable $x$, we can use the special
+  reference $⟨T\,"binds"\,x⟩$ to define that this particular instance of $T$ is a \emph{binder},
   with the variable~$x$ as the label to indicate the scoping.
 
-\item In a grammar production with a $⟨S\,"binds"\,x⟩$ reference, there can be one reference of the
-  form $⟨S'[x\,"as"\,S'']⟩$. This is like a reference $⟨S'⟩$ but with the added information that all
-  occurrences of the binder labeled $x$ \emph{must} occur inside the $S'$ subterm, and furthermore
-  the occurrences will have the sort~$S''$. If $S''$ is not the same sort as $S$, then there must be
-  a grammar production like $"sort"\,S''\,|\,⟦⟨S⟩⟧$.
+\item In a grammar production with a $⟨T\,"binds"\,x⟩$ reference, there can be one reference of the
+  form $⟨S[x\,"as"\,S']⟩$. This is like a reference $⟨S⟩$ but with the added information that all
+  occurrences of the binder labeled $x$ \emph{must} occur inside the $S$ subterm, and furthermore
+  the occurrences will have the sort~$S'$. This implies that there must in addition be a grammar
+  production like $"sort"\,S'\,|\,"symbol"\,⟦⟨T⟩⟧$, to allow the occurrences to be properly parsed.
 
 \item In rules, you \emph{must} use the native variable form (no $⟨⟩$s) for binders.
 

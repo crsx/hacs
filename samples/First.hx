@@ -1,6 +1,6 @@
-// First HACS sample compiler (inspired by Dragonbook Fig.7).
+// First HACS sample compiler (inspired by Dragonbook Fig.1.7).
 //
-module org.crsx.hacs.tests.first.First {
+module org.crsx.hacs.samples.First {
 
 
 /* LEXICAL ANALYSIS. */
