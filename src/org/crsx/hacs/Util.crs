@@ -178,62 +178,62 @@ U-then-ExtendDeclarationMap[OK, #DM, #Key, #Entry, dm¹.#[dm¹]] → U-ExtendDec
 // Basic extraction from cached information.
 
 {$String<!--Name--> : DeclarationMapEntry} U-AllNames :: NameSet;
-{"All$Names" : DME_NAMES[#Names]} U-AllNames → #Names ;
+{"All%Names" : DME_NAMES[#Names]} U-AllNames → #Names ;
 
 {$String<!--Name--> : DeclarationMapEntry} U-AllSortNames :: NameSet;
-{"All$SortNames" : DME_NAMES[#SortNames]} U-AllSortNames → #SortNames ;
+{"All%SortNames" : DME_NAMES[#SortNames]} U-AllSortNames → #SortNames ;
 
 {$String<!--Name--> : DeclarationMapEntry} U-AllTokenNames :: NameSet;
-{"All$TokenNames" : DME_NAMES[#TokenNames]} U-AllTokenNames → #TokenNames ;
+{"All%TokenNames" : DME_NAMES[#TokenNames]} U-AllTokenNames → #TokenNames ;
 
 {$String<!--Name--> : DeclarationMapEntry} U-AllInheritedNames :: NameSet;
-{"All$InheritedNames" : DME_NAMES[#Names]} U-AllInheritedNames → #Names ;
+{"All%InheritedNames" : DME_NAMES[#Names]} U-AllInheritedNames → #Names ;
 
 {$String<!--Name--> : DeclarationMapEntry} U-AllInheritedMapNames :: NameSet;
-{"All$InheritedMapNames" : DME_NAMES[#Names]} U-AllInheritedMapNames → #Names ;
+{"All%InheritedMapNames" : DME_NAMES[#Names]} U-AllInheritedMapNames → #Names ;
 
 {$String<!--Name--> : DeclarationMapEntry} U-AllSynthesizedNames :: NameSet;
-{"All$SynthesizedNames" : DME_NAMES[#Names]} U-AllSynthesizedNames → #Names ;
+{"All%SynthesizedNames" : DME_NAMES[#Names]} U-AllSynthesizedNames → #Names ;
 
 {$String<!--Name--> : DeclarationMapEntry} U-AllSynthesizedMapNames :: NameSet;
-{"All$SynthesizedMapNames" : DME_NAMES[#Names]} U-AllSynthesizedMapNames → #Names ;
+{"All%SynthesizedMapNames" : DME_NAMES[#Names]} U-AllSynthesizedMapNames → #Names ;
 
 {$String<!--Name--> : DeclarationMapEntry} U-GetAttributeForm[$String<!--Attribute-->] :: HxAttributeForm ;
-{"All$Attribute2Form" : DME_AFM[#AFM]} U-GetAttributeForm[#Attribute] → LookupAttributeForm[#AFM, #Attribute] ;
+{"All%Attribute2Form" : DME_AFM[#AFM]} U-GetAttributeForm[#Attribute] → LookupAttributeForm[#AFM, #Attribute] ;
 
 {$String<!--Name--> : DeclarationMapEntry} U-GetAttributeKeySort[$String<!--Attribute-->] :: $String ;
-{"All$Attribute2KeySort" : DME_N2N[#A2S]} U-GetAttributeKeySort[#Attribute] → LookupName[#A2S, #Attribute] ;
+{"All%Attribute2KeySort" : DME_N2N[#A2S]} U-GetAttributeKeySort[#Attribute] → LookupName[#A2S, #Attribute] ;
 
 {$String<!--Name--> : DeclarationMapEntry} U-GetAttributeValueSort[$String<!--Attribute-->] :: $String ;
-{"All$Attribute2ValueSort" : DME_N2N[#A2S]} U-GetAttributeValueSort[#Attribute] → LookupName[#A2S, #Attribute] ;
+{"All%Attribute2ValueSort" : DME_N2N[#A2S]} U-GetAttributeValueSort[#Attribute] → LookupName[#A2S, #Attribute] ;
 
 {$String<!--Name--> : DeclarationMapEntry} U-GetConstructorSort[$String<!--Constructor-->] :: $String ;
-{"All$Constructor2Sort" : DME_N2N[#C2S]} U-GetConstructorSort[#Constructor] → LookupName[#C2S, #Constructor] ;
+{"All%Constructor2Sort" : DME_N2N[#C2S]} U-GetConstructorSort[#Constructor] → LookupName[#C2S, #Constructor] ;
 
 // Get the ScopeSorts of a constructor (assumes DM has been "Unparsed").
 
 {$String<!--Name--> : DeclarationMapEntry} U-GetConstructorScopeSorts[$String<!--Constructor-->] :: $List[HxScopeSort] ;
--[Data[#Constructor]]: {"All$Constructor2ScopeSorts" : DME_N2SS[#C2SS]} U-GetConstructorScopeSorts[#Constructor] → U-GetConstructorScopeSorts2[#Constructor, #C2SS] ;
+-[Data[#Constructor]]: {"All%Constructor2ScopeSorts" : DME_N2SS[#C2SS]} U-GetConstructorScopeSorts[#Constructor] → U-GetConstructorScopeSorts2[#Constructor, #C2SS] ;
 
 U-GetConstructorScopeSorts2[$String<!--Constructor-->, Name2ScopeSorts] :: $List[HxScopeSort] ;
 U-GetConstructorScopeSorts2[#Constructor,{#C2SS}N2SS] → $[{#C2SS}Get[$List[HxScopeSort]], #Constructor, ()] ;
 
 {$String<!--Name--> : DeclarationMapEntry} U-GetSortSynthesized[$String<!--Sort-->] :: NameSet;
-{"All$Sort2Synthesized" : DME_N2NM[#S2S]} U-GetSortSynthesized[#Sort] → LookupName2Names[#S2S, #Sort] ;
+{"All%Sort2Synthesized" : DME_N2NM[#S2S]} U-GetSortSynthesized[#Sort] → LookupName2Names[#S2S, #Sort] ;
 
 {$String<!--Name--> : DeclarationMapEntry} U-GetFunctionInherited[$String<!--Function-->] :: NameSet;
-{"All$Function2Inherited" : DME_N2NM[#S2S]} U-GetFunctionInherited[#Function] → LookupName2Names[#S2S, #Function] ;
+{"All%Function2Inherited" : DME_N2NM[#S2S]} U-GetFunctionInherited[#Function] → LookupName2Names[#S2S, #Function] ;
 
 // Predicates.
 
 {$String<!--Name--> : DeclarationMapEntry} U-IsFunction[$String<!--Name-->] :: Boolean ;
-{"All$Function2Inherited" : DME_N2NM[#S2S]} U-IsFunction[#Name] → CheckName2[#S2S, #Name] ;
+{"All%Function2Inherited" : DME_N2NM[#S2S]} U-IsFunction[#Name] → CheckName2[#S2S, #Name] ;
 
 {$String<!--Name--> : DeclarationMapEntry} U-IsInheritedAttribute[$String<!--Name-->] :: Boolean ;
-{#DM; "All$InheritedNames" : DME_NAMES[#Names]} U-IsInheritedAttribute[#Name] → ContainsName[#Names, #Name] ;
+{#DM; "All%InheritedNames" : DME_NAMES[#Names]} U-IsInheritedAttribute[#Name] → ContainsName[#Names, #Name] ;
 
 {$String<!--Name--> : DeclarationMapEntry} U-IsSynthesizedAttribute[$String<!--Name-->] :: Boolean ;
-{#DM; "All$SynthesizedNames" : DME_NAMES[#Names]} U-IsSynthesizedAttribute[#Name] → ContainsName[#Names, #Name] ;
+{#DM; "All%SynthesizedNames" : DME_NAMES[#Names]} U-IsSynthesizedAttribute[#Name] → ContainsName[#Names, #Name] ;
 
 {$String<!--Name--> : DeclarationMapEntry} U-IsInheritedMapAttribute[$String<!--Name-->] :: Boolean ;
 {#DM} U-IsInheritedMapAttribute[#Name] → ContainsName[{#DM}U-AllInheritedMapNames, #Name] ;
@@ -245,7 +245,7 @@ U-GetConstructorScopeSorts2[#Constructor,{#C2SS}N2SS] → $[{#C2SS}Get[$List[HxS
 {#DM} U-IsMapAttribute[#Name] → Or[ContainsName[{#DM}U-AllSynthesizedMapNames, #Name], ContainsName[{#DM}U-AllInheritedMapNames, #Name]] ;
 
 {$String : DeclarationMapEntry} U-then-SortHasUserHx[Ok, $String<!--SortName-->] :: Boolean ;
-{"All$Sort2UserConstructors" : DME_N2NM[#S2UC]} U-then-SortHasUserHx[OK, #Sort] → HasNames[LookupName2Names[#S2UC, #Sort]] ;
+{"All%Sort2UserConstructors" : DME_N2NM[#S2UC]} U-then-SortHasUserHx[OK, #Sort] → HasNames[LookupName2Names[#S2UC, #Sort]] ;
 
 {$String<!--SortName--> : DeclarationMapEntry}U-IfSymbolForm[HxParsedForm, $String<!--ModuleName-->, in::$String.Text, Text] :: Text;
 {#DM}U-IfSymbolForm[#ParsedForm, #ModuleName, t.#[t], #text] → #text ;
@@ -1015,21 +1015,21 @@ U-MakeDM-ExtraInformation1[#ModuleName, {#DM}DM]
     →
     {#DM;
        "Module$Name" : DME_STRING[#ModuleName];
-       "All$Names" : DME_NAMES[#AllNames];
-       "All$SortNames" : DME_NAMES[#SortNames];
-       "All$TokenNames" : DME_NAMES[#TokenNames];
-       "All$InheritedNames" : DME_NAMES[#InheritedNames];
-       "All$InheritedMapNames" : DME_NAMES[#InheritedMapNames];
-       "All$SynthesizedNames" : DME_NAMES[#SynthesizedNames];
-       "All$SynthesizedMapNames" : DME_NAMES[#SynthesizedMapNames];
-       "All$Constructor2Sort" : DME_N2N[#Constructor2Sort];
-       "All$Constructor2ScopeSorts" : DME_N2SS[#Constructor2ScopeSorts];
-       "All$Attribute2Form" : DME_AFM[#Attribute2Form];
-       "All$Attribute2KeySort" : DME_N2N[#Attribute2KeySort];
-       "All$Attribute2ValueSort" : DME_N2N[#Attribute2ValueSort];
-       "All$Sort2Synthesized" : DME_N2NM[#Sort2Synthesized];
-       "All$Function2Inherited" : DME_N2NM[#Function2Inherited];
-       "All$Sort2UserConstructors" : DME_N2NM[#Sort2UserConstructors]}
+       "All%Names" : DME_NAMES[#AllNames];
+       "All%SortNames" : DME_NAMES[#SortNames];
+       "All%TokenNames" : DME_NAMES[#TokenNames];
+       "All%InheritedNames" : DME_NAMES[#InheritedNames];
+       "All%InheritedMapNames" : DME_NAMES[#InheritedMapNames];
+       "All%SynthesizedNames" : DME_NAMES[#SynthesizedNames];
+       "All%SynthesizedMapNames" : DME_NAMES[#SynthesizedMapNames];
+       "All%Constructor2Sort" : DME_N2N[#Constructor2Sort];
+       "All%Constructor2ScopeSorts" : DME_N2SS[#Constructor2ScopeSorts];
+       "All%Attribute2Form" : DME_AFM[#Attribute2Form];
+       "All%Attribute2KeySort" : DME_N2N[#Attribute2KeySort];
+       "All%Attribute2ValueSort" : DME_N2N[#Attribute2ValueSort];
+       "All%Sort2Synthesized" : DME_N2NM[#Sort2Synthesized];
+       "All%Function2Inherited" : DME_N2NM[#Function2Inherited];
+       "All%Sort2UserConstructors" : DME_N2NM[#Sort2UserConstructors]}
     DM
     ;
 
@@ -1320,7 +1320,7 @@ U-QN2[$String<!--LastName-->, $String<!--Kind+Name-->] :: $String ;
 
 {$String<!--Name--> : DeclarationMapEntry} U-TokenOrQN[$String<!--ModuleName-->, $String<!--Kind-->, $String<!--LocalName-->] :: $String ;
 -[Data[#ModuleName, #Kind, #Name]]:
-///{#DM; "All$TokenNames" : DME_NAMES[#TokenNames]}U-TokenOrQN[#ModuleName, #Kind, #Name]
+///{#DM; "All%TokenNames" : DME_NAMES[#TokenNames]}U-TokenOrQN[#ModuleName, #Kind, #Name]
 U-TokenOrQN[#ModuleName, #Kind, #Name]
 →
 ///If[ContainsName[#TokenNames, #Name], #Name, U-QN[#ModuleName, #Kind, #Name]]

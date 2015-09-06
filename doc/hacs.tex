@@ -615,8 +615,8 @@ Leftmost(…) →    …;
   \begin{hacs}[xleftmargin=\parindent,xrightmargin=\parindent]
 Leftmost(⟦⟨Exp#1⟩ + ⟨Exp#2⟩⟧)         →   …;
 Leftmost(⟦⟨Exp#1⟩ * ⟨Exp#2⟩⟧)         →   …;
-Leftmost(⟦⟨INT#⟩⟧)                    →   …;
-Leftmost(⟦⟨FLOAT#⟩⟧)                  →   …;
+Leftmost(⟦⟨INT#⟩⟧)                     →   …;
+Leftmost(⟦⟨FLOAT#⟩⟧)                 →   …;
   \end{hacs}
   %%
   Now we can express the right side of each translation rule using the now named fragments of the
@@ -625,8 +625,8 @@ Leftmost(⟦⟨FLOAT#⟩⟧)                  →   …;
   \begin{hacs}[xleftmargin=\parindent,xrightmargin=\parindent]
 Leftmost(⟦⟨Exp#1⟩ + ⟨Exp#2⟩⟧)         →   Leftmost(Exp#1) ;
 Leftmost(⟦⟨Exp#1⟩ * ⟨Exp#2⟩⟧)         →   Leftmost(Exp#1) ;
-Leftmost(⟦⟨INT#⟩⟧)                    →   ⟦⟨INT#⟩⟧ ;
-Leftmost(⟦⟨FLOAT#⟩⟧)                  →   ⟦⟨FLOAT#⟩⟧ ;
+Leftmost(⟦⟨INT#⟩⟧)                     →   ⟦⟨INT#⟩⟧ ;
+Leftmost(⟦⟨FLOAT#⟩⟧)                 →   ⟦⟨FLOAT#⟩⟧ ;
   \end{hacs}
   %%
   In the first two rules, we pass the "#1" fragment, which is of "Exp" sort, into "Leftmost", which

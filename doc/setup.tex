@@ -11,7 +11,14 @@
 \usepackage{url}
 \usepackage{xspace}
 \usepackage{fancyvrb}
-\usepackage{xcolor}
+
+%% Ignore frame environments in article.
+\makeatletter
+\ifx\beamer@currentmode\undefined
+  \usepackage{xcolor}
+\fi
+\makeatother
+
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{rcs}
@@ -40,8 +47,12 @@
   \newtheorem{lemma}[theorem]{Lemma}
   \theoremstyle{definition}
   \newtheorem{definition}[theorem]{Definition}
-  \newtheorem{proposition}[theorem]{Proposition}
   \newtheorem{example}[theorem]{Example}
+  \newtheorem{note}[theorem]{Note}
+\fi
+\ifx\remark\undefined
+  \theoremstyle{definition}
+  \newtheorem{proposition}[theorem]{Proposition}
   \newtheorem{practice}[theorem]{Practice}
   \newtheorem{notation}[theorem]{Notation}
   \newtheorem{manual}[theorem]{Manual}
@@ -51,7 +62,6 @@
   \newtheorem{limitations}[theorem]{Limitations}
   \newtheorem{commands}[theorem]{Commands}
   \newtheorem{error}[theorem]{Error}
-  \newtheorem{note}[theorem]{Note}
   \newtheorem{plan}[theorem]{Plan}
   %\theoremstyle{remark}
   \newtheorem{remark}[theorem]{Remark}
@@ -129,6 +139,7 @@
 \newcommand{\mv}[1]{\textsc{#1}}
 %\newcommand{\kw}[1]{\text{\rm\textbf{\color{gray}#1}}}
 \newcommand{\kw}[1]{\textsf{\bf\color{gray}#1}}
+\newcommand{\cw}[1]{\textsf{\color{gray}#1}}
 \newcommand{\con}[1]{\textup{#1}}
 \newcommand{\var}[1]{\textit{#1}}
 
@@ -139,7 +150,7 @@
   comment=[l]{//},morecomment=[s]{/*}{*/},commentstyle=\color{blue}\rm,%
   keywordstyle=\kw,%
   keywords={attribute,data,fragment,import,main,module,nested,property,rule,scheme,simplify,sort,%
-    space,static,sugar,symbol,tag,token,default,error,binds,as,template,@,data,variable},%
+    space,static,sugar,symbol,tag,token,default,error,binds,as,template,data,variable},%
   literate=%
     {⟦}{{\ensuremath{\llbracket}}}1 {⟧}{{\ensuremath{\rrbracket}}}1 {⟨}{{\ensuremath{\langle}}}1 {⟩}{{\ensuremath{\rangle}}}1 %
     {[}{{\ensuremath{[\mkern.5mu}}}1 {]}{{\ensuremath{\mkern.5mu]}}}1 {⟨}{{\ensuremath{\langle}}}1 {⟩}{{\ensuremath{\rangle}}}1 %
@@ -150,6 +161,8 @@
     {σ}{{\ensuremath{\sigma}}}1 {Σ}{{\ensuremath{\Sigma}}}1 {π}{{\ensuremath{\pi}}}1 {Π}{{\ensuremath{\Pi}}}1 %
     {λ̅}{{\ensuremath{\overline{\lambda}}}}1 {‾}{{\ensuremath{\overline{\phantom{x}}}}}1 %
     {¹}{{\ensuremath{^1}}}1 {²}{{\ensuremath{^2}}}2 %
+    {@0}{{\cw{@0}}}2 {@1}{{\cw{@1}}}2 {@2}{{\cw{@2}}}2 {@3}{{\cw{@3}}}2 {@4}{{\cw{@4}}}2 %
+    {@5}{{\cw{@5}}}2 {@6}{{\cw{@6}}}2 {@7}{{\cw{@7}}}2 {@8}{{\cw{@8}}}2 {@9}{{\cw{@9}}}2 %
 }[comments,strings,keywords]
 %%
 \lstnewenvironment{hacs}[1][]{\lstset{language=HACS,basewidth={.53em,.43em},columns=flexible,numberstyle=\scriptsize\color{blue},numberblanklines=false,firstnumber=auto,xrightmargin=1pc,#1}\upshape}{}

@@ -10,9 +10,7 @@ main sort Exp
   | ⟦ ⟨Exp@2⟩ * ⟨Exp@3⟩ ⟧@2
   | ⟦ ⟨INT⟩ ⟧@3
   | sugar ⟦ (⟨Exp#⟩) ⟧@3 → Exp#
-  ; 
-
-sort Name  | symbol ⟦ ⟨ID⟩ ⟧ ; //\label{code:stack:gram2}
+  ;  //\label{code:stack:gram2}
 
 // Stack code. \label{code:stack:code1}
 sort Code
