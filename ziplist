@@ -52,8 +52,6 @@ build/org/crsx/hacs/Cook.crs
 build/org/crsx/hacs/Hacs.c
 build/org/crsx/hacs/Hacs.crs
 build/org/crsx/hacs/Hacs.h
-build/org/crsx/hacs/Hacs_literals.h
-build/org/crsx/hacs/Hacs_literals.c
 build/org/crsx/hacs/Hacs_rules.c
 build/org/crsx/hacs/Hacs_sorts.c
 build/org/crsx/hacs/Hacs_symbols.c

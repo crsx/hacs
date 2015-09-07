@@ -175,7 +175,7 @@ energon1[hacs]$ ^textcolor{blue}{^texttt{make FROMZIP=1 install install-support}
 energon1[hacs]$ ^textcolor{blue}{^texttt{cd}}
 energon1[~]$ ^textcolor{blue}{^texttt{mkdir myfirst}}
 energon1[~]$ ^textcolor{blue}{^texttt{cd myfirst}}
-energon1[~]$ ^textcolor{blue}{^texttt{cp $HOME/.hacs/share/doc/hacs/samples/First.hx .}}
+energon1[~]$ ^textcolor{blue}{^texttt{cp $HOME/.hacs/share/doc/hacs/examples/First.hx .}}
 energon1[~]$ ^textcolor{blue}{^texttt{$HOME/.hacs/bin/hacs First.hx}}
 energon1[~]$ ^textcolor{blue}{^texttt{./First.run --scheme=Compile \}}
                ^textcolor{blue}{^texttt{--term="^{initial := 1; rate := 1.0; position := initial + rate * 60;^}"}}
@@ -280,9 +280,9 @@ appendix Manual~\ref{man:token} gives the formal rules.
 space [ \t\n] ;
 
 // Basic nonterminals.
-token INT      | ⟨DIGIT⟩+ ;
-token FLOAT    | ⟨DIGIT⟩* "." ⟨DIGIT⟩+ ;
-token ID       | ⟨LOWER⟩+ ('_'? ⟨INT⟩)* ;
+token INT  | ⟨DIGIT⟩+ ;
+token FLOAT  | ⟨DIGIT⟩* "." ⟨DIGIT⟩+ ;
+token ID  | ⟨LOWER⟩+ ('_'? ⟨INT⟩)* ;
 
 // Special categories of letters.
 token fragment DIGIT  | [0-9] ;
@@ -387,11 +387,11 @@ main sort Stat  | ⟦ ⟨ID⟩ := ⟨Exp⟩ ; ⟨Stat⟩ ⟧
                 | ⟦⟧ ;
 
 sort Exp  | ⟦ ⟨Exp⟩ + ⟨Exp@1⟩ ⟧
-          | ⟦ ⟨Exp@1⟩ * ⟨Exp@2⟩ ⟧@1
-          | ⟦ ⟨INT⟩ ⟧@2
-          | ⟦ ⟨FLOAT⟩ ⟧@2
-          | ⟦ ⟨ID⟩ ⟧@2
-          | sugar ⟦ ( ⟨Exp#⟩ ) ⟧@2 → Exp# ;
+           | ⟦ ⟨Exp@1⟩ * ⟨Exp@2⟩ ⟧@1
+           | ⟦ ⟨INT⟩ ⟧@2
+           | ⟦ ⟨FLOAT⟩ ⟧@2
+           | ⟦ ⟨ID⟩ ⟧@2
+           | sugar ⟦ ( ⟨Exp#⟩ ) ⟧@2 → Exp# ;
   \end{hacs}
   %%
   The grammar structures the input as two sorts: "Stat" for statements and "Exp" for expressions.
@@ -434,9 +434,9 @@ the same "Exp" language as in the example by something like the following concre
 specification (where we have also made the sugar concrete):
 %% 
 \begin{hacs}[xleftmargin=\parindent]
-sort Exp0  | ⟦ ⟨Exp0⟩ + ⟨Exp1⟩ ⟧ | ⟦ ⟨Exp1⟩ ⟧ ;
-sort Exp1  | ⟦ ⟨Exp1⟩ * ⟨Exp2⟩ ⟧ | ⟦ ⟨Exp2⟩ ⟧ ;
-sort Exp2  | ⟦ ⟨Int⟩ ⟧ | ⟦ ⟨Float⟩ ⟧ | ⟦ ⟨ID⟩ ⟧ | ⟦ ( ⟨Exp⟩ ) ⟧ ;
+sort Exp0 | ⟦ ⟨Exp0⟩ + ⟨Exp1⟩ ⟧ | ⟦ ⟨Exp1⟩ ⟧ ;
+sort Exp1 | ⟦ ⟨Exp1⟩ * ⟨Exp2⟩ ⟧ | ⟦ ⟨Exp2⟩ ⟧ ;
+sort Exp2 | ⟦ ⟨Int⟩ ⟧ | ⟦ ⟨Float⟩ ⟧ | ⟦ ⟨ID⟩ ⟧ | ⟦ ( ⟨Exp⟩ ) ⟧ ;
 \end{hacs}%|
 %%
 However, this grammar generates a different result tree, where the nodes have the four different
@@ -527,10 +527,10 @@ Manual~\ref{man:parsed} and \ref{man:raw}.
   %%
   \begin{hacs}[xleftmargin=\parindent]
 sort Exp  | ⟦ ⟨Exp⟩ + ⟨Exp@1⟩ ⟧
-          | ⟦ ⟨Exp@1⟩ * ⟨Exp@2⟩ ⟧@1
-          | ⟦ ⟨INT⟩ ⟧@2
-          | ⟦ ⟨FLOAT⟩ ⟧@2
-          | sugar ⟦ ( ⟨Exp#⟩ ) ⟧@2 → Exp# ;
+           | ⟦ ⟨Exp@1⟩ * ⟨Exp@2⟩ ⟧@1
+           | ⟦ ⟨INT⟩ ⟧@2
+           | ⟦ ⟨FLOAT⟩ ⟧@2
+           | sugar ⟦ ( ⟨Exp#⟩ ) ⟧@2 → Exp# ;
   \end{hacs}
   %%
   This grammar serves two purposes: to describe all token sequences that can be parsed, and to
@@ -539,10 +539,9 @@ sort Exp  | ⟦ ⟨Exp⟩ + ⟨Exp@1⟩ ⟧
   %%
   \begin{hacs}[xleftmargin=\parindent]
 sort Exp  | ⟦ ⟨Exp⟩ + ⟨Exp  ⟩ ⟧
-          | ⟦ ⟨Exp  ⟩ * ⟨Exp  ⟩ ⟧
-          | ⟦ ⟨INT⟩ ⟧
-          | ⟦ ⟨FLOAT⟩ ⟧
-          ;
+           | ⟦ ⟨Exp  ⟩ * ⟨Exp  ⟩ ⟧
+           | ⟦ ⟨INT⟩ ⟧
+           | ⟦ ⟨FLOAT⟩ ⟧ ;
   \end{hacs}
   %%
   We call this the \emph{abstract syntax} for the "Exp" sort, because all the helper information
@@ -636,7 +635,7 @@ Leftmost(⟦⟨FLOAT#⟩⟧)                 →   ⟦⟨FLOAT#⟩⟧ ;
   the result, as they have the wrong sort.
 \end{example}
 
-We call a syntax-directedscheme like "Leftmost" a \emph{semantic} translation scheme because it is
+We call a syntax-directed scheme like "Leftmost" a \emph{semantic} translation scheme because it is
 declared without any new syntax, \ie, without any use of "⟦⟧".
 
 \begin{commands}[invoke scheme]
@@ -719,7 +718,7 @@ The notation for defining a syntax-directed schema is as follows.
   default Leftmost(#)  →  # ;
   \end{hacs}
   %%
-  which explicitly calls out that if none of the two special cases apply then the scheme just
+  which explicitly calls out that if none of the two regular cases apply then the scheme just
   returns the contained expression.
   %%
 \end{example}
@@ -750,7 +749,7 @@ sort List | ⟦ ⟨Elem⟩ ⟨List⟩ ⟧ | ⟦⟧ ;
   %%
   \begin{hacs}[xleftmargin=\parindent,xrightmargin=\parindent]
 sort List | scheme ⟦ { ⟨List⟩ } ⟨List⟩ ⟧ ;
-⟦ { ⟨Elem#1⟩ ⟨List#2⟩ } ⟨List#3⟩ ⟧ → ⟦ ⟨Elem#1⟩ { ⟨List#2⟩ } ⟨List#3⟩ ⟧ ;
+⟦ { ⟨Elem#1⟩ ⟨List#2⟩ } ⟨List#3⟩ ⟧   →  ⟦ ⟨Elem#1⟩ { ⟨List#2⟩ } ⟨List#3⟩ ⟧ ;
 ⟦ { } ⟨List#⟩ ⟧ → # ;
   \end{hacs}
   %%
@@ -770,7 +769,7 @@ assembler instructions.
 
 \begin{figure}[p]
   \inputhacs[texcl,mathescape,xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/Stack.hx}
-  \caption{\emph{samples/Stack.hx}.}
+  \caption{\emph{examples/Stack.hx}.}
   \label{fig:stack}
 \end{figure}
 
@@ -1842,7 +1841,7 @@ ListLength2(⟦ ⟧, #n) → #n ;
 
 \begin{figure}[t]
   \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/MakeToken.hx}
-  \caption{\emph{samples/MakeToken.hx}.}
+  \caption{\emph{examples/MakeToken.hx}.}
   \label{fig:maketoken}
 \end{figure}
 
@@ -1877,7 +1876,7 @@ in the following example.
 
 \begin{figure}[p]
   \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/Desk.hx}
-  \caption{\emph{samples/Desk.hx}.}
+  \caption{\emph{examples/Desk.hx}.}
   \label{fig:desk}
 \end{figure}
 
@@ -1924,7 +1923,7 @@ representation.  In this section we work through some examples of this.
 
 \begin{figure}[p]
   \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right,texcl]{../samples/Symbols.hx}
-  \caption{\emph{samples/Symbols.hx}.}
+  \caption{\emph{examples/Symbols.hx}.}
   \label{fig:symbols}
 \end{figure}
 
@@ -2727,7 +2726,12 @@ space [ \t\f\r\n] | nested "/*" "*/" | "//" .* ;
 
   \item \verb"--output="\emph{file} sends the input to \emph{file} (the default is the standard output).
 
-  \item \verb"--errors" reports details of errors found by subprocesses.
+  \item \verb"--errors" (or \verb'-e') reports details of errors found by subprocesses.
+
+  \item \verb"--keep" (or \verb'-k') reports details of errors found by subprocesses.
+
+  \item \verb"--interpret" uses the much slower \emph{interpreted} version of \HAX and activates the
+    following options.
 
   \item \verb"--verbose="\emph{n} sets the verbosity of the underlying \CRSX rewrite engine to $n$. The
     default is 0 (quiet) but 1--3 are useful (above 3 you get a lot of low level diagnostic output).

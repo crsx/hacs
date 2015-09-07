@@ -34,7 +34,8 @@ gitclean :: realclean
 
 # External library setup.
 ifndef CRSXJAR
-CRSXVERSION = 3.3.2.1
+CRSXVERSION = 3.3.0.6
+#CRSXVERSION = 3.3.2.1
 CRSXJAR = $(abspath ../lib/crsx-$(CRSXVERSION).jar)
 all :: $(CRSXJAR)
 endif
@@ -252,13 +253,20 @@ $(BUILD)/lib/hacs/HacsRewriter : $(BUILD)/org/crsx/hacs/HacsRewriter
 	@mkdir -p $(BUILD)/lib/hacs
 	cp $(BUILD)/org/crsx/hacs/HacsRewriter $(BUILD)/lib/hacs
 
-$(BUILD)/org/crsx/hacs/HacsRewriter: $(addprefix $(BUILD)/org/crsx/hacs/Hacs, .o _literals.o _sorts.o _rules.o _symbols.o) $(addprefix $(BUILD)/org/crsx/hacs/, crsx.o crsx_scan.o linter.o prof.o)
+#$(BUILD)/org/crsx/hacs/HacsRewriter: $(addprefix $(BUILD)/org/crsx/hacs/Hacs, .o _literals.o _sorts.o _rules.o _symbols.o) $(addprefix $(BUILD)/org/crsx/hacs/, crsx.o crsx_scan.o linter.o prof.o)
+#
+#$(BUILD)/org/crsx/hacs/Hacs.o: $(BUILD)/org/crsx/hacs/Hacs.c $(BUILD)/org/crsx/hacs/Hacs.h $(BUILD)/org/crsx/hacs/Hacs_literals.h $(BUILD)/share/hacs/crsx.h $(BUILD)/share/hacs/linter.h
+#$(BUILD)/org/crsx/hacs/Hacs_literals.o: $(BUILD)/org/crsx/hacs/Hacs_literals.c $(BUILD)/org/crsx/hacs/Hacs.h $(BUILD)/org/crsx/hacs/Hacs_literals.h $(BUILD)/share/hacs/crsx.h
+#$(BUILD)/org/crsx/hacs/Hacs_sorts.o: $(BUILD)/org/crsx/hacs/Hacs_sorts.c $(BUILD)/org/crsx/hacs/Hacs.h $(BUILD)/org/crsx/hacs/Hacs_literals.h $(BUILD)/share/hacs/crsx.h
+#$(BUILD)/org/crsx/hacs/Hacs_rules.o: $(BUILD)/org/crsx/hacs/Hacs_rules.c $(BUILD)/org/crsx/hacs/Hacs.h $(BUILD)/org/crsx/hacs/Hacs_literals.h $(BUILD)/share/hacs/crsx.h
+#$(BUILD)/org/crsx/hacs/Hacs_symbols.o: $(BUILD)/org/crsx/hacs/Hacs_symbols.c $(BUILD)/org/crsx/hacs/Hacs.h $(BUILD)/org/crsx/hacs/Hacs_literals.h $(BUILD)/share/hacs/crsx.h
 
-$(BUILD)/org/crsx/hacs/Hacs.o: $(BUILD)/org/crsx/hacs/Hacs.c $(BUILD)/org/crsx/hacs/Hacs.h $(BUILD)/org/crsx/hacs/Hacs_literals.h $(BUILD)/share/hacs/crsx.h $(BUILD)/share/hacs/linter.h
-$(BUILD)/org/crsx/hacs/Hacs_literals.o: $(BUILD)/org/crsx/hacs/Hacs_literals.c $(BUILD)/org/crsx/hacs/Hacs.h $(BUILD)/org/crsx/hacs/Hacs_literals.h $(BUILD)/share/hacs/crsx.h
-$(BUILD)/org/crsx/hacs/Hacs_sorts.o: $(BUILD)/org/crsx/hacs/Hacs_sorts.c $(BUILD)/org/crsx/hacs/Hacs.h $(BUILD)/org/crsx/hacs/Hacs_literals.h $(BUILD)/share/hacs/crsx.h
-$(BUILD)/org/crsx/hacs/Hacs_rules.o: $(BUILD)/org/crsx/hacs/Hacs_rules.c $(BUILD)/org/crsx/hacs/Hacs.h $(BUILD)/org/crsx/hacs/Hacs_literals.h $(BUILD)/share/hacs/crsx.h
-$(BUILD)/org/crsx/hacs/Hacs_symbols.o: $(BUILD)/org/crsx/hacs/Hacs_symbols.c $(BUILD)/org/crsx/hacs/Hacs.h $(BUILD)/org/crsx/hacs/Hacs_literals.h $(BUILD)/share/hacs/crsx.h
+$(BUILD)/org/crsx/hacs/HacsRewriter: $(addprefix $(BUILD)/org/crsx/hacs/Hacs, .o _sorts.o _rules.o _symbols.o) $(addprefix $(BUILD)/org/crsx/hacs/, crsx.o crsx_scan.o linter.o prof.o)
+
+$(BUILD)/org/crsx/hacs/Hacs.o: $(BUILD)/org/crsx/hacs/Hacs.c $(BUILD)/org/crsx/hacs/Hacs.h $(BUILD)/share/hacs/crsx.h $(BUILD)/share/hacs/linter.h
+$(BUILD)/org/crsx/hacs/Hacs_sorts.o: $(BUILD)/org/crsx/hacs/Hacs_sorts.c $(BUILD)/org/crsx/hacs/Hacs.h $(BUILD)/share/hacs/crsx.h
+$(BUILD)/org/crsx/hacs/Hacs_rules.o: $(BUILD)/org/crsx/hacs/Hacs_rules.c $(BUILD)/org/crsx/hacs/Hacs.h $(BUILD)/share/hacs/crsx.h
+$(BUILD)/org/crsx/hacs/Hacs_symbols.o: $(BUILD)/org/crsx/hacs/Hacs_symbols.c $(BUILD)/org/crsx/hacs/Hacs.h $(BUILD)/share/hacs/crsx.h
 
 $(BUILD)/org/crsx/hacs/crsx.o : $(BUILD)/org/crsx/hacs/crsx.c $(BUILD)/share/hacs/crsx.h $(BUILD)/share/hacs/prof.h $(BUILD)/share/hacs/invariant.h
 $(BUILD)/org/crsx/hacs/crsx_scan.o : $(BUILD)/org/crsx/hacs/crsx_scan.c $(BUILD)/share/hacs/crsx.h
@@ -268,8 +276,8 @@ $(BUILD)/org/crsx/hacs/prof.o : $(BUILD)/org/crsx/hacs/prof.c $(BUILD)/share/hac
 ifndef FROMZIP
 
 $(BUILD)/org/crsx/hacs/Hacs.h: $(BUILD)/org/crsx/hacs/Hacs.dr.gz
-$(BUILD)/org/crsx/hacs/Hacs_literals.h: $(BUILD)/org/crsx/hacs/Hacs_literals.dr.gz
-$(BUILD)/org/crsx/hacs/Hacs_literals.c: $(BUILD)/org/crsx/hacs/Hacs_literals.dr.gz
+#$(BUILD)/org/crsx/hacs/Hacs_literals.h: $(BUILD)/org/crsx/hacs/Hacs_literals.dr.gz
+#$(BUILD)/org/crsx/hacs/Hacs_literals.c: $(BUILD)/org/crsx/hacs/Hacs_literals.dr.gz
 $(BUILD)/org/crsx/hacs/Hacs_sorts.c: $(BUILD)/org/crsx/hacs/Hacs.dr.gz
 $(BUILD)/org/crsx/hacs/Hacs_rules.c: $(BUILD)/org/crsx/hacs/Hacs.dr.gz
 $(BUILD)/org/crsx/hacs/Hacs_symbols.c: $(BUILD)/org/crsx/hacs/Hacs.dr.gz
@@ -313,7 +321,9 @@ $(BUILD)/bin/hacs: hacs.sh.template
 # HACS documents.
 
 DOCUMENTS = README.md
-SAMPLES = samples/First.hx samples/Bool.hx samples/IsCat.hx samples/WordSet.hx samples/WordMap.hx samples/WordPairs.hx samples/WordSubst.hx
+SAMPLES = samples/First.hx samples/Stack.hx samples/SZ.hx samples/Bool.hx samples/LetrecMap.hx samples/Lambda.hx \
+	samples/CPS.hx samples/MakeToken.hx samples/Desk.hx samples/Symbols.hx \
+	samples/IsCat.hx samples/WordSet.hx samples/WordMap.hx samples/WordPairs.hx samples/WordSubst.hx
 
 all :: $(addprefix $(BUILD)/share/doc/hacs/,$(notdir $(DOCUMENTS))) $(addprefix $(BUILD)/share/doc/hacs/examples/,$(notdir $(SAMPLES)))
 

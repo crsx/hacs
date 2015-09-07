@@ -812,7 +812,7 @@ C-Crsxify2[
 ;
     C-AddComputedConstructor[$String<!--Constructor-->, $List[HxScopeSort], DeclarationMap] :: DeclarationMap;
     -[Data[#Constructor]]:
-    C-AddComputedConstructor[#Constructor, #Scopes, {#DM; "All$Constructor2Sort" : DME_N2N[#Constructor2Sort]; "All$Constructor2ScopeSorts" : DME_N2SS[#Constructor2ScopeSorts]}DM]
+    C-AddComputedConstructor[#Constructor, #Scopes, {#DM; "All%Constructor2Sort" : DME_N2N[#Constructor2Sort]; "All%Constructor2ScopeSorts" : DME_N2SS[#Constructor2ScopeSorts]}DM]
     →
     C-AddComputedConstructor2[SetName[#Constructor2Sort, #Constructor, "Computed"], AddName2ScopeSorts[#Constructor2ScopeSorts, #Constructor, #Scopes], {#DM}DM]
     ;
@@ -820,7 +820,7 @@ C-Crsxify2[
     C-AddComputedConstructor2[NameMap, Name2ScopeSorts, DeclarationMap] :: DeclarationMap;
     C-AddComputedConstructor2[#Constructor2Sort, #Constructor2ScopeSorts, {#DM}DM]
     →
-    {#DM; "All$Constructor2Sort" : DME_N2N[#Constructor2Sort]; "All$Constructor2ScopeSorts" : DME_N2SS[#Constructor2ScopeSorts]}DM
+    {#DM; "All%Constructor2Sort" : DME_N2N[#Constructor2Sort]; "All%Constructor2ScopeSorts" : DME_N2SS[#Constructor2ScopeSorts]}DM
     ;
 
     /// C-AddVirtualConstructor[$String<!--Constructor-->, $String<!--ModuleName-->, $String<!--Sort-->, $List[HxScopeSort], DeclarationMap] :: DeclarationMap;
@@ -831,7 +831,7 @@ C-Crsxify2[
     /// 
     /// C-AddVirtualConstructor1[$String<!--Constructor-->, $String<!--ModuleLastName-->, $String<!--Sort-->, $List[HxScopeSort], DeclarationMap] :: DeclarationMap;
     /// -[Data[#Constructor,#LastName]] :
-    /// C-AddVirtualConstructor1[#Constructor, #LastName, #Sort, #Scopes, {#DM; "All$Constructor2Sort" : DME_N2N[#Constructor2Sort]; "All$Constructor2ScopeSorts" : DME_N2SS[#Constructor2ScopeSorts]}DM]
+    /// C-AddVirtualConstructor1[#Constructor, #LastName, #Sort, #Scopes, {#DM; "All%Constructor2Sort" : DME_N2N[#Constructor2Sort]; "All%Constructor2ScopeSorts" : DME_N2SS[#Constructor2ScopeSorts]}DM]
     /// →
     /// ///C-AddVirtualConstructor2[SetName[#Constructor2Sort, $[:,#LastName,"$",#Constructor], #Sort], AddName2ScopeSorts[#Constructor2ScopeSorts, $[:,#LastName,"$",#Constructor], #Scopes], {#DM}DM]
     /// C-AddVirtualConstructor2[SetName[#Constructor2Sort, #Constructor, #Sort], AddName2ScopeSorts[#Constructor2ScopeSorts, #Constructor, #Scopes], {#DM}DM]
@@ -840,7 +840,7 @@ C-Crsxify2[
     /// C-AddVirtualConstructor2[NameMap, Name2ScopeSorts, DeclarationMap] :: DeclarationMap;
     /// C-AddVirtualConstructor2[#Constructor2Sort, #Constructor2ScopeSorts, {#DM}DM]
     /// →
-    /// {#DM; "All$Constructor2Sort" : DME_N2N[#Constructor2Sort]; "All$Constructor2ScopeSorts" : DME_N2SS[#Constructor2ScopeSorts]}DM
+    /// {#DM; "All%Constructor2Sort" : DME_N2N[#Constructor2Sort]; "All%Constructor2ScopeSorts" : DME_N2SS[#Constructor2ScopeSorts]}DM
     /// ;
 
 C-Crsxify2[DeclarationMap] :: Text ;

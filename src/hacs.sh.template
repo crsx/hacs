@@ -4,8 +4,6 @@
 
 echo "HACS %%%HACSVERSION%%%"
 
-usage="Usage: $0 [--keep|--verbose] Module.hx"
-
 # Identify local relative installation, if any.
 bindir=$(dirname "$0")
 if [ -d "$bindir" -a -d "$bindir/../share/hacs" ]; then
@@ -56,7 +54,17 @@ done
 
 # Extract HACS module argument.
 if [ ! -f "$file" ]; then
-    echo $usage
+    cat >&2 <<EOF
+Usage: hacs [options] File.hx
+Options:
+ --sort=Sort      sets input sort
+ --scheme=Scheme  use Scheme to transform input
+ --term=text      use the text as the input
+ --input=file     read input from file
+ --output=file    sends the output to file (default is stdout)
+ -e|--errors      reports details of errors found by subprocesses
+ -k|--keep        keep intermediate files (for investigating bugs)
+EOF
     exit 1
 fi
 dirname=$(dirname $file)
