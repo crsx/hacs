@@ -244,44 +244,81 @@ YellowGreen,.604,.804,.196}
 \lstset{basicstyle=\ttfamily}
 
 %% HACS.
-\def\Identifier#1{#1}
-\def\Keyword#1{\textsf{\bf#1}}
+
+%% Inside listings \Identifier handles these cases:
+%% - #xx_n → \mv{xx}\ensuremath{_{\text{n}}}
+%% - $xx_n → \kw{xx}\ensuremath{_{\text{n}}}
+%% - Xx_n → \con{xx}\ensuremath{_{\text{n}}}
+%% - xx_n → \var{xx}\ensuremath{_{\text{n}}}
+%% - x_n → \ensuremath{x_{n}}
+{\makeatletter \catcode`!=6 \catcode`\#=11 \catcode`\$=11 \catcode`\_=11 %
+\gdef\justh@sh{\lst@um# }
+\gdef\just@t{\lst@um @ }
+\gdef\justd@llar{\lst@um$ }
+\gdef\just@nder{\lst@um_ }
+\gdef\Identifier!1{\expandafter\Identifier@two\the\lst@token \lst@um_ @}
+\gdef\Identifier@two!1!2\lst@um_!3@{{%
+  \def\1{!1}\def\2{!2}\def\3{!3}%
+  %\message{FIRST=\meaning\1 SECOND=\meaning\2 THIRD=\meaning\3}%
+  \ifx\3\empty\else
+    \expandafter\Identifier@subscript\3@%
+  \fi
+  \ifx\1\justh@sh              \mv{\expandafter\def\csname lst@um-\endcsname{\text{-}}\2\3}%g
+  \else\ifx\1\justd@llar
+    \ifx\2\empty               \kw{\$\3}%
+    \else                      \kw{\expandafter\def\csname lst@um-\endcsname{\text{-}}\2\3}%
+    \fi
+  \else\ifx\1\just@at
+    \kw{\expandafter\def\csname lst@um-\endcsname{\text{-}}\1\2\3}%
+  \else\ifx\1\just@nder
+    \con{\expandafter\def\csname lst@um-\endcsname{\text{-}}\1\2\3}%
+  \else
+    \edef\4{`\1=\noexpand\the\noexpand\uccode`\1}%
+    \expandafter\ifnum\4\relax \con{\expandafter\def\csname lst@um-\endcsname{\text{-}}\1\2\3}%
+    \else\ifx\2\empty          \ensuremath{\1\3}%
+    \else                      \var{\expandafter\def\csname lst@um-\endcsname{\text{-}}\1\2\3}%
+  \fi\fi\fi\fi\fi\fi}}
+\gdef\Identifier@subscript!1\lst@um_ @{\def\3{\ensuremath{\sb{\textup{!1}}}}}
+}%$
+\newcommand{\mv}[1]{\textsc{#1}}
+%\newcommand{\kw}[1]{\text{\rm\textbf{\color{gray}#1}}}
+\newcommand{\kw}[1]{\textsf{\bf\color{gray}#1}}
+\newcommand{\cw}[1]{\textsf{\color{gray}#1}}
+\newcommand{\con}[1]{\textup{#1}}
+\newcommand{\var}[1]{\textit{#1}}
 
 \lstdefinelanguage{HACS}{basicstyle=\fontfamily{ccr}\selectfont,%
   extendedchars=true,inputencoding=utf8,sensitive,%
   identifierstyle=\Identifier,%
-  string=[d]{"},morestring=[d]{'},upquote=true,stringstyle=\ttfamily,showstringspaces=true,%
+  string=[d]{"},morestring=[d]{'},upquote=true,showstringspaces=false,%
   comment=[l]{//},morecomment=[s]{/*}{*/},commentstyle=\color{blue}\rm,%
-  keywordstyle=\Keyword,%
-  keywords={attribute,data,fragment,import,module,nested,property,rule,scheme,simplify,sort,%
-    space,static,sugar,symbol,tag,token,default,error},%
+  keywordstyle=\kw,%
+  keywords={attribute,data,fragment,import,main,module,nested,property,rule,scheme,simplify,sort,%
+    space,static,sugar,symbol,tag,token,default,error,binds,as,template,data,variable},%
   literate=%
     {⟦}{{\ensuremath{\llbracket}}}1 {⟧}{{\ensuremath{\rrbracket}}}1 {⟨}{{\ensuremath{\langle}}}1 {⟩}{{\ensuremath{\rangle}}}1 %
+    {[}{{\ensuremath{[\mkern.5mu}}}1 {]}{{\ensuremath{\mkern.5mu]}}}1 {⟨}{{\ensuremath{\langle}}}1 {⟩}{{\ensuremath{\rangle}}}1 %
     {→}{{\ensuremath{\rightarrow}}}2 {↑}{{\ensuremath{\uparrow}}}1 {↓}{{\ensuremath{\downarrow}}}1 {¬}{{\ensuremath{\lnot}}}2 {¶}{{\P}}1 %
     {ε}{{\ensuremath{\varepsilon}}}1 {…}{{\ensuremath{\dots}}}2 {∧}{{\ensuremath{\!\wedge}}}2 {∨}{{\ensuremath{\!\vee}}}2 {↦}{{\ensuremath{\mapsto}}}2 %
+    {α}{{\ensuremath{\alpha}}}1 {β}{{\ensuremath{\beta}}}1 {γ}{{\ensuremath{\gamma}}}1 %
+    {λ}{{\ensuremath{\lambda}}}1 {Λ}{{\ensuremath{\Lambda}}}1 %
+    {σ}{{\ensuremath{\sigma}}}1 {Σ}{{\ensuremath{\Sigma}}}1 {π}{{\ensuremath{\pi}}}1 {Π}{{\ensuremath{\Pi}}}1 %
+    {λ̅}{{\ensuremath{\overline{\lambda}}}}1 {‾}{{\ensuremath{\overline{\phantom{x}}}}}1 %
     {¹}{{\ensuremath{^1}}}1 {²}{{\ensuremath{^2}}}2 %
+    {@0}{{\cw{@0}}}2 {@1}{{\cw{@1}}}2 {@2}{{\cw{@2}}}2 {@3}{{\cw{@3}}}2 {@4}{{\cw{@4}}}2 %
+    {@5}{{\cw{@5}}}2 {@6}{{\cw{@6}}}2 {@7}{{\cw{@7}}}2 {@8}{{\cw{@8}}}2 {@9}{{\cw{@9}}}2 %
+    {@}{{\cw{@}}}1 %
 }[comments,strings,keywords]
 %%
-\lstnewenvironment{hacs}[1][]{\lstset{language=HACS,basewidth={.55em,.45em},columns=flexible,#1}\upshape}{}
-\newcommand\inputhacs[2][]{\lstinputlisting[language=HACS,basewidth={.55em,.45em},columns=flexible,#1]{#2}}
+\lstnewenvironment{hacs}[1][]{\lstset{language=HACS,basewidth={.53em,.43em},columns=flexible,numberstyle=\scriptsize\color{blue},numberblanklines=false,firstnumber=auto,xrightmargin=1pc,#1}\upshape}{}
+\newcommand\inputhacs[2][]{\lstinputlisting[language=HACS,basewidth={.53em,.43em},columns=flexible,numberstyle=\scriptsize,numberblanklines=false,xrightmargin=1pc,#1]{#2}}
 \newcommand\hacsc{\lstinline[language=HACS]}
-%\lstMakeShortInline[language=HACS,columns=fullflexible]"
+\newcommand\h{\lstinline[language=HACS]}
 
-%% Tiger.
-\lstdefinelanguage{Tiger}{basicstyle=\normalsize,%
-  extendedchars=true,inputencoding=utf8,sensitive,%
-  identifierstyle=\textit,%
-  string=[d]{"},upquote=true,stringstyle=\ttfamily,showstringspaces=true,%
-  comment=[s]{/*}{*/},commentstyle=\color{gray}\rm,%
-  keywordstyle=\bfseries,%
-  keywords={type,array,of,var,function,nil,let,in,end,if,then,else,break,while,do},%
-  literate=%
-    {≡}{{\ensuremath{\equiv}}}1 %
-}[comments,strings,keywords]
-%%
-\lstnewenvironment{tiger}[1][]{\lstset{language=Tiger,basewidth={.5em,.35em},columns=flexible,#1}\upshape}{}
-\newcommand\inputtiger[2][]{\lstinputlisting[language=Tiger,basewidth={.5em,.35em},columns=flexible,#1]{#2}}
-\newcommand\tigerc{\lstinline[language=Tiger]}
+%% JavaScript etc...
+
+\def\Identifier#1{#1}
+\def\Keyword#1{\textsf{\bf#1}}
 
 \lstdefinelanguage{JavaScript}{
   keywords={break, case, catch, continue, debugger, default, delete, do, else, false, finally, for, function, if, in, instanceof, new, null, return, switch, this, throw, true, try, typeof, var, while, with, class, export, throw, implements, import, this, extends},

@@ -12,7 +12,7 @@
 \usepackage[margin=1in]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage{charter}
-\SelectTips{eu}{}
+\SelectTips{eu}{11}
 \bibliographystyle{plainurl}
 
 %% Topmatter.
@@ -861,7 +861,7 @@ Unif(Unif(Int, Float), Int) → Unif(Float, Int) → Float
 
 \begin{figure}[p]
   \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/SZ.hx}
-  \caption{Peano numbers with addition and lists (\emph{SZ.hx}).}
+  \caption{Peano numbers with addition and lists (\emph{examples/SZ.hx}).}
   \label{fig:sz}
 \end{figure}
 
@@ -1128,14 +1128,21 @@ sort Exp | ↑t ;           // expressions have an associated synthesized type, 
 
 \begin{figure}[p]
   \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/Bool.hx}
-  \caption{Synthesizing the value of a Boolean expression.}
+  \caption{Synthesizing the value of a Boolean expression (\emph{examples/Bool.hx}).}
   \label{fig:bool}
 \end{figure}
 
 \begin{example}\label{ex:bool}
   Figure~\ref{fig:bool} shows an implementation of Boolean algebra implemented with synthesized
   attributes. Notice how the main "Eval" scheme is defined to ``request'' the value of the
-  synthesized attribute, which then triggers the evaluation of the boolean expression.
+  synthesized attribute, which then triggers the evaluation of the boolean expression. An example
+  run would be
+  \begin{code}[commandchars=\\\{\}]
+$ \textcolor{blue}{hacs Bool.hx}
+…
+$ \textcolor{blue}{./Bool.run --scheme=Eval --term='t|(!f)'}
+ t
+  \end{code}
 \end{example}
 
 Finally, note that if you have multiple synthetic attributes then a synthesis rule \emph{only} adds
@@ -1413,7 +1420,7 @@ map.
 
 \begin{figure}[p]
   \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/LetrecMap.hx}
-  \caption{Synthesizing and then inheriting an environment.}
+  \caption{Synthesizing and then inheriting an environment (\emph{examples/LetrecMap.hx}).}
   \label{fig:letrec}
   \vspace*{2em}
   \begin{equation*}
@@ -1628,11 +1635,18 @@ fragments with scopes inside. These are the features where the ``H'' of \HAX mat
 
   \end{itemize}
   %%
+  \begin{code}[commandchars=\\\{\}]
+$ \textcolor{blue}{hacs Lambda.hx}
+…
+$ \textcolor{blue}{./Lambda.run --sort=T --term='(λx.x)y'}
+ y
+  \end{code}
+  %%
 \end{example}
 
 \begin{figure}[t]
   \inputhacs[texcl,mathescape,xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/Lambda.hx}
-  \caption{λ calculus.}
+  \caption{λ calculus (\emph{examples/Lambda.hx}).}
   \label{fig:lambda}
 \end{figure}
 
@@ -1763,19 +1777,6 @@ be globally unique? By default, \HAX follows the following rules:
 \end{itemize}
 
 
-
-
-%% TODO: CPS transform.
-%%\begin{example}[CPS]\label{ex:cps}
-%%  
-%%\end{example}
-
-%% TODO: symbolic derivation example
-%%\begin{example}[symbolic derivation]\label{ex:deriv}
-%%  
-%%\end{example}
-
-
 \section{Compile-time Computations and Errors}
 \label{sec:comp}
 
@@ -1884,8 +1885,6 @@ in the following example.
   Figure~\ref{fig:desk} implements a simple integer desk calculator. Notice how it uses the "$"
   marker to import a token as an integer value. %$
 \end{example}
-
-
 
 
 \section{Examples}

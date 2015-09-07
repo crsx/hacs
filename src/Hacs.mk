@@ -261,37 +261,37 @@ ifndef FROMZIP
 
 # Dispatchify.
 
-#%.dr.gz %_literals.dr.gz : %.crs
-%.dr.gz : %.crs
+#%.dr.gz : %.crs
+%.dr.gz %_literals.dr.gz : %.crs
 	$(RUNCRSX) rules='$<' sortify dispatchify reify=$*.dr simple-terms omit-linear-variables canonical-variables
 	@gzip <$*.dr >$*.dr.gz
-	#@gzip <$*_literals.dr >$*_literals.dr.gz
+	@gzip <$*_literals.dr >$*_literals.dr.gz
 
 # Generate C files.
 
-#%_literals.h : %_literals.dr.gz
-#	@gunzip <$< >$*_literals.dr
-#	$(CRSXC) wrapper=ComputeLiteralsHeader input=$*_literals.dr output=$@.tmp
-#	$(GNUSED) 's/222222222/9/g' '$@.tmp' >'$@'
-#	@rm -f '$*_literals.dr' '$@.tmp'
-
-#%.h : %.dr.gz %_literals.h
+#%.h : %.dr.gz
 #	@gunzip <$< >$*.dr
-#	$(CRSXC) wrapper=ComputeHeader HEADERS="crsx.h;$(notdir $*)_literals.h" input=$*.dr output=$@.tmp
+#	$(CRSXC) wrapper=ComputeHeader HEADERS="crsx.h" input=$*.dr output=$@.tmp
 #	$(GNUSED) 's/222222222/9/g' '$@.tmp' >'$@'
 #	@rm -f '$*.dr' '$@.tmp'
 
-%.h : %.dr.gz
+%_literals.h : %_literals.dr.gz
+	@gunzip <$< >$*_literals.dr
+	$(CRSXC) wrapper=ComputeLiteralsHeader input=$*_literals.dr output=$@.tmp
+	$(GNUSED) 's/222222222/9/g' '$@.tmp' >'$@'
+	@rm -f '$*_literals.dr' '$@.tmp'
+
+%.h : %.dr.gz %_literals.h
 	@gunzip <$< >$*.dr
-	$(CRSXC) wrapper=ComputeHeader HEADERS="crsx.h" input=$*.dr output=$@.tmp
+	$(CRSXC) wrapper=ComputeHeader HEADERS="crsx.h;$(notdir $*)_literals.h" input=$*.dr output=$@.tmp
 	$(GNUSED) 's/222222222/9/g' '$@.tmp' >'$@'
 	@rm -f '$*.dr' '$@.tmp'
 
-#%_literals.c : %_literals.dr.gz
-#	@gunzip <$< >$*_literals.dr
-#	$(CRSXC) rules=literals.crs wrapper=ComputeLiterals MODULE="$(notdir $*)" input=$*_literals.dr output=$@.tmp
-#	$(GNUSED) 's/222222222/9/g' '$@.tmp' >'$@'
-#	@rm -f '$*_literals.dr' '$@.tmp'
+%_literals.c : %_literals.dr.gz
+	@gunzip <$< >$*_literals.dr
+	$(CRSXC) rules=literals.crs wrapper=ComputeLiterals MODULE="$(notdir $*)" input=$*_literals.dr output=$@.tmp
+	$(GNUSED) 's/222222222/9/g' '$@.tmp' >'$@'
+	@rm -f '$*_literals.dr' '$@.tmp'
 
 %_sorts.c : %.dr.gz
 	@gunzip <$< >$*.dr
@@ -326,13 +326,13 @@ endif
 
 %.o : %.c
 	sed -n 's/^#include "\(.*\)"/\1/p' $< | while read f; do echo $(MAKE) $(dir $<)$$f; done
-	cd $(dir $<) && $(X) $(CC) -std=c99 -DOMIT_TIMESPEC -DGENERIC_LOADER -I$(SHAREDIR) -I$(BUILD)/share/hacs $(CFLAGS) -c $(notdir $<)
+	cd $(dir $<) && $(X) $(CC) -std=c99 -DOMIT_TIMESPEC -DGENERIC_LOADER -I$(BUILD)/share/hacs -I$(SHAREDIR) $(CFLAGS) -c $(notdir $<)
 
-#%Rewriter : %.o %_sorts.o %_rules.o %_symbols.o %_literals.o
-#	cd $(dir $<) && $(X) $(CC) -std=c99 $(CFLAGS) -o $(notdir $*)Rewriter $(notdir $*).o $(notdir $*)_sorts.o $(notdir $*)_rules.o $(notdir $*)_symbols.o $(notdir $*)_literals.o crsx.o crsx_scan.o linter.o prof.o -licuuc -licudata -licui18n -licuio
+#%Rewriter : %.o %_sorts.o %_rules.o %_symbols.o
+#	cd $(dir $<) && $(X) $(CC) -std=c99 $(CFLAGS) -o $(notdir $*)Rewriter $(notdir $*).o $(notdir $*)_sorts.o $(notdir $*)_rules.o $(notdir $*)_symbols.o crsx.o crsx_scan.o linter.o prof.o -licuuc -licudata -licui18n -licuio
 
-%Rewriter : %.o %_sorts.o %_rules.o %_symbols.o
-	cd $(dir $<) && $(X) $(CC) -std=c99 $(CFLAGS) -o $(notdir $*)Rewriter $(notdir $*).o $(notdir $*)_sorts.o $(notdir $*)_rules.o $(notdir $*)_symbols.o crsx.o crsx_scan.o linter.o prof.o -licuuc -licudata -licui18n -licuio
+%Rewriter : %.o %_sorts.o %_rules.o %_symbols.o %_literals.o
+	cd $(dir $<) && $(X) $(CC) -std=c99 $(CFLAGS) -o $(notdir $*)Rewriter $(notdir $*).o $(notdir $*)_sorts.o $(notdir $*)_rules.o $(notdir $*)_symbols.o $(notdir $*)_literals.o crsx.o crsx_scan.o linter.o prof.o -licuuc -licudata -licui18n -licuio
 
 crsx.o crsx_scan.o :
 	@if [ -f $(LIBDIR)/crsx.o ]; then cp $(LIBDIR)/crsx.o $(LIBDIR)/crsx_scan.o .; \
