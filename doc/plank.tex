@@ -6,7 +6,7 @@
 %% Style.
 \usepackage{charter}
 \bibliographystyle{plain}
-\usepackage{geometry}
+\usepackage[margin=1in]{geometry}
 
 %% Topmatter.
 \title{ Higher-order Attribute Contraction Schemes \\ Core Calculus }
@@ -85,19 +85,20 @@ language.
 \begin{figure*}[t]
   \begin{align}
     \tag{Declaration}
-    D &::= \kw{sort}~S \,\kw\{\, C^{*\kw,} \,\kw\}
-    \bigm| \kw{attribute}~a~\set{AS}\,\kw;
-    \\[-1pt]\notag~&
-    \bigm| \kw{data}~c\,\kw(\,\set{BS}^{*\kw,}\,\kw)~a^*\,\kw;
-    \bigm| \kw{scheme}~f\,\kw(\,\set{BS}^{*\kw,}\,\kw)~a^*\,\kw;
-    \bigm| \kw{variable}~a^*\,\kw;
+    D &::= \kw{sort}~S\,\kw\{\, F^{*\kw,} \,\kw\}
+    \bigm| \kw{attribute}~a~\set{AF}\,\kw;
     \bigm| \kw{rule}~T~\kw{$→$}~T\,\kw;
     \\[\jot]
+    \tag{Form}
+    F &::= \kw{data}~c\,\kw(\,\set{BF}^{*\kw,}\,\kw)~a^*\,\kw;
+    \bigm| \kw{scheme}~f\,\kw(\,\set{BF}^{*\kw,}\,\kw)~a^*\,\kw;
+    \bigm| \kw{variable}~v^*\,\kw;
+    \\
     \tag{BindersSort}
-    \set{BS} &::= \kw[\,S^{*\kw,}\,\kw]\,S
+    \set{BF} &::= \kw[\,S^{*\kw,}\,\kw]\,S
     \\
     \tag{AttributeSort}
-    \set{AS} &::= \kw(\,S\,\kw)
+    \set{AF} &::= \kw(\,S\,\kw)
     \bigm| \kw\{\,S\,\kw:\,S\,\kw\}
     \\
     S &::= s\,\kw[\,S^{*\kw,}\,\kw]
@@ -112,7 +113,7 @@ language.
     \tag{Binders}
     B &::= \kw[\,v^{*\kw,}\,\kw]\,T
     \\
-    A &::= a~\set{V}
+    A &::= a~\set{AV}
     \tag{Attribute}
     \\
     \set{AV} &::= \kw(\,T\,\kw)
@@ -386,17 +387,17 @@ the notation less unwieldy.
 
 \begin{definition}
   %%
-  Given a sequence of declarations $\ov{D}$ and an attribute name~$a$, we define the following
+  Given a sequence of forms $\ov{F}$ and an attribute name~$a$, we define the following
   notions:
   %%
   \begin{enumerate}
 
-  \item $\op{carriers}(\ov{D}, a)$ is the set of all constructors $c$ for which there is a
-    declaration in $\ov{D}$ of the form ``$\kw{data}~c~…~a~…\kw;$'' or
+  \item $\op{carriers}(\ov{F}, a)$ is the set of all constructors $c$ for which there is a
+    form in $\ov{F}$ of the shape ``$\kw{data}~c~…~a~…\kw;$'' or
     ``$\kw{scheme}~c~…~a~…\kw;$.''
 
-  \item $\op{form}(\ov{D}, a)$ is the \set{AS} of the (single!) declaration
-    ``$\kw{attribute}~a~\set{AS}\kw;$.''
+  \item $\op{form}(\ov{D}, a)$ is the \set{AF} of the (single!) declaration
+    ``$\kw{attribute}~a~\set{AF}\kw;$.''
 
   \end{enumerate}
   %%
@@ -442,7 +443,7 @@ the notation less unwieldy.
     \qquad
     \dfrac
     { Γ, s[\ov{v}] ⊢ \ov{D} ⇒ Γ }
-    { Γ, s[\ov{v}] ⊢ \kw{attribute}~a~\set{AS}; \, \ov{D} ⇒ Γ[a ↦ ⟨\set{AS}, \ov{s}⟩] }
+    { Γ, s[\ov{v}] ⊢ \kw{attribute}~a~\set{AF}; \, \ov{D} ⇒ Γ[a ↦ ⟨\set{AF}, \ov{s}⟩] }
     \quad Γ(a)=⟨ε,\ov{s}⟩
 %
     \\[1ex]
