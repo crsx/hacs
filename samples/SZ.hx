@@ -20,7 +20,7 @@ module org.crsx.hacs.samples.SZ { //-*-hacs-*-
   Add(Zero, #2) →   #2 ;
   Add(Succ(#1), #2) →    Succ(Add(#1, #2)) ;
   Add(Pair(#11, #12), Pair(#21, #22)) →    Pair(Add(#11, #21), Add(#12, #22)) ;
-  Add(Plus(#11, #12), #2) →    Plus(#11, Add(#11, #2)) ;
+  Add(Plus(#11, #12), #2) →    Plus(#11, Add(#12, #2)) ;
  
   // Loading input into internal form.
   | scheme Load(Exp) ;
