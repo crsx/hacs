@@ -19,7 +19,7 @@ module org.crsx.hacs.tests.Symbols { //-*-hacs-*-
   // How to initialize counters.
   sort Computed | scheme Two ; Two → ⟦2⟧ ;
 
-  // Inerited attribute with set of seen symbols.
+  // Inherited attribute with set of seen symbols.
   attribute ↓los{S} ;
 
   // Helper scheme, passing counts of tokens and symbols!

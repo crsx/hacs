@@ -279,7 +279,7 @@ appendix Manual~\ref{man:token} gives the formal rules.
 // White space convention.
 space [ \t\n] ;
 
-// Basic nonterminals.
+// Basic terminals.
 token INT  | ⟨DIGIT⟩+ ;
 token FLOAT  | ⟨DIGIT⟩* "." ⟨DIGIT⟩+ ;
 token ID  | ⟨LOWER⟩+ ('_'? ⟨INT⟩)* ;
@@ -346,6 +346,7 @@ the next section.
 $ \textcolor{blue}{./First.run --sort=FLOAT --term=34.56}
 34.56
 \end{code}
+  Note that the term 34.56 could also have been provided enclosed in quotes, such as ''34.56'' or '34.56'.
   If there is an error, the lexical analyzer will inform us of this:
 \begin{code}[commandchars=^\{\}]
 $ ^textcolor{blue}{./First.run --sort=INT --term=34.56}
@@ -512,8 +513,21 @@ $ \textcolor{blue}{./First.run --sort=Exp --term="(2+(3*(4+5)))"}
   Notice that the printout differs slightly from the input term as it has been ``resugared'' from
   the AST with minimal insertion of parentheses.
   %%
+\begin{code}[commandchars=\\\{\}]
+$ \textcolor{blue}{./First.run --sort=Exp --term="2 ** 3"}
+Exception in thread "main" java.lang.RuntimeException: net.sf.crsx.CRSException: 
+  Encountered " "*" "* "" at line 1, column 4.
+Was expecting one of:
+    "(" ...
+    <T_INT> ...
+    <T_FLOAT> ...
+    <T_ID> ...
+\end{code}
+  %%
+  Similarly to the lexical analysis, the syntax analysis can return an error in the case that a term
+  provided does not satisfy the grammar.
+  %%
 \end{commands}
-
 
 \section{Abstract Syntax and Recursive Translation Schemes}
 \label{sec:schemes}
@@ -632,7 +646,8 @@ Leftmost(⟦⟨FLOAT#⟩⟧)                 →   ⟦⟨FLOAT#⟩⟧ ;
   is guaranteed (by the declaration) to return something of "Exp" sort. In the last two rules, we
   explicitly return the argument form of sort "Exp". Notice that in the last two rules, the pattern
   sets up "#" to be of sort "INT" and "FLOAT", respectively, thus we cannot use these directly as
-  the result, as they have the wrong sort.
+  the result, as they have the wrong sort. Rather, we use a syntax to obtain the correct sort by
+  making use of an appropriate production.
 \end{example}
 
 We call a syntax-directed scheme like "Leftmost" a \emph{semantic} translation scheme because it is
@@ -868,7 +883,7 @@ Unif(Unif(Int, Float), Int) → Unif(Float, Int) → Float
 \begin{example}
   Consider the complete \HAX script in Figure~\ref{fig:sz}. Lines 3--12 define a syntax of
   expressions with lists, sums, external references, and the Peano convention that "0" stands for
-  itself and "s"$n$ stands for $n+1$. Line 15 defines a new semantic data sort, "Value", which
+  itself and "s "$n$ stands for $n+1$. Line 15 defines a new semantic data sort, "Value", which
   represents the same information but outside of syntax brackets. Line 18 defines a scheme as
   before, except now it is defined in lines 19--23 also over the data forms with arguments. In lines
   25--31 we give a traditional syntax directed translation from the syntactic "Exp" format to the
@@ -994,7 +1009,7 @@ where two subterms are compared for equality.
 \label{sec:collect}
 
 \HAX has special support for assembling information in a ``bottom-up'' manner, corresponding to how
-\emph{synthetic attributes} are used in compiler specifications written as syntax-directed
+\emph{synthesized attributes} are used in compiler specifications written as syntax-directed
 definitions, \aka SDD or \emph{attribute grammars}.  In this section we explain \emph{how} you
 convert any SDD synthetic attribute definition into a \HAX one, introducing the necessary \HAX
 formalisms as we go.  The material here is specified in the appendix Manual~\ref{man:attributes}.
@@ -1228,7 +1243,7 @@ We assume that the "T" sort is defined elsewhere with the possible types.
 \end{hacs}
 Like synthesized attributes, inherited attributes are always given lower case names.
 The "{ID : T}" part declares the value of the attribute to be a \emph{mapping} from values of
-"ID" sort to values of "T" sort. Such mappings take the rôle of symbol tables from traditional
+"ID" sort to values of "T" sort. Such mappings take the role of symbol tables from traditional
 compilers.
 
 \item The second thing to do is to associate the inherited attribute to one or more \emph{recursive
@@ -1755,7 +1770,7 @@ rewriting~\cite{Jouannaud:klop2005,Klop+:tcs1993}, and is a very powerful mechan
   operator is the overlined application). The two blocks of rules in lines 18--24 and 26--33 specify
   two variants of continuation style conversion: the traditional form and a one-pass variant,
   respectively. The two systems are equivalent but the second never constructs overlined redices
-  (which is what makes it one pass, as no so-called ``administrative'' (overlined) redices need to
+  , which is what makes it one pass, as no so-called ``administrative'' (overlined) redices need to
   be simplified. Notice how each transformation defines helper schemes, which are syntactic schemes,
   to make the recursive composition easier to express.
 \end{example}
@@ -1883,7 +1898,7 @@ in the following example.
 
 \begin{example}
   Figure~\ref{fig:desk} implements a simple integer desk calculator. Notice how it uses the "$"
-  marker to import a token as an integer value. %$
+  marker to import a token as an integer value of sort "Computed". %$
 \end{example}
 
 
@@ -1915,7 +1930,7 @@ representation.  In this section we work through some examples of this.
     \end{displaymath}
     will allow "F" to be applied to \emph{any} "Symbol", with "x_1" being the \emph{representative} of
     that symbol for the purpose of the rule. Similarly, "x_2" will correspond to a \emph{globally fresh} symbol,
-    as it only occurs left of the "→".
+    as it only occurs right of the "→".
 
   \end{itemize}
 \end{remark}
@@ -2633,7 +2648,7 @@ space [ \t\f\r\n] | nested "/*" "*/" | "//" .* ;
     is the same as "Unif(#t1,Float)" provided "Unif" was declared with the raw production
     "|Unif(Type,Type)".
 
-  \item A \emph{rewrite rule} is a pair of terms separatede by "→" (arrow, U+2192), with a few
+  \item A \emph{rewrite rule} is a pair of terms separated by "→" (arrow, U+2192), with a few
     additional constraints: in the rule $p→t$, $p$ must be a \emph{pattern}, which means it must be
     a construction term that has been declared as a "scheme" (syntactic or raw) and with the
     restriction that all contained arguments to meta-applications must be bound variables, and all
@@ -2675,7 +2690,7 @@ space [ \t\f\r\n] | nested "/*" "*/" | "//" .* ;
 
   \item One can add a simple \emph{synthesized attributes} after a raw data term as
     "↑"\emph{id}"("\emph{value}")", where the \emph{id} is an attribute name and the
-    \emph{value} can be any term.
+    \emph{value} can be any term of the appropriate sort.
 
   \item Simple \emph{inherited attributes} are added similarly after a raw scheme term as
     "↓"\emph{id}"("\emph{value}")".
