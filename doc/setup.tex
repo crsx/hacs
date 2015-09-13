@@ -27,6 +27,7 @@
 %% Macros.
 \newcommand{\HAX}{\text{H\kern-.1em A\kern-.1em C\kern-.05em S}\xspace}
 \newcommand{\hax}{\ensuremath{\hslash}\xspace}
+\newcommand{\bhax}{\ensuremath{\pmb{\hslash}}\xspace}
 \newcommand{\CRSX}{\text{CRSX}\xspace}
 \newcommand{\ie}{\textit{i.e.}\xspace}
 \newcommand{\eg}{\textit{e.g.}\xspace}
@@ -37,7 +38,7 @@
 %% Misc.
 \def\Bigstrut{\ensuremath{\vphantom{\Bigm|}}}
 \newcommand\caret{\mathbin{\char`\^}}
-\newcommand{\ov}[1]{\ensuremath{\mkern1mu\overline{\mkern-.8mu{#1}\mkern-.8mu}\mkern1mu}}
+\newcommand{\ov}[1]{\ensuremath{\mkern2mu\overline{\mkern-1.8mu{#1}\mkern-.8mu}\mkern1mu}}
 
 %% Units
 \ifx\theorem\undefined
@@ -265,3 +266,8 @@
   \left\{\,\vcenter{\let\\=\cr \normalbaselines\m@th
     \ialign{$\vphantom(##\hfil$&\quad##\hfil\crcr#1\crcr}}\right.$}}
 \makeatother
+
+%%% Local Variables:
+%%% mode: plain-tex
+%%% TeX-master: t
+%%% End:

@@ -9,27 +9,30 @@
 \usepackage[margin=1in]{geometry}
 
 %% Topmatter.
-\title{ Higher-order Attribute Contraction Schemes \\ Core Calculus }
+\title{ \hax: a Core for Higher-order Attribute Contraction Schemes }
 \author{ Kristoffer H. Rose \\
- Two Sigma Investments, LLC \& New York University
- % \and
- % Cynthia Kop \\
- % Institute of Computer Science, University of Innsbruck \\
+ Two Sigma Investments
+ \and
+ \textcolor{red}{Cynthia, Lionel, others} \\
+ Where are you?
 }
 
 \begin{document}
 \maketitle
 
 \begin{abstract}\noindent
-  Higher-order Attribute Contraction Schemes---or \HAX---is a practical formal language for
-  specifying executable compilers and other program manipulation tools.
   %%
-  Formally, \HAX is a general higher order rewriting formalism with extensions for managing the
-  special data structures used by compilers, notably custom syntax with regular expressions, symbol
-  tables (\aka environments), attribute grammars, and recursive translation schemes.
+  We present \hax, a core calculus that can serve as the foundation (or ``reduced plank'') for the
+  \HAX (Higher-order Attribute Contraction Schemes) and \CRSX (Combinatory Reductions Systems with
+  eXtensions) compiler specification languages.
   %%
-  This paper presents a \emph{core} calculus of \HAX, called \hax, a plank on which \HAX can be
-  based, which encodes the low-level operational properties of \HAX into a small formal system.
+  Formally, \hax is a general higher order rewriting formalism extended with first class
+  \emph{environments}, and equipped with a parametric polymorphic type system.
+  %%
+  In this paper we give the formal definition of the \hax calculus and its type system, and we show
+  how the central constructs of the much richer \HAX and \CRSX formalisms can be represented in
+  \hax. We also outline how \hax can be implemented, and summarize central properties of the system.
+  %%
 \end{abstract}
 
 %------------------------------------------------------------------------
@@ -39,89 +42,75 @@
 Several systems that manipulate programs, so-called \emph{meta-programming} systems, have emerged
 over the years, ranging from generic specification languages, where the goal is not to define how
 but only declare the semantics of the program manipulation, all the way to tools that support
-specific aspects of program execution or compiler generation (we comment on several in the
-conclusion).
+specific aspects of program execution or compiler generation.
 
-One such system was the CRSX system~\cite{Rose:1996} developed for industrial use at IBM Research by
-a team led by the author~\cite{Rose:hor2010,Rose:rta2011,crsx} .  CRSX is a language based on
-\emph{higher-order rewriting}~\cite{Jouannaud:klop2005} combined with \emph{higher-order abstract
-  syntax} (HOAS) \cite{PfenningElliot:pldi1988} and extensions for handling environments and using
-pluggable parsers.  The programming of the IBM Data\-Power XQuery compiler~\cite{dp60:ibm2013} using
-CRSX proved that the approach can drastically reduce the development time of a compiler (the cited
-XQuery compiler was estimated to be developed in a quarter of the traditional development time) as
-well as resulting in a rather more compact and high level source program.
+One direction has been to use a combination of \emph{higher order
+  rewriting}~\cite{Jouannaud:klop2005} combined with \emph{higher order abstract syntax} (HOAS)
+\cite{PfenningElliot:pldi1988}. This approach is used by \CRSX (Combinatory Reduction Systems with
+eXtensions)~\cite{Rose:1996}, developed for writing industrial compilers at IBM
+Research~\cite{Rose:hor2010,Rose:rta2011,dp60:ibm2013}, and the derived system \HAX (Higher-order
+Attribute Contration Schemes)~\cite{Rose:ts2015}, developed to teach compiler construction at
+NYU~\cite{RoseRose:cims2015}.
 
-However, the CRSX notation, based on combinatory reduction systems~\cite{Klop:1980,Klop+:tcs1993},
-which combines λ calculus~\cite{Church:1941,Barendregt:1984} and term rewriting
-systems~\cite{Klop:1992:Handbook}, has proven to be unwieldy for several reasons, first of all by
-being quite different from standard notations used in compiler construction reference
-works~\cite{Aho+:2006}. Adding a polymorphic sort system to CRSX (effectively changing them to
-\emph{contraction systems}~\cite{Aczel:1978} and be similar to Inductive-type-systems
-\cite{BlanquiJouannaudOkada:tcs2002}) helped but did not make the system easy enough to, for
-example, teach compiler programming.
+However, the direct implementation of the full \CRSX language~\cite{crsx} turned out to be quite
+complex, and over time we have developed notions of what the ``core'' elements of the language
+are. At the same time, \HAX has highlighted what additional programming paradigms one should add to
+get a more useful programming language for writing compilers.
 
-\HAX stands for \emph{Higher-order Attribute Contraction Schemes}, and started as an attempt to
-remedy this by providing a front-end to CRSX that allows the use of standard notations and concepts
-of (formal) programming language descriptions to more directly program compilers and other systems
-for manipulating code. As the name suggests, the notation combines HOAS with concepts from attribute
-grammars~\cite{Knuth:mst1968} as well as other common compiler specification
-notations~\cite{Aho+:2006}. \HAX has been successfully used to teach the graduate computer science
-compiler construction class at New York University~\cite{RoseRose:cims2015}.
+\TBD{Example of complex feature that can be simplified.}
 
-In this paper we specify \HAX through a ``core calculus'' as is common for functional languages, and
-give a semantics for this core language.
+The \hax calculus, presented here, represents the synthesis or what we have found to be the
+essential features of a system for implementing most features of compilers.
+
 \TBD{Plan}%
 and finally Section~\ref{sec:conc} concludes and compares to related work.
 
-
 %------------------------------------------------------------------------
 
-\section{\hax Syntax}
-\label{sec:hacs}
+\section{\bhax Overview}
+\label{sec:overview}
 
-In this section we define the \hax calculus, with a minimal syntax that supports the \HAX source
+In this section we outline the \hax calculus, with a minimal syntax that supports the \HAX source
 language.
 
-\begin{figure*}[t]
+\begin{figure*}[ht]
   \begin{align}
     \tag{Declaration}
-    D &::= \kw{sort}~S\,\kw\{\, F^{*\kw,} \,\kw\}
-    \bigm| \kw{attribute}~a~\set{AF}\,\kw;
-    \bigm| \kw{rule}~T~\kw{$→$}~T\,\kw;
+    D &::= \kw{sort}~S\,\kw\{\, F^*\,\kw\}
+    \bigm| \kw{attribute}~a~\kw\{\,S\,\kw:\,S\,\kw\}\,\kw;
     \\[\jot]
     \tag{Form}
     F &::= \kw{data}~c\,\kw(\,\set{BF}^{*\kw,}\,\kw)~a^*\,\kw;
     \bigm| \kw{scheme}~f\,\kw(\,\set{BF}^{*\kw,}\,\kw)~a^*\,\kw;
-    \bigm| \kw{variable}~v^*\,\kw;
+    \bigm| \kw{variable}\,\kw;
+    \bigm| O~\kw{rule}~T~\kw{$→$}~T\,\kw;
     \\
-    \tag{BindersSort}
+    \tag{BindersForm}
     \set{BF} &::= \kw[\,S^{*\kw,}\,\kw]\,S
     \\
-    \tag{AttributeSort}
-    \set{AF} &::= \kw(\,S\,\kw)
-    \bigm| \kw\{\,S\,\kw:\,S\,\kw\}
-    \\
+    \tag{Sort}
     S &::= s\,\kw[\,S^{*\kw,}\,\kw]
     \bigm| α
-    \tag{Sort}
+    \\
+    \tag{Option}
+    O &::= ~\mid \kw{default} 
     \\[\jot]
     \tag{Term}
     T &::= c\,\kw(\,B^{*\kw,}\,\kw)~A^*
     \bigm| v ~ A^*
-    \bigm| m\,\kw[\,T^{*\kw,}\,\kw]~A^*
+    \bigm| M\,\kw[\,T^{*\kw,}\,\kw]~A^*
     \\
     \tag{Binders}
     B &::= \kw[\,v^{*\kw,}\,\kw]\,T
     \\
-    A &::= a~\set{AV}
     \tag{Attribute}
+    A &::= a~\set{V}
     \\
-    \set{AV} &::= \kw(\,T\,\kw)
-    \bigm| \kw\{\,T\,\kw:\,T\,\kw\}
+    \tag{Value}
+    \set{V} &::= \kw\{\,T\,\kw:\,T\,\kw\}
     \bigm| \kw\{\kw\}
     \bigm| \kw\{\,\kw{$¬$}\,T\,\kw\}
-    \bigm| \kw\{\kw:\,m\,\kw\}
-    \tag{AttributeValue}
+    \bigm| \kw\{\kw:\,M\,\kw\}
   \end{align}
   \caption{\hax syntax.}
   \label{fig:plank}
@@ -134,74 +123,111 @@ language.
   %%
   \begin{itemize}
 
-  \item $s,f,c ∈ \mathbb{C}$ stands for \emph{constructor} tokens, which are capitalized words like
-    "Integer" or "A" or "CamelCaseWord", used for sort, function symbol, and data symbol names
-    (respectively).
+  \item $s,f,c$ stand for \emph{constructor} tokens, which are capitalized words like "Integer" or
+    "A" or "CamelCaseWord", used for sort, function symbol, and data symbol names (respectively).
 
-  \item $v,a,α ∈ \mathbb{V}$ stands for \emph{variable} tokens, which are lower case words like "x"
-    or "foo" or even "lowWord", used for term variables, attributes, and sort variables (respectively).
+  \item $v,a,α$ stand for \emph{variable} tokens, which are lower case words like "x" or "foo" or
+    even "lowWord", used for term variables, attributes, and sort variables (respectively).
 
-  \item $m ∈ \mathbb{M}$ stands for \emph{meta-variable} tokens, which are tokens that start with
-    "#" like "#arg" or "#BigFoot" or even just "#1" or merely~"#".
+  \item $M$ stands for \emph{meta-variable} tokens, which are tokens that start with "#" like "#arg"
+    or "#BigFoot" or even just "#1" or merely~"#".
 
   \end{itemize}
   %%
-  The ``$A^{*\kw,}$'' notation means zero or more $A$s separated by commas.
+  The ``$A^{*\kw,}$'' notation means zero or more $A$s separated by commas. In addition, we define
+  the following:
+  %%
+  \begin{itemize}
+
+  \item A term of the form $c(B_1,…,B_n)A_1…A_m$ ($m,n≥0$) is called a \emph{construction}; if
+    furthermore the top symbol $c$ is declared with a "scheme c…" declaration then it is called a
+    \emph{function construction}.
+
+  \item A term of the form $v\,A_1…A_m$ ($m≥0$) is a \emph{variable occurrence}; if the variable $v$
+    occurs contained in a binder $[…v…]T$ then the variable occurrence is \emph{bound}.
+
+  \item A term of the form $M[T_1,…,T_n]A_1…A_m$ ($m,n≥0$) is a \emph{meta-application}; if the
+    terms $T_i$ are distinct bound variable occurrences then this is a \emph{pattern
+      meta-application}.
+
+  \item A term is called a \emph{pattern fragment} if all contained meta-applications are pattern
+    meta-applications, and a \emph{pattern} if it is also a function construction.
+
+  \end{itemize}
   %%
 \end{definition}
 
-\begin{figure*}[p]\small
-
+\begin{figure*}[p]
+  %%
   \begin{hacs}[numbers=right,texcl]
-    sort N[] {                                                        // natural number sort
-      data Z() ;                                                      // zero
-      data S([]N[]) ;                                                // successor
-      scheme Plus([]N[], []N[]) ;                                   // $+$ operator
-      rule Plus([]Z(), []#2[]) →  #2[] ;                            // $0+x = x$
-      rule Plus([]S([]#1[]), []#2[]) →  S([]Plus([]#1[], []#2[])) ; // $(1+x)+y=1+(x+y)$
-    }
+sort N[] {                                                        // natural number sort
+ data Z() ;                                                       // zero
+ data S([]N[]) ;                                                 // successor
+ scheme Plus([]N[], []N[]) ;                                    // $+$ operator
+ rule Plus([]Z(), []#2[]) →  #2[] ;                             // $0+x = x$
+ rule Plus([]S([]#1[]), []#2[]) →  S([]Plus([]#1[], []#2[])) ;  // $(1+x)+y=1+(x+y)$
+}
   \end{hacs}
   \vspace*{-1em}
   \caption{Peano numerals in \hax.}
   \label{fig:peano}
-
+  %%
   \vspace{1em}
   \begin{hacs}[numbers=right,texcl]
-    sort Λ[] {                                                       // sort of λ terms
-      variable ;                                                     // permit variables
-      scheme Ap([]Λ[], []Λ[]) ;                                     // application
-      data Lm([Λ[]]Λ[]) ;                                          // abstraction
-      rule Ap([]Lm([x]#body[x]), []#arg[]) → #body[#arg[]] ;  // β-reduction
-    }
+sort Λ[] {                                                       // sort of λ terms
+ variable ;                                                      // permit variables
+ data Lm([Λ[]]Λ[]) ;                                            // abstraction
+ scheme Ap([]Λ[], []Λ[]) ;                                      // application
+ rule Ap([]Lm([x]#body[x]), []#arg[]) → #body[#arg[]] ;   // β-reduction
+}
   \end{hacs}
   \vspace*{-1em}
   \caption{Untyped λ calculus in \hax.}
   \label{fig:lambda}
-
+  %%
   \vspace{1em}
+  \small
   \begin{hacs}[numbers=right,texcl]
-    sort List[α] { data Nil(); data Cons([]α, []List[α]);
-      scheme Appnd([]List[α], []List[α]);
-      rule Appnd([]Nil(), []#2[]) →  #2[];
-      rule Appnd([]Cons([]#11[], []#12[]), []#2[]) →  Cons([]#11[], Appnd([]#12[], []#2[]));
-      scheme Map([β]α, []List[β]);
-      rule Map([x]#[x], []Nil()) →  Nil();
-      rule Map([x]#[x], []Cons([]#1[], []#2[])) →  Cons([]#[#1[]], Map([x]#[x], []#2[]));
-    }
+sort List[α] { data Nil(); data Cons([]α, []List[α]);
+ scheme Appnd([]List[α], []List[α]);
+ rule Appnd([]Nil(), []#2[]) →  #2[];
+ rule Appnd([]Cons([]#11[], []#12[]), []#2[]) →  Cons([]#11[], Appnd([]#12[], []#2[]));
+ scheme Map([β]α, []List[β]);
+ rule Map([x]#[x], []Nil()) →  Nil();
+ rule Map([x]#[x], []Cons([]#1[], []#2[])) →  Cons([]#[#1[]], Map([x]#[x], []#2[]));
+}
   \end{hacs}
   \vspace*{-1em}
   \caption{Polymorphic lists in \hax.}
   \label{fig:list}
-
+  %%
   \vspace{1em}
   \begin{hacs}[numbers=right,texcl]
-    sort {
-    }
+sort Dummy[] { variable; }
+attribute val {Dummy[] : Bool[]};
+sort Bool[] { data T() val; data F() val;
+ data Not([]Bool[]) val; data Or([]Bool[], []Bool[]) val;
+
+ scheme Eval1([]Dummy[], []Bool[]); scheme Eval2([]Dummy[], []Bool[]);
+ rule Eval1([]d, []T()) → T() val{d:T()};
+ rule Eval1([]d, []F()) → F() val{d:F()};
+
+ rule Eval1([]d, []Not([]#[])val{¬d}) → Eval2([]d, []Not([]Eval1([]d, []#[])));
+ rule Eval2([]d, []Not([]#[]val{d:T()})) → Not([]#[]) val{d:F()};
+ rule Eval2([]d, []Not([]#[]val{d:F()})) → Not([]#[]) val{d:T()};
+
+ rule Eval1([]d, []Or([]#1[], []#2[])val{¬d})
+   → Eval2([]d, []Or([]Eval1([]d, []#1[]), Eval1([]d, []#2[])));
+ rule Eval2([]d, []Or([]#1[]val{d:F()}, []#2[]val{d:#v2[]})) → Or([]#1[], []#2[])val{d:#v2[]};
+ rule Eval2([]d, []Or([]#1[]val{d:T()}, []#2[])) → Or([]#1[], []#2[]) val{d:T()};
+
+ scheme Eval([]Bool[]); rule Eval([]#[]) →  Eval1([]dummy, []#[]);
+}
   \end{hacs}
   \vspace*{-1em}
-  \caption{Attributes…}
-  \label{fig:attrib}
-
+  \caption{Boolean \emph{value} attribute synthesis in \hax.}
+  \label{fig:bool}
+  %%
 \end{figure*}
 
 \begin{example}[Peano]\label{ex:peano}
@@ -306,14 +332,69 @@ language.
 
   \end{itemize}
   %%
+  \TBD{Example evaluation.}
+  %%
 \end{example}
 
-\begin{example}[synthesis]\label{ex:attrib}
-  Figure~\ref{fig:attrib} shows attributes…
+\begin{example}[Boolean formulae]\label{ex:bool}
+  Figure~\ref{fig:bool} shows how a Boolean expression can be annotated with an attribute "val",
+  which has the computed logical value of the expression. Because \hax has no automatic propagation
+  of attributes, the annotations are generated by helper "Eval1" and "Eval2" schemes.
+  %%
+  Line~1 sets up a "Dummy" sort for a dummy key variable for maps. %
+  Line~2 sets up an attribute "val", which maps ``dummy variables'' to "Bool" values. %
+  Lines 3~and 4 set up the "Bool" sort with data constructors for the Boolean expressions true
+  ("T"), false ("F"), negation ("Not"), and disjunction ("Or"). %
+  Line~6 declares the "Eval1" and "Eval2" schemes, which take a dummy variable and a Boolean term
+  (and forms a Boolean term by being defined inside the "sort Bool").  %
+  Lines 7~and 8 define the "Eval1" scheme on the two trivial cases: literal thruth values are
+  annotated with a "val" that maps the dummy variable to the truth value. %
+  Lines 10~through 12 define the "Eval1" scheme for negation. %
+  The first rule in line~10 expresses that "Eval1" can rewrite a "Not" term where the "val"
+  attribute does \emph{not} have a binding for the dummy variable: in that case, the result is
+  obtained by applying the "Eval1" scheme recursively to the negated subterm and allowing the full
+  negation to be ``postprocessed'' by the "Eval2" scheme. %
+  Lines 11~and 12 give the details for how this works: once a negation term is obtained that has an
+  actual "val" attribute, then the "Eval2" scheme can rewrite the term to one where the negated
+  value is assigned to the negation term. %
+  Similarly, Lines 14~through 17 give rules for evaluating a disjunction. %
+  Finally, line~19 defines a root scheme that annotates an entire Boolean term by creating a "dummy"
+  variable and then passing control to "Eval1".
+
+  Here is a possible simplification using this scheme to annotate a term corresponding to the
+  logical formula $(¬F)∨T$:
+  %%
+  \begin{hacs}
+    Eval([]Or([]Not([]F()), []T()))
+    →  Eval1([]d, []Or([]Not([]F()), []T()))
+    →  Eval2([]d, []Or(Eval1([]d, []Not([]F())), Eval1([]d, []T())))
+    →  Eval2([]d, []Or(Eval1([]d, []Not([]F())), []T()val{d:T()}))
+    →  Eval2([]d, []Or(Eval2([]d, []Not(Eval1([]d, []F()))), []T()val{d:T()}))
+    →  Eval2([]d, []Or(Eval2([]d, []Not([]F()val{d:F()})), []T()val{d:T()}))
+    →  Eval2([]d, []Or([]Not([]F()val{d:F()})val{d:T()}, []T()val{d:T()}))
+    →  Or([]Not([]F()val{d:F()})val{d:T()}, []T()val{d:T()})val{d:T()}
+  \end{hacs}%
+  %%
+  The final term has every subterm annotated with its logical value.
+  %%
 \end{example}
 
-In order to present more realistic examples, we first need to define some syntactic sugar to make
-the notation less unwieldy.
+\TBD{Summarize unexplained features, like default rules.}
+
+%------------------------------------------------------------------------
+
+\section{\bhax Rewriting}
+\label{sec:rewriting}
+
+In this section we formally define rewriting in the \hax calculus.
+
+\TBD{mv, fv, substitution, rewriting.}
+
+
+%------------------------------------------------------------------------
+
+\section{\bhax Typing}
+\label{sec:typing}
 
 \begin{notation}
   We will use \emph{vector notation} with $\ov{X}$ denoting $X_1,…,X_n$ for some $n≥0$; $ε$ denotes
@@ -322,269 +403,303 @@ the notation less unwieldy.
   abbreviation of $[x_{11}…x_{1m_1}]x_1…[x_{n1}…x_{nm_n}]x_n$ for suitable $n,m_1,…,m_n ≥ 0$.
 \end{notation}
 
-\begin{notation}
-  %% 
-  \HAX permits some syntactic sugar:
-  %% 
-  \begin{itemize}
-
-  \item Empty parenthesis and brackets can be omitted.
-
-  \item The \kw{data} and \kw{rule} keywords can be omitted.
-
-  \item \TBD{Update to simplified syntax.} Sort cases ca be written with \kw{\texttt{|}} and without
-    \kw{\texttt{\{\}}}…
-
-  \item "attribute" declarations can be combined: $"attribute"~a_1~\set{AF}_1,…, a_n~\set{AF}_n ;$
-    is an abbreviation of $"attribute"~a_1~\set{AF}_1;…; "attribute"~a_n~\set{AF}_n;$.
-
-  \end{itemize}
-\end{notation}
-
-\begin{example}
-  With syntactic sugar, we can simplify the Peano example to
-  %%
-  \begin{hacs}[numbers=right]
-    sort N | Z | S(N) | scheme Plus(N, N) ;
-    Plus(Z, S(#2)) → #2 ; 
-    Plus(S(#1), #2) → S(Plus(#1, #2)) ;
-  \end{hacs}
-\end{example}
-
-\begin{example}[untyped λ calculus]
-  The untyped λ calculus is specified as follows in \hax with syntactic sugar:
-  %%
-  \begin{hacs}
-    sort L | variable | Lm([x]Lam[x as L]) | scheme Ap(L, L) | x ;
-    rule Ap(Lm([x]#body[x]), #arg) →  #body[#arg] ;
-  \end{hacs}
-  %%
-  The example shows how binding is declared and used for substitution in the style of CRS
-  systems~\cite{Klop+:tcs1993}:\footnote{The notation differs from the original CRS notation in that
-    we use ``\#'' as a marker for meta-variables instead of the original reserved use of $Z$, and we
-    use square brackets for substitution variables instead of round.}
-  %%
-  (Note that the same example in the (non-raw) full \HAX notation can include a parser for the
-  native custom λ calculus syntax:
-  %%
-  \begin{hacs}
-    token ID | [a-z] [a-z0-9_]* ;
-    sort V | symbol ⟦⟨ID⟩⟧ ;
-    sort L | ⟦λ⟨V binds x⟩.⟨L[x as L]⟩⟧ | scheme ⟦⟨L@1⟩⟨L@2⟩⟧@1
-           | ⟦⟨V⟩⟧@2 | sugar ⟦(⟨L#⟩)⟧@2 →  #;
-    ⟦ (λx.⟨L#body[x]⟩) ⟨L#arg⟩ ⟧ →  #body[#arg] ;
-  \end{hacs}
-  %%
-  including precedence markers, syntactic sugar, \etc; for details see the full \HAX
-  manual. Essentially the syntax-rich example translates to a parser and the former.)
-\end{example}
-
-%------------------------------------------------------------------------
-
-\section{\HAX Typing}
-\label{sec:typing}
-
+\begin{figure*}[p]\small
+  \begin{gather*}
+    %
+    \intertext{\shoveright{Sorting of Declarations\hfil\fbox{$ Γ ⊢ D $}}}
+    %
+    \dfrac
+    { Γ, S ⊢ \ov{F} }
+    { Γ ⊢ \kw{sort}~S\,\kw\{\, \ov{F} \,\kw\} }
+    % 
+    \\[\jot]
+    % 
+    \dfrac
+    { }
+    { Γ ⊢ \kw{attribute}~a~\kw\{\,S_1\,\kw:\,S_2\,\kw\}\,\kw; }
+    \quad Γ(a) = \{S_1{:}S_2\};~ \op{KeySort}(S_1)
+    % 
+    \\[\jot]
+    %
+    \intertext{\shoveright{Sorting of Forms\hfil\smash{\fbox{$ Γ,S ⊢ F $}}}}
+    %
+    \dfrac
+    { }
+    { Γ,S ⊢ \kw{data}~c\,\kw(\,\ov{\set{BF}}\,\kw)~\ov{a}\,\kw; }
+    \quad Γ(c) = [\ov{\set{BF}},\ov{a}⇒S];~ \op{DataAtts}\{\ov{a}\} ∈ Γ(S)
+    % 
+    \\[\jot]
+    %
+    \dfrac
+    { }
+    { Γ,S ⊢ \kw{scheme}~f\,\kw(\,\ov{\set{BF}}\,\kw)~\ov{a}\,\kw; }
+    \quad Γ(c) = [\ov{\set{BF}},\ov{a}⇒S]
+    % 
+    \\[\jot]
+    %
+    \dfrac
+    { }
+    { Γ,S ⊢ \kw{variable}\,\kw; }
+    \quad \op{Var}∈Γ(S)
+    % 
+    \\[1ex]
+    %
+    \dfrac
+    { Γ,Δ[\op{Pattern}] ⊢ T_1 : S \qquad Γ,Δ[\op{Contract}] ⊢ T_2 : S }
+    { Γ,S ⊢ O~\kw{rule}~T_1~\kw{$→$}~T_2\,\kw; }
+    % 
+    \\[\jot]
+    %
+    \intertext{\shoveright{Sorting of Terms\hfil\smash{\fbox{$ Γ,Δ ⊢ T : S $}}}}
+    %
+    \dfrac
+    { Γ,Δ ⊢ \ov{B} : \ov{\set{BF}} \qquad Γ,Δ,\{\ov{a}\} ⊢ \ov{A} }
+    { Γ,Δ ⊢ c\,\kw(\,\ov{B}\,\kw)\,\ov{A} : S }
+    \quad Γ(c) = [\ov{\set{BF}},\ov{a}⇒S]
+    % 
+    \\[\jot]
+    %
+    \dfrac
+    { Γ,Δ,\{\ov{a}\} ⊢ \ov{A} }
+    { Γ,Δ ⊢ v \, \ov{A} : S }
+    \quad Δ(v) = S;~ \op{DataAtts}\{\ov{a}\} ∈ Γ(S);~ \op{Var}∈Γ(S)
+    % 
+    \\[\jot]
+    %
+    \dfrac
+    { Γ,Δ ⊢ \ov{T} : \ov{S} \qquad Γ,Δ,\{\ov{a}\} ⊢ \ov{A} }
+    { Γ,Δ ⊢ M\,\kw[\,\ov{T}\,\kw] \, \ov{A} : S }
+    \quad Δ(M) = [\ov{S}⇒S]~; \op{DataAtts}\{\ov{a}\} ∈ Γ(S)
+    % 
+    \\[\jot]
+    %
+    \intertext{\shoveright{Sorting of Binder\hfil\smash{\fbox{$ Γ,Δ ⊢ B : \set{BF} $}}}}
+    %
+    \dfrac
+    { Γ,Δ[\ov{v}↦\ov{S}] ⊢ T : S }
+    { Γ,Δ ⊢ \kw[\,\ov{v}\,\kw]\,T : \kw[\,\ov{S}\,\kw]\,S }
+    %
+    \\[\jot]
+    %
+    \intertext{\shoveright{Sorting of Attribute\hfil\smash{\fbox{$ Γ,Δ,\{\ov{a}\} ⊢ A $}}}}
+    %
+    \dfrac
+    { Γ,Δ ⊢ V : \{S_1{:}S_2\} }
+    { Γ,Δ,\{\ov{a}\} ⊢ a\,V }
+    \quad a∈\{\ov{a}\};~ Γ(a) = \{S_1{:}S_2\}
+    %
+    \\[\jot]
+    %
+    \intertext{\shoveright{Sorting of Attribute Value\hfil\smash{\fbox{$ Γ,Δ ⊢ A : \{S:S\} $}}}}
+    %
+    \dfrac
+    { Γ,Δ ⊢ T_1 : S_1 \qquad Γ,Δ ⊢ T_2 : S_2 }
+    { Γ,Δ ⊢ \kw\{\,T_1\,\kw:\,T_2\,\kw\} : \{S_1{:}S_2\} }
+    %
+    \qquad
+    %
+    \dfrac
+    { }
+    { Γ,Δ ⊢ \kw\{\kw:\,M\,\kw\} : \{S_1{:}S_2\} }
+    ~ Δ({:}M) = \{S_1{:}S_2\}
+    %
+    \\[\jot]
+    %
+    \dfrac
+    { Γ,Δ ⊢ T : S_1 }
+    { Γ,Δ ⊢ \kw\{\,\kw{$¬$}\,T\,\kw\} : \{S_1{:}S_2\} }
+    ~ \op{Pattern}∈Δ
+    % 
+    \qquad
+    %
+    \dfrac
+    { }
+    { Γ,Δ ⊢ \kw\{\kw\} : \{S_1{:}S_2\} }
+    ~ \op{Contract}∈Δ
+    %
+  \end{gather*}
+  \caption{\hax type rules.}
+  \label{fig:typerules}
+\end{figure*}
 
 \begin{definition}
   %%
-  Given a sequence of forms $\ov{F}$ and an attribute name~$a$, we define the following
-  notions:
+  The rules in Figure~\ref{fig:typerules} give the type rules for~\hax.
+
+  \TBD{Explain all the environments and judgments.}
+\end{definition}
+
+\TBD{Example type derivation.}
+
+\begin{theorem}[subject reduction]
+  A well-sorted term can only rewrite to a well-sorted term.
+\end{theorem}
+
+%------------------------------------------------------------------------
+
+\section{Implementing \hax}
+\label{sec:implement}
+
+In this section we give a brief summary of how we see \hax implemented.
+
+\TBD{Struct for nodes, reference counting, lazy free variable lists, dispatchify.}
+
+%------------------------------------------------------------------------
+
+\section{Supporting Compiler Paradigms}
+\label{sec:compiling}
+
+In this section we outline how the standard compiler construction idioms of the full \HAX language
+translate into~\hax.
+
+\begin{definition}[higher order inference rule]\label{def:infer}%
   %%
-  \begin{enumerate}
-
-  \item $\op{carriers}(\ov{F}, a)$ is the set of all constructors $c$ for which there is a
-    form in $\ov{F}$ of the shape ``$\kw{data}~c~…~a~…\kw;$'' or
-    ``$\kw{scheme}~c~…~a~…\kw;$.''
-
-  \item $\op{form}(\ov{D}, a)$ is the \set{AF} of the (single!) declaration
-    ``$\kw{attribute}~a~\set{AF}\kw;$.''
-
-  \end{enumerate}
+  A (higher order) \emph{inference rule} has the form
   %%
-  
+  \begin{displaymath}
+    \dfrac
+    { ∀\,\ov{x} : (\, C_1⇒P_1 ~\cdots~ C_n⇒P_n \,) }
+    { P_0 ⇒ C_{n+1}}
+    ~(L)
+  \end{displaymath}
+  %%
+  where
+  %%
+  \begin{itemize}
+  \item $L$ is the unique name of the rule.
+  \item $P_0$ and all of $C_1,…,C_n$ are \emph{function constructions}.
+  \item $P_0$ is a \emph{pattern} and all of $P_1,…,P_n$ are \emph{pattern fragments}.
+  \item $∀i : \op{mv}(C_i) ⊆ \op{mv}(P_0…P_{i-1})$.
+  \end{itemize}
+  %%
+  The \emph{inference simplification system} for the above rule is the system
+  %%
+  \begin{align}
+    P_0 &→ L_1(P_0, [\ov{x}]C_1) \tag{$L_0$}\\
+    L_1(P_0, [\ov{x}]P_1) &→ L_2(P_0, [\ov{x}]P_1, [\ov{x}]C_2) \tag{$L_1$}\\[-\jot]
+    &~~\vdots\notag\\
+    L_{n-1}(P_0, [\ov{x}]P_1, …, [\ov{x}]P_{n-1}) &→ L_n(P_0, [\ov{x}]P_1, …, [\ov{x}]P_{n-1}, [\ov{x}]C_n) \tag{$L_{n-1}$}\\
+    L_n(P_0, [\ov{x}]P_1, …, [\ov{x}]P_n) &→ C_{n+1} \tag{$L_n$}
+  \end{align}
+  %%
+  (where all symbols, including the variables $\ov{x}$, are the same as in the initial rule). All
+  these rules need to be part of the "sort" declaration for the sort of $P_0$ and $C_{n+1}$, along
+  with "scheme" declarations for all the introduced $L_i$ symbols.
   %%
 \end{definition}
 
+\begin{example}
+  \TBD{Example inference simplification.}
+\end{example}
 
+We can prove that the inference simplification system for an inference rule implements the same
+semantics for non-overlapping $P_0$s. Even with an identical prefix $P_0,\ov{x},C_1$ for two rules,
+the system can be generated: in that case the two $L_1$ symbols of the rules must be aliased to a
+common function symbol; in general $L_1…L_k$ must be collapsed for identical prefixes
+$P_0,\ov{x},C_1,P_1, C_2,…,P_{k-1}, C_k$. \TBD{Explain?}
 
-\begin{definition}[sort environment]
-  Figure~\ref{fig:sortenv} gives the rules for construction of the sort environment, which has the
-  following structure:
+\begin{definition}[synthesized attributes]\label{def:synth}%
+  %%
+  A \emph{singleton synthesis rule} has the shape
+  %%
+  \begin{displaymath}
+    c\biggl(\cdots \vcenter{\txt{
+          $c_i({\cdots})\,{{↑}a_i\{{\cdots}\}}$\\
+          $M_i[{\cdots}]\,{{↑}a_i\{{\cdots}\}}$
+        }}\cdots\biggr)
+    ~{{↑}a\{{\cdots}\}}
+  \end{displaymath}
+  %%
+  (with the embedded subterms denoting all such subterms; the ``singleton'' restriction comes from
+  the single synthesized attribute on all subterms).
+
+  The \emph{synthesis simplification system} for the synthesis rule is
+  %%
   \begin{align*}
-    Γ &::= \bigl(\mathbb{C} ↦ α × (∀S^*.\,\set{BS}^*) × \set{DF}\bigr)
-         + \bigl(\mathbb{V}↦(\set{AF}+ε, \mathbb{C}^*)\bigr)
-    \tag{SortEnvironment}
-    \\
-    α &::= ∀\ov{v}.\,S
-    \tag{SortScheme}
-    \\
-    \set{DF} &≡ \op{fun}(\mathbb{V}^*) + \op{data}
-    \tag{DataOrFunction}
+    \op{Needs}_a\Biggl(
+    c\biggl(\cdots \vcenter{\txt{
+        $c_i({\cdots})$\\
+        $M_i[{\cdots}]$
+      }}\cdots\biggr)
+    \Biggr)
+    &→
+    \op{Collect}\Biggl(
+    c\biggl(\cdots \vcenter{\txt{
+        $\op{Needs}_{{a_i}}(c_i({\cdots}))$\\
+        $\op{Needs}_{{a_i}}(M_i[{\cdots}])$
+      }}\cdots\biggr)    
+    \Biggr)
+    \\[1em]
+    \op{Collect}\Biggl(
+    c\biggl(\cdots \vcenter{\txt{
+          $c_i({\cdots})\,{↑}a_i\{{\cdots}\}$\\
+          $M_i[{\cdots}]\,{↑}a_i\{{\cdots}\}$
+      }}\cdots\biggr)
+    \Biggr)
+    &→
+    c\biggl(\cdots \vcenter{\txt{
+          $c_i({\cdots})\,{↑}a_i\{{\cdots}\}$\\
+          $M_i[{\cdots}]\,{↑}a_i\{{\cdots}\}$
+        }}\cdots\biggr)
+    ~{↑}a\{{\cdots}\}
   \end{align*}
-  We use usual map notation for $Γ$, with $Γ(x)$ denoting what $x$ maps to and $Γ[x↦X]$ standing for
-  the map obtained from $Γ$ by adding (or changing) the binding of $x$ to map to~$X$.
+  %%
 \end{definition}
 
+\begin{example}
+  \TBD{Example synthesis simplification.}
+\end{example}
 
+\TBD{Discuss multiple dependent and independent synthesized attributes, and proof sketch that the
+  simplification is correct; also the erasure of not-patterns, and check details from .}
 
-
-
-
-\begin{figure*}[p]
-  \begin{gather*}
-    \intertext{\shoveright{\hfil\fbox{$ Γ,S ⊢ \ov{D} ⇒ Γ $}}}\\
-    %
-    \tag{Sort1}
-    \dfrac
-    { Γ, S' ⊢ \ov{D'} ⇒ Γ' \qquad Γ', S ⊢ \ov{D} ⇒ Γ'' }
-    { Γ, S ⊢ \kw{sort}~S' ~\kw\{\, \ov{D'} \,\kw\}\,\kw; ~ \ov{D} ⇒ Γ'' }
-    \\[1ex]
-    \tag{Attribute1}
-    \qquad
-    \dfrac
-    { Γ, s[\ov{v}] ⊢ \ov{D} ⇒ Γ }
-    { Γ, s[\ov{v}] ⊢ \kw{attribute}~a~\set{AF}; \, \ov{D} ⇒ Γ[a ↦ ⟨\set{AF}, \ov{s}⟩] }
-    \quad Γ(a)=⟨ε,\ov{s}⟩
-%
-    \\[1ex]
-    % 
-    \tag{Data}
-    \dfrac
-    { Γ, s[\ov{v}] ⊢ \ov{D} }
-    { Γ, s[\ov{v}] ⊢ \,\texttt{|}\; \kw{data}~c(\ov{[\ov{S}]S}) ; \ov{D} }
-    \quad\Cases{
-      Γ(c) = α\\
-      \op{con}(α) = ∀\ov{v}.\bigl( \ov{[\ov{S}]S} → s[\ov{v}] \bigr)
-    }
-    \\[1ex]
-    %
-    \tag{Scheme}
-    \dfrac
-    { Γ, s[\ov{v}] ⊢ \ov{D} }
-    { Γ, s[\ov{v}] ⊢ \,\texttt{|}\; \kw{scheme}~f(\ov{[\ov{S}]S})~{↓}a_1…{↓}a_n ; \ov{D} }
-    \quad\Cases{
-        Γ(f) = α\\
-        \op{con}(α) = ∀\ov{v}.\bigl( \ov{[\ov{S}]S} → s[\ov{v}] \bigr)\\
-        \op{atts}(α) = {↓}a_1…{↓}a_n
-    }
-%      ⇒ Γ[f ↦ ⟨∀\ov{v}\ov{v}.s, .s[\ov{v}], ∀\ov{v}.\ov{\set{BS}}, \op{fun}(\ov{a})⟩] }
-    \\[1ex]
-    \qquad
-    \dfrac
-    { Γ, s[\ov{v}] ⊢ \ov{D} ⇒ Γ }
-    { Γ, s[\ov{v}] ⊢ \,\texttt{|}\; {↑}a; \ov{D} ⇒ Γ[a ↦ ⟨\set{AF}, \ov{s}·s⟩] }
-    \quad Γ(a)=⟨\set{AF},\ov{s}⟩
-    \tag{Synthesize1}
-    \\[1ex]
-    \dfrac
-    { s[\ov{v}] ⊢ \ov{D} ⇒ Γ }
-    { s[\ov{v}] ⊢ \kw{rule}~P→T; \, \ov{D} ⇒ Γ }
-    \tag{Ignore1}
-    \\[1ex]
-    \dfrac
-    { }
-    { s[\ov{v}] ⊢ ε ⇒ \emptyset }
-    \tag{Done1}
-  \end{gather*}
-  \caption{\HAX Sort Environment Construction (``Pass 1'').}
-  \label{fig:sortenv}
-
-  \begin{gather*}
-    \hbox to\textwidth{\hfil\fbox{$Γ, S ⊢ \ov{D}$}}
+\begin{definition}[inherited attributes]\label{def:synth}%
+  %%
+  \begin{align*}
+    F\bigl(\cdots \vcenter{\txt{
+          $A({·})\,{↑}a({·})$\\
+          $X[{·}]\,{↑}x({·})$
+        }}\cdots\bigr)
+    {↓}c({·})
+    &→
+    \cdots\vcenter{\txt{
+        $B({·})\,{↑}b({·})$\\
+        $Y[{·}]\,{↑}y({·})$}}
+    \cdots\vcenter{\txt{
+        $G({·})\,{↓}g({·})$\\
+        $Z[{·}]\,{↓}z({·})$}}
+    \cdots
     \\
-    \dfrac
-    { Γ ⊢ P : S ⇒ Δ
-      \quad Γ, Δ ⊢ T : S \quad Γ, S ⊢ \ov{D} }
-    { Γ, S ⊢ \kw{rule}~P→T; \, \ov{D} }
-    \tag{Rule2}
-    \\[1ex]
-    \dfrac
-    { Γ, S ⊢ \ov{D} }
-    { Γ, S ⊢ \kw{sort}~s'[\ov{v'}] ; \ov{D} }
-    \quad
-    \dfrac
-    { Γ, S ⊢ \ov{D} }
-    { Γ, S ⊢ \,\texttt{|}\;C ; \ov{D} }
-    \quad
-    \dfrac
-    { Γ, S ⊢ \ov{D} }
-    { Γ, S ⊢ \kw{attribute}~a~\set{AF}; \, \ov{D} }
-    \tag{Ignore2}
-    \\[1ex]
-    \dfrac
-    { }
-    { Γ, S ⊢ ε }
-    \tag{Done2}
-    \\[1ex]
-    \hbox to\textwidth{\hfil\fbox{$Γ ⊢ P : α ⇒ Δ$}}
-    \\
-    \dfrac
-    { ∀i\bigl[\, Γ[\ov{v_i}↦\ov{S_i}],Δ_{i-1} ⊢ P_i : S_i ⇒ Δ_i \,\bigr]
-      \quad Γ,Δ_n ⊢ \ov{\set{PA}} : \ov{\set{AA}} ⇒ Δ }
-    { Γ ⊢ c\bigl(\ov{[\ov{v}]P}\bigr)~\ov{\set{PA}} : ∀\ov{w}.S ⇒ Δ }
-    \tag{PatternCons}
-    \\[-3ex]
-    \intertext{\shoveright{\hfil
-    where $
-    Δ_0 = \emptyset,
-    Γ(c) = ⟨∀\ov{w}.S, ∀\ov{w}.\,\ov{[\ov{S}]S}, \set{DF}⟩,
-    $\qquad}}
+    \intertext{becomes}
     %%
-    \dfrac
-    { Γ ⊢ P : s ⇒ Δ }
-    { Γ ⊢ v~\ov{\set{PA}} : s ⇒ Δ }
-    \tag{PatternVar}
-    \\[1ex]
-    \dfrac
-    { Γ ⊢ P : s ⇒ Δ }
-    { Γ ⊢ m\,[\ov{P}]~\ov{\set{PA}} : s ⇒ Δ }
-    \tag{PatternMeta}
-  \end{gather*}
-  \caption{\HAX Sorting Rules (``Pass 2'').}
-  \label{fig:sorting}
-
-
-
-
-\end{figure*}
-
-The intent with the $Γ$ structure is to map each defined symbol as follows:
-%%
-\begin{itemize}
-
-\item Every constructor and function symbol is mapped to a triple
-  $⟨s, ∀\ov{v}.\,\set{BS}, \set{DF}⟩$, which contains
-  \begin{itemize}
-  \item the \emph{sort} $s$ of the constructor;
-  \item the \emph{parameter sort scheme} $∀\ov{v}.\,\set{BS}$ with the sorts of all parameters (more
-    on that below);
-  \item the \emph{constructor category} of the symbol (function with specific synthesized
-    attributes, or data).
-  \end{itemize}
-
-\item Every attribute name is mapped to a pair $⟨\set{AF},\ov{s}⟩$, which contains
-  \begin{itemize}
-  \item the \emph{attribute form} that determines if the attribute is a simple value or a map;
-  \item the \emph{synthesis sorts} of the attribute, with the sorts for which the attribute is
-    synthesized on all data.
-  \end{itemize}
-
-\end{itemize}
-%%
-Constructors belong to a sort $s$, which may be a \emph{parametric sort}. This shows up in the sorts
-of the subterms of the constructor, which are specified as $∀\ov{v}.\,\set{BS}$. Note that this 
-
-\begin{definition}[sort check]
-  Figure~\ref{fig:sorting} gives rules for sorting…
+    F\bigl(\cdots \vcenter{\txt{
+          $A({·})$\\
+          $X[{·}]$
+        }}\cdots\bigr)
+    {↓}c({·})
+    &→
+    F'\bigl(\cdots \vcenter{\txt{
+          $\op{Needs}_a(A({·}))$)\\
+          $\op{Needs}_x(X[{·}])$
+        }}\cdots\bigr)
+    {↓}c({·})
+    \\[1em]
+    F'\bigl(\cdots \vcenter{\txt{
+          $A({·})\,{↑}a({·})$\\
+          $X[{·}]\,{↑}x({·})$
+        }}\cdots\bigr)
+    {↓}c({·})
+    &→
+    \cdots\vcenter{\txt{
+        $B({·})\,{↑}b({·})$\\
+        $Y[{·}]\,{↑}y({·})$}}
+    \cdots\vcenter{\txt{
+        $G({·})\,{↓}g({·})$\\
+        $Z[{·}]\,{↓}z({·})$}}
+    \cdots
+  \end{align*}
+  %% 
 \end{definition}
-
-\begin{figure*}[t]
-\end{figure*}
-
-
-
-
-
 
 
 
@@ -593,51 +708,40 @@ of the subterms of the constructor, which are specified as $∀\ov{v}.\,\set{BS}
 \section{Conclusion}
 \label{sec:conc}
 
+With \hax, we have presented a rather small calculus that can serve as the underlying formalism for
+reasoning about as well as implementing the \CRSX and \HAX languages.
+
+\TBD{What is covered.}
+
+~\cite{Knuth:mst1968} 
+~\cite{Aho+:2006}
 
 
-We would like to give credit to SIS~\cite{Mosses:daimi1979}, which shares the use of
-\emph{simplification} to a λ-calculus based formalism with \HAX, as illustrated, for example, by how
-the interpretation rule can be encoded (as shown in the previous section).
+\paragraph*{Related work.}
 
-The most prominent system that supports implementation of compilers in formal (attribute grammar)
-form is ASF+SDF~\cite{Brand+:toplas2002}, which is based on first order rewriting. While modules
-have been added for symbol table management, these lack the full integration and easy way to handle
-scoped intermediate languages. The successor, Rascal~\cite{Bos+:eptcs2011} adds a module for HOAS,
-but Rascal specifications operate in a world of side effects, which we find hard to reconcile with
-higher-order term structures (with scopes).
+We would like to give credit to SIS~\cite{Mosses:daimi1979}, which shares with \hax the use of
+\emph{simplification} using a λ-calculus based formalism.
 
-The notion of ``higher-order'' used by \HAX is similar to but not quite the same as in higher-order
-attribute grammars (HAG)~\cite{VogtSwierstraKuiper:pldi1989}. Like HAGs, \HAX specifications permit
-constructing and passing of abstract syntax fragments in attributes -- indeed our example uses this
-in the type synthesis rules -- but the ``higher order'' aspect of \HAX also covers the rewriting
-side, where we can build parameterized abstractions over any part of a specification, including with
-attributes. Indeed, one can use substitution inside attributes, have synthetic attributes block
-schemes (as we have seen), have lack of substitution block synthesis (leave ``unsynthesizable
-variables'' in a term), \etc
+The most prominent system that supports implementation of compilers in formal (rewriting and
+attribute grammar) form is ASF+SDF~\cite{Brand+:toplas2002}, which is based on first order
+rewriting. While modules have been added for symbol table management, these lack the full
+integration and easy way to handle scoped intermediate languages. The successor,
+Rascal~\cite{Bos+:eptcs2011} adds a module for HOAS, but Rascal specifications operate in a world of
+side effects, which we find hard to reconcile with higher-order term structures (with scopes).
 
-\HAX supports full HOAS, even with nested reductions under unevaluated binders, yet the applications
-we consider are quite close to the examples presented for PHOAS by
-Chlipala~\cite{Chlipala:icfp2008}. We are hoping to understand how many of the results of Chlipala
-carry over to \HAX.
+The notion of ``higher-order'' used by \hax is similar to but not quite the same as in higher-order
+attribute grammars (HAG)~\cite{VogtSwierstraKuiper:pldi1989}. Like HAGs, \hax specifications permit
+constructing and passing of abstract syntax fragments in attributes but the ``higher order'' aspect
+of \hax also covers the rewriting side, where we can build parameterized abstractions over any part
+of a specification, including with attributes. Indeed, one can use substitution inside attributes,
+and have absence of attributes and substitution block rewriting.
 
-Finally, it is clear that the formal foundation of \HAX, while based in the solid culture of higher
-order rewriting, still needs to be fully qualified and categorized in this world, so we can express
-precisely (and hopefully also implement) standard tools such as termination checking for the
-language. This is the subject of our upcoming EU-funded Marie Skłodowska-Curie ``HORIP'' action
-collaboration with Cynthia Kop.
+\paragraph*{Future work.} \TBD{Speculate!}
 
-\paragraph*{Acknowledgements.} The author would like to thank my coteacher at NYU, Eva Rose, our
-grader José Pablo Cambronero, as well as our students in the compiler construction class, for
-constructive comments to and insightful questions on \HAX.
-%%
-The initial implementation of \HAX would not have been remotely possible without the CRSX team at
-IBM: Morris Matsa, Scott Boag, and especially Lionel Villard, who suffered through understanding and
-then programming both core fragments of and using the CRSX system that still provides the
-implementation of \HAX.
-%%
-And finally \HAX owes its sanity to a collaboration with Cynthia Kop, both as an intern with the
-Watson team in 2011, which created the polymorphic sort checker in her thesis work~\cite{Kop:2012},
-and our continuing collaboration.
+
+\paragraph*{Acknowledgements.} \TBD{Thank everyone.}
+
+EU-funded Marie Skłodowska-Curie ``HORIP'' action collaboration with Cynthia Kop.
 
 
 %------------------------------------------------------------------------
@@ -645,14 +749,30 @@ and our continuing collaboration.
 \bibliography{crs}
 
 
+\TBD{End of sane part.}
+\hrule
+\vspace*{1pc}
+
+%------------------------------------------------------------------------
 \appendix
-\section{More Sugar}
+
+\section{Sugar}
 
 \begin{notation}
   %% 
   \HAX permits some additional syntactic sugar:
   %% 
   \begin{itemize}
+
+  \item Empty parenthesis and brackets can be omitted.
+
+  \item The \kw{data} and \kw{rule} keywords can be omitted.
+
+  \item \TBD{Update to simplified syntax.} Sort cases can be written with \kw{\texttt{|}} and without
+    \kw{\texttt{\{\}}}…
+
+  \item "attribute" declarations can be combined: $"attribute"~a_1~\set{AF}_1,…, a_n~\set{AF}_n ;$
+    is an abbreviation of $"attribute"~a_1~\set{AF}_1;…; "attribute"~a_n~\set{AF}_n;$.
 
   \item An additional SortCase contruct is allowed:
     \begin{displaymath}
@@ -697,6 +817,44 @@ and our continuing collaboration.
 
   \end{itemize}
 \end{notation}
+
+\begin{example}
+  With syntactic sugar, we can simplify the Peano example to
+  %%
+  \begin{hacs}[numbers=right]
+    sort N | Z | S(N) | scheme Plus(N, N) ;
+    Plus(Z, S(#2)) → #2 ; 
+    Plus(S(#1), #2) → S(Plus(#1, #2)) ;
+  \end{hacs}
+\end{example}
+
+\begin{example}[untyped λ calculus]
+  The untyped λ calculus is specified as follows in \hax with syntactic sugar:
+  %%
+  \begin{hacs}
+    sort L | variable | Lm([x]Lam[x as L]) | scheme Ap(L, L) | x ;
+    rule Ap(Lm([x]#body[x]), #arg) →  #body[#arg] ;
+  \end{hacs}
+  %%
+  The example shows how binding is declared and used for substitution in the style of CRS
+  systems~\cite{Klop+:tcs1993}:\footnote{The notation differs from the original CRS notation in that
+    we use ``\#'' as a marker for meta-variables instead of the original reserved use of $Z$, and we
+    use square brackets for substitution variables instead of round.}
+  %%
+  (Note that the same example in the (non-raw) full \HAX notation can include a parser for the
+  native custom λ calculus syntax:
+  %%
+  \begin{hacs}
+    token ID | [a-z] [a-z0-9_]* ;
+    sort V | symbol ⟦⟨ID⟩⟧ ;
+    sort L | ⟦λ⟨V binds x⟩.⟨L[x as L]⟩⟧ | scheme ⟦⟨L@1⟩⟨L@2⟩⟧@1
+           | ⟦⟨V⟩⟧@2 | sugar ⟦(⟨L#⟩)⟧@2 →  #;
+    ⟦ (λx.⟨L#body[x]⟩) ⟨L#arg⟩ ⟧ →  #body[#arg] ;
+  \end{hacs}
+  %%
+  including precedence markers, syntactic sugar, \etc; for details see the full \HAX
+  manual. Essentially the syntax-rich example translates to a parser and the former.)
+\end{example}
 
 \section{Inference Systems}
 \label{sec:infer}
@@ -845,8 +1003,6 @@ To finish the transform from inference rules to \HAX rules we need two additiona
 \begin{theorem}
   A rooted and leftmost matching ground sequential inference system can be implemented by a 
 \end{theorem}
-
-
 
 \end{document}
 

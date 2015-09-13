@@ -50,12 +50,14 @@
 
 \newcommand{\opx}[1]{\operatorname{\textcolor{blue}{#1}}}
 
+\usepackage[all]{xy}
+
 %% STYLE.
 \usepackage[T1]{fontenc}
 \usepackage{charter}
 \renewcommand{\ttdefault}{txtt}
 \usefonttheme{serif}
-\SelectTips{lu}{10 scaled 2074}
+%\SelectTips{lu}{10 scaled 2074}
 \def\q#1{~\text{`\texttt{#1}'}~}
 \def\t#1{\texttt{#1}}
 \def\tup#1{\ensuremath{\left\langle{#1}\right\rangle}}
@@ -492,7 +494,7 @@ sort E | ↑t | scheme ⟦Te ⟨E⟩⟧ ↓e ;
 \end{frame}
 
 \begin{frame}[fragile]{HACS Program (VII)}\footnotesize
-\begin{hacs}[texcl]
+\begin{hacs}
 // $(E3)\quad E→\textbf{int}$:
 // 1. Propagation leaf: set $E.t=\op{Int}$ directly.
 ⟦ Te ⟨INT#1⟩ ⟧  →  ⟦ ⟨INT#1⟩ ⟧ ↑t(Int) ;
@@ -544,4 +546,5 @@ sort E | ↑t | scheme ⟦Te ⟨E⟩⟧ ↓e ;
 % Local Variables:
 % mode:latex
 % fill-column:100
+% TeX-master: t
 % End:
