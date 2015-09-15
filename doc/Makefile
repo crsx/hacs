@@ -4,7 +4,7 @@
 all::
 install::
 clean::
-	rm -f *.tmp *~ ./#* *.log *~ *.aux *.bbl *.blg *.toc *.out *.idx *.ind
+	rm -f *.tmp *~ ./#* *.log *~ *.aux *.bbl *.blg *.toc *.out *.idx *.ind *.nav *.snm *.vrb
 realclean:: clean
 	rm -fr auto *.pdf
 gitclean:: realclean

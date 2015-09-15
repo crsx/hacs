@@ -28,6 +28,7 @@ endif
 
 all install clean realclean gitclean ::
 	$(MAKE) -C src $@
+	$(MAKE) -C doc -I $(abspath src) $@
 
 all-debug install-support ::
 	$(MAKE) -C src $@
@@ -38,6 +39,7 @@ src/% :
 samples/% :
 	$(MAKE) -C samples -I $(abspath src) ../$@
 
+all install :: doc/hacs.pdf
 doc/% :
 	$(MAKE) -C doc -I $(abspath src) ../$@
 
