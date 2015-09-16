@@ -8,5 +8,5 @@ module org.crsx.hacs.samples.Lambda {
   | symbol ⟦⟨ID⟩⟧@2				 // variable occurrence
   | sugar ⟦(⟨T#⟩)⟧@2 →  # ;
 
-  ⟦(λx.⟨T#1[x]⟩) ⟨T#2⟩⟧ →  #1[T#2] ;
+  ⟦(λx.⟨T#1[T⟦x⟧]⟩) ⟨T#2⟩⟧ →  #1[T#2] ;
 }
