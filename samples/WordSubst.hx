@@ -1,23 +1,20 @@
 module org.crsx.hacs.samples.WordSubst {
 
-// Spacing rules.
-space [\ \t\n\r] ;
-
-// Tokens.
-token ID | [A-Za-z]+ ;
-token NAT | [0-9]+ ;
-
 // Grammar.
 sort Units | ⟦ ⟨Unit⟩ ⟨Units⟩ ⟧ | ⟦⟧ ;
 sort Unit | ⟦⟨Variable⟩=⟨NAT⟩⟧ | ⟦⟨Variable⟩⟧ | ⟦⟨NAT⟩⟧ | ⟦ { ⟨Units⟩ } ⟧ ;
 sort Variable | symbol ⟦⟨ID⟩⟧ ;
 
-// Helper Subst structure: lists of variable and NAT pairs.
+token ID | [A-Za-z]+ ;
+token NAT | [0-9]+ ;
+space [\ \t\n\r] ;
+
+// Helper Subst structure: lists of variable-NAT pairs.
 sort Subst | MoreSubst(Variable, NAT, Subst) | NoSubst ;
 
 // Append operation for Subst structures.
 | scheme SubstAppend(Subst, Subst) ;
-SubstAppend(MoreSubst(#variable, #nat, #subst1), #subst2) → MoreSubst(#variable, #nat, SubstAppend(#subst1, #subst2)) ;
+SubstAppend(MoreSubst(#var, #nat, #subst1), #subst2) → MoreSubst(#var, #nat, SubstAppend(#subst1, #subst2)) ;
 SubstAppend(NoSubst, #subst2) → #subst2 ;
 
 // Attributes.
@@ -36,7 +33,7 @@ Run(#units) → Run1(#units) ;
 Run1(#units ↑subst(#subst)) → Run2(#units, #subst) ;
 
 | scheme Run2(Units, Subst) ↓env ;
-Run2(#units, MoreSubst(#variable, #nat, #subst)) → Run2(#units, #subst) ↓env{#variable : #nat} ;
+Run2(#units, MoreSubst(#var, #nat, #subst)) → Run2(#units, #subst) ↓env{#var : #nat} ;
 Run2(#units, NoSubst) → Unitsenv(#units) ;
 
 // Synthesis of subst.
@@ -51,17 +48,16 @@ sort Unit | ↑subst ;
 ⟦⟨NAT#n⟩⟧ ↑subst(NoSubst) ;
 ⟦ { ⟨Units#units ↑subst(#subst)⟩ } ⟧ ↑subst(#subst) ;
 
-// Inheritance of env.
+// Inheritance of env combined with substitution.
 
 sort Units | scheme Unitsenv(Units) ↓env ;
-Unitsenv( ⟦ ⟨Unit#1⟩ ⟨Units#2⟩ ⟧ ) →  ⟦ ⟨Unit Unitenv(#1)⟩ ⟨Units Unitsenv(#2)⟩ ⟧ ;
-Unitsenv( ⟦ ⟧ ) → ⟦ ⟧ ;
+Unitsenv( ⟦ ⟨Unit#1⟩ ⟨Units#2⟩ ⟧↑#s ) →  ⟦ ⟨Unit Unitenv(#1)⟩ ⟨Units Unitsenv(#2)⟩ ⟧↑#s ;
+Unitsenv( ⟦ ⟧↑#s ) → ⟦ ⟧↑#s ;
 
 sort Unit | scheme Unitenv(Unit) ↓env ;
-Unitenv( ⟦v=⟨NAT#n⟩⟧ ) → ⟦v=⟨NAT#n⟩⟧ ;
+Unitenv( ⟦v=⟨NAT#n⟩ ⟧↑#s) → ⟦v=⟨NAT#n⟩⟧↑#s ;
 Unitenv( ⟦v⟧ ) ↓env{⟦v⟧:#n} → ⟦⟨NAT#n⟩⟧ ;
-Unitenv( ⟦v⟧ ) ↓env{¬⟦v⟧} → ⟦v⟧ ;
-Unitenv( ⟦⟨NAT#n⟩⟧ ) → ⟦⟨NAT#n⟩⟧ ;
-Unitenv( ⟦ { ⟨Units#units⟩ } ⟧ ) → ⟦ { ⟨Units Unitsenv(#units)⟩ } ⟧ ;
-
+Unitenv( ⟦v⟧↑#s ) ↓env{¬⟦v⟧} → ⟦v⟧↑#s ;
+Unitenv( ⟦⟨NAT#n⟩⟧↑#s ) → ⟦⟨NAT#n⟩⟧↑#s ;
+Unitenv( ⟦ { ⟨Units#units⟩ } ⟧↑#s ) → ⟦ { ⟨Units Unitsenv(#units)⟩ } ⟧↑#s ;
 }
