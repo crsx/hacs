@@ -983,8 +983,8 @@ for example, the following additions that search a list for a specific boolean v
 sort Bools | Cons(Bool, Bools) | Nil ;
 sort Bool | scheme Find(Bools, Bool) ;
 Find(Cons(#b, #bs), #b) → True ;                      //3
-Find(Cons(#b, #bs), #b2) → Find(#bs, #b2) ;           //4 \textcolor{red}{problematic}
-default Find(#bs, #b) → False ;                       //5 \textcolor{red}{problematic}
+Find(Cons(#b, #bs), #b2) → Find(#bs, #b2) ;         //4 \textcolor{red}{problematic}
+default Find(#bs, #b) → False ;                         //5 \textcolor{red}{problematic}
 \end{hacs}
 These rules are problematic for two reasons. First, \HAX can \emph{always} pick rule "//4" over rule
 "//3", and in this way give a false negative, as will be discussed below. Second, if the list is
@@ -998,8 +998,8 @@ can decide \emph{at that time} to apply rule "//5", which of course is wrong.
 A fix for the second issue is to instead use
 \begin{hacs}[texcl,xleftmargin=\parindent]
 Find(Nil, #b) → False ;                                         //6
-Find(Cons(#b, #bs), #b) →   True ;                              //7 \textcolor{red}{careful}
-default Find(Cons(#b, #bs), #b2) →   Find(#bs, #b2) ;           //8
+Find(Cons(#b, #bs), #b) →   True ;                            //7 \textcolor{red}{careful}
+default Find(Cons(#b, #bs), #b2) →   Find(#bs, #b2) ;        //8
 \end{hacs}
 This avoids issues where the list parameter is unevaluated: they will not match any rule, so no
 wrong simplification is done.
@@ -1751,14 +1751,14 @@ main sort Stat  | ⟦ ⟨ID binds v⟩ := ⟨Exp⟩ ; ⟨Stat[x as Exp]⟩ ⟧
                 | ⟦⟧ ;
 
 sort Exp  | ⟦ ⟨Exp⟩ + ⟨Exp@1⟩ ⟧
-          | ⟦ ⟨Exp@1⟩ * ⟨Exp@2⟩ ⟧@1
-          | ⟦ ⟨INT⟩ ⟧@2
-          | ⟦ ⟨FLOAT⟩ ⟧@2
-          | symbol ⟦ ⟨ID⟩ ⟧@2
-          | sugar ⟦ ( ⟨Exp#⟩ ) ⟧@2 → Exp# ;
+           | ⟦ ⟨Exp@1⟩ * ⟨Exp@2⟩ ⟧@1
+           | ⟦ ⟨INT⟩ ⟧@2
+           | ⟦ ⟨FLOAT⟩ ⟧@2
+           | symbol ⟦ ⟨ID⟩ ⟧@2
+           | sugar ⟦ ( ⟨Exp#⟩ ) ⟧@2 → Exp# ;
   \end{hacs}
   %% 
-  The HOAS constructs are only present in line 1 of the grammar, and the difference may seem
+  The HOAS constructs are only present in lines 1~and 8 of the grammar, and the difference may seem
   irrelevant. However, consider these simple rules that \emph{duplicate} and \emph{append}
   statements (such a rule may be useful in loop hoisting code, for example):
   %%
@@ -1773,18 +1773,18 @@ Append(⟦ old := ⟨Exp#2⟩; ⟨Stat#3[old]⟩ ⟧, #S2)
   Notice how the pattern of the last rule in line 15 explicitly calls out the used binding: the
   actual variable that is used in the program is referenced in the pattern as "old" and the pattern
   matching should also keep track of all the occurrences inside the scope, which is~"#3", by writing
-  it as "#3[old]". (This exploits a \HAX hack, where \HAX variables that are also ``raw'' variables,
-  can be written in this short form instead of the full "#3[Exp⟦old⟧]".)  This setup makes it
-  possible to now \emph{systematically replace the symbol} with a new and fresh one, referred to as
-  "new" in the replacement in line 16, but which the system will in fact replace with a new and
-  unique name, both the binder \emph{and all the in-scope occurrences} inside~"#3". This ensures
-  that there is no so-called ``variable capture,'' \ie, that occurrences of the "old" name inside
-  "#S2" accidentally become double-bound.
+  it as "#3[old]". (This exploits the aforementioned \HAX hack, where \HAX variables that are also
+  ``raw'' variables, can be written in this short form instead of the full "#3[Exp⟦old⟧]".)  This
+  setup makes it possible to now \emph{systematically replace the symbol} with a new and fresh one,
+  referred to as "new" in the replacement in line 16, but which the system will in fact replace with
+  a new and unique name, both the binder \emph{and all the in-scope occurrences} inside~"#3". This
+  ensures that there is no so-called ``variable capture,'' \ie, that occurrences of the "old" name
+  inside "#S2" accidentally become double-bound.
   %%
 \end{example}
 
 Interestingly, HOAS also makes it impossible to have variables ``escape'' from their scope. A rule
-in the old grammar old grammar from Example~\ref{ex:syntax} might look like
+in the old grammar from Example~\ref{ex:syntax} might look like
 \begin{hacs}
    Flip(⟦ ⟨ID#v1⟩ := ⟨Exp#2⟩; ⟨Stat#3⟩ ⟧) →    ⟦ { ⟨Stat#3⟩ } ⟨ID#v1⟩ := ⟨Exp#2⟩; ⟧ ;
 \end{hacs}
@@ -1795,11 +1795,11 @@ obvious mistake that no one would make but this sort of variable escaping is a r
 leads to bugs in compilers.)
 %%
 The use of HOAS in \HAX in fact allows the full range of methods used in higher-order
-rewriting~\cite{Jouannaud:klop2005,Klop+:tcs1993}, and is a very powerful mechanism.
+rewriting~\cite{Jouannaud:klop2005,Klop+:tcs1993}, a very powerful mechanism.
 
 \begin{figure}[p]
   \inputhacs[texcl,mathescape,xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/CPS.hx}
-  \caption{Definitions of Call-by-Value Continuation Passing Style}
+  \caption{Definitions of Call-by-Value Continuation Passing Style (\emph{examples/CPS.hx}).}
   \label{fig:cps}
 \end{figure}
 
@@ -1813,8 +1813,8 @@ rewriting~\cite{Jouannaud:klop2005,Klop+:tcs1993}, and is a very powerful mechan
   two variants of continuation style conversion: the traditional form and a one-pass variant,
   respectively. The two systems are equivalent, but the second never constructs overlined redices ,
   which is what makes it one pass, as there is no need to simplify any so-called ``administrative''
-  (overlined) redices. Notice how each transformation defines helper schemes, which are syntactic
-  schemes, to make the recursive composition easier to express.
+  (overlined) redices. Notice how the transformations define syntactic helper schemes, to make the
+  recursive composition easier to express.
 \end{example}
 
 Finally, sometimes symbols serve as \emph{labels} or for some other purpose, when there is a need
@@ -1844,16 +1844,15 @@ The mechanism is quite simple: in rule replacements, arguments of sort "Computed
 expressions in ⟦⟧s, which include
 %%
 \begin{itemize}
-\item References to meta-variables of sort "Computed".
+\item References to meta-variables of "Computed" and token sorts (the latter as strings).
 \item Integers in decimal and \texttt{0x}-hexadecimal notation.
-\item Strings enclosed in \texttt{"…"}.
-\item Standard operators and parentheses.
-\item Conversion of tokens to integers.
+\item String literals enclosed in \verb|"|…\verb|"|.
+\item Standard operators (summarized in Table~\ref{tab:ops}) and parentheses.
+\item Conversion of tokens to integers (prefix the token meta-variable with "$"). %$
 \end{itemize}
 %%
 Notice that for "Computed", meta-variables are part of the syntax: essentially "#x" is used instead
-of ``"⟨Computed#x⟩",'' which is not permitted, inside the special syntax.  The allowed operators are
-summarized in Table~\ref{tab:ops}.
+of ``"⟨Computed#x⟩",'' which is not permitted, inside the special syntax.
 
 Also, since \emph{all} computed parts of a rule are evaluated as soon as the rule is expanded, only
 use this for calculations that can be safely computed in any case where the \emph{pattern} of the
@@ -1876,7 +1875,7 @@ rule matches.
       \texttt{+}~\texttt{-} & \text{unary plus and minus}\\
       \verb|~| & \text{bitwise not} \\
       \texttt{escape~unescape} & \text{unary function that inserts/removes C string escapes} \\
-      \texttt{length} & \text{unary function that returns length of string} \\
+      \texttt{length} & \text{unary function that returns length of (Unicode) string} \\
       \hline
     \end{array}
   \end{displaymath}
@@ -1888,12 +1887,14 @@ rule matches.
   Consider the list from Example~\ref{ex:flatten}. The following computes the length of the list,
   using a helper.
   %%
-\begin{hacs}
+  \begin{hacs}
 sort Computed | scheme ListLength(List) | scheme ListLength2(List, Computed) ;
 ListLength(#) → ListLength2(#, ⟦0⟧) ;
 ListLength2(⟦ ⟨Elem#1⟩ ⟨List#2⟩ ⟧, #n) →  ListLength2(#2, ⟦ #n + 1 ⟧) ;
 ListLength2(⟦ ⟧, #n) → #n ;
-\end{hacs}
+  \end{hacs}
+  %%
+  Note how the declaration of the helper sets up the use of the "Computed" mechanism.
   %%
 \end{example}
 
@@ -1957,28 +1958,25 @@ representation.  This section presents some examples of this.
 
   \item Separate token names from sort names, for example by using ALL CAPS for token names.
 
-  \item If using some kind of identifier, declare it as a special sort, such as
+  \item If using some kind of identifier, declare it as a special token that always allows numeric
+    extensions, like
     \begin{displaymath}
-      "sort Symbol | symbol ⟦⟨SYMBOL⟩⟧ ;"
-    \end{displaymath}
-    with "SYMBOL" defined as a token that always allows numeric extensions, like
-    \begin{displaymath}
-      "token SYMBOL | [a-z]+ ('_'"~"[0-9]+)* ;"
+      "token SYMBOL | [a-z]+ ('_'?"~"[0-9]+)* ;"
     \end{displaymath}
     This construction permits the use of symbols of the specified kind in patterns, \ie, a rule like
     \begin{displaymath}
-      "F(⟦x_1⟧) →   ⟦ x_1 + x_2 ⟧ ;"
+      "F(⟦x1⟧)" ~→~"⟦ x1 + x2 ⟧ ;"
     \end{displaymath}
-    will allow "F" to be applied to \emph{any} "Symbol", with "x_1" being the \emph{representative} of
-    that symbol for the purpose of the rule. Similarly, "x_2" will correspond to a \emph{globally fresh} symbol,
-    as it only occurs right of the "→".
+    will allow "F" to be applied to \emph{any} "Symbol", with "x1" being the \emph{representative}
+    of that symbol for the purpose of the rule. Similarly, "x2" will correspond to a \emph{globally
+      fresh} symbol, as it only occurs right of the "→".
 
   \end{itemize}
 \end{remark}
 
 \begin{figure}[p]
   \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right,texcl]{../samples/Symbols.hx}
-  \caption{\emph{examples/Symbols.hx}.}
+  \caption{\emph{examples/Symbols.hx}: Variations on symbols.}
   \label{fig:symbols}
 \end{figure}
 
@@ -2004,24 +2002,9 @@ A A 2 a a * s A 3 s_39 a * END END END s_46 s_46 s_46
 \end{example}
 
 \begin{figure}[t]
-\begin{hacs}[numbers=right,texcl]
-module org.crsx.hacs.samples.IsCat {
-
-token WORD | [A-Za-z]+ ;
-main sort Word | ⟦⟨WORD⟩⟧ ;
-
-sort Boolean | ⟦True⟧ | ⟦False⟧ ;
-
-sort Boolean | scheme IsCat(Word) ;
-IsCat(#word) → IsSameWord(#word, ⟦cat⟧) ;
-
-sort Boolean | scheme IsSameWord(Word, Word) ;
-IsSameWord(#, #) → ⟦True⟧ ;
-default IsSameWord(#1, #2) → ⟦False⟧ ;
-}
-\end{hacs}
-\caption{\emph{IsCat.hx}: Finding cats.}
-\label{fig:cats}
+  \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right,texcl]{../samples/IsCat.hx}
+  \caption{\emph{examples/IsCat.hx}: Finding cats.}
+  \label{fig:cats}
 \end{figure}
 
 \begin{example}[finding cats]
@@ -2041,41 +2024,14 @@ $ \textcolor{blue}{./IsCat.run --scheme=IsCat --term="dog"}
 False
 $ \textcolor{blue}{./IsCat.run --scheme=IsCat --term="cat"}
 True
-\end{code}
-%%$
+  \end{code}
+  %%$
 \end{example}
 
 \begin{figure}[p]
-\begin{hacs}[numbers=right,texcl]
-module org.crsx.hacs.samples.WordSet {
-
-// Simple word membership query.
-main sort Query | ⟦ ⟨WORD⟩ in ⟨List⟩ ⟧ ;
-sort List | ⟦ ⟨WORD⟩, ⟨List⟩ ⟧ | ⟦ ⟨WORD⟩ ⟧ ;
-token WORD | [A-Za-z0-9]+ ;
-
-// Collect set of words.
-attribute ↑z{WORD} ;
-sort List | ↑z ;
-⟦ ⟨WORD#w⟩, ⟨List#rest ↑z{:#ws}⟩ ⟧ ↑z{:#ws} ↑z{#w} ;
-⟦ ⟨WORD#w⟩ ⟧ ↑z{#w} ;
-
-// We'll provide the answer in clear text.
-sort Answer
-| ⟦Yes, the list contains ⟨WORD⟩.⟧
-| ⟦No, the list does not contain ⟨WORD⟩.⟧
-;
-
-// Check is main query scheme, which gives an Answer.
-sort Answer | scheme Check(Query) ;
-
-// The main program needs the synthesized list before it can check membership.
-Check( ⟦ ⟨WORD#w⟩ in ⟨List#rest ↑z{#w}⟩ ⟧ ) → ⟦Yes, the list contains ⟨WORD#w⟩.⟧ ;
-Check( ⟦ ⟨WORD#w⟩ in ⟨List#rest ↑z{¬#w}⟩ ⟧ ) → ⟦No, the list does not contain ⟨WORD#w⟩.⟧ ;
-}
-\end{hacs}
-\caption{\emph{WordSet.hx}: Sets of Words.}
-\label{fig:wordset}
+  \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right,texcl]{../samples/WordSet.hx}
+  \caption{\emph{examples/WordSet.hx}: Sets of Words.}
+  \label{fig:wordset}
 \end{figure}
 
 \begin{example}[set of words]
@@ -2102,8 +2058,8 @@ Check( ⟦ ⟨WORD#w⟩ in ⟨List#rest ↑z{¬#w}⟩ ⟧ ) → ⟦No, the list 
     \emph{two} new things to the top level of the rule: "↑z{:#ws} ↑z{#w}". This adds \emph{both} the
     existing members (just matched) \emph{and} the one new member "#w" to the result set.
 
-  \item Lines 24 and 25 are almost the same: the one difference is that 24 matches sets that contain
-    the "#w" word, whereas 25 matches sets that do not because of the "¬" logical negation sign.
+  \item Lines 24--26 are almost the same: the one difference is that 24 matches sets that contain
+    the "#w" word, whereas 25--26 matches sets that do not because of the "¬" logical negation sign.
   \end{itemize}
   %%
   The example runs as follows:
@@ -2119,47 +2075,9 @@ No, the list does not contain Foo.
 \end{example}
 
 \begin{figure}[p]
-\begin{hacs}[numbers=right,texcl]
-module org.crsx.hacs.samples.WordMap {
-
-// Simple word map over list.
-main sort Query | ⟦ ⟨Map⟩ in ⟨List⟩ ⟧ ;
-sort List | ⟦ ⟨WORD⟩ ⟨List⟩ ⟧ | ⟦ ⟧ ;
-sort Map | ⟦ ⟨WORD⟩ : ⟨WORD⟩ , ⟨Map⟩ ⟧ | ⟦ ⟨WORD⟩ : ⟨WORD⟩ ⟧ ;
-token WORD | [A-Za-z0-9]+ ;
-
-// Collect word mapping.
-attribute ↑m{WORD:WORD} ;
-sort Map | ↑m ;
-⟦ ⟨WORD#key⟩ : ⟨WORD#value⟩, ⟨Map#map ↑m{:#ms}⟩ ⟧ ↑m{:#ms} ↑m{#key:#value} ;
-⟦ ⟨WORD#key⟩ : ⟨WORD#value⟩ ⟧ ↑m{#key:#value} ;
-
-// Main program takes a Query and gives a List.
-sort List | scheme Substitute(Query) ;
-
-// Environment for mappings during List processing.
-attribute ↓e{WORD:WORD} ;
-sort List | scheme ListE(List) ↓e ;
-
-// The main program needs the synthesized map before it can substitute.
-Substitute( ⟦ ⟨Map#map ↑m{:#ms}⟩ in ⟨List#list⟩ ⟧ ) → ListE( #list ) ↓e{:#ms} ;
-
-// Replace any mapped words.
-ListE( ⟦ ⟨WORD#word⟩ ⟨List#words⟩ ⟧ ↑#syn ) ↓e{#word : #replacement}
-→ 
-⟦ ⟨WORD#replacement⟩ ⟨List ListE(#words)⟩ ⟧↑#syn
-;
-
-ListE( ⟦ ⟨WORD#word⟩ ⟨List#words⟩ ⟧ ↑#syn ) ↓e{¬#word}
-→ 
-⟦ ⟨WORD#word⟩ ⟨List ListE(#words)⟩ ⟧↑#syn
-;
-
-ListE( ⟦ ⟧ ↑#syn ) → ⟦ ⟧ ↑#syn ;
-}
-\end{hacs}
-\caption{\emph{WordMap.hx}: Apply Word Substitution as Map.}
-\label{fig:wordmap}
+  \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right,texcl]{../samples/WordMap.hx}
+  \caption{\emph{examples/WordMap.hx}: Apply Word Substitution as Map.}
+  \label{fig:wordmap}
 \end{figure}
 
 \begin{example}[map of words]\label{ex:wordmap}

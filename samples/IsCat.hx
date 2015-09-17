@@ -6,10 +6,9 @@ main sort Word | ⟦⟨WORD⟩⟧ ;
 sort Boolean | ⟦True⟧ | ⟦False⟧ ;
 
 sort Boolean | scheme IsCat(Word) ;
-IsCat(#word) → IsSameWord(#word, ⟦cat⟧) ;
+IsCat(#word) →  IsSameWord(#word, ⟦cat⟧) ;
 
 sort Boolean | scheme IsSameWord(Word, Word) ;
-IsSameWord(#, #) → ⟦True⟧ ;
-default IsSameWord(#1, #2) → ⟦False⟧ ;
-
+IsSameWord(#, #) →  ⟦True⟧ ;
+default IsSameWord(#1, #2) →  ⟦False⟧ ;
 }

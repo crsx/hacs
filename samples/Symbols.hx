@@ -27,7 +27,7 @@ module org.crsx.hacs.tests.Symbols { //-*-hacs-*-
 
   // Rules for tokens (not seen before and already seen).
   Emit(⟦ ⟨UP#id⟩ ⟨L#⟩ ⟧) ↓ups{¬#id}
-  → ⟦ ⟨UP#id⟩ ⟨L Emit(#) ↓ups{#id : Two}⟩ ⟧ ;
+    → ⟦ ⟨UP#id⟩ ⟨L Emit(#) ↓ups{#id : Two}⟩ ⟧ ;
   Emit(⟦ ⟨UP#id⟩ ⟨L#⟩ ⟧) ↓ups{#id : #n}
     → ⟦ ⟨UP#id⟩ ⟨INT#n⟩ ⟨L Emit(#) ↓ups{#id : ⟦ #n + 1 ⟧}⟩ ⟧ ;
 

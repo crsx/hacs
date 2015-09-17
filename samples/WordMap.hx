@@ -1,8 +1,8 @@
 module org.crsx.hacs.samples.WordMap {
 
-// Simple word map over sentence.
-main sort Query | ⟦ ⟨Map⟩ in ⟨Sentence⟩ ⟧ ;
-sort Sentence | ⟦ ⟨WORD⟩ ⟨Sentence⟩ ⟧ | ⟦ ⟧ ;
+// Simple word map over list.
+main sort Query | ⟦ ⟨Map⟩ in ⟨List⟩ ⟧ ;
+sort List | ⟦ ⟨WORD⟩ ⟨List⟩ ⟧ | ⟦ ⟧ ;
 sort Map | ⟦ ⟨WORD⟩ : ⟨WORD⟩ , ⟨Map⟩ ⟧ | ⟦ ⟨WORD⟩ : ⟨WORD⟩ ⟧ ;
 token WORD | [A-Za-z0-9]+ ;
 
@@ -12,26 +12,26 @@ sort Map | ↑m ;
 ⟦ ⟨WORD#key⟩ : ⟨WORD#value⟩, ⟨Map#map ↑m{:#ms}⟩ ⟧ ↑m{:#ms} ↑m{#key:#value} ;
 ⟦ ⟨WORD#key⟩ : ⟨WORD#value⟩ ⟧ ↑m{#key:#value} ;
 
-// Main "program" takes a Query and gives a Sentence.
-sort Sentence | scheme Substitute(Query) ;
+// Main program takes a Query and gives a List.
+sort List | scheme Substitute(Query) ;
 
-// Environment for mappings during Sentence processing.
+// Environment for mappings during List processing.
 attribute ↓e{WORD:WORD} ;
-sort Sentence | scheme SentenceE(Sentence) ↓e ;
+sort List | scheme ListE(List) ↓e ;
 
 // The main program needs the synthesized map before it can substitute.
-Substitute( ⟦ ⟨Map#map ↑m{:#ms}⟩ in ⟨Sentence#sentence⟩ ⟧ ) → SentenceE( #sentence ) ↓e{:#ms} ;
+Substitute( ⟦ ⟨Map#map ↑m{:#ms}⟩ in ⟨List#list⟩ ⟧ ) → ListE( #list ) ↓e{:#ms} ;
 
 // Replace any mapped words.
-SentenceE( ⟦ ⟨WORD#word⟩ ⟨Sentence#words⟩ ⟧ ↑#syn ) ↓e{#word : #replacement}
+ListE( ⟦ ⟨WORD#word⟩ ⟨List#words⟩ ⟧ ↑#syn ) ↓e{#word : #replacement}
 → 
-⟦ ⟨WORD#replacement⟩ ⟨Sentence SentenceE(#words)⟩ ⟧↑#syn
+⟦ ⟨WORD#replacement⟩ ⟨List ListE(#words)⟩ ⟧↑#syn
 ;
 
-SentenceE( ⟦ ⟨WORD#word⟩ ⟨Sentence#words⟩ ⟧ ↑#syn ) ↓e{¬#word}
+ListE( ⟦ ⟨WORD#word⟩ ⟨List#words⟩ ⟧ ↑#syn ) ↓e{¬#word}
 → 
-⟦ ⟨WORD#word⟩ ⟨Sentence SentenceE(#words)⟩ ⟧↑#syn
+⟦ ⟨WORD#word⟩ ⟨List ListE(#words)⟩ ⟧↑#syn
 ;
 
-SentenceE( ⟦ ⟧ ↑#syn ) → ⟦ ⟧ ↑#syn ;
+ListE( ⟦ ⟧ ↑#syn ) → ⟦ ⟧ ↑#syn ;
 }
