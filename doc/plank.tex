@@ -1,12 +1,17 @@
 \documentclass[letterpaper,11pt]{article}
+
+%% Style.
+%\usepackage{charter}
+\usepackage{eulervm}
+\renewcommand{\rmdefault}{pplx}
+\bibliographystyle{plain}
+\usepackage[margin=1in]{geometry}
+
+%% Format.
 \input{setup}
 \usepackage{cite}
 \usepackage{stmaryrd}
-
-%% Style.
-\usepackage{charter}
-\bibliographystyle{plain}
-\usepackage[margin=1in]{geometry}
+\let\pmb=\boldmath
 
 %% Topmatter.
 \title{ \hax: a Core for Higher-order Attribute Contraction Schemes }
@@ -22,18 +27,20 @@
 
 \begin{abstract}\noindent
   %%
-  We present \hax, a core calculus that can serve as the foundation (or ``reduced plank'') for the
-  \HAX (Higher-order Attribute Contraction Schemes) and \CRSX (Combinatory Reductions Systems with
+  We present \hax (or ``plank''), a core calculus that can serve as the foundation for the \HAX
+  (Higher-order Attribute Contraction Schemes) and \CRSX (Combinatory Reductions Systems with
   eXtensions) compiler specification languages.
   %%
   Formally, \hax is a general higher order rewriting formalism extended with first class
-  \emph{environments}, and equipped with a parametric polymorphic type system.
+  \emph{environments}, and equipped with a parametric polymorphic sort system.
   %%
-  In this paper we give the formal definition of the \hax calculus and its type system, and we show
+  In this paper we give the formal definition of the \hax calculus and its sort system, and we show
   how the central constructs of the much richer \HAX and \CRSX formalisms can be represented in
   \hax. We also outline how \hax can be implemented, and summarize central properties of the system.
   %%
 \end{abstract}
+
+\compacttableofcontents
 
 %------------------------------------------------------------------------
 
@@ -75,9 +82,12 @@ language.
 
 \begin{figure*}[ht]
   \begin{align}
+    \tag{\hax{}Script}
+    H &::= D^* 
+    \\
     \tag{Declaration}
     D &::= \kw{sort}~S\,\kw\{\, F^*\,\kw\}
-    \bigm| \kw{attribute}~a~\kw\{\,S\,\kw:\,S\,\kw\}\,\kw;
+    \bigm| \kw{attribute}~a~\set{AF}\,\kw;
     \\[\jot]
     \tag{Form}
     F &::= \kw{data}~c\,\kw(\,\set{BF}^{*\kw,}\,\kw)~a^*\,\kw;
@@ -87,6 +97,9 @@ language.
     \\
     \tag{BindersForm}
     \set{BF} &::= \kw[\,S^{*\kw,}\,\kw]\,S
+    \\
+    \tag{AttributeForm}
+    \set{AF} &::= \kw\{\,S\,\kw:\,S\,\kw\}
     \\
     \tag{Sort}
     S &::= s\,\kw[\,S^{*\kw,}\,\kw]
@@ -104,49 +117,52 @@ language.
     B &::= \kw[\,v^{*\kw,}\,\kw]\,T
     \\
     \tag{Attribute}
-    A &::= a~\set{V}
+    A &::= a~\set{AV}
     \\
-    \tag{Value}
-    \set{V} &::= \kw\{\,T\,\kw:\,T\,\kw\}
+    \tag{AttributeValue}
+    \set{AV} &::= \kw\{\,T\,\kw:\,T\,\kw\}
     \bigm| \kw\{\kw\}
     \bigm| \kw\{\,\kw{$¬$}\,T\,\kw\}
     \bigm| \kw\{\kw:\,M\,\kw\}
   \end{align}
+  \vspace*{-2em}
   \caption{\hax syntax.}
-  \label{fig:plank}
+  \label{fig:syntax}
 \end{figure*}
 
-\begin{definition}[\hax]
+\begin{definition}[\hax syntax]
   %%
-  The \hax grammar is shown in Figure~\ref{fig:plank}. The top level of a \hax script is a sequence
+  The \hax syntax is shown in Figure~\ref{fig:syntax}. The top level of a \hax script is a sequence
   of declarations $D^*$, and the grammar assumes that we have three categories of tokens defined:
   %%
   \begin{itemize}
 
-  \item $s,f,c$ stand for \emph{constructor} tokens, which are capitalized words like "Integer" or
-    "A" or "CamelCaseWord", used for sort, function symbol, and data symbol names (respectively).
+  \item $s,f,c ∈ \mathcal{C}$ stand for \emph{constructor} tokens, which are capitalized words like
+    "Integer" or "A" or "CamelCaseWord", used for sort, function symbol, and data symbol names
+    (respectively).
 
-  \item $v,a,α$ stand for \emph{variable} tokens, which are lower case words like "x" or "foo" or
-    even "lowWord", used for term variables, attributes, and sort variables (respectively).
+  \item $v,a,α ∈ \mathcal{V}$ stand for \emph{variable} tokens, which are lower case words like "x"
+    or "foo" or even "lowWord", used for term variables, attributes, and sort variables
+    (respectively).
 
-  \item $M$ stands for \emph{meta-variable} tokens, which are tokens that start with "#" like "#arg"
-    or "#BigFoot" or even just "#1" or merely~"#".
+  \item $M ∈ \mathcal{M}$ stands for \emph{meta-variable} tokens, which are tokens that start with
+    "#" like "#arg" or "#BigFoot" or even just "#1" or merely~"#".
 
   \end{itemize}
   %%
   The ``$A^{*\kw,}$'' notation means zero or more $A$s separated by commas. In addition, we define
-  the following:
+  the following concepts:
   %%
   \begin{itemize}
 
-  \item A term of the form $c(B_1,…,B_n)A_1…A_m$ ($m,n≥0$) is called a \emph{construction}; if
+  \item A term of the form $c(B_1,…,B_n)\,A_1…A_m$ ($m,n≥0$) is called a \emph{construction}; if
     furthermore the top symbol $c$ is declared with a "scheme c…" declaration then it is called a
     \emph{function construction}.
 
   \item A term of the form $v\,A_1…A_m$ ($m≥0$) is a \emph{variable occurrence}; if the variable $v$
     occurs contained in a binder $[…v…]T$ then the variable occurrence is \emph{bound}.
 
-  \item A term of the form $M[T_1,…,T_n]A_1…A_m$ ($m,n≥0$) is a \emph{meta-application}; if the
+  \item A term of the form $M[T_1,…,T_n]\,A_1…A_m$ ($m,n≥0$) is a \emph{meta-application}; if the
     terms $T_i$ are distinct bound variable occurrences then this is a \emph{pattern
       meta-application}.
 
@@ -158,6 +174,7 @@ language.
 \end{definition}
 
 \begin{figure*}[p]
+  \vspace*{-1em}
   %%
   \begin{hacs}[numbers=right,texcl]
 sort N[] {                                                        // natural number sort
@@ -186,12 +203,11 @@ sort Λ[] {                                                       // sort of λ 
   \label{fig:lambda}
   %%
   \vspace{1em}
-  \small
   \begin{hacs}[numbers=right,texcl]
 sort List[α] { data Nil(); data Cons([]α, []List[α]);
- scheme Appnd([]List[α], []List[α]);
- rule Appnd([]Nil(), []#2[]) →  #2[];
- rule Appnd([]Cons([]#11[], []#12[]), []#2[]) →  Cons([]#11[], Appnd([]#12[], []#2[]));
+ scheme Append([]List[α], []List[α]);
+ rule Append([]Nil(), []#2[]) →  #2[];
+ rule Append([]Cons([]#11[], []#12[]), []#2[]) →  Cons([]#11[], Append([]#12[], []#2[]));
  scheme Map([β]α, []List[β]);
  rule Map([x]#[x], []Nil()) →  Nil();
  rule Map([x]#[x], []Cons([]#1[], []#2[])) →  Cons([]#[#1[]], Map([x]#[x], []#2[]));
@@ -202,6 +218,7 @@ sort List[α] { data Nil(); data Cons([]α, []List[α]);
   \label{fig:list}
   %%
   \vspace{1em}
+  \small
   \begin{hacs}[numbers=right,texcl]
 sort Dummy[] { variable; }
 attribute val {Dummy[] : Bool[]};
@@ -247,7 +264,7 @@ sort Bool[] { data T() val; data F() val;
     argument. The single numeric argument is specified as "[]N[]" because it has no locally scoped
     binders ("[]"$_-$) and the "N" sort has no sort parameters ($_-$"[]").
 
-  \item There is a single function (\kw{scheme}) constructor: "Plus" with two numeric arguments.
+  \item There is a single function (\kw{scheme}) constructor, "Plus", with two numeric arguments.
 
   \item There are two \kw{rule}s for the function symbol, implementing the usual Peano addition rules.
 
@@ -269,7 +286,7 @@ sort Bool[] { data T() val; data F() val;
   number.  Otherwise, binding and substitution are in the style of CRS higher order rewrite
   systems~\cite{Klop+:tcs1993}.\footnote{The notation does differ from the original CRS notation in
     that we use ``\#'' as a marker for meta-variables instead of the original reserved use of $Z$,
-    and we use square brackets for substitution variables instead of round.}
+    and we use square brackets instead of round for meta-application arguments.}
 \end{remark}
 
 \begin{example}[untyped λ calculus]\label{ex:lambda}
@@ -292,13 +309,13 @@ sort Bool[] { data T() val; data F() val;
   \item We specify one rewrite "rule" for "Λ": β-reduction. As usual, the rule specifies how an
     application of an abstraction is simplified. The interesting aspect of the pattern is how the
     abstraction is matched: the part of the pattern "[x]#body[x]" means ``the scoped subterm with
-    binder "x" and subterm "#bind" wherein "x" may occur.'' Note the similarity to the declaration
-    of the subterm of the "Lm" constructor.
+    binder "x" and subterm "#bind" wherein we keep track of where "x" occurs.'' Note the similarity
+    to the declaration of the subterm of the "Lm" constructor.
 
   \item Once an application of an abstraction is matched, the "rule" gives the result of
     simplification as "#body[#arg[]]", which means that we construct a copy of "#body" except all
-    occurrences of the variable we matched in the pattern "#body[x]" is substituted with what
-    "#arg[]" matched.
+    occurrences of the variable we matched (and kept track of) in the pattern "#body[x]" is
+    substituted with what "#arg[]" matched.
 
   \end{itemize}
   %%
@@ -318,20 +335,12 @@ sort Bool[] { data T() val; data F() val;
 
 \begin{example}[lists]\label{ex:list}
   Figure~\ref{fig:list} shows a standard definition of polymorphic lists over an arbitrary element
-  sort.
-  %%
-  \begin{itemize}
+  sort.  The target sort is "List[α]" which is a usual polymorphic way to express a list of members
+  of an unspecified parameter sort~"α".  Inside the scope of the "sort" declaration, "α" denotes the
+  member sort of the result list of all constructs. So the declaration of "data Cons([]α,[]List[α])"
+  means that the "Cons" constructor takes one argument of the same sort as the member of the result
+  list, as well as an argument of the same sort as the result, "List[α]".
 
-  \item The target sort is "List[α]" which is a usual polymorphic way to express a list of members
-    of an unspecified parameter sort~"α".
-
-  \item Inside the scope of the "sort" declaration, "α" denotes the member sort of the result list
-    of all constructs. So the declaration of "data Cons([]α, []List[α])" means that the "Cons"
-    constructor takes one argument of the same sort as the member of the result list, as well as an
-    argument of the same sort as the result, "List[α]".
-
-  \end{itemize}
-  %%
   \TBD{Example evaluation.}
   %%
 \end{example}
@@ -350,7 +359,7 @@ sort Bool[] { data T() val; data F() val;
   Lines 7~and 8 define the "Eval1" scheme on the two trivial cases: literal thruth values are
   annotated with a "val" that maps the dummy variable to the truth value. %
   Lines 10~through 12 define the "Eval1" scheme for negation. %
-  The first rule in line~10 expresses that "Eval1" can rewrite a "Not" term where the "val"
+  The first rule in line~10 expresses that "Eval1" can rewrite a "Not"-term where the "val"
   attribute does \emph{not} have a binding for the dummy variable: in that case, the result is
   obtained by applying the "Eval1" scheme recursively to the negated subterm and allowing the full
   negation to be ``postprocessed'' by the "Eval2" scheme. %
@@ -366,13 +375,13 @@ sort Bool[] { data T() val; data F() val;
   %%
   \begin{hacs}
     Eval([]Or([]Not([]F()), []T()))
-    →  Eval1([]d, []Or([]Not([]F()), []T()))
-    →  Eval2([]d, []Or(Eval1([]d, []Not([]F())), Eval1([]d, []T())))
-    →  Eval2([]d, []Or(Eval1([]d, []Not([]F())), []T()val{d:T()}))
-    →  Eval2([]d, []Or(Eval2([]d, []Not(Eval1([]d, []F()))), []T()val{d:T()}))
-    →  Eval2([]d, []Or(Eval2([]d, []Not([]F()val{d:F()})), []T()val{d:T()}))
-    →  Eval2([]d, []Or([]Not([]F()val{d:F()})val{d:T()}, []T()val{d:T()}))
-    →  Or([]Not([]F()val{d:F()})val{d:T()}, []T()val{d:T()})val{d:T()}
+    → Eval1([]d, []Or([]Not([]F()), []T()))
+    → Eval2([]d, []Or(Eval1([]d, []Not([]F())), Eval1([]d, []T())))
+    → Eval2([]d, []Or(Eval1([]d, []Not([]F())), []T()val{d:T()}))
+    → Eval2([]d, []Or(Eval2([]d, []Not(Eval1([]d, []F()))), []T()val{d:T()}))
+    → Eval2([]d, []Or(Eval2([]d, []Not([]F()val{d:F()})), []T()val{d:T()}))
+    → Eval2([]d, []Or([]Not([]F()val{d:F()})val{d:T()}, []T()val{d:T()}))
+    → Or([]Not([]F()val{d:F()})val{d:T()}, []T()val{d:T()})val{d:T()}
   \end{hacs}%
   %%
   The final term has every subterm annotated with its logical value.
@@ -383,99 +392,146 @@ sort Bool[] { data T() val; data F() val;
 
 %------------------------------------------------------------------------
 
-\section{\bhax Rewriting}
-\label{sec:rewriting}
+\section{\bhax Sorting}
+\label{sec:sorting}
 
-In this section we formally define rewriting in the \hax calculus.
+The \hax calculus in practice restricts the terms of the grammar in Figure~\ref{fig:syntax} further
+by only allowing sortable scripts. Informally, sorting ensures that
+%%
+\begin{itemize}
+\item the pattern and contraction restrictions are obeyed;
+\item binders are used in the shape declared for constructors;
+\item subterms (including variable and meta-variable occurrences) have the right sort;
+\item attributes are used with properly sorted values;
+\item attributes are used only on constructors for which they have been declared;
+\item the attributes are the same on all data constructors of a given sort;
+\item \emph{all} data terms of the same sort have the same attributes.
+\end{itemize}
+%%
+If you check with the examples, then you can see that the examples all satisfy these restrictions
+except that Example~\ref{ex:bool}, which breaks the last of the above constraints. \TBD{Fix but how:
+  patch example or rules?}
 
-\begin{definition}[substitution]
-  
-\end{definition}
-
-\TBD{mv, fv, substitution, rewriting.}
-
-
-%------------------------------------------------------------------------
-
-\section{\bhax Typing}
-\label{sec:typing}
-
-\begin{notation}
+\begin{notation}[vectors]
   We will use \emph{vector notation} with $\ov{X}$ denoting $X_1,…,X_n$ for some $n≥0$; $ε$ denotes
-  all empty vectors. We use $·$ (dot) for vector \emph{catenation}, including adding single new
-  elements, and will freely abuse this notation and in particular write $\ov{[\ov{x}]x}$ as an
-  abbreviation of $[x_{11}…x_{1m_1}]x_1…[x_{n1}…x_{nm_n}]x_n$ for suitable $n,m_1,…,m_n ≥ 0$.
+  all empty vectors. Vectors are combined by simple concatenation, and will freely abuse this
+  notation and, for example, write $\ov{[\ov{x}]x}$ as an abbreviation of
+  $[x_{11}…x_{1m_1}]x_1…[x_{n1}…x_{nm_n}]x_n$ for suitable $n,m_1,…,m_n ≥ 0$.
 \end{notation}
 
-\begin{figure*}[p]\small
+\begin{definition}[sorts and sort environments]
+  %%
+  A \emph{global sort environment} $Γ$ is a structure that combines
+  %% 
+  \begin{itemize}
+
+  \item $Γ_{\op{cons}}\colon \mathcal{C} → S×F$ from constructor name to sort-form pair.
+
+  \item $Γ_{\op{hasvar}}\colon 2^{\mathcal{C}}$ is a set of sorts that allows variables.
+
+  \item $Γ_{\op{attr}}\colon \mathcal{V} → \set{AF}$ from attribute name to attribute form.
+
+  \item $Γ_{\op{cons-attr}}\colon \mathcal{C} → 2^{\mathcal{V}}$ from constructor name to set of
+    attribute names.
+
+  \item $Γ_{\op{data-atts}}\colon \mathcal{C} → 2^{\mathcal{V}}$ from sort name to sets of data
+    attribute names.
+
+  \end{itemize}
+  %%
+  A \emph{local sort environment} $Δ$ is a structure that combines
+  %% 
+  \begin{itemize}
+
+  \item $Δ_{\op{free}}\colon \mathcal{V} → \set{S}$ from variable names to sorts.
+
+  \item $Δ_{\op{meta}}\colon \mathcal{M} → \set{BF}$ from meta-variable names to binder forms.
+
+  \item $Δ_{\op{attr-meta}}\colon \mathcal{M} → \set{BAF}$ from attribute ``catch-all'' meta-variable.
+    names to attribute forms.
+
+  \item $Δ_{\op{var}}\colon \mathcal{C} → \set{BAF}$ from attribute ``catch-all'' meta-variable.
+
+  \end{itemize}
+  %%
+  We will confuse $Γ$ and $Δ$ with their components and omit the subscript when it is apparent from
+  the context.
+  %%
+\end{definition}
+
+We separate the mappings for free and bound variables for semantic reasons, as it will be useful
+when showing properties of the type system.
+
+\begin{figure*}[p]%\small
+  \vspace*{-3em}
   \begin{gather*}
     %
-    \intertext{\shoveright{Sorting of Declarations\hfil\fbox{$ Γ ⊢ D $}}}
+    \intertext{\shoveright{Sorting of Declaration\hfil\fbox{$ Γ ⊢ D $}}}
     %
     \dfrac
-    { Γ, S ⊢ \ov{F} }
-    { Γ ⊢ \kw{sort}~S\,\kw\{\, \ov{F} \,\kw\} }
+    { Γ,s[\ov{S}] ⊢ (\ov{F}) }
+    { Γ ⊢ \kw{sort}~s[\ov{S}]\,\kw\{\, \ov{F} \,\kw\} }
     % 
-    \\[\jot]
+    \\[1ex]
     % 
-    \dfrac
-    { }
-    { Γ ⊢ \kw{attribute}~a~\kw\{\,S_1\,\kw:\,S_2\,\kw\}\,\kw; }
-    \quad Γ(a) = \{S_1{:}S_2\};~ \op{KeySort}(S_1)
-    % 
-    \\[\jot]
-    %
-    \intertext{\shoveright{Sorting of Forms\hfil\smash{\fbox{$ Γ,S ⊢ F $}}}}
-    %
     \dfrac
     { }
-    { Γ,S ⊢ \kw{data}~c\,\kw(\,\ov{\set{BF}}\,\kw)~\ov{a}\,\kw; }
-    \quad Γ(c) = [\ov{\set{BF}},\ov{a}⇒S];~ \op{DataAtts}\{\ov{a}\} ∈ Γ(S)
+    { Γ ⊢ \kw{attribute}~a~\kw\{\,s[\ov{S}]\,\kw:\,S_2\,\kw\}\,\kw; }
+    \quad Γ(a) = \{s[\ov{S}]:S_2\}, ~ s∈Γ_{\op{hasvar}} 
     % 
-    \\[\jot]
+    \\
+    %
+    \intertext{\shoveright{Sorting of Form\hfil\smash{\fbox{$ Γ,s[\ov{S}] ⊢ F $}}}}
     %
     \dfrac
     { }
-    { Γ,S ⊢ \kw{scheme}~f\,\kw(\,\ov{\set{BF}}\,\kw)~\ov{a}\,\kw; }
-    \quad Γ(c) = [\ov{\set{BF}},\ov{a}⇒S]
-    % 
-    \\[\jot]
-    %
-    \dfrac
-    { }
-    { Γ,S ⊢ \kw{variable}\,\kw; }
-    \quad \op{Var}∈Γ(S)
+    { Γ,s[\ov{S}] ⊢ \kw{data}~c\,\kw(\,\ov{\set{BF}}\,\kw)~\ov{a}\,\kw; }
+    \quad Γ(c) = (s[\ov{S}], c(\ov{\set{BF}})\ov{a}), ~ Γ_{\op{data-atts}}(s) = \{\ov{a}\}
     % 
     \\[1ex]
     %
     \dfrac
-    { Γ,Δ[\op{Pattern}] ⊢ T_1 : S \qquad Γ,Δ[\op{Contract}] ⊢ T_2 : S }
-    { Γ,S ⊢ O~\kw{rule}~T_1~\kw{$→$}~T_2\,\kw; }
+    { }
+    { Γ,s[\ov{S}] ⊢ \kw{scheme}~f\,\kw(\,\ov{\set{BF}}\,\kw)~\ov{a}\,\kw; }
+    \quad Γ(f) = (s[\ov{S}], f(\ov{\set{BF}})\ov{a})
     % 
-    \\[\jot]
-    %
-    \intertext{\shoveright{Sorting of Terms\hfil\smash{\fbox{$ Γ,Δ ⊢ T : S $}}}}
+    \\[1ex]
     %
     \dfrac
-    { Γ,Δ ⊢ \ov{B} : \ov{\set{BF}} \qquad Γ,Δ,\{\ov{a}\} ⊢ \ov{A} }
-    { Γ,Δ ⊢ c\,\kw(\,\ov{B}\,\kw)\,\ov{A} : S }
-    \quad Γ(c) = [\ov{\set{BF}},\ov{a}⇒S]
+    { }
+    { Γ,s[\ov{S}] ⊢ \kw{variable}\,\kw; }
+    \quad s∈Γ_{\op{hasvar}}
     % 
-    \\[\jot]
+    \\[1ex]
     %
     \dfrac
-    { Γ,Δ,\{\ov{a}\} ⊢ \ov{A} }
-    { Γ,Δ ⊢ v \, \ov{A} : S }
-    \quad Δ(v) = S;~ \op{DataAtts}\{\ov{a}\} ∈ Γ(S);~ \op{Var}∈Γ(S)
+    { Γ,Δ,\op{Pattern} ⊢ T_1 : s[\ov{S}]  \qquad Γ,Δ,\op{Contract} ⊢ T_2 : s[\ov{S}] }
+    { Γ,s[\ov{S}]  ⊢ O~\kw{rule}~T_1~\kw{$→$}~T_2\,\kw; }
     % 
-    \\[\jot]
+    \\
+    %
+    \intertext{\shoveright{Sorting of Terms\hfil\smash{\fbox{$ Γ,Δ,\set{CP} ⊢ T : S $}}}}
     %
     \dfrac
-    { Γ,Δ ⊢ \ov{T} : \ov{S} \qquad Γ,Δ,\{\ov{a}\} ⊢ \ov{A} }
-    { Γ,Δ ⊢ M\,\kw[\,\ov{T}\,\kw] \, \ov{A} : S }
+    { Γ,Δ,CP ⊢ \ov{B} : \ov{\set{BF}} \qquad Γ,Δ,CP,\{\ov{a}\} ⊢ \ov{A} }
+    { Γ,Δ,CP ⊢ c\,\kw(\,\ov{B}\,\kw)\,\ov{A} : S }
+    \quad Γ(c) = (S, c(\ov{\set{BF}})\ov{a})
+    % 
+    \\[1ex]
+    %
+    \dfrac
+    { Γ,Δ,CP,\{\ov{a}\} ⊢ \ov{A} }
+    { Γ,Δ,CP ⊢ v \, \ov{A} : s[\ov{S}] }
+    \quad Δ(v) = s[\ov{S}],~ Γ_{\op{data-attr}}(s) = \{\ov{a}\},~ s∈Γ_{\op{hasvar}}
+    % 
+    \\[1ex]
+    %
+    \dfrac
+    { Γ,Δ,CP ⊢ \ov{T} : \ov{S} \qquad Γ,Δ,CP,\{\ov{a}\} ⊢ \ov{A} }
+    { Γ,Δ,CP ⊢ M\,\kw[\,\ov{T}\,\kw] \, \ov{A} : S }
     \quad Δ(M) = [\ov{S}⇒S]~; \op{DataAtts}\{\ov{a}\} ∈ Γ(S)
     % 
-    \\[\jot]
+    \\
     %
     \intertext{\shoveright{Sorting of Binder\hfil\smash{\fbox{$ Γ,Δ ⊢ B : \set{BF} $}}}}
     %
@@ -488,9 +544,9 @@ In this section we formally define rewriting in the \hax calculus.
     \intertext{\shoveright{Sorting of Attribute\hfil\smash{\fbox{$ Γ,Δ,\{\ov{a}\} ⊢ A $}}}}
     %
     \dfrac
-    { Γ,Δ ⊢ V : \{S_1{:}S_2\} }
+    { Γ,Δ ⊢ V : \{S_1:S_2\} }
     { Γ,Δ,\{\ov{a}\} ⊢ a\,V }
-    \quad a∈\{\ov{a}\};~ Γ(a) = \{S_1{:}S_2\}
+    \quad a∈\{\ov{a}\};~ Γ(a) = \{S_1:S_2\}
     %
     \\[\jot]
     %
@@ -498,55 +554,111 @@ In this section we formally define rewriting in the \hax calculus.
     %
     \dfrac
     { Γ,Δ ⊢ T_1 : S_1 \qquad Γ,Δ ⊢ T_2 : S_2 }
-    { Γ,Δ ⊢ \kw\{\,T_1\,\kw:\,T_2\,\kw\} : \{S_1{:}S_2\} }
+    { Γ,Δ ⊢ \kw\{\,T_1\,\kw:\,T_2\,\kw\} : \{S_1:S_2\} }
     %
     \qquad
     %
     \dfrac
     { }
-    { Γ,Δ ⊢ \kw\{\kw:\,M\,\kw\} : \{S_1{:}S_2\} }
-    ~ Δ({:}M) = \{S_1{:}S_2\}
+    { Γ,Δ ⊢ \kw\{\kw:\,M\,\kw\} : \{S_1:S_2\} }
+    ~ Δ({:}M) = \{S_1:S_2\}
     %
     \\[\jot]
     %
     \dfrac
     { Γ,Δ ⊢ T : S_1 }
-    { Γ,Δ ⊢ \kw\{\,\kw{$¬$}\,T\,\kw\} : \{S_1{:}S_2\} }
-    ~ \op{Pattern}∈Δ
+    { Γ,Δ,\op{Pattern} ⊢ \kw\{\,\kw{$¬$}\,T\,\kw\} : \{S_1:S_2\} }
     % 
     \qquad
     %
     \dfrac
     { }
-    { Γ,Δ ⊢ \kw\{\kw\} : \{S_1{:}S_2\} }
-    ~ \op{Contract}∈Δ
+    { Γ,Δ,\op{Contract} ⊢ \kw\{\kw\} : \{S_1:S_2\} }
     %
   \end{gather*}
-  \caption{\hax type rules.}
-  \label{fig:typerules}
+  \caption{\hax sort rules.}
+  \label{fig:sortrules}
 \end{figure*}
 
 \begin{definition}
+  Given a \hax script $H$, a sort $\op{Void}∈S$ which does not occur in $H$, and a sort environment
+  $Γ$, and define the additional syntax rule
   %%
-  The rules in Figure~\ref{fig:typerules} give the type rules for~\hax.
+  \begin{displaymath}
+    CP ::= \op{Contract} \mid \op{Pattern}
+  \end{displaymath}
+  %% 
+  The \hax script is \emph{well-sorted for $Γ$} if $Γ$ is the smallest sort environment for which we
+  can prove
+  %%
+  \begin{displaymath}
+    Γ,\op{Void} ⊢ H
+  \end{displaymath}
+  %%
+  using the rules in Figure~\ref{fig:sortrules} and the added conventions that
+  \begin{itemize}
 
-  \TBD{Explain all the environments and judgments.}
+  \item $A⊢(\ov{B})$ means $A⊢B_1~\cdots~A⊢B_n$.
+
+  \item $\op{KeySort}("s["\ov{S}"]")$ is true for sorts $s$ with a declaration
+    $"sort "s"[…]{…variable;…}"$.
+
+  \item 
+
+  \end{itemize}
+
+  Given $H,Γ$ as above, a term $T$ is said to be \emph{$S$-sorted in $H$} if we can prove
+  %%
+  \begin{displaymath}
+    Γ,\op{Contract} ⊢ T : S
+  \end{displaymath}
+  %%
+  using the rules.
 \end{definition}
 
-\TBD{Example type derivation.}
+\TBD{Example sort derivation.}
+
+%------------------------------------------------------------------------
+
+\section{\bhax Rewriting}
+\label{sec:rewriting}
+
+In this section we formally define rewriting in the \hax calculus. We follow [\TBD{Cynthia?}] in
+defining rewriting in the context of a sort assignment.
+
+\begin{definition}[substitution]
+  
+\end{definition}
+
+\TBD{mv, fv, substitution, rewriting.}
 
 \begin{theorem}[subject reduction]
-  A well-sorted term can only rewrite to a well-sorted term.
+  Given a well-sorted \hax script $H$ with the rewrite 
+
+
+A well-sorted term can only rewrite to a well-sorted term.
 \end{theorem}
+
+%------------------------------------------------------------------------
+
+\section{\bhax Properties}
+\label{sec:properties}
+
+In this section we provide proofs for several standard rewrite properties of~\hax.
+
+\TBD{What do we know of properties of such a system…Cynthi or Maria or Julian?}
+
 
 %------------------------------------------------------------------------
 
 \section{Implementing \hax}
 \label{sec:implement}
 
-In this section we give a brief summary of how we see \hax implemented.
+In this section we give notes on how we see \hax implemented.
 
-\TBD{Struct for nodes, reference counting, lazy free variable lists, dispatchify.}
+\TBD{Struct for nodes, reference counting, lazy free variable lists…Lionel?}
+
+\TBD{What about dispatchification…Maria?}
 
 %------------------------------------------------------------------------
 
@@ -705,7 +817,15 @@ $P_0,\ov{x},C_1,P_1, C_2,…,P_{k-1}, C_k$. \TBD{Explain?}
   %% 
 \end{definition}
 
+%------------------------------------------------------------------------
 
+\section{A Constraint Model}
+\label{sec:constraints}
+
+In this section, we introduce a notion of \emph{constraint environment} and primitives for
+\emph{constraint solving}.
+
+\TBD{Develop this…Eva?}
 
 %------------------------------------------------------------------------
 
@@ -810,7 +930,7 @@ EU-funded Marie Skłodowska-Curie ``HORIP'' action collaboration with Cynthia Ko
     \begin{itemize}
     \item In patterns, a missing attribute is inserted as "↓a(#a)" or "↓a{:#a}" as appropriate.
     \item Missing attributes that were defined in the pattern are inserted the same.
-    \item Remaining missing attributes must be of a map type and are inserted as~"↓a{}".
+    \item Remaining missing attributes must be of a map sort and are inserted as~"↓a{}".
     \end{itemize}
 
   \item We allow two more forms of \set{PA}:

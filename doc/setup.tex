@@ -33,7 +33,7 @@
 \newcommand{\eg}{\textit{e.g.}\xspace}
 \newcommand{\etc}{\textit{etc.}\xspace}
 \newcommand{\aka}{\textit{aka.}\xspace}
-\newcommand{\TBD}[2][]{\textit{To Be Done: #2~}\marginpar{\bf\color{red} TBD #1}}
+\newcommand{\TBD}[2][]{\leavevmode\marginpar{\bf\color{red} TBD #1}\textit{To Be Done: #2~}}
 
 %% Misc.
 \def\Bigstrut{\ensuremath{\vphantom{\Bigm|}}}
@@ -240,7 +240,7 @@
 % }
 
 %% Identifiers
-\newcommand{\set}[1]{\textit{#1}}
+\newcommand{\set}[1]{\ensuremath{#1}}
 \newcommand{\op}[1]{\ensuremath{\operatorname{#1}}}
 
 \usepackage[all]{xy}
