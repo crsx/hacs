@@ -54,17 +54,17 @@ suitable for that stage of the compiler. Specifically, \HAX supports the followi
 \begin{description}
 
 \item[Regular Expressions.] Used to describe how an input text is partitioned into
-  \emph{tokens}. The regular expressions of \HAX follows common
+  \emph{tokens}. The regular expressions of \HAX follow common
   conventions~\cite{Aho+:2006}. Section~\ref{sec:tokens} gives details of this notation.
 
 \item[Context Free Grammars.] \HAX uses a form of BNF~\cite{NaurEtal:cacm1960} \emph{context-free
-    grammars} but tweaks the notation has been tweaked to look more like \emph{templates} to allow
-  for reuse of the notation in subsequent rewrite rules. \HAX includes simple mecha, to allow for
-  the formalization of the transformation from token stream to abstract syntax. Details in
+    grammars} but tweaks the notation to look more like \emph{templates} to allow for reuse of the
+  notation in the subsequent rewrite rules. \HAX includes simple mechanics to allow for the
+  formalization of the transformation from token stream to abstract syntax. Details in
   Section~\ref{sec:syntax}.
 
-\item[Recursive Translation Schemes.] Simple translations in general, and code generation in
-  particular, are traditionally achieved by \emph{recursive translation} from one abstract form to
+\item[Recursive Translation Schemes.] Simple translation in general, and code generation in
+  particular, is traditionally achieved by \emph{recursive translation} from one abstract form to
   another.  \HAX includes special notations for defining such translations, described in
   Section~\ref{sec:schemes}, as well as a full programming language for defining auxiliary so-called
   ``semantic'' sorts and operators, detailed in Section~\ref{sec:eval}.
@@ -73,19 +73,19 @@ suitable for that stage of the compiler. Specifically, \HAX supports the followi
   \emph{syntax-directed definitions}~\cite{Aho+:2006}, originally introduced as \emph{attribute
     grammars}~\cite{Knuth:mst1968}, which describe how properties propagate through the abstract
   syntax tree.  Section~\ref{sec:collect} details how the basic propagation rules work for
-  synthesized attributes, Section~\ref{sec:sdd} explains how inherited attributes are integrated to
+  synthesized attributes. Section~\ref{sec:sdd} explains how inherited attributes are integrated to
   enable the encoding of full syntax-directed definitions.
 
 \item[Higher-order Abstract Syntax.] Most programming languages use \emph{lexical scoping}, and
-  compiler internal and target representations increasingly manipulate lexical scopes as part of
-  their normal operation~\cite{MarlowPeyton-Jones:2010,Morrisett+:popl1998}. \HAX supports this by
-  providing explicit support for \emph{higher-order abstract syntax}, and integrates this with
+  compiler internal as well as target representations increasingly manipulate lexical scopes as part
+  of their normal operation~\cite{MarlowPeyton-Jones:2010,Morrisett+:popl1998}. \HAX supports this
+  by providing explicit support for \emph{higher order abstract syntax}, and integrates this with
   support for attributes with mappings from variables to values for modeling \emph{symbol tables}.
 
 \end{description}
 %%
 A typical compiler written with \HAX involves multiple instances of each of the above, as each used
-language, including intermediate and target languages, are specified using grammars and have
+language, including intermediate and target languages, is specified using grammars and have
 language-specific analyses, with the transformations between them specified as translation schemes.
 
 \paragraph*{History.}
@@ -96,11 +96,11 @@ define how but only declare the semantics of the program manipulation, all the w
 support specific aspects of program execution or compiler generation (a survey is beyond the scope
 of this document).
 
-One such system was the CRSX system~\cite{Rose:1996} developed for industrial use at IBM Research by
-a team led by the author~\cite{Rose:hor2007,Rose:hor2010,Rose:rta2011,crsx} .  CRSX is a language
-based on \emph{higher order rewriting}~\cite{Jouannaud:klop2005} combined with \emph{higher order
-  abstract syntax} (HOAS) \cite{PfenningElliot:pldi1988}, further extended for handling environments
-natively and using pluggable parsers.  The programming of the IBM Data\-Power XQuery
+One such system was CRSX~\cite{Rose:1996} developed for industrial use at IBM Research by a team led
+by the author~\cite{Rose:hor2007,Rose:hor2010,Rose:rta2011,crsx}.  CRSX is a language based on
+\emph{higher order rewriting}~\cite{Jouannaud:klop2005} combined with \emph{higher order abstract
+  syntax} (HOAS) \cite{PfenningElliot:pldi1988}, further extended for handling environments natively
+and using pluggable parsers.  The programming of the IBM Data\-Power XQuery
 compiler~\cite{dp60:ibm2013} using CRSX proved that the approach can drastically reduce the
 development time of a compiler (the cited XQuery compiler was estimated to be developed in a quarter
 of the traditional development time) as well as resulting in a rather more compact and high level
@@ -110,10 +110,10 @@ However, the CRSX notation, based on combinatory reduction systems~\cite{Klop:19
 which combines λ calculus~\cite{Church:1941,Barendregt:1984} and term rewriting
 systems~\cite{Klop:1992:Handbook}, has proven to be unwieldy for several reasons, first of all by
 being quite different from standard notations used in compiler construction reference
-works~\cite{Aho+:2006}. Adding a polymorphic sort system to CRSX (effectively changing them to
-\emph{contraction systems}~\cite{Aczel:1978} changed the system to be similar to
-Inductive-type-systems \cite{BlanquiJouannaudOkada:tcs2002}), which helped, but did not make the
-system easy enough to, for example, teach compiler construction.
+works~\cite{Aho+:2006}. Adding a polymorphic sort system to CRSX following \emph{contraction
+  systems}~\cite{Aczel:1978} changed the system to be similar to Inductive type systems
+\cite{BlanquiJouannaudOkada:tcs2002}), which helped, but did not make the system easy enough to, for
+example, teach compiler construction.
 
 \HAX is an attempt to remedy this situation by providing a front-end for CRSX that allows the use of
 standard notations and concepts of (formal) programming language descriptions to directly program
@@ -132,7 +132,7 @@ questions on \HAX.\footnote{A special shout-out goes to John Downs for starting 
 The implementation of \HAX would not have been remotely possible without the CRSX team at IBM:
 Morris Matsa, Scott Boag, and especially Lionel Villard, who suffered through understanding and
 programming core fragments of the CRSX system that is still used underneath \HAX; in the process
-they proposed many improvements and clarifications to the formalism.
+they continue to propose many improvements to and clarifications of the formalism.
 %%
 And finally \HAX owes its sanity to a collaboration with Cynthia Kop, both as an intern with the
 Watson team in 2011, which created the polymorphic sort checker, in her thesis work~\cite{Kop:2012},
@@ -141,25 +141,25 @@ and in our continuing collaboration on keeping the formal basis for the system u
 \paragraph*{Outline of this report.}
 
 The remainder of this document introduces the most important features of the \HAX language by
-explaining the relevant parts of the included \emph{First.hx} example, inspired by
-\cite[Figure~1.7]{Aho+:2006}, as well as several other minor examples.
+explaining the relevant parts of the included \emph{First.hx} example (inspired by
+\cite[Figure~1.7]{Aho+:2006}) as well as several other minor examples.
 %%
 Section~\ref{sec:run} shows how to install \HAX and run the example, before proceeding to
 the writing of specifications. %
-Section~\ref{sec:tokens} explains lexical analysis; %
-Section~\ref{sec:syntax}, syntax analysis; %
-Section~\ref{sec:schemes}, basic recursive translation schemes; %
-Section~\ref{sec:eval}, semantic sorts, operations, and data; %
-Section~\ref{sec:collect}, bottom-up semantic analysis; %
-Section~\ref{sec:sdd}, general syntax-directed definitions; %
-and Section~\ref{sec:hoas}, higher order abstract syntax. %
+Section~\ref{sec:tokens} explains lexical analysis, %
+Section~\ref{sec:syntax} syntax analysis, %
+Section~\ref{sec:schemes} basic recursive translation schemes, %
+Section~\ref{sec:eval} semantic sorts, operations, and data, %
+Section~\ref{sec:collect} bottom-up semantic analysis, %
+Section~\ref{sec:sdd} general syntax-directed definitions, %
+and Section~\ref{sec:hoas} higher order abstract syntax. %
 Section~\ref{sec:comp} addresses the manipulation of primitive values, %
 and Section~\ref{sec:examples} provides several examples of how everything can be combined.
 %%
 Finally, %
 Appendix~\ref{app:manual} has a reference manual, %
 Appendix~\ref{app:errors} explains some of the (still) cryptic error messages, %
-Appendix~\ref{app:limits} lists some current limitations;
+and Appendix~\ref{app:limits} lists some current limitations;
 last we have collected bibliographic references.
 
 
@@ -184,31 +184,31 @@ computer.\footnote{Please report any problems with this procedure to \emph{hacs-
   %%
   If you have an old version of \HAX installed, then it is best to remove it first with a command like
   %%
-\begin{code}[commandchars=\^\{\}]
+  \begin{code}[commandchars=\^\{\}]
 energon1[~]$ ^textcolor{blue}{^texttt{rm -fr ~/.hacs hacs}}
-\end{code}
+  \end{code}
   %%$
   Now retrieve the \emph{hacs-\version.zip} archive, extract it to a new directory, and install it, for
   example with the following commands:\footnote{User input is \textcolor{blue}{blue}.}
   %%
-\begin{code}[commandchars=\^\{\}]
+  \begin{code}[commandchars=\^\{\}]
 energon1[~]$ ^textcolor{blue}{^texttt{wget http://crsx.org/hacs-^version.zip}}
 energon1[~]$ ^textcolor{blue}{^texttt{unzip hacs-^version.zip}}
 energon1[~]$ ^textcolor{blue}{^texttt{cd hacs}}
 energon1[hacs]$ ^textcolor{blue}{^texttt{make FROMZIP=1 install install-support}}
-\end{code}
+  \end{code}
   %%
-  These commands will need Internet access, using the wget command to retrieve support
+  These commands will need Internet access to use the wget command to retrieve support
   libraries.\footnote{Specifically, \HAX needs the \CRSX system, JavaCC parser generator, and ICU4C
     Unicode library. The setup is documented in \emph{src/Env.mk}.} The above command will install
   \HAX in a \emph{.hacs} subdirectory of your home directory. You can change this with the option
-  \verb|prefix=|…  to (all uses of) \emph{make}; if so then make sure to replace occurrences of
+  \verb|prefix=|… to (all uses of) \emph{make}; if so then make sure to replace occurrences of
   \verb|$HOME/.hacs| everywhere below with your chosen directory.
 
   The main \emph{make} command may take several minutes the first time and should end without error.
 
   Please check that your new installation works with these commands:
-\begin{code}[commandchars=\^\{\}]
+  \begin{code}[commandchars=\^\{\}]
 energon1[hacs]$ ^textcolor{blue}{^texttt{cd}}
 energon1[~]$ ^textcolor{blue}{^texttt{mkdir myfirst}}
 energon1[~]$ ^textcolor{blue}{^texttt{cd myfirst}}
@@ -226,7 +226,7 @@ energon1[~]$ ^textcolor{blue}{^texttt{./First.run --scheme=Compile \}}
     MULF  T_2_21 ,  T_1_60 ,  T_2 
     ADDF  T_96 ,  T_1 ,  T_2_21 
     STF position, T_96
-\end{code}
+  \end{code}
   %%
   Congratulations---you just built your first compiler!\footnote{Please do not mind the spacing --
     that is how \HAX prints in its present state.}
@@ -234,12 +234,12 @@ energon1[~]$ ^textcolor{blue}{^texttt{./First.run --scheme=Compile \}}
   The following assumes that you have issued the following command to make the main \emph{hacs}
   command available for use:
   %%
-\begin{code}[commandchars=\^\{\}]
+  \begin{code}[commandchars=\^\{\}]
 energon1[hacs]$ ^textcolor{blue}{^texttt{alias hacs=$HOME/.hacs/bin/hacs}}
-\end{code}
+  \end{code}
   %%
-  (It may be worth including this command in your setup, or including the \verb|$HOME/.hacs/bin|
-  directory in your \verb|$PATH|.)
+  (It may be worth including this command in your setup, or including the
+  \verb|$HOME/.hacs/bin| directory in your \verb|$PATH|.)
   %%
 \end{commands}
 
@@ -264,7 +264,7 @@ module org.crsx.hacs.samples.First
 
 \begin{notation}
   The structure shown in Example~\ref{ex:wrapper} is formally explained in the appendix
-  Manual~\ref{man:structure}, while how to run \HAX appears in appendix Manual~\ref{man:run}.
+  (Manual~\ref{man:structure}), as is how to run \HAX (Manual~\ref{man:run}).
 \end{notation}
 
 \begin{notation}[special Unicode characters]\label{man:unicode}
@@ -305,7 +305,7 @@ module org.crsx.hacs.samples.First
 
 Lexical analysis is the process of splitting the input text into tokens. \HAX uses a rather standard
 variation of \emph{regular expressions} for this. This section explains the most common rules; the
-appendix Manual~\ref{man:token} gives the formal rules.
+appendix (Manual~\ref{man:token}) gives the formal rules.
 
 \begin{example}[tokens and white space]\label{ex:lexical}
   %%
@@ -336,10 +336,10 @@ The example illustrates the following particulars of \HAX lexical expressions.
 
   \item Declarations generally start with a keyword or two and are terminated by a ";" (semicolon).
 
-  \item "token" declarations in particular have the "token" keyword followed by the token name and a
-    regular expression between a "|" (vertical bar) and a ";" (semicolon). Each defines the token as
-    a \emph{terminal symbol} that can be used in other token declarations as well as the syntax
-    productions described in the next section.
+  \item "token" declarations in particular have the "token" keyword followed by the name of the
+    token and a regular expression between a "|" (vertical bar) and a ";" (semicolon). Each defines
+    the token as a \emph{terminal symbol} that can be used in other token declarations as well as
+    the syntax productions described in the next section.
 
   \item Token names must be words that start with an upper case letter.
 
@@ -355,7 +355,7 @@ The example illustrates the following particulars of \HAX lexical expressions.
     token declarations, not in syntax productions.
 
   \item Every regular expression component can be followed by a repetition marker "?", "+", or~"*",
-    and regular expressions can be \emph{grouped} with parentheses.
+    and regular expressions can be grouped with parentheses.
 
   \item The regular expression for white space is setup by "space" followed by the regular
     expression of what to skip -- here spaces, tabs, and newlines, where \HAX uses backslash to
@@ -379,19 +379,20 @@ the next section.
   command: a \emph{token sort} and a \emph{token term}.\footnote{The command has more options that
     will be introduced as needed.}  Execution proceeds by parsing the string following the syntax of
   the token. For example, the following checks the lexical analysis of a number:
-\begin{code}[commandchars=\\\{\}]
+  \begin{code}[commandchars=\\\{\}]
 $ \textcolor{blue}{./First.run --sort=FLOAT --term=34.56}
 34.56
-\end{code}
-  Note that the term 34.56 could also have been provided enclosed in quotes, such as ''34.56'' or '34.56'.
-  If there is an error, the lexical analyzer will inform us of this:
-\begin{code}[commandchars=^\{\}]
+  \end{code}
+  Note that the term \verb|34.56| could also have been provided enclosed in quotes, such as
+  \verb|"34.56"| or \verb|'34.56'|.  If there is an error, the lexical analyzer will inform us of
+  this:
+  \begin{code}[commandchars=^\{\}]
 $ ^textcolor{blue}{./First.run --sort=INT --term=34.56}
 Exception in thread "main" java.lang.RuntimeException: net.sf.crsx.CRSException:
   Encountered " <T_FLOAT> "34.56 "" at line 1, column 1.
 Was expecting:
     <T_INT> ...
-\end{code}
+  \end{code}
   (where the trail of Java exceptions has been truncated: the important information is in the first
   few lines).
 \end{commands}
@@ -399,26 +400,25 @@ Was expecting:
 As the example illustrates, all the token declarations together define how the processed stream of
 characters is partitioned into terminal symbols with no need for consulting a grammar.
 %%
-The reference manual for tokens in the appendix Manual~\ref{man:token}, gives further details,
+The reference manual for tokens in the appendix (Manual~\ref{man:token}), gives further details,
 including some additional constructs.
 
 
 \section{Syntax Analysis}
 \label{sec:syntax}
 
-With tokens, it is possible to use \HAX to program a syntax analysis with a grammar that specifies
-how to decompose the input text according to a \emph{concrete syntax} and how to construct the
-desired \emph{abstract syntax tree} (AST) from that. Notice that \HAX does not provide a ``parse
-tree'' in the traditional sense, \ie, a tree that represents the full concrete syntax parse: only
-the AST is built.  Grammars are structured following the \emph{sorts} of AST nodes, with concrete
-syntax details managed through precedence annotations and ``syntactic sugar'' declarations. The
-complete specification for grammars is in the appendix Manual~\ref{man:syntax}.
+Once tokens have been defined it is possible to use \HAX to program a syntax analysis with a grammar
+that specifies how to decompose the input text according to a \emph{concrete syntax} and how to
+construct the desired \emph{abstract syntax tree} (AST) from that. Notice that \HAX does not provide
+a ``parse tree'' in the traditional sense, \ie, a tree that represents the full concrete syntax
+parse: only an AST is built.  Grammars are structured following the \emph{sorts} of AST nodes, with
+concrete syntax details managed through precedence annotations and ``syntactic sugar''
+declarations. The complete specification for grammars is in the appendix (Manual~\ref{man:syntax}).
 
 \begin{example}\label{ex:syntax}
   %%
-  Here is another extract from the \emph{First.hx} example, with a syntax analysis grammar. This
-  small example source language merely has blocks, assignment statements, and a few forms of
-  expression, like so:
+  Here is the syntax analysis grammar from the \emph{First.hx} example. This small example source
+  language merely has blocks, assignment statements, and a few expression forms, like so:
   %%
   \begin{hacs}[xleftmargin=\parindent,xrightmargin=2em,numbers=right]
 main sort Stat  | ⟦ ⟨ID⟩ := ⟨Exp⟩ ; ⟨Stat⟩ ⟧
@@ -433,7 +433,8 @@ sort Exp  | ⟦ ⟨Exp⟩ + ⟨Exp@1⟩ ⟧
            | sugar ⟦ ( ⟨Exp#⟩ ) ⟧@2 → Exp# ;
   \end{hacs}
   %%
-  The grammar structures the input as two sorts: "Stat" for statements and "Exp" for expressions.
+  The grammar structures the generated AST with two sorts: "Stat" for statements and "Exp" for
+  expressions.
   %%
 \end{example}
 
@@ -441,10 +442,10 @@ The example grammar above captures the \HAX version of several standard parsing 
 %%
 \begin{description}
 
-\item[Literal syntax] is indicated by the double ``syntax brackets,'' $⟦…⟧$.  Text inside $⟦…⟧$
+\item[Literal syntax] is indicated by the double ``syntax brackets,'' $⟦…⟧$: text inside $⟦…⟧$
   consists of three things only: spaces, literal character ``words,'' and references to
   non-terminals and predefined tokens inside $⟨…⟩$.  In this way, literal syntax is similar to macro
-  notation or ``quasi-quotation'' of other programming languages.
+  notation or ``quasi-quotation'' of other programming notations.
 
 \item[Syntactic sugar] is represented by the "sugar" part of the "Exp" sort declaration, which
   states that the parser should accept an "Exp" in parenthesis, identified as "#", and replace it
@@ -452,85 +453,84 @@ The example grammar above captures the \HAX version of several standard parsing 
   the generated AST as well as in the rules below.
 
 \item[Precedence rules] are represented by the "@"-annotations, which assign precedence and
-  associativity to each operator. This example marksd all references to the "Exp" non-terminal
-  inside the productions for "Exp" with the lowest permitted priority in each case. The first rule
-  in line 5 says that the "+" operator is restricted on the right to only expressions with at least
-  priority 1 (but not restricted on the left, causing it to be left recursive). The outer "@1" in
-  line 6 states that all "*" expressions have priority 1, and the inner "@"-annotations allow left
-  subexpressions of "*" with at least priority 1 ("*" is also left recursive) whereas right
-  subexpressions must have at least priority~2. Notice that left (right) recursion is identified by
-  the \emph{leftmost (rightmost) unit in the production having the outer precedence}.
+  associativity to each operator. This example marks all references to the "Exp" non-terminal inside
+  the productions for "Exp" with the lowest permitted precedence in each case. The first rule in
+  line 5 says that the "+" operator is restricted on the right to only expressions with at least
+  precedence 1 (but not restricted on the left, causing it to be left-recursive). The outer "@1" in
+  line 6 states that all "*" expressions have precedence 1, and the inner "@"-annotations allow left
+  subexpressions of "*" with at least precedence 1 ("*" is also left recursive) whereas right
+  subexpressions must have at least precedence~2. Notice that left (right) recursion is identified
+  by the \emph{leftmost (rightmost) unit in the production having the outer precedence}.
 
 \end{description}
 %%
-The precedence notation allows us the definition of one sort per ``sort of abstract syntax tree
-node.''  This enables the use a single kind of AST node to represent all the ``levels'' of
-expression, which helps the subsequent steps.
+The precedence notation allows the definition of one sort per ``sort of abstract syntax tree node.''
+This enables the use of a single kind of AST node to represent all the ``levels'' of expression,
+which helps the subsequent steps.
 
 {\small\begin{remark} This is traditionally done with additional ``helper'' productions. It is
-    possible, for example, to recognize the same "Exp" language as in the example by something akin
-    to the following concrete \HAX specification (in which the sugar is also concrete):
-%% 
-\begin{hacs}[xleftmargin=\parindent]
+    possible, for example, to recognize the same "Exp" language as in Example~\ref{ex:syntax} by
+    something akin to the following concrete \HAX specification (in which the sugar is also
+    concrete):
+  %% 
+  \begin{hacs}[xleftmargin=\parindent]
 sort Exp0 | ⟦ ⟨Exp0⟩ + ⟨Exp1⟩ ⟧ | ⟦ ⟨Exp1⟩ ⟧ ;
 sort Exp1 | ⟦ ⟨Exp1⟩ * ⟨Exp2⟩ ⟧ | ⟦ ⟨Exp2⟩ ⟧ ;
 sort Exp2 | ⟦ ⟨Int⟩ ⟧ | ⟦ ⟨Float⟩ ⟧ | ⟦ ⟨ID⟩ ⟧ | ⟦ ( ⟨Exp⟩ ) ⟧ ;
-\end{hacs}%|
-%%
-However, this grammar generates a different result tree, where the nodes have the four different
-sorts used instead of all being of the single "Exp" sort that the precedence annotations make
-possible.  The transformed system also illustrates how \HAX deals with left recursion with
-"@"-annotations: each becomes an instance of \emph{immediate left recursion}, which is eliminated
-automatically using standard techniques.
+  \end{hacs}%|
+  %%
+  However, this grammar generates a different result tree, where the nodes have the three different
+  sorts used instead of all being of the single "Exp" sort that the precedence annotations make
+  possible.  The transformed system also illustrates how \HAX deals with left recursion with
+  "@"-annotations: each becomes an instance of \emph{immediate left recursion}, which is eliminated
+  automatically using standard techniques.
 \end{remark}}
 
-Also note that the notation is admittedly dense: this is intentional, as we generalize this very
-same notation to serve all the formalisms of the following sections.  Here are the formal rules.
+Also note that the notation is admittedly dense: this is intentional, as the notation can be
+generalized to serve all the formalisms of the following sections.  Here are the formal rules.
 
 \begin{notation}[syntax analysis]\leavevmode
   \begin{enumerate}
 
-  \item Each sort is defined by a "sort" declaration followed by a number of \emph{productions}, each
-    introduced by a "|" (bar). (The first "|" corresponds to what is usually written ``::='' or ``→''
-    in BNF grammars.)  All productions for a sort define cases for that sort as a nonterminal, called
-    the ``target'' non-terminal.
+  \item Each sort is defined by a "sort" declaration followed by a number of \emph{productions},
+    each introduced by a "|" (bar). (The first "|" corresponds to what is usually written ::= or →
+    in BNF grammars.)  All productions for a sort define cases for that sort as a nonterminal,
+    called the ``target'' non-terminal.
 
   \item Sort names must be words that start with an uppercase letter.
 
   \item Concrete syntax is enclosed in "⟦…⟧" (``double'' or ``white'' brackets). Everything inside
     double brackets should be seen as \emph{literal syntax}, even "\" (backslash), \emph{except} for
-    \HAX white space (corresponding to "[ \t\n\r]"), which is ignored, and references in "⟨…⟩" (angle
+    \HAX white space (corresponding to "[\ \t\n\r]"), which is ignored, and references in "⟨…⟩" (angle
     brackets), which are special.
 
   \item References to \emph{terminals} (tokens) and \emph{nonterminals} (other productions) are
     wrapped in "⟨…⟩" (angle brackets).
 
   \item \emph{Precedence} is indicated with "@"$n$, where higher numbers $n$ designate higher
-    (tighter) precedence. After every top-level "⟦⟧" and inside every "⟨⟩"-reference to the target
-    non-terminal there is a precedence, which defaults to "@0".  The precedence of self references at
-    the beginning and end of a production must be \emph{greater than or equal to} the outer
-    precedence; at most one of the ends can have precedence equal to the outer one.
+    (tighter) precedence. After every top-level "⟦⟧" and last inside every "⟨⟩"-reference to a
+    target non-terminal there is a precedence, which defaults to "@0".  The precedence of self
+    references at the beginning and end of a production must be \emph{greater than or equal to} the
+    outer precedence; at most one of the ends can have precedence equal to the outer one.
 
-  \item The special "sugar" declaration expresses that the concrete syntax can use parentheses to
-    raise the precedence of the enclosed expression to~2: it is the first example presented here of
-    a \emph{rewrite rule} with a "→". Note that the expression is marked "#" to use "Exp#" to the
-    right of the "→" to indicate that the result of simplifying concrete syntax with parenthesis.
-    (In fact the general rule is that when an "→" is used all sort specifiers must be
-    ``disambiguated'' with distinct markers like "#" or "#5" in this way.)
+  \item The special "sugar" declaration expresses that the specified concrete syntax with a single
+    disambiguated self reference is \emph{replaced} by what is written after the~→. A reference is
+    ``disambiguated'' by trailing it with a meta-variable starting with~"#".
 
   \end{enumerate}
   %% 
   Of all these rules, the one thing that is unique to parsing is the precedence notation with "@".
   When specifying a grammar then \emph{every} target non-terminal reference has a precedence, which
-  determines how to parse ambiguous terms. So imagine that every "⟨⟩" contains a "@" marker,
-  defaulting to "@0", and that every "⟦⟧" is terminated with a "@" marker, again defaulting to "@0".
+  determines how to parse ambiguous terms. So imagine that every "⟨⟩" contains a "@" marker at the
+  end, defaulting to "@0", and that every "⟦⟧" is terminated with a "@" marker, again defaulting to
+  "@0".
 \end{notation}
 
 Notice that \HAX will do three things automatically:
 %%
 \begin{enumerate}
-\item Eliminate immediate left recursion, such as found in the example.
 \item Split the productions into subproductions according to the precedence assignments.
+\item Eliminate immediate left recursion, such as found in the example.
 \item Left factor the grammar, which means that productions within a sort may start with a common
   prefix.
 \end{enumerate}
@@ -542,15 +542,15 @@ specified, eliminating the need to be aware that this conversion happens.
   %%
   It is possible to parse an expression from the command line:
   %%
-\begin{code}[commandchars=\\\{\}]
+  \begin{code}[commandchars=\\\{\}]
 $ \textcolor{blue}{./First.run --sort=Exp --term="(2+(3*(4+5)))"}
 2 + 3 * ( 4 + 5 )
-\end{code}
+  \end{code}
   %%$
   Notice that the printout differs slightly from the input term as it has been ``resugared'' from
-  the AST with minimal insertion of parentheses.
+  the AST with minimal reinsertion of the sugared syntax.
   %%
-\begin{code}[commandchars=\\\{\}]
+  \begin{code}[commandchars=\\\{\}]
 $ \textcolor{blue}{./First.run --sort=Exp --term="2 ** 3"}
 Exception in thread "main" java.lang.RuntimeException: net.sf.crsx.CRSException: 
   Encountered " "*" "* "" at line 1, column 4.
@@ -559,7 +559,7 @@ Was expecting one of:
     <T_INT> ...
     <T_FLOAT> ...
     <T_ID> ...
-\end{code}
+  \end{code}
   %%
   Similarly to the lexical analysis, the syntax analysis can return an error in the case that a term
   provided does not satisfy the grammar.
@@ -570,8 +570,8 @@ Was expecting one of:
 \label{sec:schemes}
 
 This section explains how to express recursive translation schemes over the abstract syntax implied
-by a grammar. The formal specification for this section is part of appendix Manual~\ref{man:parsed}
-and \ref{man:raw}.
+by a grammar. The formal specification for this section is in the appendix (Manual~\ref{man:parsed}
+and \ref{man:raw}).
 
 \begin{example}\label{ex:ast}%
   Consider the following subset of the example expression grammar of Example~\ref{ex:syntax}:
@@ -585,8 +585,8 @@ sort Exp  | ⟦ ⟨Exp⟩ + ⟨Exp@1⟩ ⟧
   \end{hacs}
   %%
   This grammar serves two purposes: to describe all token sequences that can be parsed and to
-  describe the structures that are generated from them. Erasing all the information that is
-  purely there for parsing leaves just
+  describe the structures that are generated from them. Erasing all the information that is purely
+  there for parsing leaves just
   %%
   \begin{hacs}[xleftmargin=\parindent]
 sort Exp  | ⟦ ⟨Exp⟩ + ⟨Exp  ⟩ ⟧
@@ -624,12 +624,13 @@ What remains are minimal productions with the essential information---the AST.
     \begin{displaymath}
       E → E+E \mid E*E \mid \textbf{int} \mid \textbf{float}
     \end{displaymath}
-    which additionally ``folds'' the $T$ and $F$ productions into $E$.
+    which additionally ``folds'' the $T$ and $F$ productions into $E$, as was done in the previous
+    section.
   \end{remark}}
 
-With such a description of the AST, it is possible to start to write code that operates on the
-AST. The notion of \emph{syntax-directed translation} now becomes important in (although it would
-perhaps be even better called ``abstract syntax-directed translation'').
+With such a description of the AST, it is possible to write code that operates on the AST,
+implementing the notion of \emph{syntax-directed translation} (although it would perhaps be even
+better called ``abstract syntax-directed translation'').
 
 \begin{definition}
   A scheme is \emph{syntax-directed} if it has one case per abstract syntax production.

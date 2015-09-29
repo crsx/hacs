@@ -86,11 +86,11 @@ language.
     H &::= D^* 
     \\
     \tag{Declaration}
-    D &::= \kw{sort}~S\,\kw\{\, F^*\,\kw\}
+    D &::= \kw{sort}~S~a^*~\kw\{\, F^*\,\kw\}
     \bigm| \kw{attribute}~a~\set{AF}\,\kw;
     \\[\jot]
     \tag{Form}
-    F &::= \kw{data}~c\,\kw(\,\set{BF}^{*\kw,}\,\kw)~a^*\,\kw;
+    F &::= \kw{data}~c\,\kw(\,\set{BF}^{*\kw,}\,\kw)\,\kw;
     \bigm| \kw{scheme}~f\,\kw(\,\set{BF}^{*\kw,}\,\kw)~a^*\,\kw;
     \bigm| \kw{variable}\,\kw;
     \bigm| O~\kw{rule}~T~\kw{$→$}~T\,\kw;
@@ -103,7 +103,7 @@ language.
     \\
     \tag{Sort}
     S &::= s\,\kw[\,S^{*\kw,}\,\kw]
-    \bigm| α
+    \bigm| α\,a^*
     \\
     \tag{Option}
     O &::= ~\mid \kw{default} 
@@ -222,7 +222,7 @@ sort List[α] { data Nil(); data Cons([]α, []List[α]);
   \begin{hacs}[numbers=right,texcl]
 sort Dummy[] { variable; }
 attribute val {Dummy[] : Bool[]};
-sort Bool[] { data T() val; data F() val;
+sort Bool[] val { data T(); data F();
  data Not([]Bool[]) val; data Or([]Bool[], []Bool[]) val;
 
  scheme Eval1([]Dummy[], []Bool[]); scheme Eval2([]Dummy[], []Bool[]);
@@ -409,7 +409,7 @@ by only allowing sortable scripts. Informally, sorting ensures that
 \end{itemize}
 %%
 If you check with the examples, then you can see that the examples all satisfy these restrictions
-except that Example~\ref{ex:bool}, which breaks the last of the above constraints. \TBD{Fix but how:
+except Example~\ref{ex:bool}, which breaks the last of the above constraints. \TBD{Fix but how:
   patch example or rules?}
 
 \begin{notation}[vectors]
@@ -419,17 +419,17 @@ except that Example~\ref{ex:bool}, which breaks the last of the above constraint
   $[x_{11}…x_{1m_1}]x_1…[x_{n1}…x_{nm_n}]x_n$ for suitable $n,m_1,…,m_n ≥ 0$.
 \end{notation}
 
-\begin{definition}[sorts and sort environments]
+\begin{definition}[sort environments]
   %%
   A \emph{global sort environment} $Γ$ is a structure that combines
   %% 
   \begin{itemize}
 
-  \item $Γ_{\op{cons}}\colon \mathcal{C} → S×F$ from constructor name to sort-form pair.
+  \item $Γ_{\op{hasvar}}\colon 2^{\mathcal{C}}$ is a set of sorts (the sorts that allow variables).
 
-  \item $Γ_{\op{hasvar}}\colon 2^{\mathcal{C}}$ is a set of sorts that allows variables.
+  \item $Γ_{\op{cons}}\colon \mathcal{C} → S×F$ from constructor name to sort-form pairs.
 
-  \item $Γ_{\op{attr}}\colon \mathcal{V} → \set{AF}$ from attribute name to attribute form.
+  \item $Γ_{\op{attr}}\colon \mathcal{V} → \set{AF}$ from attribute name to attribute forms.
 
   \item $Γ_{\op{cons-attr}}\colon \mathcal{C} → 2^{\mathcal{V}}$ from constructor name to set of
     attribute names.
@@ -447,13 +447,17 @@ except that Example~\ref{ex:bool}, which breaks the last of the above constraint
 
   \item $Δ_{\op{meta}}\colon \mathcal{M} → \set{BF}$ from meta-variable names to binder forms.
 
-  \item $Δ_{\op{attr-meta}}\colon \mathcal{M} → \set{BAF}$ from attribute ``catch-all'' meta-variable.
+  \item $Δ_{\op{attr-meta}}\colon \mathcal{M} → \set{BAV}$ from attribute ``catch-all'' meta-variable
     names to attribute forms.
 
-  \item $Δ_{\op{var}}\colon \mathcal{C} → \set{BAF}$ from attribute ``catch-all'' meta-variable.
+  \item $Δ_{\op{bound}}\colon \mathcal{V} → \set{S}$ from bound variable names to sorts.
 
   \end{itemize}
   %%
+  with $BAV ::= [\,v^*\,]\,AV$.
+
+  \TBD{Extension of maps?}
+
   We will confuse $Γ$ and $Δ$ with their components and omit the subscript when it is apparent from
   the context.
   %%
@@ -536,16 +540,16 @@ when showing properties of the type system.
     \intertext{\shoveright{Sorting of Binder\hfil\smash{\fbox{$ Γ,Δ ⊢ B : \set{BF} $}}}}
     %
     \dfrac
-    { Γ,Δ[\ov{v}↦\ov{S}] ⊢ T : S }
-    { Γ,Δ ⊢ \kw[\,\ov{v}\,\kw]\,T : \kw[\,\ov{S}\,\kw]\,S }
+    { Γ,Δ[\ov{v}↦\ov{S}],CP ⊢ T : S }
+    { Γ,Δ,CP ⊢ \kw[\,\ov{v}\,\kw]\,T : \kw[\,\ov{S}\,\kw]\,S }
     %
     \\[\jot]
     %
     \intertext{\shoveright{Sorting of Attribute\hfil\smash{\fbox{$ Γ,Δ,\{\ov{a}\} ⊢ A $}}}}
     %
     \dfrac
-    { Γ,Δ ⊢ V : \{S_1:S_2\} }
-    { Γ,Δ,\{\ov{a}\} ⊢ a\,V }
+    { Γ,Δ,CP ⊢ V : \{S_1:S_2\} }
+    { Γ,Δ,CP,\{\ov{a}\} ⊢ a\,V }
     \quad a∈\{\ov{a}\};~ Γ(a) = \{S_1:S_2\}
     %
     \\[\jot]
@@ -553,27 +557,27 @@ when showing properties of the type system.
     \intertext{\shoveright{Sorting of Attribute Value\hfil\smash{\fbox{$ Γ,Δ ⊢ A : \{S:S\} $}}}}
     %
     \dfrac
-    { Γ,Δ ⊢ T_1 : S_1 \qquad Γ,Δ ⊢ T_2 : S_2 }
-    { Γ,Δ ⊢ \kw\{\,T_1\,\kw:\,T_2\,\kw\} : \{S_1:S_2\} }
+    { Γ,Δ,CP ⊢ T_1 : S_1 \qquad Γ,Δ ⊢ T_2 : S_2 }
+    { Γ,Δ,CP ⊢ \kw\{\,T_1\,\kw:\,T_2\,\kw\} : \{S_1:S_2\} }
     %
     \qquad
     %
     \dfrac
     { }
-    { Γ,Δ ⊢ \kw\{\kw:\,M\,\kw\} : \{S_1:S_2\} }
+    { Γ,Δ,CP ⊢ \kw\{\kw:\,M\,\kw\} : \{S_1:S_2\} }
     ~ Δ({:}M) = \{S_1:S_2\}
     %
     \\[\jot]
     %
     \dfrac
-    { Γ,Δ ⊢ T : S_1 }
-    { Γ,Δ,\op{Pattern} ⊢ \kw\{\,\kw{$¬$}\,T\,\kw\} : \{S_1:S_2\} }
+    { Γ,Δ,CP ⊢ T : S_1 }
+    { Γ,Δ,CP,\op{Pattern} ⊢ \kw\{\,\kw{$¬$}\,T\,\kw\} : \{S_1:S_2\} }
     % 
     \qquad
     %
     \dfrac
     { }
-    { Γ,Δ,\op{Contract} ⊢ \kw\{\kw\} : \{S_1:S_2\} }
+    { Γ,Δ,CP,\op{Contract} ⊢ \kw\{\kw\} : \{S_1:S_2\} }
     %
   \end{gather*}
   \caption{\hax sort rules.}
