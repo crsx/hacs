@@ -610,7 +610,7 @@ Formally, the abstract syntax is obtained as follows:
 \item Remove "sugar" productions.
 \end{itemize}
 %%
-What remains are minimal productions with the essential information---the AST.
+What remains are minimal productions with the essential information describing the AST.
 
 {\small\begin{remark}%
     The dragon book~\cite{Aho+:2006} achieves a similar but even bigger leap by associating the
@@ -652,7 +652,7 @@ sort Exp | scheme Leftmost(Exp) ;
   result that is also of sort "Exp". (Translations that convert from one sort to another will come
   into play as needed going forward.)
 
-  To have "Leftmost" actually do something, requires a set of rules of the form
+  To have "Leftmost" actually do something requires a set of rules of the form
   %%
   \begin{hacs}[xleftmargin=\parindent,xrightmargin=\parindent]
 Leftmost(…) →    …;
@@ -684,8 +684,8 @@ Leftmost(⟦⟨FLOAT#⟩⟧)                 →   ⟦⟨FLOAT#⟩⟧ ;
   guaranteed (by the declaration) to return something of "Exp" sort. The last two rules explicitly
   return the argument form of sort "Exp". Notice that in the last two rules, the pattern sets up "#"
   to be of sort "INT" and "FLOAT", respectively, disallowing their use directly as the result, as
-  they have the wrong sort. Rather, we use a syntax to obtain the correct sort by making use of an
-  appropriate production.
+  they have the wrong sort. Rather, we use syntax construction to obtain the correct sort by making
+  use of an appropriate production.
 \end{example}
 
 A syntax-directed scheme like "Leftmost" is called a \emph{semantic} translation scheme because it
@@ -705,7 +705,7 @@ $ \textcolor{blue}{./First.run --scheme=Leftmost --sort=Exp --term="2*3+4"}
   argument, which is different from the main "Stat" sort.
 \end{commands}
 
-The notation for defining a syntax-directed schema is as follows.
+The notation for defining a syntax-directed scheme is as follows.
 
 \begin{notation}[syntax-directed schemes]\leavevmode
   \begin{enumerate}
@@ -740,15 +740,15 @@ The notation for defining a syntax-directed schema is as follows.
 
 \item Each rule should be equipped with a result (right of the~"→") of the result sort, which can
   use the ``meta-variable'' "#"-named fragments using any (syntactic or semantic) mechanism for
-  building something of the result sort. For example, with
+  building something of the result sort. For example, adding
   \begin{hacs}
   sort R  |  ⟦ x ⟨E⟩ ⟧  |  scheme Other(B);
   \end{hacs}
-  one can write
+  allows writing
   \begin{hacs}
   sort R;
-  S(⟦ a ⟨E#1⟩ b ⟧, #2)        →   ⟦ x ⟨E#1⟩ ⟧ ;
-  S(⟦ ⟨G#1⟩ c ⟨H#2⟩ ⟧, #3)    →   Other(#3) ;
+  S(⟦ a ⟨E#1⟩ b ⟧, #2)         →  ⟦ x ⟨E#1⟩ ⟧ ;
+  S(⟦ ⟨G#1⟩ c ⟨H#2⟩ ⟧, #3)    →  Other(#3) ;
   \end{hacs}
 
   %% \item Finally notice that If it helps readability then non-syntax meta-variables as well as syntax
@@ -767,12 +767,12 @@ The notation for defining a syntax-directed schema is as follows.
   %%
   \begin{hacs}
   sort Exp | scheme Leftmost(Exp) ;
-  Leftmost(⟦⟨Exp#1⟩ + ⟨Exp#2⟩⟧)  →     Leftmost(#1) ;
-  Leftmost(⟦⟨Exp#1⟩ * ⟨Exp#2⟩⟧)  →     Leftmost(#1) ;
+  Leftmost(⟦⟨Exp#1⟩ + ⟨Exp#2⟩⟧)    →  Leftmost(#1) ;
+  Leftmost(⟦⟨Exp#1⟩ * ⟨Exp#2⟩⟧)    →  Leftmost(#1) ;
   default Leftmost(#)  →  # ;
   \end{hacs}
   %%
-  which explicitly calls out that if neither of the two regular cases applies, then the scheme just
+  which explicitly calls out that if neither of the two regular cases apply, then the scheme just
   returns the contained expression.
   %%
 \end{example}
@@ -851,7 +851,7 @@ $ \textcolor{blue}{./Stack.run --scheme=Compile --term="(1+2)*(3+4)"}
   MULT 
   \end{code}
   %%
-  Simple code generation tasks can be handled with recursive schemes such as this one, however,
+  Simple code generation tasks can be handled with recursive schemes, such as this one, however,
   serious compilation tasks will require proper attributes and semantic helper structures, detailed
   in the following sections.
   %%
@@ -861,17 +861,17 @@ $ \textcolor{blue}{./Stack.run --scheme=Compile --term="(1+2)*(3+4)"}
 \section{Semantic Data, Operators, and Evaluation}
 \label{sec:eval}
 
-For most compilers, simple recursive translations such as presented above, do not suffice. More
-complex programming tools are necessary to support more sophisticated analysis and transformations.
+For most compilers, simple recursive translations, such as presented above, do not suffice. More
+complex programming tools are necessary to support more sophisticated analyses and transformations.
 
 Specifically, note that rules for syntax-directed schemes are similar to definitions by case in
 functional programming. However, there are important differences to be detailed here, that sometimes
 make \HAX pick rules differently than functional programming would.
 
 As discussed in the previous section, it is possible to have functions written with syntactic
-brackets, and similarly to have data written with semantic constructors, called ``semantic data.''
-Semantic data forms are introduced as non-syntax (so-called ``raw'') notations that can be used in
-patterns.
+brackets, and similarly it is possible to have data written with semantic constructors, called
+``semantic data.''  Semantic data forms are introduced as non-syntax (so-called ``raw'') notations
+that can be used in patterns.
 
 \begin{example}[semantic data constants]\label{ex:unif}
   %%
@@ -892,7 +892,7 @@ Unif(Float, #2) → Float;
   %% 
   The code declares a new sort, "Type", which is a \emph{semantic sort} because it does not include
   any syntactic cases: all the possible values (as usual listed after leading "|"s) are simple
-  \emph{term structures} written without any ⟦⟧s.  Structures are written with a leading
+  \emph{term structures} written without any ⟦⟧s.  Term structures are written with a leading
   ``constructor,'' which should be a capitalized word (the same as sort and scheme names),
   optionally followed by some arguments in "()"s, where the declaration gives the sort for each
   argument (here there are none).
@@ -945,7 +945,7 @@ $ \textcolor{blue}{./SZ.run --scheme=Calc --term="s 0+s 0"}
  s  s  0   
   \end{code}
   which generates the correct result. This uses the "Calc" scheme defined in lines 34--35 and the
-  "Unload" scheme from line~37.
+  "Unload" scheme from line~37 of Figure~\ref{fig:sz}.
 \end{example}
 
 However, while \HAX definitions for schemes and data sorts look like function definitions and
@@ -963,20 +963,20 @@ Defining the "Or" scheme as follows
 Or(False, False) → False ;        //1
 default Or(#1, #2) → True ;       //2 \textcolor{red}{problematic}
 \end{hacs}
-is only correct under one condition: that the arguments to "Or" are never computed by other
+is only correct under one condition: that the arguments to "Or" are never computed by
 schemes. Consider, for example, the term
 \begin{hacs}[xleftmargin=\parindent]
 Or(Or(False, False), False)
 \end{hacs}
 For this term, \HAX is allowed to decide that "//1" cannot be immediately applied, because \emph{at
-  this time} the first parameter is different from "False" , and \HAX may then decide to instead use
+  this time} the first parameter is different from "False", and \HAX may then decide to instead use
 "//2". This is probably not what is intended.
 
 The best way to avoid this is to fully expand the observed parameters for "Or", which leads to the
 classic definition,
 \begin{hacs}[xleftmargin=\parindent]
-Or(False, #2) → #2 ;
-Or(True, #2) → True ;
+Or(False, #2) →  #2 ;
+Or(True, #2) →  True ;
 \end{hacs}
 With rules that check for equality between several parameters this requires further care. Consider,
 for example, the following additions that search a list for a specific boolean value:
@@ -1048,10 +1048,9 @@ where two subterms are compared for equality.
 
 \HAX has special support for assembling information in a ``bottom-up'' manner, corresponding to the
 use of \emph{synthesized attributes} in compiler specifications written as syntax-directed
-definitions (SDD), otherwise known as attribute grammars. This section explains \emph{how} to
-convert any SDD synthetic attribute definition into one appropriate for \HAX, introducing the
-necessary \HAX formalisms along the way.  You can find further details in the appendix
-Manual~\ref{man:attributes}.
+definitions (SDD), also known as attribute grammars. This section explains \emph{how} to convert any
+SDD synthetic attribute definition into one appropriate for \HAX, introducing the necessary \HAX
+formalisms along the way.  You can find further details in the appendix Manual~\ref{man:attributes}.
 
 \begin{example}
   Consider the following single definition of the synthesized attribute $t$ for expressions~$E$:
@@ -1839,7 +1838,7 @@ be globally unique? By default, \HAX follows the following rules:
 \label{sec:comp}
 
 There is sometimes a need to compute helper values, most commonly for counting. \HAX supports this
-through a special sort, "Computed", which has special syntax for operations on primitive values.
+through a dedicated sort, "Computed", which has special syntax for operations on primitive values.
 %%
 The mechanism is quite simple: in rule replacements, arguments of sort "Computed" can contain
 expressions in ⟦⟧s, which include

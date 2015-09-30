@@ -25,7 +25,8 @@ sort Instruction
  
 // Flattening helper. \label{code:stack:flat1}
 sort Code | scheme ⟦ { ⟨Code⟩ } ⟨Code⟩ ⟧ ;
-⟦ { ⟨Instruction#1⟩ ⟨Code#2⟩ } ⟨Code#3⟩ ⟧ →   ⟦ ⟨Instruction#1⟩ { ⟨Code#2⟩ } ⟨Code#3⟩ ⟧ ;
+⟦ { ⟨Instruction#1⟩ ⟨Code#2⟩ } ⟨Code#3⟩ ⟧
+  →  ⟦ ⟨Instruction#1⟩ { ⟨Code#2⟩ } ⟨Code#3⟩ ⟧  ;
 ⟦ { } ⟨Code#⟩ ⟧ →   Code# ; //\label{code:stack:flat2}
  
 // Compiler. \label{code:stack:comp1}
