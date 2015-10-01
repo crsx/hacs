@@ -2835,36 +2835,36 @@ cookmain: crsx.c:528: bufferEnd: Assertion
 \item Only \emph{immediate} left recursion is currently supported, \ie, left recursion should be
   within a single production. Specifically,
   \begin{hacs}
-sort A | ⟦ ⟨A⟩ stuff ⟧ | ⟦ other-stuff ⟧ ;
+    sort A | ⟦ ⟨A⟩ stuff ⟧ | ⟦ other-stuff ⟧ ;
   \end{hacs}
   and 
   \begin{hacs}
-sort A | ⟦ ⟨A@1⟩ stuff ⟧@1 | ⟦ other-stuff ⟧@2 ;
+    sort A | ⟦ ⟨A@1⟩ stuff ⟧@1 | ⟦ other-stuff ⟧@2 ;
   \end{hacs}
   are allowed, but
   \begin{hacs}
-sort A | ⟦ ⟨B⟩ a-stuff ⟧ | ⟦ other-a-stuff ⟧ ;
-sort B | ⟦ ⟨A⟩ b-stuff ⟧ | ⟦ other-b-stuff ⟧ ;
+    sort A | ⟦ ⟨B⟩ a-stuff ⟧ | ⟦ other-a-stuff ⟧ ;
+    sort B | ⟦ ⟨A⟩ b-stuff ⟧ | ⟦ other-b-stuff ⟧ ;
   \end{hacs}
   and 
   \begin{hacs}
-sort A  | ⟦ ⟨A@1⟩ stuff ⟧@2 | ⟦ other ⟧ ;
+    sort A  | ⟦ ⟨A@1⟩ stuff ⟧@2 | ⟦ other ⟧ ;
   \end{hacs}
-  are not: prohibited cases involve indirect recursion (the latter case, because the inner left
-  recursive precedence 1 is less than the outer precedence 2).
+  are not: prohibited cases involve indirect recursion (the latter case where the inner left
+  recursive precedence "@1" is less than the outer precedence "@2").
 
 \item Productions can share a prefix but only within productions for the same sort, and the prefix
-  must be precisely identical unit by unit (except for left recursive precedence markers), \ie,
-  \begin{code}
-sort S | ⟦ ⟨A⟩ then ⟨B⟩ then C ⟧
-       | ⟦ ⟨A⟩ then ⟨B⟩ or else D ⟧ ;
-  \end{code}
+  must be precisely identical unit for unit, \ie,
+  \begin{hacs}
+    sort S | ⟦ ⟨A⟩ then ⟨B⟩ then C ⟧
+           | ⟦ ⟨A⟩ then ⟨B⟩ or else D ⟧ ;
+  \end{hacs}
   is fine, but
-  \begin{code}
-sort S | ⟦ ⟨A⟩ then ⟨B⟩ then C ⟧
-       | ⟦ ⟨A⟩ ⟨ThenB⟩ or else D ⟧ ;
-sort ThenB | ⟦ then ⟨B⟩ ⟧;
-  \end{code}
+  \begin{hacs}
+    sort S | ⟦ ⟨A⟩ then ⟨B⟩ then C ⟧
+           | ⟦ ⟨A⟩ ⟨ThenB⟩ or else D ⟧ ;
+    sort ThenB | ⟦ then ⟨B⟩ ⟧;
+  \end{hacs}
   is not.
 
 \item It is not possible to left-factor a binder (making it impossible for multiple binding
