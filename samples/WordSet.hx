@@ -13,15 +13,15 @@ sort List | ↑z ;
 
 // We'll provide the answer in clear text.
 sort Answer
-| ⟦Yes, the list contains ⟨WORD⟩.⟧
-| ⟦No, the list does not contain ⟨WORD⟩.⟧
+| ⟦Yes, the list has ⟨WORD⟩.⟧
+| ⟦No, the list does not have ⟨WORD⟩.⟧
 ;
 
 // Check is main query scheme, which gives an Answer.
 sort Answer | scheme Check(Query) ;
 
 // The main program needs the synthesized list before it can check membership.
-Check( ⟦ ⟨WORD#w⟩ in ⟨List#rest ↑z{#w}⟩ ⟧ ) → ⟦Yes, the list contains ⟨WORD#w⟩.⟧ ;
+Check( ⟦ ⟨WORD#w⟩ in ⟨List#rest ↑z{#w}⟩ ⟧ ) → ⟦Yes, the list has ⟨WORD#w⟩.⟧ ;
 Check( ⟦ ⟨WORD#w⟩ in ⟨List#rest ↑z{¬#w}⟩ ⟧ )
-   → ⟦No, the list does not contain ⟨WORD#w⟩.⟧ ;
+   → ⟦No, the list does not have ⟨WORD#w⟩.⟧ ;
 }

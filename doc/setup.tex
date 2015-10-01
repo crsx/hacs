@@ -1,6 +1,14 @@
 %% $Id: setup.tex,v 1.11 2013/12/05 04:10:03 krisrose Exp $
 
 %% Format.
+
+%% Ignore frame environments in article.
+\makeatletter
+\ifx\beamer@currentmode\undefined
+  \usepackage[table]{xcolor}
+\fi
+\makeatother
+
 \usepackage[utf8]{inputenc}
 \usepackage{comment}
 \usepackage{amsmath,amssymb,stmaryrd,textcomp}
@@ -10,19 +18,11 @@
 \usepackage{utf8math}
 \usepackage{url}
 \usepackage{xspace}
-\usepackage{fancyvrb}
-
-%% Ignore frame environments in article.
-\makeatletter
-\ifx\beamer@currentmode\undefined
-  \usepackage{xcolor}
-\fi
-\makeatother
-
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{rcs}
 \usepackage{enumitem}
+\usepackage{makecell}
 
 %% Macros.
 \newcommand{\HAX}{\text{H\kern-.1em A\kern-.1em C\kern-.05em S}\xspace}
@@ -83,7 +83,7 @@
 %%  Java.
 \lstloadlanguages{Java}
 \newcommand\inputJava[2][]{\lstinputlisting[language=Java,%
-  basicstyle=\fontfamily{ccr}\selectfont,%
+  basicstyle=\normalfont,%
   extendedchars=true,inputencoding=utf8,sensitive,%
   commentstyle=\color{blue}\sl,%
   identifierstyle=\textit,%
@@ -92,7 +92,7 @@
   #1]{#2}}
 
 \lstnewenvironment{Java}[1][]{\lstset{language=Java,%
-  basicstyle=\fontfamily{ccr}\selectfont,%
+  basicstyle=\normalfont,%
   extendedchars=true,inputencoding=utf8,sensitive,%
   commentstyle=\color{blue}\sl,%
   identifierstyle=\textit,%
@@ -132,9 +132,10 @@
   \else
     \edef\4{`\1=\noexpand\the\noexpand\uccode`\1}%
     \expandafter\ifnum\4\relax \con{\expandafter\def\csname lst@um-\endcsname{\text{-}}\1\2\3}%
-    \else\ifx\2\empty          \ensuremath{\1\3}%
+%%%    \else\ifx\2\empty          \ensuremath{\1\3}%
     \else                      \var{\expandafter\def\csname lst@um-\endcsname{\text{-}}\1\2\3}%
-  \fi\fi\fi\fi\fi\fi}}
+  \fi\fi\fi\fi\fi%%%\fi
+}}
 \gdef\Identifier@subscript!1\lst@um_ @{\def\3{\ensuremath{\sb{\textup{!1}}}}}
 }%$
 \newcommand{\mv}[1]{\textsc{#1}}
@@ -144,7 +145,7 @@
 \newcommand{\con}[1]{\textup{#1}}
 \newcommand{\var}[1]{\textit{#1}}
 
-\lstdefinelanguage{HACS}{basicstyle=\fontfamily{ccr}\selectfont,%
+\lstdefinelanguage{HACS}{basicstyle=\normalfont,%
   extendedchars=true,inputencoding=utf8,sensitive,%
   identifierstyle=\Identifier,%
   string=[d]{"},morestring=[d]{'},upquote=true,showstringspaces=false,%
@@ -167,7 +168,7 @@
     {@5}{{\cw{@5}}}2 {@6}{{\cw{@6}}}2 {@7}{{\cw{@7}}}2 {@8}{{\cw{@8}}}2 {@9}{{\cw{@9}}}2 %
 }[comments,strings,keywords]
 %%
-\lstnewenvironment{hacs}[1][]{\lstset{language=HACS,basewidth={.53em,.43em},columns=flexible,numberstyle=\scriptsize\color{blue},numberblanklines=false,firstnumber=auto,xrightmargin=1pc,#1}\upshape}{}
+\lstnewenvironment{hacs}[1][]{\lstset{language=HACS,basewidth={.53em,.43em},columns=flexible,numberstyle=\scriptsize,numberblanklines=false,firstnumber=auto,xrightmargin=1pc,#1}\upshape}{}
 \newcommand\inputhacs[2][]{\lstinputlisting[language=HACS,basewidth={.53em,.43em},columns=flexible,numberstyle=\scriptsize,numberblanklines=false,xrightmargin=1pc,#1]{#2}}
 \newcommand\hacsc{\lstinline[language=HACS]}
 \newcommand\h{\lstinline[language=HACS]}
@@ -247,7 +248,7 @@
 \SelectTips{eu}{}
 
 \makeatletter
-\def\compacttableofcontents{{\if@twocolumn\else \quotation\small \fi
+\def\compacttableofcontents{{\bigskip%\if@twocolumn\else \quotation\small \fi
     \noindent\textbf{Contents:}~%
     \def\protect{\relax}%
     \def\contentsline##1{\csname contentslineA##1\endcsname}%
@@ -256,7 +257,7 @@
     \def\nextfresh##1{\relax##1 }%
     \def\contentslineAsection##1##2##3{\fresh,##1~(##2)\ignorespaces}%
     \def\contentslineAsubsection##1##2##3{\ignorespaces}%
-    \@starttoc{toc}.\endquotation}}
+    \@starttoc{toc}.}}
 \makeatother
 
 %% WORKING \Cases{...} (based on \cases from plain TeX -- the one in

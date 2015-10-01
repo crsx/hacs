@@ -31,7 +31,7 @@ module org.crsx.hacs.tests.Symbols { //-*-hacs-*-
   Emit(⟦ ⟨UP#id⟩ ⟨L#⟩ ⟧) ↓ups{#id : #n}
     → ⟦ ⟨UP#id⟩ ⟨INT#n⟩ ⟨L Emit(#) ↓ups{#id : ⟦ #n + 1 ⟧}⟩ ⟧ ;
 
-  // Rule for symbols (not seen and already seen) - note how an exemplar symbol is used.
+  // Rule for symbols (not and already seen) - note how an exemplar symbol is used.
   Emit(⟦ s ⟨L#⟩ ⟧) ↓los{¬⟦s⟧} → ⟦ s ⟨L Emit(#) ↓los{⟦s⟧}⟩ ⟧ ;
   Emit(⟦ s ⟨L#⟩ ⟧) ↓los{⟦s⟧} → ⟦ s * ⟨L Emit(#)⟩ ⟧ ;
 

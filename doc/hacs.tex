@@ -1,30 +1,49 @@
 %% Introduction to HACS.
 %%
-\documentclass[11pt]{article} %style: font size.
+%% Copyright (c) 2011-2015 Kristoffer Rose <krisrose@crsx.org>
+%% License: EPL-1.0 or CC-BY-4.0 (by readers choice).
+%%
+\documentclass[12pt]{article} %style: font size.
+\usepackage[utf8]{inputenc}
+
+%% Special configurable markup.
+\newcommand{\reportnumber}[1]{}
+\newcommand{\authorname}[2]{#2}
+\newcommand{\authorinstitution}[2]{\\#2}
+\newcommand{\also}{/\xspace}
+\newenvironment{figureunit}[1][]{\def\figureunitcaption{#1}}{\figureunitcaption}
+
+\newcommand{\basecopyright}{Original document source on GitHub is \doclicenseIcon~2011, 2015
+  Kristoffer Rose under the \href{\doclicenseURL}{\doclicenseName} license.}
+\newcommand{\documentcopyright}{\basecopyright}
+
+%% Style.
+\usepackage[margin=.8in]{geometry}
+\usepackage[T1]{fontenc}
+\AtBeginDocument{\SelectTips{lu}{11}}
+\bibliographystyle{plainurl}
+\usepackage{euler}
+\usepackage{charter}
+%\usepackage{ts}
+
+%% Base format.
 \input{setup}
 
+%% Special version and license information.
 \usepackage{catchfile}
 \CatchFileDef{\VERSION}{../VERSION}{}
 \def\setversion VERSION=#1 #2\relax{\def\version{#1\xspace}}\expandafter\setversion\VERSION\relax
-%\usepackage[draft]{showlabels}
-
-%% Style.
-\usepackage[margin=1in]{geometry}
-\usepackage[T1]{fontenc}
-\usepackage{charter}
-\SelectTips{eu}{11}
-\bibliographystyle{plainurl}
+\usepackage[type={CC},modifier={by},version={4.0},imagewidth=5em]{doclicense}
 
 %% Topmatter.
 \title{
-  \emph{Introduction to}\\
-  Compiler Generation Using \HAX%
-  \thanks{This manual describes \HAX version \version, as documented on \today.}
+  \emph{Introduction to} Compiler Generation Using \HAX
 }
 \author{
-  Kristoffer H. Rose\\
-  Two Sigma Investments/New York University
+  \authorname1{Kristoffer H. Rose}
+  \authorinstitution1{Two Sigma Investments \also New York University}
 }
+\reportnumber{2015-1}
 
 \begin{document}
 \maketitle
@@ -35,9 +54,14 @@
   document explains how to get \HAX up and running, and walks through the code of a simple example
   with each of the main stages of a compiler as specified in \HAX: lexical analysis, syntax
   analysis, semantic analysis, and code generation.
-\end{abstract}
 
-\compacttableofcontents
+  \compacttableofcontents
+
+  \vspace*{2em} \footnotesize\color{gray}\noindent%
+  This document describes \HAX version \version.\\[1ex]
+  The \HAX software on GitHub is © 2011, 2015 Kristoffer Rose under the \href{https://www.eclipse.org/legal/epl-v10.html}{Eclipse Public License v1.0}.\\[1ex]
+  \documentcopyright
+\end{abstract}
 
 
 \section{Introduction}\label{sec:intro}
@@ -273,30 +297,30 @@ module org.crsx.hacs.samples.First
 \end{notation}
 
 \begin{table}[h]
-  \begin{displaymath}
-    \begin{tabular}{c|c|c}
-      \hline
-      \hline
-      \emph{Glyph} & \emph{Code Point} & \emph{Character} \Bigstrut \\
-      \hline
-      {¬} & U+00AC & logical negation sign \\
-      {×} & U+00D7 & multiplication sign \\
-      {÷} & U+00F7 & division sign \\
-      {¶} & U+00B6 & paragraph sign \\
-      \hline
-      ↑ & U+2191 & upwards arrow \\
-      → & U+2192 & rightwards arrow \\
-      ↓ & U+2193 & downwards arrow \\
-      \hline
-      ⟦ & U+27E6 & mathematical left white square bracket \\
-      ⟧ & U+27E7 & mathematical right white square bracket \\
-      ⟨ & U+27E8 & mathematical left angle bracket \\
-      ⟩ & U+27E9 & mathematical right angle bracket \\
-      \hline
-    \end{tabular}
-  \end{displaymath}
-  \caption{Unicode special characters used by \HAX.}
-\label{tab:unicode}
+  \begin{figureunit}[
+      \caption{Unicode special characters used by \HAX.}
+      \label{tab:unicode}
+    ]
+    \begin{displaymath}
+      \begin{tabular}{ccc}
+        \Xhline{2\arrayrulewidth}
+        \emph{Glyph} & \emph{Code Point} & \emph{Character} \Bigstrut \\
+        \Xhline{2\arrayrulewidth}
+        {¬} & U+00AC & logical negation sign \\
+        {¶} & U+00B6 & paragraph sign \\
+        \hline
+        ↑ & U+2191 & upwards arrow \\
+        → & U+2192 & rightwards arrow \\
+        ↓ & U+2193 & downwards arrow \\
+        \hline
+        ⟦ & U+27E6 & mathematical left white square bracket \\
+        ⟧ & U+27E7 & mathematical right white square bracket \\
+        ⟨ & U+27E8 & mathematical left angle bracket \\
+        ⟩ & U+27E9 & mathematical right angle bracket \\
+        \Xhline{2\arrayrulewidth}
+      \end{tabular}
+    \end{displaymath}
+  \end{figureunit}
 \end{table}
 
 
@@ -363,10 +387,10 @@ The example illustrates the following particulars of \HAX lexical expressions.
 
   \end{enumerate}
   %%
-  In addition, \HAX follows the convention of naming proper grammar terminals with ALL-CAPS names,
-  like "INT", to make them are easy to distinguish from non-terminals below. (Token declarations are
-  not grammar productions: tokens cannot be recursively defined, and a token referenced from another
-  token is merely a reference to the character sequences allowed by what is referenced.)
+  In addition, this manual follows the convention of naming proper grammar terminals with ALL-CAPS
+  names, like "INT", to make them easy to distinguish from non-terminals below. (Token declarations
+  are not grammar productions: tokens cannot be recursively defined, and a token referenced from
+  another token is merely an inlining of the character sequences allowed by what is referenced.)
 \end{notation}
 
 Notice that while it is possible to make every keyword of your language into a named token in this
@@ -821,9 +845,12 @@ scheme of Example~\ref{ex:flatten} makes it much easier to manipulate sequences 
 instructions.
 
 \begin{figure}[p]
-  \inputhacs[texcl,mathescape,xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/Stack.hx}
-  \caption{\emph{examples/Stack.hx}.}
-  \label{fig:stack}
+  \begin{figureunit}[
+      \caption{\emph{examples/Stack.hx}.}
+      \label{fig:stack}
+    ]
+    \inputhacs[texcl,mathescape,xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/Stack.hx}
+  \end{figureunit}
 \end{figure}
 
 \begin{example}[stack code compiler]\label{ex:stack}
@@ -914,9 +941,12 @@ Unif(Unif(Int, Float), Int) → Unif(Float, Int) → Float
 \end{example}
 
 \begin{figure}[p]
-  \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/SZ.hx}
-  \caption{Peano numbers with addition and lists (\emph{examples/SZ.hx}).}
-  \label{fig:sz}
+  \begin{figureunit}[
+      \caption{Peano numbers with addition and lists (\emph{examples/SZ.hx}).}
+      \label{fig:sz}
+    ]\small
+    \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/SZ.hx}
+  \end{figureunit}
 \end{figure}
 
 \begin{example}
@@ -1057,12 +1087,11 @@ formalisms along the way.  You can find further details in the appendix Manual~\
   %% 
   \begin{equation}
     \begin{array}{l|l}
-      \hline
-      \hline
+      \Xhline{2\arrayrulewidth}
       \textsc{Production}  & \textsc{Semantic Rules} \Bigstrut\\
       \hline
       E → E_1 + E_2 & E.t = \op{Unif}(E_1.t, E_2.t) \Bigstrut\\
-      \hline
+      \Xhline{2\arrayrulewidth}
     \end{array}
     \tag{E1}
   \end{equation}
@@ -1131,9 +1160,12 @@ formalisms along the way.  You can find further details in the appendix Manual~\
 \end{notation}
 
 \begin{figure}[p]
-  \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/Bool.hx}
-  \caption{Synthesizing the value of a Boolean expression (\emph{examples/Bool.hx}).}
-  \label{fig:bool}
+  \begin{figureunit}[
+      \caption{Synthesizing the value of a Boolean expression (\emph{examples/Bool.hx}).}
+      \label{fig:bool}
+    ]
+    \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/Bool.hx}
+  \end{figureunit}
 \end{figure}
 %%% Note: fig:bool moved UP, example is further below.
 
@@ -1148,15 +1180,14 @@ formalisms along the way.  You can find further details in the appendix Manual~\
   %% 
   \begin{equation*}
     \begin{array}{l|l}
-      \hline
-      \hline
+      \Xhline{2\arrayrulewidth}
       \textsc{Production}  & \textsc{Semantic Rules} \Bigstrut\\
       \hline
       E → E_1 + E_2 & E.t = \op{Unif}(E_1.t, E_2.t) \Bigstrut\\[\jot]
       \quad\mid E_1 \ast E_2 & E.t = \op{Unif}(E_1.t, E_2.t) \\[\jot]
       \quad\mid \textbf{int} & E.t = \op{Int} \\[\jot]
       \quad\mid \textbf{float} & E.t = \op{Float} \\[\jot]
-      \hline
+      \Xhline{2\arrayrulewidth}
     \end{array}
   \end{equation*}
   %%
@@ -1227,8 +1258,7 @@ and cannot be easily achieved with usual positional arguments to recursive schem
   %% 
   \begin{equation*}
     \begin{array}{l|ll}
-      \hline
-      \hline
+      \Xhline{2\arrayrulewidth}
       \textsc{Production}  & \textsc{Semantic Rules} \Bigstrut&\\
       \hline
       S → T_1 ~ \textbf{id}_2 = E_3; S_4
@@ -1247,7 +1277,7 @@ and cannot be easily achieved with usual positional arguments to recursive schem
       E.t = \op{Lookup}(E.e, \textbf{id}_1.sym)
       &\thetag{3}
       \\[\jot]
-      \hline
+      \Xhline{2\arrayrulewidth}
     \end{array}
   \end{equation*}
   %% 
@@ -1370,61 +1400,62 @@ and cannot be easily achieved with usual positional arguments to recursive schem
 
 With the addition of inherited attrbutes, we can now list all the possible attribute forms.
 
-\begin{table}[h]
-  \begin{displaymath}\small
-    \begin{array}{c|p{.4\textwidth}|p{.4\textwidth}}
-      \hline\hline
-      \textsc{Notation} & \textsc{In Pattern} & \textsc{In Result} \\
-      \hline
-      D"↑a(#)"
-      & $D$ must synthesize "a"-value captured in "#"
-      & $D$ will synthesize "a"-value captured in "#"
-      \\
-      D"↑a{:#}"
-      & --- "a"-environment captured in ":#"
-      & --- "a"-environment captured in ":#"
-      \\
-      D"↑a{#k : #v}"
-      & --- --- which includes binding "#k" to "#v"
-      & --- --- which includes binding "#k" to "#v"
-      \\
-      D"↑a{¬#k}"
-      & --- --- which does not have binding for "#k"
-      & n/a
-      \\
-      D"↑a{}"
-      & n/a
-      & $D$ synthesizes an empty environment in "a"
-      \\
-      D"↑#"
-      & \emph{All} $D$-synthesized attributes captured in "#"
-      & \emph{All} attributes captured in "#" $D$-synthesized
-      \\
-      \hline
-      F"↓a(#)"
-      & $F$ must inherit "a"-value captured in "#"
-      & $F$ will inherit "a"-value captured in "#"
-      \\
-      F"↓a{:#}"
-      & --- "a"-environment captured in ":#"
-      & --- "a"-environment captured in ":#"
-      \\
-      F"↓a{#k : #v}"
-      & --- --- which includes binding "#k" to "#v"
-      & --- --- which includes binding "#k" to "#v"
-      \\
-      F"↓a{¬#k}"
-      & --- --- which does not have binding for "#k"
-      & n/a
-      \\
-      F"↓a{}"
-      & n/a
-      & $F$ inherits an empty environment in "a"
-      \\
-      \hline
-    \end{array}
-  \end{displaymath}
-  \caption{Attribute constraints.}\label{tab:attributes}
+\begin{table}[t]
+  \begin{figureunit}[\caption{Attribute constraints.}\label{tab:attributes}]
+    \begin{displaymath}\small
+      \begin{array}{c|p{.4\textwidth}|p{.4\textwidth}}
+        \Xhline{2\arrayrulewidth}
+        \textsc{Notation} & \textsc{In Pattern} & \textsc{In Result} \\
+        \Xhline{2\arrayrulewidth}
+        D"↑a(#)"
+        & $D$ must synthesize "a"-value captured in "#"
+        & $D$ will synthesize "a"-value captured in "#"
+        \\
+        D"↑a{:#}"
+        & --- "a"-environment captured in ":#"
+        & --- "a"-environment captured in ":#"
+        \\
+        D"↑a{#k : #v}"
+        & --- --- which includes binding "#k" to "#v"
+        & --- --- which includes binding "#k" to "#v"
+        \\
+        D"↑a{¬#k}"
+        & --- --- which does not have binding for "#k"
+        & n/a
+        \\
+        D"↑a{}"
+        & n/a
+        & $D$ synthesizes an empty environment in "a"
+        \\
+        D"↑#"
+        & \emph{All} $D$-synthesized attributes captured in "#"
+        & \emph{All} attributes captured in "#" $D$-synthesized
+        \\
+        \hline
+        F"↓a(#)"
+        & $F$ must inherit "a"-value captured in "#"
+        & $F$ will inherit "a"-value captured in "#"
+        \\
+        F"↓a{:#}"
+        & --- "a"-environment captured in ":#"
+        & --- "a"-environment captured in ":#"
+        \\
+        F"↓a{#k : #v}"
+        & --- --- which includes binding "#k" to "#v"
+        & --- --- which includes binding "#k" to "#v"
+        \\
+        F"↓a{¬#k}"
+        & --- --- which does not have binding for "#k"
+        & n/a
+        \\
+        F"↓a{}"
+        & n/a
+        & $F$ inherits an empty environment in "a"
+        \\
+        \Xhline{2\arrayrulewidth}
+      \end{array}
+    \end{displaymath}
+  \end{figureunit}
 \end{table}
 
 \begin{notation}[attributes]\leavevmode
@@ -1436,20 +1467,20 @@ With the addition of inherited attrbutes, we can now list all the possible attri
       "attribute"
       ~
       \left\{
-      \begin{matrix}
+      \begin{gathered}
         {↑} \\
         {↓}
-      \end{matrix}
+      \end{gathered}
       \right\}
       ~
       a
       ~
       \left\{
-      \begin{matrix}
+      \begin{gathered}
         (\,S\,) \\
         \{\,S'\,\} \\
         \{\,S' : S\,\}
-      \end{matrix}
+      \end{gathered}
       \right\}
       \,;
     \end{displaymath}
@@ -1474,38 +1505,46 @@ With the addition of inherited attrbutes, we can now list all the possible attri
 \end{notation}
 
 \begin{figure}[p]
-  \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/LetrecMap.hx}
-  \caption{Synthesizing and then inheriting an environment (\emph{examples/LetrecMap.hx}).}
-  \label{fig:letrec}
+
+  \begin{figureunit}[
+      \caption{Synthesizing and then inheriting an environment (\emph{examples/LetrecMap.hx}).}
+      \label{fig:letrec}
+    ]
+    \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/LetrecMap.hx}
+  \end{figureunit}
+
   \vspace*{2em}
 
-  \begin{equation*}
-    \begin{array}{r@{\,}l|lr}
-      \hline
-      \hline
-      \multicolumn{2}{c|}{\textsc{Production}}  & \textsc{Semantic Rules} &\Bigstrut\\
-      \hline\Bigstrut
-      S &→ \textbf{id} := E_1; S_2
-      & E_1.e = S.e; S_2.e = \op{Extend}(S.e, \textbf{id}.sym, E_1.t) &\thetag{S1}
-      \\[\jot]
-      &\mid \{~S_1~\}~S_2 & S_1.e = S.e; S_2.e = S.e &\thetag{S2}
-      \\[\jot]
-      &\mid ε & &\thetag{S3}
-      \\[\jot]
-      \hline\Bigstrut
-      E &→ E_1 + E_2 & E_1.e=E.e; E_2.e=E.e; E.t = \op{Unif}(E_1.t, E_2.t) &\thetag{E1}\\[\jot]
-      &\mid E_1 \ast E_2 & E_1.e=E.e; E_2.e=E.e; E.t = \op{Unif}(E_1.t, E_2.t) &\thetag{E2}\\[\jot]
-      &\mid \textbf{int} & E.t = \op{Int}&\thetag{E3}\\[\jot]
-      &\mid \textbf{float} & E.t = \op{Float}&\thetag{E4}\\[\jot]
-      &\mid \textbf{id} & E.t = \text{if}~\op{Defined}(E.e,\textbf{id}.sym)&\thetag{E5}\\
-      && \qquad\quad\text{then}~\op{Lookup}(E.e,\textbf{id}.sym)\\
-      && \qquad\quad\text{else}~\op{TypeError}
-      \\[\jot]
-      \hline
-    \end{array}
-  \end{equation*}
-  \caption{SDD for type checking.}
-  \label{fig:sdd}
+  \begin{figureunit}[
+      \caption{SDD for type checking.}
+      \label{fig:sdd}
+    ]
+    \begin{equation*}
+      \begin{array}{r@{\;}l|lr}
+        \Xhline{2\arrayrulewidth}
+        \multicolumn{2}{c|}{\textsc{Production}}  & \textsc{Semantic Rules} &\Bigstrut\\
+        \hline\Bigstrut
+        S &→ \textbf{id} := E_1; S_2
+        & E_1.e = S.e; S_2.e = \op{Extend}(S.e, \textbf{id}.sym, E_1.t) &\thetag{S1}
+        \\[\jot]
+        &\mid \{~S_1~\}~S_2 & S_1.e = S.e; S_2.e = S.e &\thetag{S2}
+        \\[\jot]
+        &\mid ε & &\thetag{S3}
+        \\[\jot]
+        \hline\Bigstrut
+        E &→ E_1 + E_2 & E_1.e=E.e; E_2.e=E.e; E.t = \op{Unif}(E_1.t, E_2.t) &\thetag{E1}\\[\jot]
+        &\mid E_1 \ast E_2 & E_1.e=E.e; E_2.e=E.e; E.t = \op{Unif}(E_1.t, E_2.t) &\thetag{E2}\\[\jot]
+        &\mid \textbf{int} & E.t = \op{Int}&\thetag{E3}\\[\jot]
+        &\mid \textbf{float} & E.t = \op{Float}&\thetag{E4}\\[\jot]
+        &\mid \textbf{id} & E.t = \text{if}~\op{Defined}(E.e,\textbf{id}.sym)&\thetag{E5}\\
+        && \qquad\quad\text{then}~\op{Lookup}(E.e,\textbf{id}.sym)&\\
+        && \qquad\quad\text{else}~\op{TypeError}&
+        \\[\jot]
+        \Xhline{2\arrayrulewidth}
+      \end{array}
+    \end{equation*}
+  \end{figureunit}
+
 \end{figure}
 
 \begin{example}
@@ -1521,7 +1560,11 @@ The examples presented thus far have very simple attribute dependencies. A final
 demonstrates more complicated attribute dependencies.
 
 \begin{figure}[p]
-\begin{hacs}[numbers=right,texcl]
+  \begin{figureunit}[
+      \caption{\HAX code for type analysis.}
+      \label{fig:sdd-hacs}
+    ]
+\begin{hacs}[xleftmargin=\parindent,xrightmargin=2em,numbers=right]
 sort Type  | Int | Float | TypeError
             | scheme Unif(Type,Type) ;
 
@@ -1565,8 +1608,7 @@ Se (⟦ { ⟨Stat#1⟩ } ⟨Stat#2⟩ ⟧ ↑#syn) → ⟦ { ⟨Stat Se(#1)⟩ }
 
 Se (⟦ ⟧ ↑#syn) → ⟦ ⟧ ↑#syn ;
 \end{hacs}
-  \caption{\HAX code for type analysis.}
-  \label{fig:sdd-hacs}
+  \end{figureunit}
 \end{figure}
 
 \begin{example}
@@ -1661,7 +1703,7 @@ fragments with scopes inside. These are the features where the ``H'' of \HAX mat
     which means that we may have rules for application (line 7), which is so basic in λ calculus
     that it is denoted by simple concatenation.
 
-  \item The first syntax production (line 6) is different, however:
+  \item The first syntax production (line 6) is different:
     %%
     ``"| ⟦λ ⟨ID binds x⟩ . ⟨T[x as T]⟩⟧"''
     %%
@@ -1701,9 +1743,12 @@ $ \textcolor{blue}{./Lambda.run --sort=T --term='(λx.x)y'}
 \end{example}
 
 \begin{figure}[t]
-  \inputhacs[texcl,mathescape,xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/Lambda.hx}
-  \caption{λ calculus (\emph{examples/Lambda.hx}).}
-  \label{fig:lambda}
+  \begin{figureunit}[
+      \caption{λ calculus (\emph{examples/Lambda.hx}).}
+      \label{fig:lambda}
+    ]
+    \inputhacs[texcl,mathescape,xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/Lambda.hx}
+  \end{figureunit}
 \end{figure}
 
 More formally, \HAX provides support for manipulating scoped terms using \emph{higher-order abstract
@@ -1798,9 +1843,12 @@ The use of HOAS in \HAX in fact allows the full range of methods used in higher-
 rewriting~\cite{Jouannaud:klop2005,Klop+:tcs1993}, a very powerful mechanism.
 
 \begin{figure}[p]
-  \inputhacs[texcl,mathescape,xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/CPS.hx}
-  \caption{Definitions of Call-by-Value Continuation Passing Style (\emph{examples/CPS.hx}).}
-  \label{fig:cps}
+  \begin{figureunit}[
+      \caption{Definitions of Call-by-Value Continuation Passing Style (\emph{examples/CPS.hx}).}
+      \label{fig:cps}
+    ]
+    \inputhacs[texcl,mathescape,xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/CPS.hx}
+  \end{figureunit}
 \end{figure}
 
 \begin{example}
@@ -1859,28 +1907,31 @@ use this for calculations that can be safely computed in any case where the \emp
 rule matches.
 
 \begin{table}[h]
-  \begin{displaymath}
-    \begin{array}{c|p{.55\linewidth}}
-      \hline
-      \textit{Operators} & \textit{Explanation} \\
-      \hline
-      \texttt{?:} & \text{ternary test} \\
-      \hline
-      \texttt{=}~\texttt{≠}~\texttt{<}~\texttt{>}~\texttt{≤}~\texttt{≥} & \text{comparisons} \\
-      \hline
-      \texttt{*}~\texttt{/}~\texttt{\%} & \text{multiplication, division, modulo} \\
-      \texttt{\&} & \text{bitwise and} \\
-      \verb|<<|~\verb|>>| & \text{bitwise shift left and right} \\
-      \hline
-      \texttt{+}~\texttt{-} & \text{unary plus and minus}\\
-      \verb|~| & \text{bitwise not} \\
-      \texttt{escape~unescape} & \text{unary function that inserts/removes C string escapes} \\
-      \texttt{length} & \text{unary function that returns length of (Unicode) string} \\
-      \hline
-    \end{array}
-  \end{displaymath}
-  \caption{Operations permitted in Computed syntax.}
-  \label{tab:ops}
+  \begin{figureunit}[
+      \caption{Operations permitted in Computed syntax.}
+      \label{tab:ops}
+    ]
+    \begin{displaymath}
+      \begin{array}{c|p{.55\linewidth}}
+        \Xhline{2\arrayrulewidth}
+        \textit{Operators} & \textit{Explanation} \\
+        \Xhline{2\arrayrulewidth}
+        \texttt{?:} & \text{ternary test} \\
+        \hline
+        \texttt{=}~\texttt{≠}~\texttt{<}~\texttt{>}~\texttt{≤}~\texttt{≥} & \text{comparisons} \\
+        \hline
+        \texttt{*}~\texttt{/}~\texttt{\%} & \text{multiplication, division, modulo} \\
+        \texttt{\&} & \text{bitwise and} \\
+        \verb|<<|~\verb|>>| & \text{bitwise shift left and right} \\
+        \hline
+        \texttt{+}~\texttt{-} & \text{unary plus and minus}\\
+        \verb|~| & \text{bitwise not} \\
+        \texttt{escape~unescape} & \text{unary function that inserts/removes C string escapes} \\
+        \texttt{length} & \text{unary function that returns length of (Unicode) string} \\
+        \Xhline{2\arrayrulewidth}
+      \end{array}
+    \end{displaymath}
+  \end{figureunit}
 \end{table}
 
 \begin{example}[count]\label{ex:count}
@@ -1899,9 +1950,12 @@ ListLength2(⟦ ⟧, #n) → #n ;
 \end{example}
 
 \begin{figure}[t]
-  \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/MakeToken.hx}
-  \caption{\emph{examples/MakeToken.hx}.}
-  \label{fig:maketoken}
+  \begin{figureunit}[
+      \caption{\emph{examples/MakeToken.hx}.}
+      \label{fig:maketoken}
+    ]
+    \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/MakeToken.hx}
+  \end{figureunit}
 \end{figure}
 
 \begin{example}[string operations]
@@ -1934,9 +1988,12 @@ Notice that it is \emph{not} presently possible to nest computations, \ie, inser
 by the simple desk calculator in the following example.
 
 \begin{figure}[p]
-  \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/Desk.hx}
-  \caption{\emph{examples/Desk.hx}.}
-  \label{fig:desk}
+  \begin{figureunit}[
+      \caption{\emph{examples/Desk.hx}.}
+      \label{fig:desk}
+    ]
+    \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/Desk.hx}
+  \end{figureunit}
 \end{figure}
 
 \begin{example}
@@ -1975,9 +2032,12 @@ representation.  This section presents some examples of this.
 \end{remark}
 
 \begin{figure}[p]
-  \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right,texcl]{../samples/Symbols.hx}
-  \caption{\emph{examples/Symbols.hx}: Variations on symbols.}
-  \label{fig:symbols}
+  \begin{figureunit}[
+      \caption{\emph{examples/Symbols.hx}: Variations on symbols.}
+      \label{fig:symbols}
+    ]\small
+    \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right,texcl]{../samples/Symbols.hx}
+  \end{figureunit}
 \end{figure}
 
 \begin{example}
@@ -2002,9 +2062,12 @@ A A 2 a a * s A 3 s_39 a * END END END s_46 s_46 s_46
 \end{example}
 
 \begin{figure}[t]
-  \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right,texcl]{../samples/IsCat.hx}
-  \caption{\emph{examples/IsCat.hx}: Finding cats.}
-  \label{fig:cats}
+  \begin{figureunit}[
+      \caption{\emph{examples/IsCat.hx}: Finding cats.}
+      \label{fig:cats}
+    ]
+    \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right,texcl]{../samples/IsCat.hx}
+  \end{figureunit}
 \end{figure}
 
 \begin{example}[finding cats]
@@ -2028,10 +2091,13 @@ True
   %%$
 \end{example}
 
-\begin{figure}[p]
-  \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right,texcl]{../samples/WordSet.hx}
-  \caption{\emph{examples/WordSet.hx}: Sets of Words.}
-  \label{fig:wordset}
+\begin{figure}[tp]
+  \begin{figureunit}[
+      \caption{\emph{examples/WordSet.hx}: Sets of Words.}
+      \label{fig:wordset}
+    ]
+    \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right,texcl]{../samples/WordSet.hx}
+  \end{figureunit}
 \end{figure}
 
 \begin{example}[set of words]
@@ -2067,17 +2133,20 @@ True
 \begin{code}[commandchars=\^\{\}]
 energon1[~]$ ^textcolor{blue}{^texttt{hacs WordSet.hx}}
 energon1[~]$ ^textcolor{blue}{^texttt{./WordSet.run --scheme=Check --term="a in a,b,b,a"}}
-Yes, the list contains a.
+Yes, the list has a.
 energon1[~]$ ^textcolor{blue}{^texttt{./WordSet.run --scheme=Check --term="Foo in Bar"}}
-No, the list does not contain Foo.
+No, the list does not have Foo.
 \end{code}
 %%$
 \end{example}
 
 \begin{figure}[p]
-  \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right,texcl]{../samples/WordMap.hx}
-  \caption{\emph{examples/WordMap.hx}: Apply Word Substitution as Map.}
-  \label{fig:wordmap}
+  \begin{figureunit}[
+      \caption{\emph{examples/WordMap.hx}: Apply Word Substitution as Map.}
+      \label{fig:wordmap}
+    ]
+    \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right,texcl]{../samples/WordMap.hx}
+  \end{figureunit}
 \end{figure}
 
 \begin{example}[map of words]\label{ex:wordmap}
@@ -2111,8 +2180,12 @@ a b c
 %%$
 \end{example}
 
-\begin{figure}[p]\scriptsize
-\begin{hacs}[numbers=right,texcl]
+\begin{figure}[p]
+  \begin{figureunit}[
+      \caption{\emph{examples/WordSubst.hx}: Combining list, maps, and transformation.}
+      \label{fig:wordsubst}
+    ]\scriptsize
+\begin{hacs}[xleftmargin=\parindent,xrightmargin=3em,numbers=right,texcl]
 module org.crsx.hacs.samples.WordSubst {
 
 // Grammar.
@@ -2177,7 +2250,7 @@ Unitenv( ⟦⟨NAT#n⟩⟧↑#s ) → ⟦⟨NAT#n⟩⟧↑#s ;
 Unitenv( ⟦ { ⟨Units#units⟩ } ⟧↑#s ) → ⟦ { ⟨Units Unitsenv(#units)⟩ } ⟧↑#s ;
 }
 \end{hacs}
-\caption{\emph{examples/WordSubst.hx}: Combining list, maps, and transformation.}\label{fig:wordsubst}
+  \end{figureunit}
 \end{figure}
 
 \begin{example}[word substitution]
