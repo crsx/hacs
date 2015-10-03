@@ -6,7 +6,6 @@ module edu.nyu.cs.cc.Desk {
 
   sort E
     | ⟦ ⟨NUM⟩ ⟧@5
-    | ⟦ ⟨STR⟩ ⟧@5
     | sugar ⟦ ( ⟨E#⟩ ) ⟧@5 → #
 
     | ⟦ ⟨E@2⟩ / ⟨E@3⟩ ⟧@2
@@ -20,7 +19,6 @@ module edu.nyu.cs.cc.Desk {
 
   sort Computed | scheme Eval(E) ;
   Eval(⟦ ⟨NUM#⟩ ⟧) → ⟦ $# ⟧ ;
-  Eval(⟦ ⟨STR#⟩ ⟧) → ⟦ unescape(#) ⟧ ;
 
   Eval(⟦ ⟨E#1⟩ + ⟨E#2⟩ ⟧) →  Plus(Eval(#1), Eval(#2)) ;
   | scheme Plus(Computed, Computed) ;

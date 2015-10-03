@@ -35,8 +35,8 @@
 {\thefigureunitcaption\vspace{1ex}\end{minipage}\end{lrbox}%
   \colorbox{blue!10}{\usebox{\saveunit@}}}
 \makeatother
-%\usepackage[table]{xcolor}
-%\rowcolors{1}{blue!10}{green!10}
+\usepackage[table]{xcolor}
+\rowcolors[\hline]{1}{blue!10}{green!10}
 %\usepackage{ts}
 
 %% Base format.
@@ -308,7 +308,7 @@ module org.crsx.hacs.samples.First
   Table~\ref{tab:unicode}.
 \end{notation}
 
-\begin{table}[h]
+\begin{table}[ht]
   \begin{figureunit}[
       \caption{Unicode special characters used by \HAX.}
       \label{tab:unicode}
@@ -2020,28 +2020,35 @@ by the simple desk calculator in the following example.
 Once the structure of a specification is clear, it is possible to start analyzing and manipulating the internal
 representation.  This section presents some examples of this.
 
-\begin{remark}
-  Here is a short checklist of recommended practices for \HAX processing:
-  %% 
-  \begin{itemize}
+\begin{figure}[h]
+  \begin{figureunit}[
+      \caption{\emph{examples/IsCat.hx}: Finding cats.}
+      \label{fig:cats}
+    ]
+    \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right,texcl]{../samples/IsCat.hx}
+  \end{figureunit}
+\end{figure}
 
-  \item Separate token names from sort names, for example by using ALL CAPS for token names.
+\begin{example}[finding cats]
+  The small example in Figure~\ref{fig:cats} illustrates how to test for equality using a
+  non-linear rule in line 12 combined with a ``catch-all'' default rule in line 13.
 
-  \item If using some kind of identifier, declare it as a special token that always allows numeric
-    extensions, like
-    \begin{displaymath}
-      "token SYMBOL | [a-z]+ ('_'?"~"[0-9]+)* ;"
-    \end{displaymath}
-    This construction permits the use of symbols of the specified kind in patterns, \ie, a rule like
-    \begin{displaymath}
-      "F(⟦x1⟧)" ~→~"⟦ x1 + x2 ⟧ ;"
-    \end{displaymath}
-    will allow "F" to be applied to \emph{any} "Symbol", with "x1" being the \emph{representative}
-    of that symbol for the purpose of the rule. Similarly, "x2" will correspond to a \emph{globally
-      fresh} symbol, as it only occurs right of the "→".
+  It is not permissible to use "⟦cat⟧" directly in a pattern: patterns are restricted to
+  \emph{syntactic cases} of the grammar.  Also note the definition of the "Boolean" sort with
+  syntactic values rather than just constructors: this allows them to be printed.
 
-  \end{itemize}
-\end{remark}
+  Here is a possible run using this command:
+  %%
+\begin{code}[commandchars=\\\{\}]
+$ \textcolor{blue}{hacs IsCat.hx}
+...
+$ \textcolor{blue}{./IsCat.run --scheme=IsCat --term="dog"}
+False
+$ \textcolor{blue}{./IsCat.run --scheme=IsCat --term="cat"}
+True
+  \end{code}
+  %%$
+\end{example}
 
 \begin{figure}[p]
   \begin{figureunit}[
@@ -2073,37 +2080,7 @@ A A 2 a a * s A 3 s_39 a * END END END s_46 s_46 s_46
   \end{itemize}
 \end{example}
 
-\begin{figure}[t]
-  \begin{figureunit}[
-      \caption{\emph{examples/IsCat.hx}: Finding cats.}
-      \label{fig:cats}
-    ]
-    \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right,texcl]{../samples/IsCat.hx}
-  \end{figureunit}
-\end{figure}
-
-\begin{example}[finding cats]
-  The small example in Figure~\ref{fig:cats} illustrates how to test for equality using a
-  non-linear rule in line 12 combined with a ``catch-all'' default rule in line 13.
-
-  It is not permissible to use "⟦cat⟧" directly in a pattern: patterns are restricted to
-  \emph{syntactic cases} of the grammar.  Also note the definition of the "Boolean" sort with
-  syntactic values rather than just constructors: this allows them to be printed.
-
-  Here is a possible run using this command:
-  %%
-\begin{code}[commandchars=\\\{\}]
-$ \textcolor{blue}{hacs IsCat.hx}
-...
-$ \textcolor{blue}{./IsCat.run --scheme=IsCat --term="dog"}
-False
-$ \textcolor{blue}{./IsCat.run --scheme=IsCat --term="cat"}
-True
-  \end{code}
-  %%$
-\end{example}
-
-\begin{figure}[t!]
+\begin{figure}[ht]
   \begin{figureunit}[
       \caption{\emph{examples/WordSet.hx}: Sets of Words.}
       \label{fig:wordset}
