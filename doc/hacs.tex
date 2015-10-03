@@ -13,27 +13,39 @@
 \newcommand{\also}{/\xspace}
 \newenvironment{figureunit}[1][]{\def\figureunitcaption{#1}}{\figureunitcaption}
 
-\newcommand{\basecopyright}{Original document source on GitHub is \doclicenseIcon~2011, 2015
-  Kristoffer Rose under the \href{\doclicenseURL}{\doclicenseName} license.}
+\newcommand{\basecopyright}{%
+  \HAX is © 2011, 2015 Kristoffer Rose and released under the
+  \href{https://www.eclipse.org/legal/epl-v10.html}{Eclipse Public License 1.0}.}
 \newcommand{\documentcopyright}{\basecopyright}
 
 %% Style.
 \usepackage[margin=.8in]{geometry}
 \usepackage[T1]{fontenc}
-\AtBeginDocument{\SelectTips{lu}{11}}
 \bibliographystyle{plainurl}
-\usepackage{euler}
-\usepackage{charter}
+\usepackage{eulervm}
+\renewcommand{\rmdefault}{pplx}
+%\usepackage{euler}
+%\usepackage{charter}
+\AtBeginDocument{\SelectTips{eu}{11}}
+% Figure wrapper!
+\makeatletter
+\newsavebox{\saveunit@}
+\renewenvironment{figureunit}[1][]{\def\thefigureunitcaption{#1}%
+  \begin{lrbox}{\saveunit@}\begin{minipage}{\linewidth}}%
+{\thefigureunitcaption\vspace{1ex}\end{minipage}\end{lrbox}%
+  \colorbox{blue!10}{\usebox{\saveunit@}}}
+\makeatother
+%\usepackage[table]{xcolor}
+%\rowcolors{1}{blue!10}{green!10}
 %\usepackage{ts}
 
 %% Base format.
 \input{setup}
 
-%% Special version and license information.
+%% Special version information.
 \usepackage{catchfile}
 \CatchFileDef{\VERSION}{../VERSION}{}
 \def\setversion VERSION=#1 #2\relax{\def\version{#1\xspace}}\expandafter\setversion\VERSION\relax
-\usepackage[type={CC},modifier={by},version={4.0},imagewidth=5em]{doclicense}
 
 %% Topmatter.
 \title{
@@ -57,9 +69,9 @@
 
   \compacttableofcontents
 
-  \vspace*{2em} \footnotesize\color{gray}\noindent%
-  This document describes \HAX version \version.\\[1ex]
-  The \HAX software on GitHub is © 2011, 2015 Kristoffer Rose under the \href{https://www.eclipse.org/legal/epl-v10.html}{Eclipse Public License v1.0}.\\[1ex]
+  \vspace*{2em} \color{gray}\noindent%
+  This document describes \HAX version \version available from
+  \href{http://github.com/crsx/hacs}{github.com/crsx/hacs}.\\[1ex]
   \documentcopyright
 \end{abstract}
 
@@ -150,7 +162,7 @@ University~\cite{RoseRose:cims2015}.
 The author would like to thank my coteacher at NYU, Eva Rose, our grader, José Pablo Cambronero, as
 well as our students in the compiler construction class, for constructive comments to and insightful
 questions on \HAX.\footnote{A special shout-out goes to John Downs for starting the Emacs
-  \texttt{M-x hacs-mode} syntax highligting mode~\cite{git:hacsel} and Tyler Palsulich for a \HAX
+  \texttt{M-x hacs-mode} syntax highlighting mode~\cite{git:hacsel} and Tyler Palsulich for a \HAX
   mode for Sublime Text~\cite{git:hacs-sublime}.}
 %%
 The implementation of \HAX would not have been remotely possible without the CRSX team at IBM:
@@ -648,8 +660,8 @@ What remains are minimal productions with the essential information describing t
     \begin{displaymath}
       E → E+E \mid E*E \mid \textbf{int} \mid \textbf{float}
     \end{displaymath}
-    which additionally ``folds'' the $T$ and $F$ productions into $E$, as was done in the previous
-    section.
+    which additionally ``folds'' the $T$ and $F$ productions into $E$, as was effectively done in
+    the previous section.
   \end{remark}}
 
 With such a description of the AST, it is possible to write code that operates on the AST,
@@ -691,7 +703,7 @@ Leftmost(…) →    …;
 Leftmost(⟦⟨Exp#1⟩ + ⟨Exp#2⟩⟧)         →   …;
 Leftmost(⟦⟨Exp#1⟩ * ⟨Exp#2⟩⟧)         →   …;
 Leftmost(⟦⟨INT#⟩⟧)                     →   …;
-Leftmost(⟦⟨FLOAT#⟩⟧)                 →   …;
+Leftmost(⟦⟨FLOAT#⟩⟧)                  →   …;
   \end{hacs}
   %%
   It is now possible to express the right side of each translation rule using the now named
@@ -701,7 +713,7 @@ Leftmost(⟦⟨FLOAT#⟩⟧)                 →   …;
 Leftmost(⟦⟨Exp#1⟩ + ⟨Exp#2⟩⟧)         →   Leftmost(Exp#1) ;
 Leftmost(⟦⟨Exp#1⟩ * ⟨Exp#2⟩⟧)         →   Leftmost(Exp#1) ;
 Leftmost(⟦⟨INT#⟩⟧)                     →   ⟦⟨INT#⟩⟧ ;
-Leftmost(⟦⟨FLOAT#⟩⟧)                 →   ⟦⟨FLOAT#⟩⟧ ;
+Leftmost(⟦⟨FLOAT#⟩⟧)                  →   ⟦⟨FLOAT#⟩⟧ ;
   \end{hacs}
   %%
   The first two rules pass the "#1" fragment, which is of "Exp" sort, into "Leftmost", which is
@@ -735,7 +747,7 @@ The notation for defining a syntax-directed scheme is as follows.
   \begin{enumerate}
 
   \item Set the result "sort" and add a declaration for the scheme. A scheme "S" of result sort "R"
-    with argument sorts "A" and "B" is declared by defining
+    with argument sorts "A" and "B" is declared by
     \begin{hacs}
   sort R |  scheme S(A, B);
   \end{hacs}
@@ -1408,12 +1420,12 @@ With the addition of inherited attrbutes, we can now list all the possible attri
         \textsc{Notation} & \textsc{In Pattern} & \textsc{In Result} \\
         \Xhline{2\arrayrulewidth}
         D"↑a(#)"
-        & $D$ must synthesize "a"-value captured in "#"
-        & $D$ will synthesize "a"-value captured in "#"
+        & $D$ must synthesize "a"-value in "#"
+        & $D$ will synthesize "a"-value in "#"
         \\
         D"↑a{:#}"
-        & --- "a"-environment captured in ":#"
-        & --- "a"-environment captured in ":#"
+        & --- "a"-environment in ":#"
+        & --- "a"-environment in ":#"
         \\
         D"↑a{#k : #v}"
         & --- --- which includes binding "#k" to "#v"
@@ -1425,20 +1437,20 @@ With the addition of inherited attrbutes, we can now list all the possible attri
         \\
         D"↑a{}"
         & n/a
-        & $D$ synthesizes an empty environment in "a"
+        & $D$ synthesizes empty environment in "a"
         \\
         D"↑#"
-        & \emph{All} $D$-synthesized attributes captured in "#"
-        & \emph{All} attributes captured in "#" $D$-synthesized
+        & \emph{All} $D$-synthesized attributes in "#"
+        & \emph{All} attributes in "#" $D$-synthesized
         \\
         \hline
         F"↓a(#)"
-        & $F$ must inherit "a"-value captured in "#"
-        & $F$ will inherit "a"-value captured in "#"
+        & $F$ must inherit "a"-value in "#"
+        & $F$ will inherit "a"-value in "#"
         \\
         F"↓a{:#}"
-        & --- "a"-environment captured in ":#"
-        & --- "a"-environment captured in ":#"
+        & --- "a"-environment in ":#"
+        & --- "a"-environment in ":#"
         \\
         F"↓a{#k : #v}"
         & --- --- which includes binding "#k" to "#v"
@@ -1450,7 +1462,7 @@ With the addition of inherited attrbutes, we can now list all the possible attri
         \\
         F"↓a{}"
         & n/a
-        & $F$ inherits an empty environment in "a"
+        & $F$ inherits empty environment in "a"
         \\
         \Xhline{2\arrayrulewidth}
       \end{array}
@@ -1815,7 +1827,7 @@ Append(⟦ old := ⟨Exp#2⟩; ⟨Stat#3[old]⟩ ⟧, #S2)
   → ⟦ new := ⟨Exp#2⟩; ⟨Stat Append(#3[new], #S2⟩ ⟧ ;
   \end{hacs}
   %%
-  Notice how the pattern of the last rule in line 15 explicitly calls out the used binding: the
+  Notice how the pattern of the last rule in lines 13--14 explicitly calls out the used binding: the
   actual variable that is used in the program is referenced in the pattern as "old" and the pattern
   matching should also keep track of all the occurrences inside the scope, which is~"#3", by writing
   it as "#3[old]". (This exploits the aforementioned \HAX hack, where \HAX variables that are also
@@ -2091,7 +2103,7 @@ True
   %%$
 \end{example}
 
-\begin{figure}[tp]
+\begin{figure}[t!]
   \begin{figureunit}[
       \caption{\emph{examples/WordSet.hx}: Sets of Words.}
       \label{fig:wordset}

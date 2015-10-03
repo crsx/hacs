@@ -140,12 +140,12 @@
 }%$
 \newcommand{\mv}[1]{\textsc{#1}}
 %\newcommand{\kw}[1]{\text{\rm\textbf{\color{gray}#1}}}
-\newcommand{\kw}[1]{\textsf{\bf\color{gray}#1}}
+\newcommand{\kw}[1]{\text{\bfseries\sffamily\color{black!60}#1}}
 \newcommand{\cw}[1]{\textsf{\color{gray}#1}}
-\newcommand{\con}[1]{\textup{#1}}
-\newcommand{\var}[1]{\textit{#1}}
+\newcommand{\con}[1]{\textsf{#1}}
+\newcommand{\var}[1]{\text{\sffamily\itshape#1}}
 
-\lstdefinelanguage{HACS}{basicstyle=\normalfont,%
+\lstdefinelanguage{HACS}{basicstyle=\sf,%
   extendedchars=true,inputencoding=utf8,sensitive,%
   identifierstyle=\Identifier,%
   string=[d]{"},morestring=[d]{'},upquote=true,showstringspaces=false,%
