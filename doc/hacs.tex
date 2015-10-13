@@ -1,7 +1,7 @@
 %% Introduction to HACS.
 %%
 %% Copyright (c) 2011-2015 Kristoffer Rose <krisrose@crsx.org>
-%% License: EPL-1.0 or CC-BY-4.0 (by readers choice).
+%% License: Eclipse Public License 1.0 <https://www.eclipse.org/legal/epl-v10.html>
 %%
 \documentclass[12pt]{article} %style: font size.
 \usepackage[utf8]{inputenc}
@@ -24,19 +24,15 @@
 \bibliographystyle{plainurl}
 \usepackage{eulervm}
 \renewcommand{\rmdefault}{pplx}
-%\usepackage{euler}
-%\usepackage{charter}
 \AtBeginDocument{\SelectTips{eu}{11}}
 % Figure wrapper!
 \makeatletter
-\newsavebox{\saveunit@}
+\newsavebox{\savedfigureunit}
 \renewenvironment{figureunit}[1][]{\def\thefigureunitcaption{#1}%
-  \begin{lrbox}{\saveunit@}\begin{minipage}{\linewidth}}%
+  \begin{lrbox}{\savedfigureunit}\begin{minipage}{\linewidth}}%
 {\thefigureunitcaption\vspace{1ex}\end{minipage}\end{lrbox}%
-  \colorbox{blue!10}{\usebox{\saveunit@}}}
+  \colorbox{blue!10}{\usebox{\savedfigureunit}}}
 \makeatother
-\usepackage[table]{xcolor}
-\rowcolors[\hline]{1}{blue!10}{green!10}
 %\usepackage{ts}
 
 %% Base format.
@@ -1854,7 +1850,7 @@ leads to bugs in compilers.)
 The use of HOAS in \HAX in fact allows the full range of methods used in higher-order
 rewriting~\cite{Jouannaud:klop2005,Klop+:tcs1993}, a very powerful mechanism.
 
-\begin{figure}[p]
+\begin{figure}[t!]
   \begin{figureunit}[
       \caption{Definitions of Call-by-Value Continuation Passing Style (\emph{examples/CPS.hx}).}
       \label{fig:cps}
@@ -2129,7 +2125,7 @@ No, the list does not have Foo.
 %%$
 \end{example}
 
-\begin{figure}[p]
+\begin{figure}[t!]
   \begin{figureunit}[
       \caption{\emph{examples/WordMap.hx}: Apply Word Substitution as Map.}
       \label{fig:wordmap}
@@ -2289,7 +2285,6 @@ energon1[~]$ \textcolor{blue}{./WordSubst.run --scheme=Run --term="\{a=1 b=2 c=3
 \end{example}
 
 
-\clearpage
 \appendix\small
 
 \section{Manual}\label{app:manual}

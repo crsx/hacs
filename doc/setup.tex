@@ -245,7 +245,6 @@
 \newcommand{\op}[1]{\ensuremath{\operatorname{#1}}}
 
 \usepackage[all]{xy}
-\SelectTips{eu}{}
 
 \makeatletter
 \def\compacttableofcontents{{\bigskip%\if@twocolumn\else \quotation\small \fi
@@ -255,7 +254,7 @@
     \def\numberline##1{\DN@{##1}\ifx\next@\empty\else##1.~\fi}%
     \def\fresh##1{\relax \let\fresh=\nextfresh}%
     \def\nextfresh##1{\relax##1 }%
-    \def\contentslineAsection##1##2##3{\fresh,##1~(##2)\ignorespaces}%
+    \def\contentslineAsection##1##2##3{\fresh,##1~(\hyper@linkstart{link}{##3}{##2}\hyper@linkend)\ignorespaces}%
     \def\contentslineAsubsection##1##2##3{\ignorespaces}%
     \@starttoc{toc}.}}
 \makeatother
