@@ -25,6 +25,9 @@
  Where are you?
 }
 
+%% Discussion
+\newcommand{\CK}[1]{\textcolor{blue}{CK: #1}}
+
 \begin{document}
 \maketitle
 
@@ -143,6 +146,8 @@ language.
   \item $s,f,c ∈ \mathcal{C}$ stand for \emph{constructor} tokens, which are capitalized words like
     "Integer" or "A" or "CamelCaseWord", used for sort, function symbol, and data symbol names
     (respectively).
+    \CK{But this suggests that when you write $c(\dots)$ that $c$ is a data symbol name.  You
+    violate that right below when using it for arbitrary and function constructions.}
 
   \item $v,a,α ∈ \mathcal{V}$ stand for \emph{variable} tokens, which are lower case words like "x"
     or "foo" or even "lowWord", used for term variables, attributes, and sort variables
@@ -164,6 +169,7 @@ language.
 
   \item A term of the form $v\,A_1…A_m$ ($m≥0$) is a \emph{variable occurrence}; if the variable $v$
     occurs contained in a binder $[…v…]T$ then the variable occurrence is \emph{bound}.
+    \CK{Okay, so variables have attributes. That's new.}
 
   \item A term of the form $M[T_1,…,T_n]\,A_1…A_m$ ($m,n≥0$) is a \emph{meta-application}; if the
     terms $T_i$ are distinct bound variable occurrences then this is a \emph{pattern
@@ -299,7 +305,7 @@ sort Bool[] val { data T(); data F();
   \begin{itemize}
 
   \item The "Λ" sort includes a special "variable" case to indicate that variables can occur in
-    terms.
+    terms. \CK{Should there be a qualifier like ``unbound'' in this sentence?}
 
   \item "Λ" also includes a usual case for application construction, which is a "scheme" because it
     can (sometimes) be rewritten.
@@ -317,7 +323,7 @@ sort Bool[] val { data T(); data F();
 
   \item Once an application of an abstraction is matched, the "rule" gives the result of
     simplification as "#body[#arg[]]", which means that we construct a copy of "#body" except all
-    occurrences of the variable we matched (and kept track of) in the pattern "#body[x]" is
+    occurrences of the variable we matched (and kept track of) in the pattern "#body[x]" are
     substituted with what "#arg[]" matched.
 
   \end{itemize}
@@ -358,7 +364,7 @@ sort Bool[] val { data T(); data F();
   Lines 3~and 4 set up the "Bool" sort with data constructors for the Boolean expressions true
   ("T"), false ("F"), negation ("Not"), and disjunction ("Or"). %
   Line~6 declares the "Eval1" and "Eval2" schemes, which take a dummy variable and a Boolean term
-  (and forms a Boolean term by being defined inside the "sort Bool").  %
+  (and form a Boolean term by being defined inside the "sort Bool").  %
   Lines 7~and 8 define the "Eval1" scheme on the two trivial cases: literal thruth values are
   annotated with a "val" that maps the dummy variable to the truth value. %
   Lines 10~through 12 define the "Eval1" scheme for negation. %
@@ -389,6 +395,14 @@ sort Bool[] val { data T(); data F();
   %%
   The final term has every subterm annotated with its logical value.
   %%
+
+  \CK{I don't think this example works, though: in the end, you have all those
+  formulas annotated, but you don't have any reference to the variable d
+  in the terms!  How can you check what the value of the dummy variable is in
+  the attribute set?  If you create a new variable to match against, it won't
+  be equal to d.  For what I remember, the ``dummy'' thing we originally had
+  going was just a sort with only one nullary constructor, which \emph{would}
+  be easily queryable.}
 \end{example}
 
 \TBD{Summarize unexplained features, like default rules.}
