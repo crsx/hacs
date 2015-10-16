@@ -24,14 +24,14 @@ module org.crsx.hacs.samples.Bool {
 
   // Disjunction.
   ⟦ ⟨B#1 ↑b(#b1)⟩  | ⟨B#2 ↑b(#b2)⟩ ⟧    ↑b(Or(#b1, #b2)) ;
-  { | scheme Or(B, B) ;   Or(⟦t⟧, #2)  →  ⟦t⟧ ;  Or(⟦f⟧, #2)  →  #2 ;  }
+  | scheme Or(B, B) ;  Or(⟦t⟧, #2) →  ⟦t⟧ ; Or(⟦f⟧, #2) →  #2 ;
 
   // Conjunction.
   ⟦ ⟨B#1 ↑b(#b1)⟩  & ⟨B#2 ↑b(#b2)⟩ ⟧    ↑b(And(#b1, #b2)) ;
-  { | scheme And(B, B) ;   And(⟦t⟧, #2)  →  #2 ;  And(⟦f⟧, #2)  →  ⟦f⟧ ;  }
+  | scheme And(B, B) ;  And(⟦t⟧, #2) →  #2 ; And(⟦f⟧, #2) →  ⟦f⟧ ;
 
   // Negation.
   ⟦ ! ⟨B# ↑b(#b)⟩ ⟧   ↑b(Not(#b)) ;
-  { | scheme Not(B) ;   Not(⟦t⟧)  →  ⟦f⟧ ;   Not(⟦f⟧)  →  ⟦t⟧ ;  }
+  | scheme Not(B) ;  Not(⟦t⟧) →  ⟦f⟧ ;  Not(⟦f⟧) →  ⟦t⟧ ;
 
 }

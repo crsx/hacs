@@ -1022,8 +1022,8 @@ for example, the following additions that search a list for a specific boolean v
 sort Bools | Cons(Bool, Bools) | Nil ;
 sort Bool | scheme Find(Bools, Bool) ;
 Find(Cons(#b, #bs), #b) → True ;                      //3
-Find(Cons(#b, #bs), #b2) → Find(#bs, #b2) ;         //4 \textcolor{red}{problematic}
-default Find(#bs, #b) → False ;                         //5 \textcolor{red}{problematic}
+Find(Cons(#b, #bs), #b2) → Find(#bs, #b2) ;          //4 \textcolor{red}{problematic}
+default Find(#bs, #b) → False ;                        //5 \textcolor{red}{problematic}
 \end{hacs}
 These rules are problematic for two reasons. First, \HAX can \emph{always} pick rule "//4" over rule
 "//3", and in this way give a false negative, as will be discussed below. Second, if the list is
@@ -1310,7 +1310,7 @@ and cannot be easily achieved with usual positional arguments to recursive schem
   \item First, encode the grammar (assuming an existing $T$ sort of types and
     "ID" tokens as in the previous section):
     \begin{hacs}
-   main sort S  | ⟦ ⟨T⟩ ⟨ID⟩ = ⟨E⟩ ; ⟨S⟩ ⟧ ;
+   sort S  | ⟦ ⟨T⟩ ⟨ID⟩ = ⟨E⟩ ; ⟨S⟩ ⟧ ;
    sort E  | ⟦ ⟨E⟩ + ⟨E@1⟩ ⟧   | ⟦ ⟨ID⟩ ⟧@1 ;
   \end{hacs}
   %% 
@@ -1572,7 +1572,7 @@ demonstrates more complicated attribute dependencies.
       \caption{\HAX code for type analysis.}
       \label{fig:sdd-hacs}
     ]
-\begin{hacs}[xleftmargin=\parindent,xrightmargin=2em,numbers=right]
+\begin{hacs}[texcl,xleftmargin=\parindent,xrightmargin=2em,numbers=right]
 sort Type  | Int | Float | TypeError
             | scheme Unif(Type,Type) ;
 
@@ -1659,7 +1659,7 @@ Se (⟦ ⟧ ↑#syn) → ⟦ ⟧ ↑#syn ;
     \item Do $E_2.e = S.e$, establishing the precondition for allowing the system to compute $E_2.t$.
     \item When the system has computed $E_2.t$, then do
       $S_3.e=\op{Extend}(S.e,\textbf{id}_1.sym,E_2.t)$.
-    \end{enumerate}
+    \end{enumerate}x
     These two steps are achieved by having an extra carrier scheme, "SeB", which is locally
     declared, so that "Se" and "SeB" can handle the two steps above: first "Se", in lines 32--33, copies
     "e" \emph{just} to $E_1$ (from \thetag{S1}), and then \emph{chains} to "SeB".
@@ -1734,7 +1734,7 @@ fragments with scopes inside. These are the features where the ``H'' of \HAX mat
     sort~"T".
 
   \item Finally, the defined scoping in the classic $β$ rewrite rule is used for our one scheme in
-    line~12: it expresses that a λ term which is an application (of the scheme declared in line~7)
+    line~11: it expresses that a λ term which is an application (of the scheme declared in line~7)
     where the first subterm is a λ-abstraction (declared in line~6) can be rewritten.
 
   \end{itemize}
