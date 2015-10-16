@@ -14,7 +14,7 @@ module org.crsx.hacs.samples.SZ { //-*-hacs-*-
   // Semantic Values.
   sort Value | Pair(Value, Value) | Plus(Value, Value) | Ref(ID) | Zero | Succ(Value) ;
 
-  // Semantic Operations 
+  // Semantic Operations.
   | scheme Add(Value, Value) ;
   Add(Ref(#id), #2) →    Plus(Ref(#id), #2) ;
   Add(Zero, #2) →   #2 ;

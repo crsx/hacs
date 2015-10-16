@@ -89,8 +89,8 @@ suitable for that stage of the compiler. Specifically, \HAX supports the followi
   \emph{tokens}. The regular expressions of \HAX follow common
   conventions~\cite{Aho+:2006}. Section~\ref{sec:tokens} gives details of this notation.
 
-\item[Context Free Grammars.] \HAX uses a form of BNF~\cite{NaurEtal:cacm1960} \emph{context-free
-    grammars} but tweaks the notation to look more like \emph{templates} to allow for reuse of the
+\item[Context-Free Grammars.] \HAX uses a form of BNF~\cite{NaurEtal:cacm1960} \emph{context-free
+    grammars} but tweaks the notation to look more like \emph{templates}, to allow for reuse of the
   notation in the subsequent rewrite rules. \HAX includes simple mechanics to allow for the
   formalization of the transformation from token stream to abstract syntax. Details in
   Section~\ref{sec:syntax}.
@@ -109,41 +109,41 @@ suitable for that stage of the compiler. Specifically, \HAX supports the followi
   enable the encoding of full syntax-directed definitions.
 
 \item[Higher-order Abstract Syntax.] Most programming languages use \emph{lexical scoping}, and
-  compiler internal as well as target representations increasingly manipulate lexical scopes as part
+  compiler internals as well as target representations increasingly manipulate lexical scopes as part
   of their normal operation~\cite{MarlowPeyton-Jones:2010,Morrisett+:popl1998}. \HAX supports this
-  by providing explicit support for \emph{higher order abstract syntax}, and integrates this with
+  by providing explicit support for \emph{higher-order abstract syntax}, and integrates this with
   support for attributes with mappings from variables to values for modeling \emph{symbol tables}.
 
 \end{description}
 %%
 A typical compiler written with \HAX involves multiple instances of each of the above, as each used
-language, including intermediate and target languages, is specified using grammars and have
+language, including intermediate and target languages, is specified using grammars and has
 language-specific analyses, with the transformations between them specified as translation schemes.
 
 \paragraph*{History.}
 
 Many systems for writing programs that manipulate other programs, so-called \emph{meta-programming},
-have emerged over the years, ranging from generic specification languages, where the goal is to not
-define how but only declare the semantics of the program manipulation, all the way to tools that
+have emerged over the years. These range from generic specification languages, where the goal is not to
+define how but only to declare the semantics of the program manipulation, all the way to tools that
 support specific aspects of program execution or compiler generation (a survey is beyond the scope
 of this document).
 
 One such system was CRSX~\cite{Rose:1996} developed for industrial use at IBM Research by a team led
 by the author~\cite{Rose:hor2007,Rose:hor2010,Rose:rta2011,crsx}.  CRSX is a language based on
-\emph{higher order rewriting}~\cite{Jouannaud:klop2005} combined with \emph{higher order abstract
+\emph{higher-order rewriting}~\cite{Jouannaud:klop2005} combined with \emph{higher-order abstract
   syntax} (HOAS) \cite{PfenningElliot:pldi1988}, further extended for handling environments natively
-and using pluggable parsers.  The programming of the IBM Data\-Power XQuery
+and using pluggable parsers. The programming of the IBM Data\-Power XQuery
 compiler~\cite{dp60:ibm2013} using CRSX proved that the approach can drastically reduce the
-development time of a compiler (the cited XQuery compiler was estimated to be developed in a quarter
-of the traditional development time) as well as resulting in a rather more compact and high level
-source program.
+development time of a compiler (the cited XQuery compiler was estimated to have been developed in a
+quarter of the traditional development time) as well as resulting in a rather more compact and
+high-level source program.
 
 However, the CRSX notation, based on combinatory reduction systems~\cite{Klop:1980,Klop+:tcs1993},
 which combines λ calculus~\cite{Church:1941,Barendregt:1984} and term rewriting
 systems~\cite{Klop:1992:Handbook}, has proven to be unwieldy for several reasons, first of all by
 being quite different from standard notations used in compiler construction reference
 works~\cite{Aho+:2006}. Adding a polymorphic sort system to CRSX following \emph{contraction
-  systems}~\cite{Aczel:1978} changed the system to be similar to Inductive type systems
+  systems}~\cite{Aczel:1978} changed the system to be similar to Inductive Type Systems
 \cite{BlanquiJouannaudOkada:tcs2002}), which helped, but did not make the system easy enough to, for
 example, teach compiler construction.
 
@@ -155,7 +155,7 @@ University~\cite{RoseRose:cims2015}.
 
 \paragraph*{Acknowledgements.}
 
-The author would like to thank my coteacher at NYU, Eva Rose, our grader, José Pablo Cambronero, as
+The author would like to thank his coteacher at NYU, Eva Rose, our grader, José Pablo Cambronero, as
 well as our students in the compiler construction class, for constructive comments to and insightful
 questions on \HAX.\footnote{A special shout-out goes to John Downs for starting the Emacs
   \texttt{M-x hacs-mode} syntax highlighting mode~\cite{git:hacsel} and Tyler Palsulich for a \HAX
@@ -163,12 +163,14 @@ questions on \HAX.\footnote{A special shout-out goes to John Downs for starting 
 %%
 The implementation of \HAX would not have been remotely possible without the CRSX team at IBM:
 Morris Matsa, Scott Boag, and especially Lionel Villard, who suffered through understanding and
-programming core fragments of the CRSX system that is still used underneath \HAX; in the process
-they continue to propose many improvements to and clarifications of the formalism.
+programming core fragments of the CRSX system that is used underneath \HAX.
 %%
-And finally \HAX owes its sanity to a collaboration with Cynthia Kop, both as an intern with the
-Watson team in 2011, which created the polymorphic sort checker, in her thesis work~\cite{Kop:2012},
-and in our continuing collaboration on keeping the formal basis for the system up to date.
+\HAX owes its sanity to a collaboration with Cynthia Kop, both as an intern with the Watson team in
+2011, which created the polymorphic sort checker, in her thesis work~\cite{Kop:2012}, and in our
+continuing collaboration on keeping the formal basis for the system up to date.
+%%
+Finally, the author would like to thank Two Sigma for supporting this work, and in particular Eliot
+Walsh for corrections and advice on the use of English.
 
 \paragraph*{Outline of this report.}
 
@@ -178,12 +180,12 @@ explaining the relevant parts of the included \emph{First.hx} example (inspired 
 %%
 Section~\ref{sec:run} shows how to install \HAX and run the example, before proceeding to
 the writing of specifications. %
-Section~\ref{sec:tokens} explains lexical analysis, %
-Section~\ref{sec:syntax} syntax analysis, %
-Section~\ref{sec:schemes} basic recursive translation schemes, %
-Section~\ref{sec:eval} semantic sorts, operations, and data, %
-Section~\ref{sec:collect} bottom-up semantic analysis, %
-Section~\ref{sec:sdd} general syntax-directed definitions, %
+Section~\ref{sec:tokens} explains lexical analysis; %
+Section~\ref{sec:syntax} syntax analysis; %
+Section~\ref{sec:schemes} basic recursive translation schemes; %
+Section~\ref{sec:eval} semantic sorts, operations, and data; %
+Section~\ref{sec:collect} bottom-up semantic analysis; %
+Section~\ref{sec:sdd} general syntax-directed definitions; %
 and Section~\ref{sec:hoas} higher order abstract syntax. %
 Section~\ref{sec:comp} addresses the manipulation of primitive values, %
 and Section~\ref{sec:examples} provides several examples of how everything can be combined.
@@ -191,8 +193,8 @@ and Section~\ref{sec:examples} provides several examples of how everything can b
 Finally, %
 Appendix~\ref{app:manual} has a reference manual, %
 Appendix~\ref{app:errors} explains some of the (still) cryptic error messages, %
-and Appendix~\ref{app:limits} lists some current limitations;
-last we have collected bibliographic references.
+and Appendix~\ref{app:limits} lists some current limitations.
+Bibliographic references are collected last.
 
 
 \section{Getting Started}
@@ -208,7 +210,7 @@ computer.\footnote{Please report any problems with this procedure to \emph{hacs-
   and C99 and C++ compilers. In addition, the setup process needs internet access to retrieve the
   \CRSX base system~\cite{crsx}, JavaCC parser generator~\cite{JavaCC}, and \emph{icu} Unicode C
   libraries~\cite{ICU}. Finally, these instructions are written for and tested on Ubuntu and Debian
-  GNU/Linux systems using the "bash" shell; if your system is different some adaptation may be
+  GNU/Linux systems using the "bash" shell; if your system is different, some adaptation may be
   needed.
 \end{requirements}
 
@@ -230,12 +232,12 @@ energon1[~]$ ^textcolor{blue}{^texttt{cd hacs}}
 energon1[hacs]$ ^textcolor{blue}{^texttt{make FROMZIP=1 install install-support}}
   \end{code}
   %%
-  These commands will need Internet access to use the wget command to retrieve support
+  These commands will need Internet access to use the \texttt{wget} command to retrieve support
   libraries.\footnote{Specifically, \HAX needs the \CRSX system, JavaCC parser generator, and ICU4C
     Unicode library. The setup is documented in \emph{src/Env.mk}.} The above command will install
   \HAX in a \emph{.hacs} subdirectory of your home directory. You can change this with the option
-  \verb|prefix=|… to (all uses of) \emph{make}; if so then make sure to replace occurrences of
-  \verb|$HOME/.hacs| everywhere below with your chosen directory.
+  \verb|prefix=|… to (all uses of) \emph{make}; if so, then make sure to replace occurrences of
+\verb|$HOME/.hacs| everywhere below with your chosen directory.
 
   The main \emph{make} command may take several minutes the first time and should end without error.
 
@@ -290,7 +292,7 @@ module org.crsx.hacs.samples.First
   $\text{\it Main (Section~\ref{sec:schemes})}$
 }
   \end{hacs}
-  Notice that \HAX permits C/Java style comments and that the final component of the module name is
+  Notice that \HAX permits C/Java-style comments and that the final component of the module name is
   the same as the base of the filename.
 \end{example}
 
@@ -373,9 +375,9 @@ The example illustrates the following particulars of \HAX lexical expressions.
     the token as a \emph{terminal symbol} that can be used in other token declarations as well as
     the syntax productions described in the next section.
 
-  \item Token names must be words that start with an upper case letter.
+  \item Token names must be words that start with an uppercase letter.
 
-  \item A regular expressions is a sequence of units, corresponding to the concatenation of a
+  \item A regular expression is a sequence of units, corresponding to the concatenation of a
     sequence of characters that match each one.  Each unit can be a \emph{character class} such as
     "[a-z]", which matches a single character in the indicated range (or, more generally, in one of
     a sequence of individual characters and ranges), a \emph{string} such as \hacsc|"."| or
@@ -396,7 +398,7 @@ The example illustrates the following particulars of \HAX lexical expressions.
   \end{enumerate}
   %%
   In addition, this manual follows the convention of naming proper grammar terminals with ALL-CAPS
-  names, like "INT", to make them easy to distinguish from non-terminals below. (Token declarations
+  names, like "INT", to make them easy to distinguish from nonterminals below. (Token declarations
   are not grammar productions: tokens cannot be recursively defined, and a token referenced from
   another token is merely an inlining of the character sequences allowed by what is referenced.)
 \end{notation}
@@ -425,21 +427,21 @@ Exception in thread "main" java.lang.RuntimeException: net.sf.crsx.CRSException:
 Was expecting:
     <T_INT> ...
   \end{code}
-  (where the trail of Java exceptions has been truncated: the important information is in the first
-  few lines).
+  where the trail of Java exceptions has been truncated.  The important information is in the first
+  few lines.
 \end{commands}
 
 As the example illustrates, all the token declarations together define how the processed stream of
 characters is partitioned into terminal symbols with no need for consulting a grammar.
 %%
-The reference manual for tokens in the appendix (Manual~\ref{man:token}), gives further details,
+The reference manual for tokens in the appendix (Manual~\ref{man:token}) gives further details,
 including some additional constructs.
 
 
 \section{Syntax Analysis}
 \label{sec:syntax}
 
-Once tokens have been defined it is possible to use \HAX to program a syntax analysis with a grammar
+Once tokens have been defined, it is possible to use \HAX to program a syntax analysis with a grammar
 that specifies how to decompose the input text according to a \emph{concrete syntax} and how to
 construct the desired \emph{abstract syntax tree} (AST) from that. Notice that \HAX does not provide
 a ``parse tree'' in the traditional sense, \ie, a tree that represents the full concrete syntax
@@ -474,23 +476,23 @@ The example grammar above captures the \HAX version of several standard parsing 
 %%
 \begin{description}
 
-\item[Literal syntax] is indicated by the double ``syntax brackets,'' $⟦…⟧$: text inside $⟦…⟧$
+\item[Literal syntax] is indicated by the double ``syntax brackets,'' $⟦…⟧$. Text inside $⟦…⟧$
   consists of three things only: spaces, literal character ``words,'' and references to
-  non-terminals and predefined tokens inside $⟨…⟩$.  In this way, literal syntax is similar to macro
+  nonterminals and predefined tokens inside $⟨…⟩$.  In this way, literal syntax is similar to macro
   notation or ``quasi-quotation'' of other programming notations.
 
 \item[Syntactic sugar] is represented by the "sugar" part of the "Exp" sort declaration, which
-  states that the parser should accept an "Exp" in parenthesis, identified as "#", and replace it
+  states that the parser should accept an "Exp" in parentheses, identified as "#", and replace it
   with just that same "Exp", indicated by "→ Exp#".  This avoids any need to think of parentheses in
   the generated AST as well as in the rules below.
 
 \item[Precedence rules] are represented by the "@"-annotations, which assign precedence and
-  associativity to each operator. This example marks all references to the "Exp" non-terminal inside
+  associativity to each operator. This example marks all references to the "Exp" nonterminal inside
   the productions for "Exp" with the lowest permitted precedence in each case. The first rule in
   line 5 says that the "+" operator is restricted on the right to only expressions with at least
   precedence 1 (but not restricted on the left, causing it to be left-recursive). The outer "@1" in
   line 6 states that all "*" expressions have precedence 1, and the inner "@"-annotations allow left
-  subexpressions of "*" with at least precedence 1 ("*" is also left recursive) whereas right
+  subexpressions of "*" with at least precedence 1 ("*" is also left recursive), whereas right
   subexpressions must have at least precedence~2. Notice that left (right) recursion is identified
   by the \emph{leftmost (rightmost) unit in the production having the outer precedence}.
 
@@ -500,7 +502,7 @@ The precedence notation allows the definition of one sort per ``sort of abstract
 This enables the use of a single kind of AST node to represent all the ``levels'' of expression,
 which helps the subsequent steps.
 
-{\small\begin{remark} This is traditionally done with additional ``helper'' productions. It is
+\begin{remark} Precedence is traditionally done with additional ``helper'' productions. It is
     possible, for example, to recognize the same "Exp" language as in Example~\ref{ex:syntax} by
     something akin to the following concrete \HAX specification (in which the sugar is also
     concrete):
@@ -516,9 +518,9 @@ sort Exp2 | ⟦ ⟨Int⟩ ⟧ | ⟦ ⟨Float⟩ ⟧ | ⟦ ⟨ID⟩ ⟧ | ⟦ ( �
   possible.  The transformed system also illustrates how \HAX deals with left recursion with
   "@"-annotations: each becomes an instance of \emph{immediate left recursion}, which is eliminated
   automatically using standard techniques.
-\end{remark}}
+\end{remark}
 
-Also note that the notation is admittedly dense: this is intentional, as the notation can be
+Also note that the notation is admittedly dense. This is intentional, as the notation can be
 generalized to serve all the formalisms of the following sections.  Here are the formal rules.
 
 \begin{notation}[syntax analysis]\leavevmode
@@ -527,7 +529,7 @@ generalized to serve all the formalisms of the following sections.  Here are the
   \item Each sort is defined by a "sort" declaration followed by a number of \emph{productions},
     each introduced by a "|" (bar). (The first "|" corresponds to what is usually written ::= or →
     in BNF grammars.)  All productions for a sort define cases for that sort as a nonterminal,
-    called the ``target'' non-terminal.
+    called the ``target'' nonterminal.
 
   \item Sort names must be words that start with an uppercase letter.
 
@@ -540,19 +542,19 @@ generalized to serve all the formalisms of the following sections.  Here are the
     wrapped in "⟨…⟩" (angle brackets).
 
   \item \emph{Precedence} is indicated with "@"$n$, where higher numbers $n$ designate higher
-    (tighter) precedence. After every top-level "⟦⟧" and last inside every "⟨⟩"-reference to a
-    target non-terminal there is a precedence, which defaults to "@0".  The precedence of self
-    references at the beginning and end of a production must be \emph{greater than or equal to} the
-    outer precedence; at most one of the ends can have precedence equal to the outer one.
+    (tighter) precedence. After every top-level "⟦⟧" and placed last inside every "⟨⟩"-reference to
+    a target nontermina,l there is a precedence, which defaults to "@0".  The precedence of
+    self-references at the beginning and end of a production must be \emph{greater than or equal to}
+    the outer precedence; at most one of the ends can have precedence equal to the outer one.
 
   \item The special "sugar" declaration expresses that the specified concrete syntax with a single
-    disambiguated self reference is \emph{replaced} by what is written after the~→. A reference is
+    disambiguated self-reference is \emph{replaced} by what is written after the~→. A reference is
     ``disambiguated'' by trailing it with a meta-variable starting with~"#".
 
   \end{enumerate}
   %% 
   Of all these rules, the one thing that is unique to parsing is the precedence notation with "@".
-  When specifying a grammar then \emph{every} target non-terminal reference has a precedence, which
+  When specifying a grammar then \emph{every} target nonterminal reference has a precedence, which
   determines how to parse ambiguous terms. So imagine that every "⟨⟩" contains a "@" marker at the
   end, defaulting to "@0", and that every "⟦⟧" is terminated with a "@" marker, again defaulting to
   "@0".
@@ -562,12 +564,12 @@ Notice that \HAX will do three things automatically:
 %%
 \begin{enumerate}
 \item Split the productions into subproductions according to the precedence assignments.
-\item Eliminate immediate left recursion, such as found in the example.
+\item Eliminate immediate left recursion, as in the example.
 \item Left factor the grammar, which means that productions within a sort may start with a common
   prefix.
 \end{enumerate}
 %%
-However, this is \emph{not} reflected in the generated trees: they will follow the grammar as
+However, this is \emph{not} reflected in the generated trees. They will follow the grammar as
 specified, eliminating the need to be aware that this conversion happens.
 
 \begin{commands}
@@ -644,21 +646,21 @@ Formally, the abstract syntax is obtained as follows:
 %%
 What remains are minimal productions with the essential information describing the AST.
 
-{\small\begin{remark}%
-    The dragon book~\cite{Aho+:2006} achieves a similar but even bigger leap by associating the
-    grammar with explicit precedence, written
-    \begin{align*}
-      E &→ E+T \mid T \\
-      T &→ T*F \mid F \\
-      F &→ (~E~) \mid \textbf{int} \mid \textbf{float}
-    \end{align*}
-    with the abstract syntax
-    \begin{displaymath}
-      E → E+E \mid E*E \mid \textbf{int} \mid \textbf{float}
-    \end{displaymath}
-    which additionally ``folds'' the $T$ and $F$ productions into $E$, as was effectively done in
-    the previous section.
-  \end{remark}}
+\begin{remark}%
+  The dragon book~\cite{Aho+:2006} achieves a similar but even bigger leap by associating the
+  grammar with explicit precedence, written
+  \begin{align*}
+    E &→ E+T \mid T \\
+    T &→ T*F \mid F \\
+    F &→ (~E~) \mid \textbf{int} \mid \textbf{float}
+  \end{align*}
+  with the abstract syntax
+  \begin{displaymath}
+    E → E+E \mid E*E \mid \textbf{int} \mid \textbf{float}
+  \end{displaymath}
+  which additionally ``folds'' the $T$ and $F$ productions into $E$, as was effectively done in
+  the previous section.
+\end{remark}
 
 With such a description of the AST, it is possible to write code that operates on the AST,
 implementing the notion of \emph{syntax-directed translation} (although it would perhaps be even
@@ -752,7 +754,7 @@ The notation for defining a syntax-directed scheme is as follows.
 
 \item To make the scheme "S" syntax-directed in, say, "A", create a separate rule for each ``pattern
   case'' of "A", which is just each abstract syntax production for "A" with a "#"$n$ marker after
-  the token or nonterminal name to identify the subexpression of that token or non-terminal for use
+  the token or nonterminal name to identify the subexpression of that token or nonterminal for use
   on the right side of the~"→". Thus,
   \begin{hacs}
   sort A  |  ⟦ a ⟨E⟩ b ⟧  |  ⟦ ⟨G⟩ c ⟨H⟩ ⟧ ;
@@ -841,8 +843,8 @@ sort List | scheme ⟦ { ⟨List⟩ } ⟨List⟩ ⟧ ;
   %%
   This creates a scheme that can be informally written as "⟦{_}_⟧" with the understanding that the
   two occurrences of ``"_"'' should be filled with lists as prescribed by the syntax specification
-  in the "scheme" declaration. Notice that the two rules differ on the \emph{content} of the braces,
-  and are clearly designed to fully eliminate all possible contents of the braces: this is
+  in the "scheme" declaration. Notice that the two rules differ on the \emph{content} of the braces
+  and are clearly designed to fully eliminate all possible contents of the braces. This is
   essential; the scheme should be \emph{complete}. To be precise: the first "_" position in the
   "⟦{_}_⟧" function definition is filled differently in the two rules, namely once with each of the
   data shapes of lists -- indeed the rules are syntax-directed in the first list argument.
@@ -886,7 +888,7 @@ $ \textcolor{blue}{./Stack.run --scheme=Compile --term="(1+2)*(3+4)"}
   MULT 
   \end{code}
   %%
-  Simple code generation tasks can be handled with recursive schemes, such as this one, however,
+  Simple code generation tasks can be handled with recursive schemes, such as this one. However,
   serious compilation tasks will require proper attributes and semantic helper structures, detailed
   in the following sections.
   %%
@@ -900,7 +902,7 @@ For most compilers, simple recursive translations, such as presented above, do n
 complex programming tools are necessary to support more sophisticated analyses and transformations.
 
 Specifically, note that rules for syntax-directed schemes are similar to definitions by case in
-functional programming. However, there are important differences to be detailed here, that sometimes
+functional programming. However, there are important differences to be detailed here that sometimes
 make \HAX pick rules differently than functional programming would.
 
 As discussed in the previous section, it is possible to have functions written with syntactic
@@ -927,7 +929,7 @@ Unif(Float, #2) → Float;
   %% 
   The code declares a new sort, "Type", which is a \emph{semantic sort} because it does not include
   any syntactic cases: all the possible values (as usual listed after leading "|"s) are simple
-  \emph{term structures} written without any ⟦⟧s.  Term structures are written with a leading
+  \emph{term structures} written without any ⟦⟧s. Term structures are written with a leading
   ``constructor,'' which should be a capitalized word (the same as sort and scheme names),
   optionally followed by some arguments in "()"s, where the declaration gives the sort for each
   argument (here there are none).
@@ -940,7 +942,7 @@ Unif(Unif(Int, Float), Int) → Unif(Float, Int) → Float
   \end{hacs}
   %%
   Note that overlaps are permissible, but it is important to verify determinacy, \ie, if a
-  particular combination of arguments can be subjected to two rules then they should give the same
+  particular combination of arguments can be subjected to two rules, then they should give the same
   result! This example satisfies this requirement because the term "Unif(Float,Float)" can be
   rewritten by both the rule in line 7 and the rule in line~8, but it does not matter, because the
   result is the same. Also note that \emph{the order of the rules does not matter}: the three rules
@@ -1016,7 +1018,7 @@ classic definition,
 Or(False, #2) →  #2 ;
 Or(True, #2) →  True ;
 \end{hacs}
-With rules that check for equality between several parameters this requires further care. Consider,
+With rules that check for equality between several parameters, this requires further care. Consider,
 for example, the following additions that search a list for a specific boolean value:
 \begin{hacs}[texcl,xleftmargin=\parindent]
 sort Bools | Cons(Bool, Bools) | Nil ;
@@ -1043,12 +1045,12 @@ default Find(Cons(#b, #bs), #b2) →   Find(#bs, #b2) ;        //8
 This avoids issues where the list parameter is unevaluated: they will not match any rule, so no
 wrong simplification is done.
 
-However, it still requires care that \emph{both} of the compared pieces in "//7" are \emph{always}
+However, it still requires care to ensure that \emph{both} of the compared pieces in "//7" are \emph{always}
 in data form. To see why, consider an expression like
 \begin{hacs}[xleftmargin=\parindent]
 Find(Cons(Or(...), ...), True)
 \end{hacs}
-Again this does not immediately fit "//7" without evaluating the "Or(...)"  subterm, so \HAX may
+Again, this does not immediately fit "//7" without evaluating the "Or(...)"  subterm, so \HAX may
 instead use "//8", leading to a false negative result.
 
 The fix to this is to guarantee that elements of a list are always data, and not unevaluated. One
@@ -1139,7 +1141,7 @@ formalisms along the way.  You can find further details in the appendix Manual~\
    ⟦ ⟨E#1 ↑t(#t1)⟩ + ⟨E#2 ↑t(#t2)⟩ ⟧ ↑t(Unif(#t1,#t2)) ;
     \end{hacs}
     %% 
-    This is read ``When considering an "E" (the current sort) which has the (abstract syntax) shape
+    This is read, ``When considering an "E" (the current sort), which has the (abstract syntax) shape
     $⟦⟨E⟩+⟨E⟩⟧$ where furthermore the first expression has a value matching "#t1" for the
     synthesized attribute "t", and the second expression has a value matching "#t2" for the
     synthesized attribute "t", then the entire expression should be assigned the value
@@ -1160,9 +1162,9 @@ formalisms along the way.  You can find further details in the appendix Manual~\
   \item The synthesized attribute $a$ is associated with a sort by adding the pseudo-production
     ${|}↑a$ to the sort declaration.
 
-  \item Synthesis rules as discussed here have the form $p↑a(r)$ where $p$ is like a pattern in a
-    rule but with the requirement that $p$ be a \emph{data} instance (not a scheme), $a$ is an
-    attribute name, and $r$ should be a replacement of the value sort of~$a$.
+ \item Synthesis rules as discussed here have the form $p↑a(r)$, where $p$ is like a pattern in a
+    rule, but with the requirement that $p$ be a \emph{data} instance (not a scheme); $a$ is an
+    attribute name; and $r$ should be a replacement of the value sort of~$a$.
 
   \end{enumerate}
 \end{notation}
@@ -1182,7 +1184,7 @@ formalisms along the way.  You can find further details in the appendix Manual~\
   Example~\ref{ex:syntax} presented the abstract syntax of the small language processed by
   \emph{First.hx}. A type analysis of the expressions of the language (for now excluding variables)
   might look as follows as a standard SDD (syntax-directed definition), where $E$ is the "Exp"
-  non-terminal, and is associated with one attribute: $E.t$ is the synthesized "Type" of the
+  nonterminal and is associated with one attribute: $E.t$ is the synthesized "Type" of the
   expression $E$.  In the notations of \cite{Aho+:2006}, the SDD can be specified something like
   this:
   %% 
@@ -1241,7 +1243,7 @@ $ \textcolor{blue}{./Bool.run --scheme=Eval --term='t|(!f)'}
 \end{example}
 
 Finally, note that in the case of multiple synthetic attributes, a synthesis rule \emph{only} adds
-one new attribute to the program construct in question, it does not remove any other attributes
+one new attribute to the program construct in question; it does not remove any other attributes
 already set for it (see below for examples of such systems). %TODO: see where?
 
 
@@ -1260,9 +1262,9 @@ One of the main uses of inherited attributes in formal compiler specifications i
 and cannot be easily achieved with usual positional arguments to recursive schemes.
 
 \begin{example}
-  Compiler construction formalization expresses this using an SDD with an inherited attribute that
-  for each node in the AST associates the appropriate symbol table for that node. Consider the
-  following three simple semantic rules, which demonstrate this approach:
+  Compiler construction formalization expresses the use of a symbol table using an SDD with an
+  inherited attribute that for each node in the AST associates the appropriate symbol table for that
+  node. Consider the following three simple semantic rules, which demonstrate this approach:
   %% 
   \begin{equation*}
     \begin{array}{l|ll}
@@ -1361,6 +1363,7 @@ and cannot be easily achieved with usual positional arguments to recursive schem
   that follows from the use of the "Ee" scheme. The recursive arrangement of the "Ee" wrappers
   implies the two attribute equations $E_1.e=E.e$ and $E_2.e=E.e$ from \thetag{2}.
 
+%The following sentence appears to be missing a predicate
 \item Next, rule \thetag{3}, which defines the synthesized attribute $t$ on \textbf{id}-expressions
   using a ``Lookup'' meta-function that is meant to suggest extracting the mapping from the $E.e$
   environment inherited from the context. Begin with a template like this:
@@ -1368,8 +1371,8 @@ and cannot be easily achieved with usual positional arguments to recursive schem
    Ee(⟦⟨ID#1⟩⟧)  →  ⟦⟨ID#1⟩⟧ ;
   \end{hacs}
   which just states that the $e$ attribute is inherited ``into'' a name subterm (through "Ee"),
-  essentially making $E.e$ available, but the rule does not use the inherited attribute.  In
-  particular, this rule fails to actually set the $t$ attribute. Fixing this first entails capturing
+  essentially making $E.e$ available, but note that the rule does not use the inherited attribute. In
+  particular, this rule fails to actually set the $t$ attribute. Fixing this entails first capturing
   the ``Lookup'' in the inherited environment. \HAX has a special notation for this. Write the
   pattern as follows:
   \begin{hacs}
@@ -1390,7 +1393,7 @@ and cannot be easily achieved with usual positional arguments to recursive schem
   \begin{hacs}
    Se(⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E#3⟩; ⟨S#4⟩⟧)  →    ⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E Ee(#3)⟩; ⟨S Se(#4)⟩⟧ ;
   \end{hacs}
-  which merely establish that the basic rules that the $S.e$ attribute inherited from the context
+  which merely establishes that the basic rules that the $S.e$ attribute inherited from the context
   (through the left hand "Se") are passed to both $E_3$ and $S_4$ through the right "Ee" and "Se",
   respectively. This captures everything except the ``Extend'' notation. \HAX supports this by
   allowing mapping constraints also on the right side of the "→" acting as \emph{extensions} of the
@@ -1499,7 +1502,7 @@ With the addition of inherited attrbutes, we can now list all the possible attri
     \item The arrow determines whether to define a synthetic ("↑") or inherited ("↓") attribute.
     \item $a$ is the attribute name, a lowercase identifier.
     \item The last unit gives the category and sort(s) of the attribute: $(S)$ is a simply valued
-      attribute of sort $S$, $\{S'\}$ an attribute with a set of $S'$-members, and $\{S':S\}$ is an
+      attribute of sort $S$, $\{S'\}$ is an attribute with a set of $S'$-members, and $\{S':S\}$ is an
       attribute with a map from $S'$-values to $S$-values. For sets and maps, the $S'$ sort must be
       a token sort (or a sort with a single "symbol" case, as explained in the next section).
     \end{itemize}
@@ -1607,7 +1610,7 @@ sort Stat | scheme Se(Stat) ↓e ;  // propagates $e$ over Stat
 Se(⟦⟨ID#v⟩ := ⟨Exp#1⟩; ⟨Stat#2⟩⟧ ↑#syn)
   → SeB(⟦⟨ID#v⟩ := ⟨Exp Ee(#1)⟩; ⟨Stat#2⟩⟧ ↑#syn);
 {
-  | scheme SeB(Stat) ↓e;  // helper scheme for assignment after expression typeanalysis
+  | scheme SeB(Stat) ↓e;  // helper scheme for assignment after expression type analysis
   SeB(⟦⟨ID#v⟩ := ⟨Exp#1 ↑t(#t1)⟩; ⟨Stat#2⟩ ⟧ ↑#syn)
    → ⟦⟨ID#v⟩ := ⟨Exp#1⟩; ⟨Stat Se(#2) ↓e{#v : #t1}⟩⟧ ↑#syn ;
 }
@@ -1651,7 +1654,7 @@ Se (⟦ ⟧ ↑#syn) → ⟦ ⟧ ↑#syn ;
 
   \item Rule \thetag{S1} is slightly more complicated, because the inherited attribute has
     non-trivial dependencies. It is essential to know the dependency relationship of the attributes
-    to devise a \emph{recursive strategy} for the attribute evaluation.  Recall the following
+    to devise a \emph{recursive strategy} for the attribute evaluation. Recall the following
     (realistic) dependency for \thetag{1}: ``The $E_2.t$ attribute cannot be computed until
     \emph{after} $E_2.e$ has been instantiated (and recursively propagated).'' In that case, one has
     to evaluate \thetag{S1} in two steps:
@@ -1659,7 +1662,7 @@ Se (⟦ ⟧ ↑#syn) → ⟦ ⟧ ↑#syn ;
     \item Do $E_2.e = S.e$, establishing the precondition for allowing the system to compute $E_2.t$.
     \item When the system has computed $E_2.t$, then do
       $S_3.e=\op{Extend}(S.e,\textbf{id}_1.sym,E_2.t)$.
-    \end{enumerate}x
+    \end{enumerate}
     These two steps are achieved by having an extra carrier scheme, "SeB", which is locally
     declared, so that "Se" and "SeB" can handle the two steps above: first "Se", in lines 32--33, copies
     "e" \emph{just} to $E_1$ (from \thetag{S1}), and then \emph{chains} to "SeB".
@@ -1707,7 +1710,7 @@ fragments with scopes inside. These are the features where the ``H'' of \HAX mat
   \item The specification has properties like others we have seen: it is a \emph{module} (lines 1
     and 12); it has a lexical specification of \emph{spacing} (line 2) and \emph{identifiers} (line
     3); it has a \emph{main sort} (line 5) of terms "T"; the term grammar uses "@" precedence
-    markers (lines 7--9) and syntactic sugar for grouping (line 9); the term has one \emph{scheme}
+    markers (lines 7--9) and syntactic sugar for grouping (line 9); the term has one \emph{scheme},
     which means that we may have rules for application (line 7), which is so basic in λ calculus
     that it is denoted by simple concatenation.
 
@@ -1773,24 +1776,24 @@ More formally, \HAX provides support for manipulating scoped terms using \emph{h
 
 \item In a grammar production with a $⟨T\,"binds"\,x⟩$ reference, there can be one reference of the
   form $⟨S[x\,"as"\,S']⟩$. This is like a reference $⟨S⟩$ but with the added information that all
-  occurrences of the binder labeled $x$ \emph{must} occur inside the $S$ subterm, and furthermore
+  occurrences of the binder labeled $x$ \emph{must} occur inside the $S$ subterm, and furthermore that
   the occurrences will have the sort~$S'$. This implies that there must in addition be a grammar
   production like $"sort"\,S'\,|\,"symbol"\,⟦⟨T⟩⟧$, to allow the occurrences to be properly parsed.
 
 \item Rules \emph{must} use the native variable form (no $⟨⟩$s) for binders.
 
 \item Patterns (left of $→$) should include references to scoped subterms using a special notation
-  where scoped meta-variables are ``applied'' to the bound variables in $[]$s, looking something
+  where scoped meta-variables are ``applied'' to the bound variables in $[\,]$s, looking something
   like this: $⟦…⟨S\#[S'⟦x⟧]⟩…⟧$.
 
 \item Replacements (right of $→$) should always have scoped metavariables applied to the same number
-  of arguments in $[]$s as the corresponding pattern sets up. The result of such an application is
+  of arguments in $[\,]$s as the corresponding pattern sets up. The result of such an application is
   to replace all bound occurrences of the variable that was indicated in the pattern with whatever
   is used in the replacement.
 
 \end{itemize}
 %%
-The formal rules are rather dense, however, as will now become apparent with some examples, this is
+The formal rules are rather dense, however, as will now become apparent with some examples, their use is
 really just a compact way of encoding the usual notions of binders and parameter substitution that
 are familiar from ordinary programming.
 
@@ -1824,10 +1827,10 @@ Append(⟦ old := ⟨Exp#2⟩; ⟨Stat#3[old]⟩ ⟧, #S2)
   \end{hacs}
   %%
   Notice how the pattern of the last rule in lines 13--14 explicitly calls out the used binding: the
-  actual variable that is used in the program is referenced in the pattern as "old" and the pattern
+  actual variable that is used in the program is referenced in the pattern as "old", and the pattern
   matching should also keep track of all the occurrences inside the scope, which is~"#3", by writing
   it as "#3[old]". (This exploits the aforementioned \HAX hack, where \HAX variables that are also
-  ``raw'' variables, can be written in this short form instead of the full "#3[Exp⟦old⟧]".)  This
+  ``raw'' variables can be written in this short form instead of the full "#3[Exp⟦old⟧]".)  This
   setup makes it possible to now \emph{systematically replace the symbol} with a new and fresh one,
   referred to as "new" in the replacement in line 16, but which the system will in fact replace with
   a new and unique name, both the binder \emph{and all the in-scope occurrences} inside~"#3". This
@@ -1844,7 +1847,7 @@ in the old grammar from Example~\ref{ex:syntax} might look like
 which will take uses of "#v1" inside "#3" and move them outside of their scope. This is not
 immediately possible with HOAS without explicitly substituting the occurrences of the bound variable
 with something else in the copy, which would expose the error. (You may think that this is an
-obvious mistake that no one would make but this sort of variable escaping is a real problem that
+obvious mistake that no one would make, but this sort of variable escaping is a real problem that
 leads to bugs in compilers.)
 %%
 The use of HOAS in \HAX in fact allows the full range of methods used in higher-order
@@ -1860,13 +1863,13 @@ rewriting~\cite{Jouannaud:klop2005,Klop+:tcs1993}, a very powerful mechanism.
 \end{figure}
 
 \begin{example}
-  Next consider a real example from the literature~\cite{DanvyRose:rta1998}.  Figure~\ref{fig:cps}
+  Next consider a real example from the literature~\cite{DanvyRose:rta1998}. Figure~\ref{fig:cps}
   shows two systems for transforming λ-terms to continuation-passing style with call-by-value
   evaluation semantics. The grammar uses higher-order binding to define the two forms of abstraction
   (with "λ" and "λ̅") using specific unicode characters. The overlined application is a scheme
   because it can be evaluated, which is specified by the rule in line 16 (where the outermost
   operator is the overlined application). The two blocks of rules in lines 18--24 and 26--33 specify
-  two variants of continuation style conversion: the traditional form and a one-pass variant,
+  two variants of continuation-style conversion: the traditional form and a one-pass variant,
   respectively. The two systems are equivalent, but the second never constructs overlined redices ,
   which is what makes it one pass, as there is no need to simplify any so-called ``administrative''
   (overlined) redices. Notice how the transformations define syntactic helper schemes, to make the
@@ -1914,6 +1917,7 @@ Also, since \emph{all} computed parts of a rule are evaluated as soon as the rul
 use this for calculations that can be safely computed in any case where the \emph{pattern} of the
 rule matches.
 
+%Note that in print, the bottow two lines of this table overhang their shaded box
 \begin{table}[h]
   \begin{figureunit}[
       \caption{Operations permitted in Computed syntax.}
@@ -1971,7 +1975,7 @@ ListLength2(⟦ ⟧, #n) → #n ;
   \begin{itemize}
 
   \item There is a strict distinction between the token "WORD" and the sort "Word". Something of
-    sort "Word" can be written in syntax brackets -- like ⟦X⟧ in the "Test" rule.
+    sort "Word" can be written in syntax brackets---like ⟦X⟧ in the "Test" rule.
 
   \item A map attribute---called "dup" in the example---can have a token sort as the key sort, here
     "WORD".
@@ -2029,8 +2033,8 @@ representation.  This section presents some examples of this.
   The small example in Figure~\ref{fig:cats} illustrates how to test for equality using a
   non-linear rule in line 12 combined with a ``catch-all'' default rule in line 13.
 
-  It is not permissible to use "⟦cat⟧" directly in a pattern: patterns are restricted to
-  \emph{syntactic cases} of the grammar.  Also note the definition of the "Boolean" sort with
+  It is not permissible to use "⟦cat⟧" directly in a pattern; patterns are restricted to
+  \emph{syntactic cases} of the grammar. Also, note the definition of the "Boolean" sort with
   syntactic values rather than just constructors: this allows them to be printed.
 
   Here is a possible run using this command:
@@ -2068,11 +2072,11 @@ A A 2 a a * s A 3 s_39 a * END END END s_46 s_46 s_46
 %%$
   Notice the following:
   \begin{itemize}
-  \item input tokens and symbols passed through, \eg, \texttt{A} and \texttt{a};
-  \item repeated input tokens followed by count, \eg, \texttt{A 2} and \texttt{A 3},
-  \item repeated input symbols followed by star, \eg,  \texttt{a *},
-  \item rule symbols generated fresh for each use of a rule replacement, \eg, \texttt{s $≠$ s\_30 $≠$ s\_46},
-  \item generated symbols consistent within each replacement, \eg, \texttt{s\_46}.
+  \item Input tokens and symbols passed through, \eg, \texttt{A} and \texttt{a}.
+  \item Repeated input tokens followed by count, \eg, \texttt{A 2} and \texttt{A 3}.
+  \item Repeated input symbols followed by star, \eg,  \texttt{a *}.
+  \item Rule symbols generated fresh for each use of a rule replacement, \eg, \texttt{s $≠$ s\_30 $≠$ s\_46}.
+  \item Generated symbols consistent within each replacement, \eg, \texttt{s\_46}.
   \end{itemize}
 \end{example}
 
@@ -2142,16 +2146,16 @@ No, the list does not have Foo.
   %%
   \begin{itemize}
 
-  \item The map attribute is synthesized in lines 12--13 just like the set attribute was in the
-    previous example, the only difference is that the map of course includes both a key and value.
+  \item The map attribute is synthesized in lines 12--13, just like the set attribute was in the
+    previous example. The only difference is that the map of course includes both a key and value.
 
-  \item In line 23 simply captures all the ``mappings'' of the "m" attribute with the special
+  \item Line 23 simply captures all the ``mappings'' of the "m" attribute with the special
     ":#ms" pattern, which is then \emph{reused} to populate the "e" environment.
 
   \item Lines 26--34 combine the distribution of the inherited map with a recursive transformation
-    that replaces words, in lines 26--34. The two rules for an initial "WORD" are mutually exclusive
-    because the pattern in line 26 requires that the word is present with a mapping in the "e"
-    attribute, whereas the pattern in line 31 requires that the word is not present.
+    that replaces words. The two rules for an initial "WORD" are mutually exclusive because the
+    pattern in line 26 requires the word to be present with a mapping in the "e" attribute, whereas
+    the pattern in line 31 requires that the word not be present.
 
   \end{itemize}
   Here is a run demonstrating the program:
@@ -2243,17 +2247,17 @@ Unitenv( ⟦ { ⟨Units#units⟩ } ⟧↑#s ) → ⟦ { ⟨Units Unitsenv(#units
   them to the entire document.  Notice the following:
   \begin{itemize}
 
-  \item This example uses a typical two-pass strategy: first one pass to collect the substitutions
+  \item This example uses a typical two-pass strategy: first, one pass to collect the substitutions
     into a synthesized attribute, then a second pass where the full list of substitutions is applied
     everywhere.
 
   \item A choice has been made to synthesize the map as a \emph{data structure} instead of a native
-    \HAX map as in the previous Example~\ref{ex:wordmap} because of the need here to \emph{append}
+    \HAX map (as in the previous Example~\ref{ex:wordmap}) because of the need here to \emph{append}
     two maps (in line 42), which is not supported for the native maps.  The synthesis happens in
     lines 41--49.
 
   \item The synthesized map is translated in list form into a native \HAX map before starting the
-    second pass: notice how "Run2" starts by recursing over the list of substitutions, inserting
+    second pass. Notice how "Run2" starts by recursing over the list of substitutions, inserting
     each into the carried inherited "env" map.  Since the map is consumed from left to right, the
     \emph{latest} substitution for any variable is always used.
 
@@ -2261,8 +2265,8 @@ Unitenv( ⟦ { ⟨Units#units⟩ } ⟧↑#s ) → ⟦ { ⟨Units Unitsenv(#units
     the term, a benefit accrues from building the actual substitutions into the traversal.
 
   \item The inheritance rules carefully preserve the synthesized attributes only when the term does
-    not change. In the present case, this is manifest by just the rule in line 59 not including the
-    "↑#s" marker to capture and copy the synthesized attributes; in general this should be
+    not change. In the present case, this is manifest by just the rule in line 59, not including the
+    "↑#s" marker to capture and copy the synthesized attributes; in general, this should be
     considered for every situation.
 
   \end{itemize}
@@ -2301,7 +2305,7 @@ module $\text{\it\color{blue}modulename}$
 }
   \end{hacs}
   %%
-  where the \emph{modulename} should be a Java style fully qualified class name with the last
+  where the \emph{modulename} should be a Java-style fully qualified class name with the last
   component capitalized and the same as the file base name, \eg, \verb|org.crsx.hacs.samples.First|
   is an allowed module name for a specification stored as \emph{First.hx}. The individual sections
   specify the compiler, and the possible contents are documented in the manual blocks below.
@@ -2310,8 +2314,8 @@ module $\text{\it\color{blue}modulename}$
 \begin{manual}[lexical declarations]\label{man:token}
   %%
   A token is declared with the keyword "token" followed by the token (sort) name, a "|" (vertical
-  bar), and a \emph{regular expression}, which has one of the following forms (with increasing order
-  of precedence):
+  bar), and a \emph{regular expression}, which has one of the following forms (in order of
+  increasing precedence):
   %%
   \begin{enumerate}
 
@@ -2335,14 +2339,14 @@ module $\text{\it\color{blue}modulename}$
 
   \item A \emph{character class} is given in "[ ]", with these rules for the contents of the brackets:
    \begin{enumerate}
-    \item if the first character is "^" then the character class is negated;
-    \item if the first character (after "^") is "]" then that character is (not) permitted;
-    \item a "\" followed by an \emph{escape code} represents the encoded character;
-    \item The characters \verb|\'"| should always be escaped (this is a bug);
-    \item two characters connected with a "-" (dash) represents a single character in the indicated
+    \item If the first character is "^" then the character class is negated.
+    \item If the first character (after "^") is "]" then that character is (not) permitted.
+    \item A "\" followed by an \emph{escape code} represents the encoded character.
+    \item The characters \verb|\'"| should always be escaped (this is a bug).
+    \item Two characters connected with a "-" (dash) represent a single character in the indicated
       (inclusive) \emph{range}.
     \end{enumerate}
-    Note that a character class cannot be empty, however, "[^]" is permitted and represents all
+    Note that a character class cannot be empty. However, "[^]" is permitted and represents all
     characters.
 
   \item The "." (period) character represents the character class "[^\n]".
@@ -2375,15 +2379,15 @@ space [ \t\f\r\n] | nested "/*" "*/" | "//" .* ;
   %%
   \begin{enumerate}
 
-  \item \HAX \emph{production names} are capitalized words: for example, "Exp" for the production of
+  \item \HAX \emph{production names} are capitalized words. For example, "Exp" for the production of
     expressions.  The name of a production also serves as the name of its \emph{sort}, \ie, the
     semantic category that is used internally for abstract syntax trees with that root production.
     If particular instances of a sort need to be referenced later they can be \emph{disambiguated}
     with a "#"$i$ suffix, \eg, "Exp#2", where $i$ is an optional number or other simple word.
 
-  \item A sort is declared by one or more "sort" declarations of the name optionally followed by a
+  \item A sort is declared by one or more "sort" declarations of the name, optionally followed by a
     number of \emph{abstract syntax production} alternatives, each starting with a~"|". A sort
-    declaration sets the \emph{current sort} for subsequent declarations and in particular any
+    declaration sets the \emph{current sort} for subsequent declarations and, in particular, any
     stand-alone production alternatives. All sort declarations for a sort are cumulative.
 
   \item Double square brackets "⟦…⟧" (unicode U+27E6 and U+27E7) are used for \emph{concrete syntax}
@@ -2395,17 +2399,17 @@ space [ \t\f\r\n] | nested "/*" "*/" | "//" .* ;
   \item Concrete syntax specification can include "¶" characters (Unicode U+00b6) to indicate where
     \emph{newlines} should be inserted in the printed output.
 
-  \item A "@"$p$ for some natural number $p$ is a \emph{precedence indicator} with higher numbers
+  \item A "@"$p$ for some natural number $p$ is a \emph{precedence indicator}, with higher numbers
     indicating higher precedence, \ie, tighter association. A precedence indicator can be added to a
     production reference (\ie, "⟨Exp@2⟩") or an entire concrete syntax production (\ie,
-    "⟦⟨Exp⟩+⟨Exp⟩⟧@2", indicating that either the appropriate subexpression or the entire
-    alternative (as appropriate) is restricted to only occur at at least the specified precedence
-    level.  (For details on the limitations of how the precedence and left recursion mechanisms are
+    "⟦⟨Exp⟩+⟨Exp⟩⟧@2"), indicating that either the appropriate subexpression or the entire
+    alternative (as appropriate) is restricted to occur only at (at least) the specified precedence
+    level.  (For details on the limitations of how the precedence and left-recursion mechanisms are
     implemented, see Appendix~\ref{app:limits}.)
 
-  \item "sugar ⟦…⟧→…" alternatives specify equivalent forms for existing syntax: anything matching
-    the left alternative will be interpreted the same as the right one (which must have been
-    previously defined); references must be disambiguated.
+  \item A "sugar ⟦…⟧→…" alternative specifies an equivalent form for existing syntax: anything
+    matching the left alternative will be interpreted the same as the right one (which must have
+    been previously defined); references must be disambiguated.
 
   \item If a production contains a reference to a token, where furthermore the token is defined such
     that it can end with a sequence of "_"$n$ units (an underscore followed by a count), then the
@@ -2431,7 +2435,7 @@ space [ \t\f\r\n] | nested "/*" "*/" | "//" .* ;
     \item by immediately prefixing with the sort (as in "Exp⟦1+2⟧"), or
     \item by using as the argument of a defined constructor (as "IsType(⟦mytype⟧)"), or
     \item by using as an attribute value, or
-    \item by using as a top level rule pattern or replacement term with a defined current sort.
+    \item by using as a top-level rule pattern or replacement term with a defined current sort.
     \end{enumerate}
 
   \item Concrete terms can contain nested raw terms (see below) in "⟨…⟩" (unicode U+27E8 and
@@ -2458,7 +2462,7 @@ space [ \t\f\r\n] | nested "/*" "*/" | "//" .* ;
 
   \item A sort can be given a \emph{semantic production} as a "|" (bar) followed by a \emph{form},
     which consists of a constructor name, optionally followed by a list of the subexpression sorts
-    in parenthesis.
+    in parentheses.
 
 %%% "()"ed ","-separated list of
 %%%    \emph{scope forms}, which each consist of a \emph{sort} optionally preceded by a \emph{binder
@@ -2482,11 +2486,11 @@ space [ \t\f\r\n] | nested "/*" "*/" | "//" .* ;
     as a candidate for rewrite rules (defined below).
 
   \item A \emph{raw term} is either a \emph{construction}, a \emph{variable use}, or a
-    \emph{meta-application}, as follows
+    \emph{meta-application}, as follows:
     %%
     \begin{enumerate}
 
-    \item A \emph{construction} term is a constructor name followed by an optional "()"ed
+    \item A \emph{construction} term is a constructor name followed by an optional parenthesized
       ","-separated list of \emph{scope arguments}, which each consist of a term optionally preceded
       by an optional \emph{binder list} of variables enclosed in "[]" (dot).  So in the most general
       case, a term looks like this:
@@ -2520,21 +2524,26 @@ space [ \t\f\r\n] | nested "/*" "*/" | "//" .* ;
     is the same as "Unif(#t1,Float)", provided "Unif" was declared with the raw production
     "|Unif(Type,Type)".
 
-  \item A term can include embedded parsed terms, however, these must in general have a sort prefix,
+  \item A term can include embedded parsed terms. However, these must in general have a sort prefix,
     except when they are arguments to defined constructors.
 
   \item A \emph{rewrite rule} is a pair of terms separated by "→" (arrow, U+2192), with a few
-    additional constraints: in the rule $p→t$, $p$ must be a \emph{pattern}, which means it must be
-    a construction term that has been declared as a "scheme" (syntactic or raw) and with the
-    restriction that all contained arguments to meta-applications must be distinct bound variables,
-    and all meta-applications in $t$ must have meta-variables that also occur in $p$ with the same
-    number of meta-arguments.
+    additional constraints on the rule $p→t$:
+    \begin{itemize}
 
+    \item $p$ must be a \emph{pattern}, which means it must be a construction term that has been
+      declared as a "scheme" (syntactic or raw) and with the restriction that all contained
+      arguments to meta-applications must be distinct bound variables.
+      
+    \item $t$ must be a \emph{contraction}, which means that all meta-applications in $t$ must have
+      meta-variables that also occur in $p$ with the same number of meta-arguments.
+
+    \end{itemize}
     Rule declarations must either occur with the appropriate current sort or have a pattern with a
     sort prefix.
 
-  \item One rule per scheme can be prefixed with the qualifier "default". If so, the pattern can
-    have no structure: all subterms of the pattern scheme construction must be plain
+  \item One rule per scheme can be prefixed with the qualifier "default". If so, the pattern cannot
+    have any structure: all subterms of the pattern scheme construction must be plain
     meta-applications. Such a default rule is applied \emph{after} it has been ensured that all
     other rules fail for the scheme.
 
@@ -2617,13 +2626,13 @@ space [ \t\f\r\n] | nested "/*" "*/" | "//" .* ;
 
   \item \verb"--errors" (or \verb'-e') reports details of errors found by subprocesses.
 
-  \item \verb"--keep" (or \verb'-k') reports details of errors found by subprocesses.
+  \item \verb"--keep" (or \verb'-k') does not remove temporary generated files.
 
   \item \verb"--interpret" uses the much slower \emph{interpreted} version of \HAX and activates the
     following options.
 
   \item \verb"--verbose="\emph{n} sets the verbosity of the underlying \CRSX rewrite engine to $n$. The
-    default is 0 (quiet) but 1--3 are useful (above 3 you get a lot of low level diagnostic output).
+    default is 0 (quiet) but 1--3 are useful (above 3 you get a lot of low-level diagnostic output).
 
   \item \verb"--parse-verbose" activates (very!) verbose output from JavaCC of the parsing.
 
@@ -2778,8 +2787,8 @@ Was expecting one of:
     "," ...
   \end{code}
   This indicates an incorrect number of arguments in the \emph{.hx} file: here insufficient
-  arguments (encountering a ")" instead of ","); a similar but opposite error is given when excess
-  arguments are present.
+  arguments (encountering a parenthesis instead of comma); a similar but opposite error is given
+  when excess arguments are present.
 \end{error}
 
 \begin{error}\leavevmode
@@ -2834,7 +2843,7 @@ cookmain: crsx.c:528: bufferEnd: Assertion
   \begin{hacs}
     sort A  | ⟦ ⟨A@1⟩ stuff ⟧@2 | ⟦ other ⟧ ;
   \end{hacs}
-  are not: prohibited cases involve indirect recursion (the latter case where the inner left
+  are not: prohibited cases involve indirect recursion (the latter case, where the inner left
   recursive precedence "@1" is less than the outer precedence "@2").
 
 \item Productions can share a prefix but only within productions for the same sort, and the prefix
@@ -2856,15 +2865,15 @@ cookmain: crsx.c:528: bufferEnd: Assertion
 
 \item Variables embedded in "error⟦…⟧" instructions must start with a lowercase letter.
 
-\item When using the "symbol" qualifier on a reference to a token, then the token \emph{must} allow
-  ending with a sequence of "_"$n$ for $n$ any natural numbers.
+\item When using the "symbol" qualifier on a reference to a token, then the token \emph{must} be
+  defined such that it allows ending with a sequence of "_"$n$ for $n$ any natural number.
 
-\item Symbols inside of "⟦…⟧" and raw variables outside the ⟦⟧ must still have different names or
+\item Symbols inside of "⟦…⟧" and raw variables outside the "⟦⟧" must still have different names or
   they will be identified.
 
 \item Special terms like "error⟦…⟧" cannot be used as raw subterms.
 
-\item Synthesized attribute patterns with pattern matching in the attributes may not always work.
+\item Synthesized attribute patterns with pattern-matching in the attributes may not always work.
 
 \item The "Computed" sort only works if there is at least one data or scheme constructor that
   \emph{returns} a value of "Computed" sort.
