@@ -19,12 +19,9 @@
 \newcommand{\documentcopyright}{\basecopyright}
 
 %% Style.
-\usepackage[margin=.8in]{geometry}
+\usepackage[margin=.7in]{geometry}
 \usepackage[T1]{fontenc}
 \bibliographystyle{plainurl}
-\usepackage{eulervm}
-\renewcommand{\rmdefault}{pplx}
-\AtBeginDocument{\SelectTips{eu}{11}}
 % Figure wrapper!
 \makeatletter
 \newsavebox{\savedfigureunit}
@@ -33,6 +30,9 @@
 {\thefigureunitcaption\vspace{1ex}\end{minipage}\end{lrbox}%
   \colorbox{blue!10}{\usebox{\savedfigureunit}}}
 \makeatother
+\renewcommand{\rmdefault}{pplx}
+\usepackage{eulervm}
+\AtBeginDocument{\SelectTips{eu}{11}}
 %\usepackage{ts}
 
 %% Base format.
