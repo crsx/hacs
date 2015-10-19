@@ -41,7 +41,7 @@ samples/% :
 
 all install :: doc/hacs.pdf
 doc/% :
-	$(MAKE) -C doc -I $(abspath src) ../$@
+	$(MAKE) -C doc -I $(abspath src) $(subst doc/,,$@)
 
 gitclean ::; rm -fr lib
 

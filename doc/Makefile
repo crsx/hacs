@@ -11,7 +11,7 @@ gitclean:: realclean
 
 %.pdf : %.tex
 	pdflatex $*
-	grep -vq bibcite $*.aux || bibtex $*
+	bibtex $*
 	pdflatex $*
 	pdflatex $*
 
