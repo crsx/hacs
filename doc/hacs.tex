@@ -13,9 +13,12 @@
 \newcommand{\also}{/\xspace}
 \newenvironment{figureunit}[1][]{\def\figureunitcaption{#1}}{\figureunitcaption}
 
+\usepackage[type={CC},modifier={by},version={4.0}]{doclicense}
 \newcommand{\basecopyright}{\noindent
   \HAX is © 2011, 2015 Kristoffer Rose and released under the
-  \href{https://www.eclipse.org/legal/epl-v10.html}{Eclipse Public License 1.0}.}
+  \href{https://www.eclipse.org/legal/epl-v10.html}{Eclipse Public License 1.0}.\\
+    \doclicenseImage[imagewidth=3em] This manual is © 2011,2015 Kristoffer Rose and additionally available under \doclicenseNameRef.
+}
 \newcommand{\documentcopyright}{\basecopyright}
 
 %% Style.
@@ -67,7 +70,7 @@
 
   \vspace*{2em}\small\color{gray}\noindent%
   This document describes \HAX version \version available from
-  \href{http://github.com/crsx/hacs}{github.com/crsx/hacs}.\\[1ex]
+  \href{http://github.com/crsx/hacs}{github.com/crsx/hacs}.\\
   \documentcopyright
 \end{abstract}
 
