@@ -136,6 +136,19 @@ language.
   \label{fig:syntax}
 \end{figure*}
 
+\CK{Hum\dots\ in earlier versions, we allowed the rules to match on a
+set of key/value parts, with a given property.  For example, the
+left-hand side of a rule might contain $a\{ \#M \mid k:\#v \}$.  The
+advantage of this approach is that you can pass $\#M$ on to the
+right-hand side of the rule.  What is more, it was possible to extend
+sets, using a construction like $a\{ \#M + k:\#v \}$. \\
+As I think you are still going to want to be able to extend given
+attribute sets, I do believe you need more than the given syntax for
+attribute values.  I can imagine omitting the $\#M$ when clear from
+context (especially on the left-hand side), but on the right-hand side
+it is not clear in general when you would want to copy a set from the
+left-hand side, or when you would want to start building a new one.}
+
 \begin{definition}[\hax syntax]
   %%
   The \hax syntax is shown in Figure~\ref{fig:syntax}. The top level of a \hax script is a sequence
@@ -428,6 +441,21 @@ by only allowing sortable scripts. Informally, sorting ensures that
 If you check with the examples, then you can see that the examples all satisfy these restrictions
 except Example~\ref{ex:bool}, which breaks the last of the above constraints. \TBD{Fix but how:
   patch example or rules?}
+
+\CK{About the TBD: the example breaks the rule only because some data terms are
+missing the $\mathit{val}$ attribute, right?  This ties in to my earlier
+comment below Figure 1, although only a little: the attribute here should be a
+catch-all meta-variable on the left, and the empty set on the right.  You can
+actually do that with the syntax as given, but it would be quite ugly. \\
+The most natural solution seems to be calling it syntactic sugar: we could
+point out that Example~\ref{ex:bool} \emph{seems} to violate the rule, but
+only due to syntactic sugar, as explained later?  Alternatively, we could
+change the example.  To make it a bit less ugly, a possibility is to add a
+sort $\mathtt{DecidedBool}$ with only true/false values, to be used as the
+values for the attribute; typically, you'd probably want to know that those
+values will in fact be true/false rather than a Not or Or.  This sort would
+not need to have an attribute, so would save you from having to write an
+addition attribute set inside an attribute set.}
 
 \begin{notation}[vectors]
   We will use \emph{vector notation} with $\ov{X}$ denoting $X_1,…,X_n$ for some $n≥0$; $ε$ denotes
