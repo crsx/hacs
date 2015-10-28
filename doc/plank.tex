@@ -27,6 +27,8 @@
 
 %% Discussion
 \newcommand{\CK}[1]{\textcolor{blue}{CK: #1}}
+\newcommand{\KR}[1]{\textcolor{red}{KR: #1}}
+\newcommand{\LV}[1]{\textcolor{green}{LV: #1}}
 
 \begin{document}
 \maketitle
@@ -43,7 +45,8 @@
   In this paper we give the formal definition of the \hax calculus and its sort system, and we show
   how the central constructs of the much richer \HAX and \CRSX formalisms can be represented in
   \hax. We also outline how \hax can be implemented, and summarize central properties of the system.
-  %%
+
+  \CK{Cynthia's comments.} \KR{Kris' comments.} \LV{Lionel's comments.}
 \end{abstract}
 
 \compacttableofcontents
@@ -148,6 +151,8 @@ attribute values.  I can imagine omitting the $\#M$ when clear from
 context (especially on the left-hand side), but on the right-hand side
 it is not clear in general when you would want to copy a set from the
 left-hand side, or when you would want to start building a new one.}
+\KR{The ``capture all'' syntax is still available, just different: it is
+$a\{{:}\#M\} a\{k:\#v\}$ (for both forms, in patterns and comtractæ, respectively).}
 
 \begin{definition}[\hax syntax]
   %%
@@ -160,7 +165,8 @@ left-hand side, or when you would want to start building a new one.}
     "Integer" or "A" or "CamelCaseWord", used for sort, function symbol, and data symbol names
     (respectively).
     \CK{But this suggests that when you write $c(\dots)$ that $c$ is a data symbol name.  You
-    violate that right below when using it for arbitrary and function constructions.}
+      violate that right below when using it for arbitrary and function constructions.}
+    \KR{Right. We could use $d$ for data and $c$ for ``unknown.''}
 
   \item $v,a,α ∈ \mathcal{V}$ stand for \emph{variable} tokens, which are lower case words like "x"
     or "foo" or even "lowWord", used for term variables, attributes, and sort variables
@@ -181,8 +187,9 @@ left-hand side, or when you would want to start building a new one.}
     \emph{function construction}.
 
   \item A term of the form $v\,A_1…A_m$ ($m≥0$) is a \emph{variable occurrence}; if the variable $v$
-    occurs contained in a binder $[…v…]T$ then the variable occurrence is \emph{bound}.
-    \CK{Okay, so variables have attributes. That's new.}
+    occurs contained in a binder $[…v…]T$ then the variable occurrence is \emph{bound}.  \CK{Okay,
+      so variables have attributes. That's new.} \KR{Yes. It turns out to be key in most
+      applications, inclusing that substitution \emph{erases} those attributes.}
 
   \item A term of the form $M[T_1,…,T_n]\,A_1…A_m$ ($m,n≥0$) is a \emph{meta-application}; if the
     terms $T_i$ are distinct bound variable occurrences then this is a \emph{pattern
@@ -194,6 +201,18 @@ left-hand side, or when you would want to start building a new one.}
   \end{itemize}
   %%
 \end{definition}
+
+\LV{Lionel proposes this alternte syntax:}
+\begin{code}
+D  ::= sort S { F* } ;
+F  ::= data c ( BF*' ) ; | scheme f ( BF*' ) ; | ...
+S  ::= s [ S*' ] | α | RF
+T  ::= c (B*') | v | M [ T*'] | { AV* }
+RF ::= { AF* }           (RecordMapForm)
+AF ::= S : S
+AV ::= T : T | ¬T | :M  
+\end{code}
+
 
 \begin{figure*}[p]
   \vspace*{-1em}
@@ -319,6 +338,7 @@ sort Bool[] val { data T(); data F();
 
   \item The "Λ" sort includes a special "variable" case to indicate that variables can occur in
     terms. \CK{Should there be a qualifier like ``unbound'' in this sentence?}
+    \KR{Perhaps---suggestions?}
 
   \item "Λ" also includes a usual case for application construction, which is a "scheme" because it
     can (sometimes) be rewritten.
@@ -409,13 +429,13 @@ sort Bool[] val { data T(); data F();
   The final term has every subterm annotated with its logical value.
   %%
 
-  \CK{I don't think this example works, though: in the end, you have all those
-  formulas annotated, but you don't have any reference to the variable d
-  in the terms!  How can you check what the value of the dummy variable is in
-  the attribute set?  If you create a new variable to match against, it won't
-  be equal to d.  For what I remember, the ``dummy'' thing we originally had
-  going was just a sort with only one nullary constructor, which \emph{would}
-  be easily queryable.}
+  \CK{I don't think this example works, though: in the end, you have all those formulas annotated,
+    but you don't have any reference to the variable d in the terms!  How can you check what the
+    value of the dummy variable is in the attribute set?  If you create a new variable to match
+    against, it won't be equal to $d$.  For what I remember, the ``dummy'' thing we originally had
+    going was just a sort with only one nullary constructor, which \emph{would} be easily
+    queryable.} \KR{That would depend on the context capturing $d$. Suggestions for improvements
+    welcome.}
 \end{example}
 
 \TBD{Summarize unexplained features, like default rules.}
@@ -456,6 +476,7 @@ values for the attribute; typically, you'd probably want to know that those
 values will in fact be true/false rather than a Not or Or.  This sort would
 not need to have an attribute, so would save you from having to write an
 addition attribute set inside an attribute set.}
+\KR{Is it improved by the previous comments?}
 
 \begin{notation}[vectors]
   We will use \emph{vector notation} with $\ov{X}$ denoting $X_1,…,X_n$ for some $n≥0$; $ε$ denotes
