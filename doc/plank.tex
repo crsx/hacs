@@ -153,6 +153,7 @@ it is not clear in general when you would want to copy a set from the
 left-hand side, or when you would want to start building a new one.}
 \KR{The ``capture all'' syntax is still available, just different: it is
 $a\{{:}\#M\} a\{k:\#v\}$ (for both forms, in patterns and comtractæ, respectively).}
+\CK{Ah, I see.}
 
 \begin{definition}[\hax syntax]
   %%
@@ -338,7 +339,18 @@ sort Bool[] val { data T(); data F();
 
   \item The "Λ" sort includes a special "variable" case to indicate that variables can occur in
     terms. \CK{Should there be a qualifier like ``unbound'' in this sentence?}
-    \KR{Perhaps---suggestions?}
+    \KR{Perhaps---suggestions?} \CK{Well, what I \emph{think} you mean is twofold:
+    \begin{itemize}
+    \item in the objects you're rewriting (which I call ``terms'' as opposed to ``meta-terms''
+      for the sides of the rules), variables of that sort may occur unbound by a $\lambda$;
+    \item in left-hand sides of rules, variables may occur unbound to indicate explicitly
+      matching on a variable (but this also matches unbound variables);
+    \item in right-hand sides of rules, fresh variables of these sorts (and only these
+      sorts) may occur.
+    \end{itemize}
+    Is all of that indeed the intention?  Also, the rephrasing I would propose depends on
+    whether we separate terms (however you decide to call them) from meta-terms---which I
+    think would be a really good thing to do, if only for clarity.}
 
   \item "Λ" also includes a usual case for application construction, which is a "scheme" because it
     can (sometimes) be rewritten.
@@ -435,7 +447,7 @@ sort Bool[] val { data T(); data F();
     against, it won't be equal to $d$.  For what I remember, the ``dummy'' thing we originally had
     going was just a sort with only one nullary constructor, which \emph{would} be easily
     queryable.} \KR{That would depend on the context capturing $d$. Suggestions for improvements
-    welcome.}
+    welcome.} \CK{Well, my suggestion would be to use a nullary constructor instead!}
 \end{example}
 
 \TBD{Summarize unexplained features, like default rules.}
@@ -477,6 +489,18 @@ values will in fact be true/false rather than a Not or Or.  This sort would
 not need to have an attribute, so would save you from having to write an
 addition attribute set inside an attribute set.}
 \KR{Is it improved by the previous comments?}
+\CK{Improved, but not solved.  The suggestion to introduce
+$\mathtt{DecidedBool}$ stands!  As for the rest, if you want to express a
+``catch-all'' syntax such as $\alpha\{\#M \mid \dots\}$ as $\alpha\{\#M\}
+\alpha\{\dots\}$, so repeating the attribute name, then it makes sense not
+to write the attribute name at all when we are not interested in it.  This
+makes the formation rules for \emph{terms} and \emph{meta-terms} rather
+different, though.  For terms, the objects being rewritten, the attribute
+requirement is there.  For meta-terms, the attribute requirement is ``no
+other attributes may be mentioned''.  It may be worth making the distinction
+explicit, or even introducing the two separately---especially since an
+understanding of what rules do hinges on the understanding of what terms are,
+and how attributes are assigned.}
 
 \begin{notation}[vectors]
   We will use \emph{vector notation} with $\ov{X}$ denoting $X_1,…,X_n$ for some $n≥0$; $ε$ denotes
@@ -495,13 +519,19 @@ addition attribute set inside an attribute set.}
 
   \item $Γ_{\op{cons}}\colon \mathcal{C} → S×F$ from constructor name to sort-form pairs.
 
-  \item $Γ_{\op{attr}}\colon \mathcal{V} → \set{AF}$ from attribute name to attribute forms.
+  \item $Γ_{\op{attr}}\colon \mathcal{V} → \set{AF}$ from attribute name to attribute form. \\
+   \CK{The set $\mathcal{V}$ of variables contains attribute names, rather than only
+   variables? That seems strange, especially as there \emph{is} a separate set for
+   meta-variables.}
 
   \item $Γ_{\op{cons-attr}}\colon \mathcal{C} → 2^{\mathcal{V}}$ from constructor name to set of
-    attribute names.
+    attribute names. \\
+    \CK{Should this be for \emph{function} constructors only?}
 
   \item $Γ_{\op{data-atts}}\colon \mathcal{C} → 2^{\mathcal{V}}$ from sort name to sets of data
-    attribute names.
+    attribute names. \\
+    \CK{Are ``data attribute names'' supposed to be a different set than just ``attribute
+    names''?}
 
   \end{itemize}
   %%
