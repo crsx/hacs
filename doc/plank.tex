@@ -99,7 +99,7 @@ language.
     \bigm| \kw{attribute}~a~\set{AF}\,\kw;
     \\[\jot]
     \tag{Form}
-    F &::= \kw{data}~c\,\kw(\,\set{BF}^{*\kw,}\,\kw)\,\kw;
+    F &::= \kw{data}~d\,\kw(\,\set{BF}^{*\kw,}\,\kw)\,\kw;
     \bigm| \kw{scheme}~f\,\kw(\,\set{BF}^{*\kw,}\,\kw)~a^*\,\kw;
     \bigm| \kw{variable}\,\kw;
     \bigm| O~\kw{rule}~T~\kw{$→$}~T\,\kw;
@@ -643,8 +643,8 @@ when showing properties of the type system.
     %
     \dfrac
     { }
-    { Γ,s[\ov{S}] ⊢ \kw{data}~c\,\kw(\,\ov{\set{BF}}\,\kw)~\ov{a}\,\kw; }
-    \quad Γ(c) = (s[\ov{S}], c(\ov{\set{BF}})\ov{a}), ~ Γ_{\op{data-atts}}(s) = \{\ov{a}\}
+    { Γ,s[\ov{S}] ⊢ \kw{data}~d\,\kw(\,\ov{\set{BF}}\,\kw)~\ov{a}\,\kw; }
+    \quad Γ(d) = (s[\ov{S}], d(\ov{\set{BF}})\ov{a}), ~ Γ_{\op{data-atts}}(s) = \{\ov{a}\}
     % 
     \\[1ex]
     %
