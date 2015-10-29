@@ -2,8 +2,8 @@
 
 %% Style.
 %\usepackage{charter}
-\usepackage{eulervm}
 \renewcommand{\rmdefault}{pplx}
+\usepackage{eulervm}
 \bibliographystyle{plain}
 \usepackage[margin=1in]{geometry}
 
@@ -162,12 +162,13 @@ $a\{{:}\#M\} a\{k:\#v\}$ (for both forms, in patterns and comtractæ, respective
   %%
   \begin{itemize}
 
-  \item $s,f,c ∈ \mathcal{C}$ stand for \emph{constructor} tokens, which are capitalized words like
-    "Integer" or "A" or "CamelCaseWord", used for sort, function symbol, and data symbol names
-    (respectively).
+  \item $c,s,d,f ∈ \mathcal{C}$ stand for \emph{constructor} tokens, which are capitalized words like
+    "Integer" or "A" or "CamelCaseWord". They are used for sort, function symbol, and data symbol
+    names. By convention, we use $s$/$d$/$f$ for sort/data/function names, respectively, and $c$
+    when either a data and function constructor makes sense.
+
     \CK{But this suggests that when you write $c(\dots)$ that $c$ is a data symbol name.  You
-      violate that right below when using it for arbitrary and function constructions.}
-    \KR{Right. We could use $d$ for data and $c$ for ``unknown.''}
+      violate that right below when using it for arbitrary and function constructions.}  \KR{OK?}
 
   \item $v,a,α ∈ \mathcal{V}$ stand for \emph{variable} tokens, which are lower case words like "x"
     or "foo" or even "lowWord", used for term variables, attributes, and sort variables
@@ -190,7 +191,7 @@ $a\{{:}\#M\} a\{k:\#v\}$ (for both forms, in patterns and comtractæ, respective
   \item A term of the form $v\,A_1…A_m$ ($m≥0$) is a \emph{variable occurrence}; if the variable $v$
     occurs contained in a binder $[…v…]T$ then the variable occurrence is \emph{bound}.  \CK{Okay,
       so variables have attributes. That's new.} \KR{Yes. It turns out to be key in most
-      applications, inclusing that substitution \emph{erases} those attributes.}
+      applications, including that substitution \emph{erases} those attributes.}
 
   \item A term of the form $M[T_1,…,T_n]\,A_1…A_m$ ($m,n≥0$) is a \emph{meta-application}; if the
     terms $T_i$ are distinct bound variable occurrences then this is a \emph{pattern
@@ -203,7 +204,7 @@ $a\{{:}\#M\} a\{k:\#v\}$ (for both forms, in patterns and comtractæ, respective
   %%
 \end{definition}
 
-\LV{Lionel proposes this alternte syntax:}
+\LV{Lionel proposes this alternate syntax:}
 \begin{code}
 D  ::= sort S { F* } ;
 F  ::= data c ( BF*' ) ; | scheme f ( BF*' ) ; | ...
@@ -213,7 +214,57 @@ RF ::= { AF* }           (RecordMapForm)
 AF ::= S : S
 AV ::= T : T | ¬T | :M  
 \end{code}
-
+\KR{ I tried this syntax, and cannot get Figure 5 to work. The key is that we allow patterns like
+  $d(\#↑a\{d:\#a\})$, which works for \emph{all} (data) constructor forms of $\#$. This is not
+  possible with the explicit argument version without lots of extra cases. Here is the precise
+  syntax I tried, which is even more limited than Lionel's by only allowing ``associations'' as
+  constructor arguments.
+  \begin{align}
+    \tag{\hax{}Script}
+    H &::= D^* 
+    \\
+    \tag{Declaration}
+    D &::= \kw{sort}~S~a^*~\kw\{\, F^*\,\kw\}
+    \\[\jot]
+    \tag{Form}
+    F &::= \kw{data}~d\,\kw(\,\set{BF}^{*\kw,}\,\kw)\,\kw;
+    \bigm| \kw{scheme}~f\,\kw(\,\set{BF}^{*\kw,}\,\kw)\,\kw;
+    \bigm| \kw{variable}\,\kw;
+    \bigm| O~\kw{rule}~T~\kw{$→$}~T\,\kw;
+    \\
+    \tag{BindersForm}
+    \set{BF} &::= \kw[\,S^{*\kw,}\,\kw]\,S
+    \bigm| \kw\{\, \set{AF}^{*\kw,} \,\kw\}
+    \\
+    \tag{Sort}
+    S &::= s\,\kw[\,S^{*\kw,}\,\kw]
+    \bigm| α
+    \\
+    \tag{AssociationForm}
+    \set{AF} &::= S\,\kw:\,S
+    \\
+    \tag{Option}
+    O &::= ~\mid \kw{default} 
+    \\[\jot]
+    \tag{Term}
+    T &::= c\,\kw(\,B^{*\kw,}\,\kw)
+    \bigm| v
+    \bigm| M\,\kw[\,T^{*\kw,}\,\kw]
+    \\
+    \tag{Binders}
+    B &::= \kw[\,v^{*\kw,}\,\kw]\,T
+    \bigm| \kw\{\, \set{A}^{*\kw,} \,\kw\}
+    \\
+    \tag{Association}
+    \set{A} &::= T\,\kw:\,T
+    \bigm| \kw{$¬$}\,T
+    \bigm| \kw:\,M
+  \end{align}
+  This is more compact and nice, so if the above pattern problem can be solved I am willing to
+  change! I may even consider the brute force solution of expanding to all data form variants, as it
+  \emph{is} nice to have the attributes here. Opinions? (Note to Cynthia: Lionel's version
+  eliminates attributes on variables.)
+}
 
 \begin{figure*}[p]
   \vspace*{-1em}
@@ -348,9 +399,9 @@ sort Bool[] val { data T(); data F();
     \item in right-hand sides of rules, fresh variables of these sorts (and only these
       sorts) may occur.
     \end{itemize}
-    Is all of that indeed the intention?  Also, the rephrasing I would propose depends on
-    whether we separate terms (however you decide to call them) from meta-terms---which I
-    think would be a really good thing to do, if only for clarity.}
+    Is all of that indeed the intention?  Also, the rephrasing I would propose depends on whether we
+    separate terms (however you decide to call them) from meta-terms---which I think would be a
+    really good thing to do, if only for clarity.} \KR{Yes! You do remember…}
 
   \item "Λ" also includes a usual case for application construction, which is a "scheme" because it
     can (sometimes) be rewritten.
@@ -447,7 +498,9 @@ sort Bool[] val { data T(); data F();
     against, it won't be equal to $d$.  For what I remember, the ``dummy'' thing we originally had
     going was just a sort with only one nullary constructor, which \emph{would} be easily
     queryable.} \KR{That would depend on the context capturing $d$. Suggestions for improvements
-    welcome.} \CK{Well, my suggestion would be to use a nullary constructor instead!}
+    welcome.} \CK{Well, my suggestion would be to use a nullary constructor instead!} \KR{In the
+    example, the context \emph{does} capture $d$. \hax does not at this time permit non-variable
+    keys such as nullary constructors; not sure what effect it would have.}
 \end{example}
 
 \TBD{Summarize unexplained features, like default rules.}
@@ -501,6 +554,9 @@ other attributes may be mentioned''.  It may be worth making the distinction
 explicit, or even introducing the two separately---especially since an
 understanding of what rules do hinges on the understanding of what terms are,
 and how attributes are assigned.}
+\KR{You make sense. Would going to Lionel's syntax help? It completely eliminate the attribute
+  names, but suffers from a syntax combinatorial explosion (we lose the ``match only data'' side
+  effect of a $\#↑a\{k:\#v\}$ construction argument pattern).}
 
 \begin{notation}[vectors]
   We will use \emph{vector notation} with $\ov{X}$ denoting $X_1,…,X_n$ for some $n≥0$; $ε$ denotes
@@ -522,16 +578,18 @@ and how attributes are assigned.}
   \item $Γ_{\op{attr}}\colon \mathcal{V} → \set{AF}$ from attribute name to attribute form. \\
    \CK{The set $\mathcal{V}$ of variables contains attribute names, rather than only
    variables? That seems strange, especially as there \emph{is} a separate set for
-   meta-variables.}
+   meta-variables.} \KR{True. This is an artifact of using the same symbols but the base set could
+   be different. (The one for sort names could be different, too.)}
 
   \item $Γ_{\op{cons-attr}}\colon \mathcal{C} → 2^{\mathcal{V}}$ from constructor name to set of
     attribute names. \\
-    \CK{Should this be for \emph{function} constructors only?}
+    \CK{Should this be for \emph{function} constructors only?} \KR{This is actually not used at the
+      moment, so can be removed.}
 
   \item $Γ_{\op{data-atts}}\colon \mathcal{C} → 2^{\mathcal{V}}$ from sort name to sets of data
     attribute names. \\
     \CK{Are ``data attribute names'' supposed to be a different set than just ``attribute
-    names''?}
+    names''?} \KR{No, a subset, used for checking data attribute patterns.}
 
   \end{itemize}
   %%
