@@ -622,7 +622,7 @@ when showing properties of the type system.
 
 \begin{figure*}[p]%\small
   \vspace*{-3em}
-  \begin{gather*}
+  \begin{gather}
     %
     \intertext{\shoveright{Sorting of Declaration\hfil\fbox{$ Γ ⊢ D $}}}
     %
@@ -687,7 +687,7 @@ when showing properties of the type system.
     \dfrac
     { Γ,Δ,CP ⊢ \ov{T} : \ov{S} \qquad Γ,Δ,CP,\{\ov{a}\} ⊢ \ov{A} }
     { Γ,Δ,CP ⊢ M\,\kw[\,\ov{T}\,\kw] \, \ov{A} : S }
-    \quad Δ(M) = [\ov{S}⇒S]~; \op{DataAtts}\{\ov{a}\} ∈ Γ(S)
+    \quad Δ(M) = [\ov{S}⇒S]; ~Γ(S)=\{\ov{a}\}
     % 
     \\
     %
@@ -733,7 +733,7 @@ when showing properties of the type system.
     { }
     { Γ,Δ,CP,\op{Contract} ⊢ \kw\{\kw\} : \{S_1:S_2\} }
     %
-  \end{gather*}
+  \end{gather}
   \caption{\hax sort rules.}
   \label{fig:sortrules}
 \end{figure*}
@@ -761,10 +761,10 @@ when showing properties of the type system.
   \item $\op{KeySort}("s["\ov{S}"]")$ is true for sorts $s$ with a declaration
     $"sort "s"[…]{…variable;…}"$.
 
-  \item 
+  \item $Γ(S)$ is defined as follows: $Γ(s[…]) = Γ(s)$ and $Γ(α\,\ov{a}) = \{\ov{a}\}$.
 
   \end{itemize}
-
+  %%
   Given $H,Γ$ as above, a term $T$ is said to be \emph{$S$-sorted in $H$} if we can prove
   %%
   \begin{displaymath}
@@ -772,6 +772,8 @@ when showing properties of the type system.
   \end{displaymath}
   %%
   using the rules.
+
+  \KR{More to be done…}
 \end{definition}
 
 \TBD{Example sort derivation.}
