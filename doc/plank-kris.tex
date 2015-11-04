@@ -11,9 +11,10 @@
 \input{setup}
 \usepackage{cite}
 \usepackage{stmaryrd}
+\let\pmb=\boldmath
 
 %% Topmatter.
-\title{ \hax: A Plank for Higher-order Attribute Contraction Schemes }
+\title{ \hax: a Core for Higher-order Attribute Contraction Schemes }
 \author{ Kristoffer H. Rose \\
  Two Sigma Investments
  \and
@@ -34,12 +35,12 @@
 
 \begin{abstract}\noindent
   %%
-  We present \hax (or ``plank''), a core calculus that can serve as the foundation for the \CRSX
-  (Combinatory Reductions Systems with eXtensions) and \HAX (Higher-order Attribute Contraction
-  Schemes) compiler specification languages.
+  We present \hax (or ``plank''), a core calculus that can serve as the foundation for the \HAX
+  (Higher-order Attribute Contraction Schemes) and \CRSX (Combinatory Reductions Systems with
+  eXtensions) compiler specification languages.
   %%
   Formally, \hax is a general higher order rewriting formalism extended with first class
-  \emph{associations}, and equipped with a parametric polymorphic sort system.
+  \emph{environments}, and equipped with a parametric polymorphic sort system.
   %%
   In this paper we give the formal definition of the \hax calculus and its sort system, and we show
   how the central constructs of the much richer \HAX and \CRSX formalisms can be represented in
@@ -86,8 +87,7 @@ and finally Section~\ref{sec:conc} concludes and compares to related work.
 \label{sec:overview}
 
 In this section we outline the \hax calculus, with a minimal syntax that supports the \HAX source
-language. \KR{Changed to Lionel's proposed syntax, except attributes are called ``associations''
-  (they are different) and can only occur as construction ``pieces.''}
+language.
 
 \begin{figure*}[ht]
   \begin{align}
@@ -95,43 +95,65 @@ language. \KR{Changed to Lionel's proposed syntax, except attributes are called 
     H &::= D^* 
     \\
     \tag{Declaration}
-    D &::= \kw{sort}~S~a^*~\kwm\{\, F^*\,\kwm\}
+    D &::= \kw{sort}~S~a^*~\kw\{\, F^*\,\kw\}
+    \bigm| \kw{attribute}~a~\set{AF}\,\kw;
     \\[\jot]
     \tag{Form}
-    F &::= \kw{data}~d\,\kw(\,\set{PF}^{*\kw,}\,\kw)\,\kw;
-    \bigm| \kw{scheme}~f\,\kw(\,\set{PF}^{*\kw,}\,\kw)\,\kw;
+    F &::= \kw{data}~d\,\kw(\,\set{BF}^{*\kw,}\,\kw)\,\kw;
+    \bigm| \kw{scheme}~f\,\kw(\,\set{BF}^{*\kw,}\,\kw)~a^*\,\kw;
     \bigm| \kw{variable}\,\kw;
     \bigm| O~\kw{rule}~T~\kw{$→$}~T\,\kw;
     \\
-    \tag{PieceForm}
-    \set{PF} &::= \kw[\,S^{*\kw,}\,\kw]\,S
-    \bigm| \kwm\{\, S:S \,\kwm\}
+    \tag{BindersForm}
+    \set{BF} &::= \kw[\,S^{*\kw,}\,\kw]\,S
+    \\
+    \tag{AttributeForm}
+    \set{AF} &::= \kw\{\,S\,\kw:\,S\,\kw\}
     \\
     \tag{Sort}
     S &::= s\,\kw[\,S^{*\kw,}\,\kw]
-    \bigm| α
+    \bigm| α\,a^*
     \\
     \tag{Option}
     O &::= ~\mid \kw{default} 
     \\[\jot]
     \tag{Term}
-    T &::= c\,\kw(\,P^{*\kw,}\,\kw)
-    \bigm| v
-    \bigm| M\,\kw[\,T^{*\kw,}\,\kw]
+    T &::= c\,\kw(\,B^{*\kw,}\,\kw)~A^*
+    \bigm| v ~ A^*
+    \bigm| M\,\kw[\,T^{*\kw,}\,\kw]~A^*
     \\
-    \tag{Piece}
-    P &::= \kw[\,v^{*\kw,}\,\kw]\,T
-    \bigm| \kwm\{\, \set{A}^{*\kw,} \,\kwm\}
+    \tag{Binders}
+    B &::= \kw[\,v^{*\kw,}\,\kw]\,T
     \\
-    \tag{Association}
-    \set{A} &::= T\,\kw:\,T
-    \bigm| \kw{$¬$}\,T
-    \bigm| \kw:\,M
+    \tag{Attribute}
+    A &::= a~\set{AV}
+    \\
+    \tag{AttributeValue}
+    \set{AV} &::= \kw\{\,T\,\kw:\,T\,\kw\}
+    \bigm| \kw\{\kw\}
+    \bigm| \kw\{\,\kw{$¬$}\,T\,\kw\}
+    \bigm| \kw\{\kw:\,M\,\kw\}
   \end{align}
   \vspace*{-2em}
   \caption{\hax syntax.}
   \label{fig:syntax}
 \end{figure*}
+
+\CK{Hum\dots\ in earlier versions, we allowed the rules to match on a
+set of key/value parts, with a given property.  For example, the
+left-hand side of a rule might contain $a\{ \#M \mid k:\#v \}$.  The
+advantage of this approach is that you can pass $\#M$ on to the
+right-hand side of the rule.  What is more, it was possible to extend
+sets, using a construction like $a\{ \#M + k:\#v \}$. \\
+As I think you are still going to want to be able to extend given
+attribute sets, I do believe you need more than the given syntax for
+attribute values.  I can imagine omitting the $\#M$ when clear from
+context (especially on the left-hand side), but on the right-hand side
+it is not clear in general when you would want to copy a set from the
+left-hand side, or when you would want to start building a new one.}
+\KR{The ``capture all'' syntax is still available, just different: it is
+$a\{{:}\#M\} a\{k:\#v\}$ (for both forms, in patterns and comtractæ, respectively).}
+\CK{Ah, I see.}
 
 \begin{definition}[\hax syntax]
   %%
@@ -140,63 +162,109 @@ language. \KR{Changed to Lionel's proposed syntax, except attributes are called 
   %%
   \begin{itemize}
 
-  \item $c,s,d,f ∈ \mathcal{C}$ stand for \emph{constructor} tokens, which are capitalized words
-    like "Integer" or "A" or "CamelCaseWord". They are used for sort, function symbol, and data
-    symbol names. By convention, we use $s$/$d$/$f$ for sort/data/function names, respectively, and
-    $c$ when either a data or function constructor makes sense.
+  \item $c,s,d,f ∈ \mathcal{C}$ stand for \emph{constructor} tokens, which are capitalized words like
+    "Integer" or "A" or "CamelCaseWord". They are used for sort, function symbol, and data symbol
+    names. By convention, we use $s$/$d$/$f$ for sort/data/function names, respectively, and $c$
+    when either a data and function constructor makes sense.
 
-  \item $v,α ∈ \mathcal{V}$ stand for \emph{variable} tokens, which are lower case words like "x" or
-    "foo" or even "lowWord", used for term variables and sort variables (respectively).
+    \CK{But this suggests that when you write $c(\dots)$ that $c$ is a data symbol name.  You
+      violate that right below when using it for arbitrary and function constructions.}  \KR{OK?}
+
+  \item $v,a,α ∈ \mathcal{V}$ stand for \emph{variable} tokens, which are lower case words like "x"
+    or "foo" or even "lowWord", used for term variables, attributes, and sort variables
+    (respectively).
 
   \item $M ∈ \mathcal{M}$ stands for \emph{meta-variable} tokens, which are tokens that start with
     "#" like "#arg" or "#BigFoot" or even just "#1" or merely~"#".
 
   \end{itemize}
   %%
-  The ``$A^{*\kw,}$'' notation means zero or more $A$s separated by commas. We shall use the
-  following terminology:
+  The ``$A^{*\kw,}$'' notation means zero or more $A$s separated by commas. In addition, we define
+  the following concepts:
   %%
   \begin{itemize}
 
-  \item A term of the form $c(P_1,…,P_n)$ ($n≥0$) is called a \emph{construction}; if furthermore
-    the top symbol $c$ is declared with a "scheme c {…}" declaration then it is called a
-    \emph{function construction}, and if it is declared with "data d {…}" then it is called a
-    \emph{data construction}.
+  \item A term of the form $c(B_1,…,B_n)\,A_1…A_m$ ($m,n≥0$) is called a \emph{construction}; if
+    furthermore the top symbol $c$ is declared with a "scheme c…" declaration then it is called a
+    \emph{function construction}.
 
-  \item Arguments $P$ of constructions take one of two forms: \emph{scopes} $[v_1,…,v_n]T$, which
-    introduce new local variables $v_1,…,v_n$ along with a term $T$ wherein they can occur, and
-    \emph{associations} $\{A_1,…,A_n\}$. Each $A$ is either an \emph{entry} $T:T$, or an
-    \emph{exclusion} $¬T$, or a \emph{catcher} ${:}M$.
+  \item A term of the form $v\,A_1…A_m$ ($m≥0$) is a \emph{variable occurrence}; if the variable $v$
+    occurs contained in a binder $[…v…]T$ then the variable occurrence is \emph{bound}.  \CK{Okay,
+      so variables have attributes. That's new.} \KR{Yes. It turns out to be key in most
+      applications, including that substitution \emph{erases} those attributes.}
 
-  \item A term of the form $v$ is a \emph{variable occurrence}; if the variable $v$ occurs contained
-    in a scope $[…v…]T$ then the variable occurrence is \emph{bound}.
+  \item A term of the form $M[T_1,…,T_n]\,A_1…A_m$ ($m,n≥0$) is a \emph{meta-application}; if the
+    terms $T_i$ are distinct bound variable occurrences then this is a \emph{pattern
+      meta-application}.
 
-  \item A term of the form $M[T_1,…,T_n]$ ($n≥0$) is a \emph{meta-application}
-
-  \end{itemize}
-  %%
-  
-  %%
-  \begin{itemize}
-
-  \item
-
-
-; if the terms $T_i$
-    are distinct bound variable occurrences then this is a \emph{pattern
-      meta-application}. \KR{Notice that this means one \emph{cannot} substitute a variable by an
-      association!}
-
-
-
-
- A term is called a \emph{pattern fragment} if all contained meta-applications are pattern
+  \item A term is called a \emph{pattern fragment} if all contained meta-applications are pattern
     meta-applications, and a \emph{pattern} if it is also a function construction.
 
-
   \end{itemize}
-
+  %%
 \end{definition}
+
+\LV{Lionel proposes this alternate syntax:}
+\begin{code}
+D  ::= sort S { F* } ;
+F  ::= data c ( BF*' ) ; | scheme f ( BF*' ) ; | ...
+S  ::= s [ S*' ] | α | RF
+T  ::= c (B*') | v | M [ T*'] | { AV* }
+RF ::= { AF* }           (RecordMapForm)
+AF ::= S : S
+AV ::= T : T | ¬T | :M  
+\end{code}
+\KR{ I tried this syntax, and cannot get Figure 5 to work. The key is that we allow patterns like
+  $d(\#↑a\{d:\#a\})$, which works for \emph{all} (data) constructor forms of $\#$. This is not
+  possible with the explicit argument version without lots of extra cases. Here is the precise
+  syntax I tried, which is even more limited than Lionel's by only allowing ``associations'' as
+  constructor arguments.
+  \begin{align}
+    \tag{\hax{}Script}
+    H &::= D^* 
+    \\
+    \tag{Declaration}
+    D &::= \kw{sort}~S~a^*~\kw\{\, F^*\,\kw\}
+    \\[\jot]
+    \tag{Form}
+    F &::= \kw{data}~d\,\kw(\,\set{BF}^{*\kw,}\,\kw)\,\kw;
+    \bigm| \kw{scheme}~f\,\kw(\,\set{BF}^{*\kw,}\,\kw)\,\kw;
+    \bigm| \kw{variable}\,\kw;
+    \bigm| O~\kw{rule}~T~\kw{$→$}~T\,\kw;
+    \\
+    \tag{BindersForm}
+    \set{BF} &::= \kw[\,S^{*\kw,}\,\kw]\,S
+    \bigm| \kw\{\, \set{AF}^{*\kw,} \,\kw\}
+    \\
+    \tag{Sort}
+    S &::= s\,\kw[\,S^{*\kw,}\,\kw]
+    \bigm| α
+    \\
+    \tag{AssociationForm}
+    \set{AF} &::= S\,\kw:\,S
+    \\
+    \tag{Option}
+    O &::= ~\mid \kw{default} 
+    \\[\jot]
+    \tag{Term}
+    T &::= c\,\kw(\,B^{*\kw,}\,\kw)
+    \bigm| v
+    \bigm| M\,\kw[\,T^{*\kw,}\,\kw]
+    \\
+    \tag{Binders}
+    B &::= \kw[\,v^{*\kw,}\,\kw]\,T
+    \bigm| \kw\{\, \set{A}^{*\kw,} \,\kw\}
+    \\
+    \tag{Association}
+    \set{A} &::= T\,\kw:\,T
+    \bigm| \kw{$¬$}\,T
+    \bigm| \kw:\,M
+  \end{align}
+  This is more compact and nice, so if the above pattern problem can be solved I am willing to
+  change! I may even consider the brute force solution of expanding to all data form variants, as it
+  \emph{is} nice to have the attributes here. Opinions? (Note to Cynthia: Lionel's version
+  eliminates attributes on variables.)
+}
 
 \begin{figure*}[p]
   \vspace*{-1em}
@@ -242,33 +310,34 @@ sort List[α] { data Nil(); data Cons([]α, []List[α]);
   \caption{Polymorphic lists in \hax.}
   \label{fig:list}
   %%
-%%%   \vspace{1em}
-%%%   \small
-%%%   \begin{hacs}[numbers=right,texcl]
-%%% sort Dummy[] { variable; }
-%%% sort Bool[] val { data T({Dummy[]:Bool[]}); data F({Dummy[]:Bool[]});
-%%%  data Not([]Bool[], {Dummy[]:Bool[]}); data Or([]Bool[], []Bool[], {Dummy[]:Bool[]});
-%%% 
-%%%  scheme Eval1([]Dummy[], []Bool[]); scheme Eval2([]Dummy[], []Bool[]);
-%%%  rule Eval1([]d, []T({})) → T({d:T({})});
-%%%  rule Eval1([]d, []F({})) → F({d:F({})});
-%%% 
-%%%  rule Eval1([]d, []Not([]#[], {¬d}) → Eval2([]d, []Not([]Eval1([]d, []#[])));
-%%%  rule Eval2([]d, []Not([]#[]val{d:T()})) → Not([]#[]) val{d:F()};
-%%%  rule Eval2([]d, []Not([]#[]val{d:F()})) → Not([]#[]) val{d:T()};
-%%% 
-%%%  rule Eval1([]d, []Or([]#1[], []#2[])val{¬d})
-%%%    → Eval2([]d, []Or([]Eval1([]d, []#1[]), Eval1([]d, []#2[])));
-%%%  rule Eval2([]d, []Or([]#1[]val{d:F()}, []#2[]val{d:#v2[]})) → Or([]#1[], []#2[])val{d:#v2[]};
-%%%  rule Eval2([]d, []Or([]#1[]val{d:T()}, []#2[])) → Or([]#1[], []#2[]) val{d:T()};
-%%% 
-%%%  scheme Eval([]Bool[]); rule Eval([]#[]) →  Eval1([]dummy, []#[]);
-%%% }
-%%%   \end{hacs}
-%%%   \vspace*{-1em}
-%%%   \caption{Boolean \emph{value} attribute synthesis in \hax.}
-%%%   \label{fig:bool}
-%%%   %%
+  \vspace{1em}
+  \small
+  \begin{hacs}[numbers=right,texcl]
+sort Dummy[] { variable; }
+attribute val {Dummy[] : Bool[]};
+sort Bool[] val { data T(); data F();
+ data Not([]Bool[]) val; data Or([]Bool[], []Bool[]) val;
+
+ scheme Eval1([]Dummy[], []Bool[]); scheme Eval2([]Dummy[], []Bool[]);
+ rule Eval1([]d, []T()) → T() val{d:T()};
+ rule Eval1([]d, []F()) → F() val{d:F()};
+
+ rule Eval1([]d, []Not([]#[])val{¬d}) → Eval2([]d, []Not([]Eval1([]d, []#[])));
+ rule Eval2([]d, []Not([]#[]val{d:T()})) → Not([]#[]) val{d:F()};
+ rule Eval2([]d, []Not([]#[]val{d:F()})) → Not([]#[]) val{d:T()};
+
+ rule Eval1([]d, []Or([]#1[], []#2[])val{¬d})
+   → Eval2([]d, []Or([]Eval1([]d, []#1[]), Eval1([]d, []#2[])));
+ rule Eval2([]d, []Or([]#1[]val{d:F()}, []#2[]val{d:#v2[]})) → Or([]#1[], []#2[])val{d:#v2[]};
+ rule Eval2([]d, []Or([]#1[]val{d:T()}, []#2[])) → Or([]#1[], []#2[]) val{d:T()};
+
+ scheme Eval([]Bool[]); rule Eval([]#[]) →  Eval1([]dummy, []#[]);
+}
+  \end{hacs}
+  \vspace*{-1em}
+  \caption{Boolean \emph{value} attribute synthesis in \hax.}
+  \label{fig:bool}
+  %%
 \end{figure*}
 
 \begin{example}[Peano]\label{ex:peano}
@@ -321,7 +390,18 @@ sort List[α] { data Nil(); data Cons([]α, []List[α]);
 
   \item The "Λ" sort includes a special "variable" case to indicate that variables can occur in
     terms. \CK{Should there be a qualifier like ``unbound'' in this sentence?}
-    \KR{Perhaps---suggestions?}
+    \KR{Perhaps---suggestions?} \CK{Well, what I \emph{think} you mean is twofold:
+    \begin{itemize}
+    \item in the objects you're rewriting (which I call ``terms'' as opposed to ``meta-terms''
+      for the sides of the rules), variables of that sort may occur unbound by a $\lambda$;
+    \item in left-hand sides of rules, variables may occur unbound to indicate explicitly
+      matching on a variable (but this also matches unbound variables);
+    \item in right-hand sides of rules, fresh variables of these sorts (and only these
+      sorts) may occur.
+    \end{itemize}
+    Is all of that indeed the intention?  Also, the rephrasing I would propose depends on whether we
+    separate terms (however you decide to call them) from meta-terms---which I think would be a
+    really good thing to do, if only for clarity.} \KR{Yes! You do remember…}
 
   \item "Λ" also includes a usual case for application construction, which is a "scheme" because it
     can (sometimes) be rewritten.
@@ -370,56 +450,58 @@ sort List[α] { data Nil(); data Cons([]α, []List[α]);
   %%
 \end{example}
 
-%%% \begin{example}[Boolean formulae]\label{ex:bool}
-%%%   Figure~\ref{fig:bool} shows how a Boolean expression can be annotated with an attribute "val",
-%%%   which has the computed logical value of the expression. Because \hax has no automatic propagation
-%%%   of attributes, the annotations are generated by helper "Eval1" and "Eval2" schemes.
-%%%   %%
-%%%   Line~1 sets up a "Dummy" sort for a dummy key variable for maps. %
-%%%   Line~2 sets up an attribute "val", which maps ``dummy variables'' to "Bool" values. %
-%%%   Lines 3~and 4 set up the "Bool" sort with data constructors for the Boolean expressions true
-%%%   ("T"), false ("F"), negation ("Not"), and disjunction ("Or"). %
-%%%   Line~6 declares the "Eval1" and "Eval2" schemes, which take a dummy variable and a Boolean term
-%%%   (and form a Boolean term by being defined inside the "sort Bool").  %
-%%%   Lines 7~and 8 define the "Eval1" scheme on the two trivial cases: literal thruth values are
-%%%   annotated with a "val" that maps the dummy variable to the truth value. %
-%%%   Lines 10~through 12 define the "Eval1" scheme for negation. %
-%%%   The first rule in line~10 expresses that "Eval1" can rewrite a "Not"-term where the "val"
-%%%   attribute does \emph{not} have a binding for the dummy variable: in that case, the result is
-%%%   obtained by applying the "Eval1" scheme recursively to the negated subterm and allowing the full
-%%%   negation to be ``postprocessed'' by the "Eval2" scheme. %
-%%%   Lines 11~and 12 give the details for how this works: once a negation term is obtained that has an
-%%%   actual "val" attribute, then the "Eval2" scheme can rewrite the term to one where the negated
-%%%   value is assigned to the negation term. %
-%%%   Similarly, Lines 14~through 17 give rules for evaluating a disjunction. %
-%%%   Finally, line~19 defines a root scheme that annotates an entire Boolean term by creating a "dummy"
-%%%   variable and then passing control to "Eval1".
-%%% 
-%%%   Here is a possible simplification using this scheme to annotate a term corresponding to the
-%%%   logical formula $(¬F)∨T$:
-%%%   %%
-%%%   \begin{hacs}
-%%%     Eval([]Or([]Not([]F()), []T()))
-%%%     → Eval1([]d, []Or([]Not([]F()), []T()))
-%%%     → Eval2([]d, []Or(Eval1([]d, []Not([]F())), Eval1([]d, []T())))
-%%%     → Eval2([]d, []Or(Eval1([]d, []Not([]F())), []T()val{d:T()}))
-%%%     → Eval2([]d, []Or(Eval2([]d, []Not(Eval1([]d, []F()))), []T()val{d:T()}))
-%%%     → Eval2([]d, []Or(Eval2([]d, []Not([]F()val{d:F()})), []T()val{d:T()}))
-%%%     → Eval2([]d, []Or([]Not([]F()val{d:F()})val{d:T()}, []T()val{d:T()}))
-%%%     → Or([]Not([]F()val{d:F()})val{d:T()}, []T()val{d:T()})val{d:T()}
-%%%   \end{hacs}%
-%%%   %%
-%%%   The final term has every subterm annotated with its logical value.
-%%%   %%
-%%% 
-%%%   \CK{I don't think this example works, though: in the end, you have all those formulas annotated,
-%%%     but you don't have any reference to the variable d in the terms!  How can you check what the
-%%%     value of the dummy variable is in the attribute set?  If you create a new variable to match
-%%%     against, it won't be equal to $d$.  For what I remember, the ``dummy'' thing we originally had
-%%%     going was just a sort with only one nullary constructor, which \emph{would} be easily
-%%%     queryable.} \KR{That would depend on the context capturing $d$. Suggestions for improvements
-%%%     welcome.}
-%%% \end{example}
+\begin{example}[Boolean formulae]\label{ex:bool}
+  Figure~\ref{fig:bool} shows how a Boolean expression can be annotated with an attribute "val",
+  which has the computed logical value of the expression. Because \hax has no automatic propagation
+  of attributes, the annotations are generated by helper "Eval1" and "Eval2" schemes.
+  %%
+  Line~1 sets up a "Dummy" sort for a dummy key variable for maps. %
+  Line~2 sets up an attribute "val", which maps ``dummy variables'' to "Bool" values. %
+  Lines 3~and 4 set up the "Bool" sort with data constructors for the Boolean expressions true
+  ("T"), false ("F"), negation ("Not"), and disjunction ("Or"). %
+  Line~6 declares the "Eval1" and "Eval2" schemes, which take a dummy variable and a Boolean term
+  (and form a Boolean term by being defined inside the "sort Bool").  %
+  Lines 7~and 8 define the "Eval1" scheme on the two trivial cases: literal thruth values are
+  annotated with a "val" that maps the dummy variable to the truth value. %
+  Lines 10~through 12 define the "Eval1" scheme for negation. %
+  The first rule in line~10 expresses that "Eval1" can rewrite a "Not"-term where the "val"
+  attribute does \emph{not} have a binding for the dummy variable: in that case, the result is
+  obtained by applying the "Eval1" scheme recursively to the negated subterm and allowing the full
+  negation to be ``postprocessed'' by the "Eval2" scheme. %
+  Lines 11~and 12 give the details for how this works: once a negation term is obtained that has an
+  actual "val" attribute, then the "Eval2" scheme can rewrite the term to one where the negated
+  value is assigned to the negation term. %
+  Similarly, Lines 14~through 17 give rules for evaluating a disjunction. %
+  Finally, line~19 defines a root scheme that annotates an entire Boolean term by creating a "dummy"
+  variable and then passing control to "Eval1".
+
+  Here is a possible simplification using this scheme to annotate a term corresponding to the
+  logical formula $(¬F)∨T$:
+  %%
+  \begin{hacs}
+    Eval([]Or([]Not([]F()), []T()))
+    → Eval1([]d, []Or([]Not([]F()), []T()))
+    → Eval2([]d, []Or(Eval1([]d, []Not([]F())), Eval1([]d, []T())))
+    → Eval2([]d, []Or(Eval1([]d, []Not([]F())), []T()val{d:T()}))
+    → Eval2([]d, []Or(Eval2([]d, []Not(Eval1([]d, []F()))), []T()val{d:T()}))
+    → Eval2([]d, []Or(Eval2([]d, []Not([]F()val{d:F()})), []T()val{d:T()}))
+    → Eval2([]d, []Or([]Not([]F()val{d:F()})val{d:T()}, []T()val{d:T()}))
+    → Or([]Not([]F()val{d:F()})val{d:T()}, []T()val{d:T()})val{d:T()}
+  \end{hacs}%
+  %%
+  The final term has every subterm annotated with its logical value.
+  %%
+
+  \CK{I don't think this example works, though: in the end, you have all those formulas annotated,
+    but you don't have any reference to the variable d in the terms!  How can you check what the
+    value of the dummy variable is in the attribute set?  If you create a new variable to match
+    against, it won't be equal to $d$.  For what I remember, the ``dummy'' thing we originally had
+    going was just a sort with only one nullary constructor, which \emph{would} be easily
+    queryable.} \KR{That would depend on the context capturing $d$. Suggestions for improvements
+    welcome.} \CK{Well, my suggestion would be to use a nullary constructor instead!} \KR{In the
+    example, the context \emph{does} capture $d$. \hax does not at this time permit non-variable
+    keys such as nullary constructors; not sure what effect it would have.}
+\end{example}
 
 \TBD{Summarize unexplained features, like default rules.}
 
@@ -460,6 +542,21 @@ values will in fact be true/false rather than a Not or Or.  This sort would
 not need to have an attribute, so would save you from having to write an
 addition attribute set inside an attribute set.}
 \KR{Is it improved by the previous comments?}
+\CK{Improved, but not solved.  The suggestion to introduce
+$\mathtt{DecidedBool}$ stands!  As for the rest, if you want to express a
+``catch-all'' syntax such as $\alpha\{\#M \mid \dots\}$ as $\alpha\{\#M\}
+\alpha\{\dots\}$, so repeating the attribute name, then it makes sense not
+to write the attribute name at all when we are not interested in it.  This
+makes the formation rules for \emph{terms} and \emph{meta-terms} rather
+different, though.  For terms, the objects being rewritten, the attribute
+requirement is there.  For meta-terms, the attribute requirement is ``no
+other attributes may be mentioned''.  It may be worth making the distinction
+explicit, or even introducing the two separately---especially since an
+understanding of what rules do hinges on the understanding of what terms are,
+and how attributes are assigned.}
+\KR{You make sense. Would going to Lionel's syntax help? It completely eliminate the attribute
+  names, but suffers from a syntax combinatorial explosion (we lose the ``match only data'' side
+  effect of a $\#↑a\{k:\#v\}$ construction argument pattern).}
 
 \begin{notation}[vectors]
   We will use \emph{vector notation} with $\ov{X}$ denoting $X_1,…,X_n$ for some $n≥0$; $ε$ denotes
@@ -478,13 +575,21 @@ addition attribute set inside an attribute set.}
 
   \item $Γ_{\op{cons}}\colon \mathcal{C} → S×F$ from constructor name to sort-form pairs.
 
-  \item $Γ_{\op{attr}}\colon \mathcal{V} → \set{AF}$ from attribute name to attribute forms.
+  \item $Γ_{\op{attr}}\colon \mathcal{V} → \set{AF}$ from attribute name to attribute form. \\
+   \CK{The set $\mathcal{V}$ of variables contains attribute names, rather than only
+   variables? That seems strange, especially as there \emph{is} a separate set for
+   meta-variables.} \KR{True. This is an artifact of using the same symbols but the base set could
+   be different. (The one for sort names could be different, too.)}
 
   \item $Γ_{\op{cons-attr}}\colon \mathcal{C} → 2^{\mathcal{V}}$ from constructor name to set of
-    attribute names.
+    attribute names. \\
+    \CK{Should this be for \emph{function} constructors only?} \KR{This is actually not used at the
+      moment, so can be removed.}
 
   \item $Γ_{\op{data-atts}}\colon \mathcal{C} → 2^{\mathcal{V}}$ from sort name to sets of data
-    attribute names.
+    attribute names. \\
+    \CK{Are ``data attribute names'' supposed to be a different set than just ``attribute
+    names''?} \KR{No, a subset, used for checking data attribute patterns.}
 
   \end{itemize}
   %%
@@ -494,7 +599,7 @@ addition attribute set inside an attribute set.}
 
   \item $Δ_{\op{free}}\colon \mathcal{V} → \set{S}$ from variable names to sorts.
 
-  \item $Δ_{\op{meta}}\colon \mathcal{M} → \set{PF}$ from meta-variable names to binder forms.
+  \item $Δ_{\op{meta}}\colon \mathcal{M} → \set{BF}$ from meta-variable names to binder forms.
 
   \item $Δ_{\op{attr-meta}}\colon \mathcal{M} → \set{BAV}$ from attribute ``catch-all'' meta-variable
     names to attribute forms.
@@ -517,19 +622,19 @@ when showing properties of the type system.
 
 \begin{figure*}[p]%\small
   \vspace*{-3em}
-  \begin{gather*}
+  \begin{gather}
     %
     \intertext{\shoveright{Sorting of Declaration\hfil\fbox{$ Γ ⊢ D $}}}
     %
     \dfrac
     { Γ,s[\ov{S}] ⊢ (\ov{F}) }
-    { Γ ⊢ \kw{sort}~s[\ov{S}]\,\kwm\{\, \ov{F} \,\kwm\} }
+    { Γ ⊢ \kw{sort}~s[\ov{S}]\,\kw\{\, \ov{F} \,\kw\} }
     % 
     \\[1ex]
     % 
     \dfrac
     { }
-    { Γ ⊢ \kw{attribute}~a~\kwm\{\,s[\ov{S}]\,\kw:\,S_2\,\kwm\}\,\kw; }
+    { Γ ⊢ \kw{attribute}~a~\kw\{\,s[\ov{S}]\,\kw:\,S_2\,\kw\}\,\kw; }
     \quad Γ(a) = \{s[\ov{S}]:S_2\}, ~ s∈Γ_{\op{hasvar}} 
     % 
     \\
@@ -538,15 +643,15 @@ when showing properties of the type system.
     %
     \dfrac
     { }
-    { Γ,s[\ov{S}] ⊢ \kw{data}~c\,\kw(\,\ov{\set{PF}}\,\kw)~\ov{a}\,\kw; }
-    \quad Γ(c) = (s[\ov{S}], c(\ov{\set{PF}})\ov{a}), ~ Γ_{\op{data-atts}}(s) = \{\ov{a}\}
+    { Γ,s[\ov{S}] ⊢ \kw{data}~d\,\kw(\,\ov{\set{BF}}\,\kw)~\ov{a}\,\kw; }
+    \quad Γ(d) = (s[\ov{S}], d(\ov{\set{BF}})\ov{a}), ~ Γ_{\op{data-atts}}(s) = \{\ov{a}\}
     % 
     \\[1ex]
     %
     \dfrac
     { }
-    { Γ,s[\ov{S}] ⊢ \kw{scheme}~f\,\kw(\,\ov{\set{PF}}\,\kw)~\ov{a}\,\kw; }
-    \quad Γ(f) = (s[\ov{S}], f(\ov{\set{PF}})\ov{a})
+    { Γ,s[\ov{S}] ⊢ \kw{scheme}~f\,\kw(\,\ov{\set{BF}}\,\kw)~\ov{a}\,\kw; }
+    \quad Γ(f) = (s[\ov{S}], f(\ov{\set{BF}})\ov{a})
     % 
     \\[1ex]
     %
@@ -566,9 +671,9 @@ when showing properties of the type system.
     \intertext{\shoveright{Sorting of Terms\hfil\smash{\fbox{$ Γ,Δ,\set{CP} ⊢ T : S $}}}}
     %
     \dfrac
-    { Γ,Δ,CP ⊢ \ov{B} : \ov{\set{PF}} \qquad Γ,Δ,CP,\{\ov{a}\} ⊢ \ov{A} }
+    { Γ,Δ,CP ⊢ \ov{B} : \ov{\set{BF}} \qquad Γ,Δ,CP,\{\ov{a}\} ⊢ \ov{A} }
     { Γ,Δ,CP ⊢ c\,\kw(\,\ov{B}\,\kw)\,\ov{A} : S }
-    \quad Γ(c) = (S, c(\ov{\set{PF}})\ov{a})
+    \quad Γ(c) = (S, c(\ov{\set{BF}})\ov{a})
     % 
     \\[1ex]
     %
@@ -582,11 +687,11 @@ when showing properties of the type system.
     \dfrac
     { Γ,Δ,CP ⊢ \ov{T} : \ov{S} \qquad Γ,Δ,CP,\{\ov{a}\} ⊢ \ov{A} }
     { Γ,Δ,CP ⊢ M\,\kw[\,\ov{T}\,\kw] \, \ov{A} : S }
-    \quad Δ(M) = [\ov{S}⇒S]~; \op{DataAtts}\{\ov{a}\} ∈ Γ(S)
+    \quad Δ(M) = [\ov{S}⇒S]; ~Γ(S)=\{\ov{a}\}
     % 
     \\
     %
-    \intertext{\shoveright{Sorting of Binder\hfil\smash{\fbox{$ Γ,Δ ⊢ B : \set{PF} $}}}}
+    \intertext{\shoveright{Sorting of Binder\hfil\smash{\fbox{$ Γ,Δ ⊢ B : \set{BF} $}}}}
     %
     \dfrac
     { Γ,Δ[\ov{v}↦\ov{S}],CP ⊢ T : S }
@@ -594,7 +699,7 @@ when showing properties of the type system.
     %
     \\[\jot]
     %
-    \intertext{\shoveright{Sorting of Association\hfil\smash{\fbox{$ Γ,Δ,\{\ov{a}\} ⊢ A $}}}}
+    \intertext{\shoveright{Sorting of Attribute\hfil\smash{\fbox{$ Γ,Δ,\{\ov{a}\} ⊢ A $}}}}
     %
     \dfrac
     { Γ,Δ,CP ⊢ AV : \{S_1:S_2\} }
@@ -603,32 +708,32 @@ when showing properties of the type system.
     %
     \\[\jot]
     %
-    \intertext{\shoveright{Sorting of Association Value\hfil\smash{\fbox{$ Γ,Δ ⊢ AV : \{S:S\} $}}}}
+    \intertext{\shoveright{Sorting of Attribute Value\hfil\smash{\fbox{$ Γ,Δ ⊢ AV : \{S:S\} $}}}}
     %
     \dfrac
     { Γ,Δ,CP ⊢ T_1 : S_1 \qquad Γ,Δ ⊢ T_2 : S_2 }
-    { Γ,Δ,CP ⊢ \kwm\{\,T_1\,\kw:\,T_2\,\kwm\} : \{S_1:S_2\} }
+    { Γ,Δ,CP ⊢ \kw\{\,T_1\,\kw:\,T_2\,\kw\} : \{S_1:S_2\} }
     %
     \qquad
     %
     \dfrac
     { }
-    { Γ,Δ,CP ⊢ \kwm\{\kw:\,M\,\kwm\} : \{S_1:S_2\} }
+    { Γ,Δ,CP ⊢ \kw\{\kw:\,M\,\kw\} : \{S_1:S_2\} }
     ~ Δ({:}M) = \{S_1:S_2\}
     %
     \\[\jot]
     %
     \dfrac
     { Γ,Δ,CP ⊢ T : S_1 }
-    { Γ,Δ,CP,\op{Pattern} ⊢ \kwm\{\,\kw{$¬$}\,T\,\kwm\} : \{S_1:S_2\} }
+    { Γ,Δ,CP,\op{Pattern} ⊢ \kw\{\,\kw{$¬$}\,T\,\kw\} : \{S_1:S_2\} }
     % 
     \qquad
     %
     \dfrac
     { }
-    { Γ,Δ,CP,\op{Contract} ⊢ \kwm\{\kwm\} : \{S_1:S_2\} }
+    { Γ,Δ,CP,\op{Contract} ⊢ \kw\{\kw\} : \{S_1:S_2\} }
     %
-  \end{gather*}
+  \end{gather}
   \caption{\hax sort rules.}
   \label{fig:sortrules}
 \end{figure*}
@@ -656,10 +761,10 @@ when showing properties of the type system.
   \item $\op{KeySort}("s["\ov{S}"]")$ is true for sorts $s$ with a declaration
     $"sort "s"[…]{…variable;…}"$.
 
-  \item 
+  \item $Γ(S)$ is defined as follows: $Γ(s[…]) = Γ(s)$ and $Γ(α\,\ov{a}) = \{\ov{a}\}$.
 
   \end{itemize}
-
+  %%
   Given $H,Γ$ as above, a term $T$ is said to be \emph{$S$-sorted in $H$} if we can prove
   %%
   \begin{displaymath}
@@ -667,6 +772,8 @@ when showing properties of the type system.
   \end{displaymath}
   %%
   using the rules.
+
+  \KR{More to be done…}
 \end{definition}
 
 \TBD{Example sort derivation.}
@@ -875,7 +982,7 @@ $P_0,\ov{x},C_1,P_1, C_2,…,P_{k-1}, C_k$. \TBD{Explain?}
 \section{A Constraint Model}
 \label{sec:constraints}
 
-In this section, we introduce a notion of \emph{constraint associations} and primitives for
+In this section, we introduce a notion of \emph{constraint environment} and primitives for
 \emph{constraint solving}.
 
 \TBD{Develop this…Eva?}
