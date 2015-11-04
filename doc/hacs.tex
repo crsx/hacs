@@ -1595,7 +1595,7 @@ sort Exp | ↑t;
 ⟦ ⟨FLOAT#⟩ ⟧ ↑t(Float);
 // Missing case: variables -- handled by Ee below.
 
-attribute ↓e{Exp:Type};  // inherited type environment
+attribute ↓e{ID:Type};  // inherited type environment
 sort Exp | scheme Ee(Exp) ↓e ;  // propagates $e$ over Exp
 
 // These rules associate $t$ attribute with variables (missing case above).
