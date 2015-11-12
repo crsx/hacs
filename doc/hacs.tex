@@ -1288,6 +1288,10 @@ and cannot be easily achieved with usual positional arguments to recursive schem
       &
       E.t = \op{Lookup}(E.e, \textbf{id}_1.sym)
       &\thetag{3}
+      \\[1pt]
+      \quad~\mid \textbf{num}_1
+      &
+      &\thetag{4}
       \\[\jot]
       \Xhline{2\arrayrulewidth}
     \end{array}
@@ -1302,12 +1306,15 @@ and cannot be easily achieved with usual positional arguments to recursive schem
   Rule \thetag{2} merely expresses that the $e$ attribute is inherited from the context to both
   subexpressions of addition expresions.
   %% 
-  Finally, rule \thetag{3} uses the environment to attach a synthesized attribute $t$ onto an $E$
-  that contains an \textbf{id} token (but is not otherwise used in these rules). Specifically, the
+  Rule \thetag{3} uses the environment to attach a synthesized attribute $t$ onto an $E$ that
+  contains an \textbf{id} token (but is not otherwise used in these rules). Specifically, the
   notation is meant to suggest that the type value is obtained by a \emph{lookup} of the mapping for
   the symbol of $\textbf{id}_1$.
+  %%
+  Finally, rule \thetag{4} is included to exemplify what to do with rules that do not propagate the
+  environment.
 
-  Here are the steps to follow to translate the above SDD fragment to \HAX.
+  Here are the steps to translate the above SDD fragment to \HAX.
   %% 
   \begin{enumerate}
 
@@ -1365,10 +1372,12 @@ and cannot be easily achieved with usual positional arguments to recursive schem
   that follows from the use of the "Ee" scheme. The recursive arrangement of the "Ee" wrappers
   implies the two attribute equations $E_1.e=E.e$ and $E_2.e=E.e$ from \thetag{2}.
 
-%The following sentence appears to be missing a predicate
-\item Next, rule \thetag{3}, which defines the synthesized attribute $t$ on \textbf{id}-expressions
-  using a ``Lookup'' meta-function that is meant to suggest extracting the mapping from the $E.e$
-  environment inherited from the context. Begin with a template like this:
+  Also notice that for inherited attributes \emph{all} the equations are handled by \emph{one} rule,
+  unlike for synthesized, where there is a synthesis rule for every equation.
+
+\item Next, consider rule \thetag{3}, which defines the synthesized attribute $t$ on
+  \textbf{id}-expressions using a ``Lookup'' meta-function that is meant to suggest extracting the
+  mapping from the $E.e$ environment inherited from the context. Begin with a template like this:
   \begin{hacs}
    Ee(⟦⟨ID#1⟩⟧)  →  ⟦⟨ID#1⟩⟧ ;
   \end{hacs}
@@ -1391,7 +1400,7 @@ and cannot be easily achieved with usual positional arguments to recursive schem
   Notice how mappings like "e" use "{}" notation for both declarations and constraints, and simply
   valued attributes like "t" use~"()".
 
-\item Finally, encode \thetag{1}. Begin with
+\item The semantic rules of the SDD can now be completed by encoding \thetag{1}. Begin with
   \begin{hacs}
    Se(⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E#3⟩; ⟨S#4⟩⟧)  →    ⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E Ee(#3)⟩; ⟨S Se(#4)⟩⟧ ;
   \end{hacs}
@@ -1407,6 +1416,25 @@ and cannot be easily achieved with usual positional arguments to recursive schem
   Consider carefully how the "⟦…⟧" and "⟨…⟩" nest: the first set wraps syntax fragments, and the
   second wraps raw (non-syntax) fragments inside syntax. Attribute constraints are always in the raw
   fragments.
+
+\item Finally, \thetag{4} does not contain any semantic rules but a case must still be provided for
+  the scheme:
+  \begin{hacs}
+   Ee(⟦⟨NUM#1⟩⟧)  →  ⟦⟨NUM#1⟩⟧ ;
+  \end{hacs}
+
+\item Furthermore, if the SDD in question has more semantic rules with synthetic attributes, then
+  all of the above rules should be equipped with a special "↑#syn" marker to preserve \emph{all}
+  synthesized attributes through the inheritance scheme, which makes the whole system look as
+  follows.
+  \begin{hacs}
+   Se(⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E#3⟩; ⟨S#4⟩⟧ ↑#syn)
+     →   ⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E Ee(#3)⟩; ⟨S Se(#4) ↓e{#2 : #1}⟩⟧ ↑#syn ;
+
+   Ee(⟦⟨E#1⟩ + ⟨E#2⟩⟧ ↑#syn)  →  ⟦⟨E Ee(#1)⟩ + ⟨E Ee(#2)⟩⟧ ↑#syn ;
+   Ee(⟦⟨ID#1⟩⟧ ↑#syn) ↓e{#1 : #t}  →   ⟦⟨ID#1⟩⟧ ↑#syn ↑t(#t) ;
+   Ee(⟦⟨NUM#1⟩⟧ ↑#syn)  →  ⟦⟨NUM#1⟩⟧ ↑#syn ;
+  \end{hacs}
 
 \end{enumerate}
 \end{example}
