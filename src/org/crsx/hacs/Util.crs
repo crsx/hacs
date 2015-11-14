@@ -250,6 +250,9 @@ U-GetConstructorScopeSorts2[#Constructor,{#C2SS}N2SS] → $[{#C2SS}Get[$List[HxS
 {$String<!--SortName--> : DeclarationMapEntry}U-IfSymbolForm[HxParsedForm, $String<!--ModuleName-->, in::$String.Text, Text] :: Text;
 {#DM}U-IfSymbolForm[#ParsedForm, #ModuleName, t.#[t], #text] → #text ;
 
+{$String<!--Name--> : DeclarationMapEntry} U-IsToken[$String<!--Name-->] :: Boolean ;
+{#DM} U-IsToken[#Name] → ContainsName[{#DM}U-AllTokenNames, #Name] ;
+
 /// {$String<!--SortName--> : DeclarationMapEntry}U-IfSymbolForm[HxParsedForm, $String<!--ModuleName-->, in::$String.Text, Text] :: Text;
 /// {#DM}U-IfSymbolForm[Hx_ParsedFormTerm[#HxScopeSortPrec, #ParsedForm], #ModuleName, t.#[t], #text] → {#DM}U-IfSymbolFormScopeSortPrec[#HxScopeSortPrec, #ParsedForm, #ModuleName, t.#[t], #text] ;
 /// {#DM}U-IfSymbolForm[Hx_ParsedFormSpace[#space, #ParsedForm], #ModuleName, t.#[t], #text] → {#DM}U-IfSymbolForm[#ParsedForm, #ModuleName, t.#[t], #text] ;

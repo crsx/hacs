@@ -1323,123 +1323,123 @@ and cannot be easily achieved with usual positional arguments to recursive schem
     \begin{hacs}
    sort S  | ⟦ ⟨T⟩ ⟨ID⟩ = ⟨E⟩ ; ⟨S⟩ ⟧ ;
    sort E  | ⟦ ⟨E⟩ + ⟨E@1⟩ ⟧   | ⟦ ⟨ID⟩ ⟧@1 ;
-  \end{hacs}
-  %% 
-  (Assume that the "T" sort is defined elsewhere.)
+    \end{hacs}
+    %% 
+    (Assume that the "T" sort is defined elsewhere.)
 
-\item Having defined the grammar, declare the new attribute:
-  \begin{hacs}
+  \item Having defined the grammar, declare the new attribute:
+    \begin{hacs}
    attribute ↓e{ID : T} ;
-  \end{hacs}
-  Like synthesized attributes, inherited attributes are always given lowercase names.  The "{ID:T}"
-  part declares the value of the attribute to be a \emph{mapping} from values (token strings) of
-  "ID" sort to values of "T" sort. Such mappings take the role of symbol tables from traditional
-  compilers.
+    \end{hacs}
+    Like synthesized attributes, inherited attributes are always given lowercase names.  The
+    "{ID:T}" part declares the value of the attribute to be a \emph{mapping} from values (token
+    strings) of "ID" sort to values of "T" sort. Such mappings take the role of symbol tables from
+    traditional compilers.
 
-\item Second, associate the inherited attribute to one or more \emph{recursive schemes}, which will
-  be responsible for propagating that inherited attribute over values of a certain sort.  This has
-  to be done by inventing a separate scheme for each combination of a sort and an inherited
-  attribute:
-  \begin{hacs}
+  \item Second, associate the inherited attribute to one or more \emph{recursive schemes}, which
+    will be responsible for propagating that inherited attribute over values of a certain sort.
+    This has to be done by inventing a separate scheme for each combination of a sort and an
+    inherited attribute:
+    \begin{hacs}
    sort S | scheme Se(S) ↓e ;
    sort E | scheme Ee(E) ↓e ;
-  \end{hacs}
-  As can be seen, the scheme generates results of the "S" and "E" sorts, in each case taking a
-  single argument of the same sort, and for each indicating with a "↓" that the scheme
-  \emph{carries} the associated inherited attribute. Notice that, unlike for synthesized
-  declarations, there is no "|" in front of the attribute, because the attribute itself is specific
-  to the scheme, not a declaration for the entire sort.
+    \end{hacs}
+    As can be seen, the scheme generates results of the "S" and "E" sorts, in each case taking a
+    single argument of the same sort, and for each indicating with a "↓" that the scheme
+    \emph{carries} the associated inherited attribute. Notice that, unlike for synthesized
+    declarations, there is no "|" in front of the attribute, because the attribute itself is
+    specific to the scheme, not a declaration for the entire sort.
 
-\item Next, encode the simplest rule, \thetag{2}. As in the previous section, observe that
-  \thetag{2} operates on sums, which leads to a pattern like the following, using the subscripts
-  from~\thetag{2}:
-  \begin{hacs}
+  \item Next, encode the simplest rule, \thetag{2}. As in the previous section, observe that
+    \thetag{2} operates on sums, which leads to a pattern like the following, using the subscripts
+    from~\thetag{2}:
+    \begin{hacs}
    ⟦ ⟨E#1⟩ + ⟨E#2⟩ ⟧
-  \end{hacs}
-  Now insert the pattern into the scheme, as was done for recursive syntax-directed schemes:
-  \begin{hacs}
+    \end{hacs}
+    Now insert the pattern into the scheme, as was done for recursive syntax-directed schemes:
+    \begin{hacs}
    Ee(⟦⟨E#1⟩ + ⟨E#2⟩⟧)
-  \end{hacs}
-  This clearly respects the sort constraints defined above, with "Ee" being applied to an "E"
-  expression. Since there are no complicated dependencies in \thetag{2}, the process is almost
-  complete. All that is left to do is create a rule that, on the right side of the "→" applies the
-  "Ee" scheme recursively to the subexpressions that should inherit the "e" attribute, which are the
-  two marked subexpression, \emph{inside the syntax markers}:
-  \begin{hacs}
+    \end{hacs}
+    This clearly respects the sort constraints defined above, with "Ee" being applied to an "E"
+    expression. Since there are no complicated dependencies in \thetag{2}, the process is almost
+    complete. All that is left to do is create a rule that, on the right side of the "→" applies the
+    "Ee" scheme recursively to the subexpressions that should inherit the "e" attribute, which are
+    the two marked subexpression, \emph{inside the syntax markers}:
+    \begin{hacs}
    Ee(⟦⟨E#1⟩ + ⟨E#2⟩⟧)  →  ⟦⟨E Ee(#1)⟩ + ⟨E Ee(#2)⟩⟧ ;
-  \end{hacs}
-  Notice that there is no explicit mention of the "e" attribute, only the \emph{implicit} copying
-  that follows from the use of the "Ee" scheme. The recursive arrangement of the "Ee" wrappers
-  implies the two attribute equations $E_1.e=E.e$ and $E_2.e=E.e$ from \thetag{2}.
+    \end{hacs}
+    Notice that there is no explicit mention of the "e" attribute, only the \emph{implicit} copying
+    that follows from the use of the "Ee" scheme. The recursive arrangement of the "Ee" wrappers
+    implies the two attribute equations $E_1.e=E.e$ and $E_2.e=E.e$ from \thetag{2}.
 
-  Also notice that for inherited attributes \emph{all} the equations are handled by \emph{one} rule,
-  unlike for synthesized, where there is a synthesis rule for every equation.
+    Also notice that for inherited attributes \emph{all} the equations are handled by \emph{one}
+    rule, unlike for synthesized, where there is a synthesis rule for every equation.
 
-\item Next, consider rule \thetag{3}, which defines the synthesized attribute $t$ on
-  \textbf{id}-expressions using a ``Lookup'' meta-function that is meant to suggest extracting the
-  mapping from the $E.e$ environment inherited from the context. Begin with a template like this:
-  \begin{hacs}
+  \item Next, consider rule \thetag{3}, which defines the synthesized attribute $t$ on
+    \textbf{id}-expressions using a ``Lookup'' meta-function that is meant to suggest extracting the
+    mapping from the $E.e$ environment inherited from the context. Begin with a template like this:
+    \begin{hacs}
    Ee(⟦⟨ID#1⟩⟧)  →  ⟦⟨ID#1⟩⟧ ;
-  \end{hacs}
-  which just states that the $e$ attribute is inherited ``into'' a name subterm (through "Ee"),
-  essentially making $E.e$ available, but note that the rule does not use the inherited attribute. In
-  particular, this rule fails to actually set the $t$ attribute. Fixing this entails first capturing
-  the ``Lookup'' in the inherited environment. \HAX has a special notation for this. Write the
-  pattern as follows:
-  \begin{hacs}
+    \end{hacs}
+    which just states that the $e$ attribute is inherited ``into'' a name subterm (through "Ee"),
+    essentially making $E.e$ available, but note that the rule does not use the inherited
+    attribute. In particular, this rule fails to actually set the $t$ attribute. Fixing this entails
+    first capturing the ``Lookup'' in the inherited environment. \HAX has a special notation for
+    this. Write the pattern as follows:
+    \begin{hacs}
    Ee(⟦⟨ID#1⟩⟧) ↓e{#1 : #t}  →     …
-  \end{hacs}
-  The pattern of this rule is equipped with a \emph{mapping constraint} on the "e" inherited
-  attribute, which corresponds to the "Lookup" notation of \thetag{3} above. It will match when "Ee"
-  is applied to a name, called "#1", which is \emph{also} mapped by the associated "e" attribute to
-  a type, denoted~"#t". After capturing the mapped type this way, complete the rule by explicitly
-  associating it to the "t" attribute associated with "ID" expressions.
-  \begin{hacs}
+    \end{hacs}
+    The pattern of this rule is equipped with a \emph{mapping constraint} on the "e" inherited
+    attribute, which corresponds to the "Lookup" notation of \thetag{3} above. It will match when
+    "Ee" is applied to a name, called "#1", which is \emph{also} mapped by the associated "e"
+    attribute to a type, denoted~"#t". After capturing the mapped type this way, complete the rule
+    by explicitly associating it to the "t" attribute associated with "ID" expressions.
+    \begin{hacs}
    Ee(⟦⟨ID#1⟩⟧) ↓e{#1 : #t}  →   ⟦⟨ID#1⟩⟧ ↑t(#t) ;
-  \end{hacs}
-  Notice how mappings like "e" use "{}" notation for both declarations and constraints, and simply
-  valued attributes like "t" use~"()".
+    \end{hacs}
+    Notice how mappings like "e" use "{}" notation for both declarations and constraints, and simply
+    valued attributes like "t" use~"()".
 
-\item The semantic rules of the SDD can now be completed by encoding \thetag{1}. Begin with
-  \begin{hacs}
+  \item The semantic rules of the SDD can now be completed by encoding \thetag{1}. Begin with
+    \begin{hacs}
    Se(⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E#3⟩; ⟨S#4⟩⟧)  →    ⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E Ee(#3)⟩; ⟨S Se(#4)⟩⟧ ;
-  \end{hacs}
-  which merely establishes that the basic rules that the $S.e$ attribute inherited from the context
-  (through the left hand "Se") are passed to both $E_3$ and $S_4$ through the right "Ee" and "Se",
-  respectively. This captures everything except the ``Extend'' notation. \HAX supports this by
-  allowing mapping constraints also on the right side of the "→" acting as \emph{extensions} of the
-  map.
-  \begin{hacs}
+    \end{hacs}
+    which merely establishes that the basic rules that the $S.e$ attribute inherited from the
+    context (through the left hand "Se") are passed to both $E_3$ and $S_4$ through the right "Ee"
+    and "Se", respectively. This captures everything except the ``Extend'' notation. \HAX supports
+    this by allowing mapping constraints also on the right side of the "→" acting as
+    \emph{extensions} of the map.
+    \begin{hacs}
    Se(⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E#3⟩; ⟨S#4⟩⟧)
    →   ⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E Ee(#3)⟩; ⟨S Se(#4) ↓e{#2 : #1}⟩⟧ ;
-  \end{hacs}
-  Consider carefully how the "⟦…⟧" and "⟨…⟩" nest: the first set wraps syntax fragments, and the
-  second wraps raw (non-syntax) fragments inside syntax. Attribute constraints are always in the raw
-  fragments.
+    \end{hacs}
+    Consider carefully how the "⟦…⟧" and "⟨…⟩" nest: the first set wraps syntax fragments, and the
+    second wraps raw (non-syntax) fragments inside syntax. Attribute constraints are always in the
+    raw fragments.
 
-\item Finally, \thetag{4} does not contain any semantic rules but a case must still be provided for
-  the scheme:
-  \begin{hacs}
+  \item Finally, \thetag{4} does not contain any semantic rules but a case must still be provided
+    for the scheme:
+    \begin{hacs}
    Ee(⟦⟨NUM#1⟩⟧)  →  ⟦⟨NUM#1⟩⟧ ;
-  \end{hacs}
+    \end{hacs}
 
-\item Furthermore, if the SDD in question has more semantic rules with synthetic attributes, then
-  all of the above rules should be equipped with a special "↑#syn" marker to preserve \emph{all}
+  \end{enumerate}
+  %% 
+  Furthermore, if the SDD in question has more semantic rules with synthetic attributes, then all of
+  the above rules should be equipped with a special "↑#syn" marker to preserve \emph{all}
   synthesized attributes through the inheritance scheme, which makes the whole system look as
   follows.
   \begin{hacs}
-   Se(⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E#3⟩; ⟨S#4⟩⟧ ↑#syn)
-     →   ⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E Ee(#3)⟩; ⟨S Se(#4) ↓e{#2 : #1}⟩⟧ ↑#syn ;
+ Se(⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E#3⟩; ⟨S#4⟩⟧ ↑#syn)
+   →   ⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E Ee(#3)⟩; ⟨S Se(#4) ↓e{#2 : #1}⟩⟧ ↑#syn ;
 
-   Ee(⟦⟨E#1⟩ + ⟨E#2⟩⟧ ↑#syn)  →  ⟦⟨E Ee(#1)⟩ + ⟨E Ee(#2)⟩⟧ ↑#syn ;
-   Ee(⟦⟨ID#1⟩⟧ ↑#syn) ↓e{#1 : #t}  →   ⟦⟨ID#1⟩⟧ ↑#syn ↑t(#t) ;
-   Ee(⟦⟨NUM#1⟩⟧ ↑#syn)  →  ⟦⟨NUM#1⟩⟧ ↑#syn ;
+ Ee(⟦⟨E#1⟩ + ⟨E#2⟩⟧ ↑#syn)  →  ⟦⟨E Ee(#1)⟩ + ⟨E Ee(#2)⟩⟧ ↑#syn ;
+ Ee(⟦⟨ID#1⟩⟧ ↑#syn) ↓e{#1 : #t}  →   ⟦⟨ID#1⟩⟧ ↑#syn ↑t(#t) ;
+ Ee(⟦⟨NUM#1⟩⟧ ↑#syn)  →  ⟦⟨NUM#1⟩⟧ ↑#syn ;
   \end{hacs}
-
-\end{enumerate}
 \end{example}
 
-With the addition of inherited attrbutes, we can now list all the possible attribute forms.
+The addition of inherited attributes completes the list of possible attributes forms.
 
 \begin{table}[t]
   \begin{figureunit}[\caption{Attribute constraints.}\label{tab:attributes}]

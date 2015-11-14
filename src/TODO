@@ -1,2 +1,4 @@
 * Lionel's lexical state syntax?
 * Sugar should be automatically used by print.
+* Sugar should allow multiple arguments.
+* Reintroduce Kleene operators.

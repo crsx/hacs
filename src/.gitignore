@@ -1,3 +1,6 @@
 build
 crsx-rulecompiler
 lib
+readme.txt
+*.tgz
+*.zip

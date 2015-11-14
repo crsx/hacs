@@ -1273,7 +1273,7 @@ P-ProduceBodyTerm3[$String<!--ModuleName-->, $String<!--HostSort-->, $String<!--
 {#DM} P-ProduceBody0[#ModuleName, #SortName, StringJoin[(#tagprefix; "_"; U-SortName[#HxSort#]; "_";), ""], #nonterminalPFKs, $[Plus,#n,1],
   Append[#words, (%n⟨†‹ U-SortName[#HxSort#] ›⟩;)],
   Append[#terms, (%n⟨†‹ P-SortMetaVar[#HxSort#, #n] ›⟩;)],
-  Append[#scopes, (%n⟨‹ P-CRSX-ArgumentWrapper[#HxSubstituteSorts#, P-SortMetaVar[#HxSort#, #n], #Kind] ›⟩;)],
+  Append[#scopes, (%n⟨‹ P-CRSX-ArgumentWrapper[{#DM}U-IsToken[U-QN[#ModuleName,"",U-SortName[#HxSort#]]], #HxSubstituteSorts#, P-SortMetaVar[#HxSort#, #n], #Kind] ›⟩;)],
   #consumer,
   in after .
     #[%n⟪⟦( <« P-ProductionNameWithPrecRepeatText[U-SortName[#HxSort#], StringToNumericDefault[#HxFormPrec#,0], #HxRepeat#] »>«
@@ -1325,12 +1325,15 @@ P-ProduceBodyTerm3[$String<!--ModuleName-->, $String<!--HostSort-->, $String<!--
     -[Data[#Name,#HxString#]]:      P-RegExpSubNameText[#Name, %rawHxRegExpSub⟪ #HxString# ⟫] → %n⟪†«#Name»_SomeS†« $[Mangle,#HxString#] »⟫ ;
     -[Data[#Name,#HxSeparator#]]:        P-RegExpSubNameText[#Name, %rawHxRegExpSub⟪ #HxSeparator# ⟫] → %n⟪†«#Name»_SomeW†« $[Mangle,#HxSeparator#] »⟫ ;
 
-    P-CRSX-ArgumentWrapper[$List[HxSubstituteSort], $String<!--MetaVar-->, FormKind] :: Text ;
-    P-CRSX-ArgumentWrapper[#HxSubstituteSorts, #MetaVar, FK_DATA[#tag]] → %n⟪/***EMBEDPG: <!--2--> 'C-UnravelScope_†« NumericToString[Length[#HxSubstituteSorts]] »'[***/†«#MetaVar»/***EMBEDPG:]***/⟫ ;
-    P-CRSX-ArgumentWrapper[#HxSubstituteSorts, #MetaVar, FK_SCHEME[#tag]] → %n⟪/***EMBEDPG: <!--3--> 'C-UnravelScope_†« NumericToString[Length[#HxSubstituteSorts]] »'[***/†«#MetaVar»/***EMBEDPG:]***/⟫ ;
-    P-CRSX-ArgumentWrapper[#HxSubstituteSorts, #MetaVar, FK_SYMBOL[#stat, #token]] → %n⟪†«#MetaVar»⟫ ;
-    P-CRSX-ArgumentWrapper[#HxSubstituteSorts, #MetaVar, FK_SUGAR[#term]] → %n⟪†«#MetaVar»⟫ ;
-    P-CRSX-ArgumentWrapper[#HxSubstituteSorts, #MetaVar, FK_ALIAS] → %n⟪†«#MetaVar»⟫ ;
+    P-CRSX-ArgumentWrapper[Boolean<!--IsToken-->, $List[HxSubstituteSort], $String<!--MetaVar-->, FormKind] :: Text ;
+    P-CRSX-ArgumentWrapper[#IsToken, #HxSubstituteSorts, #MetaVar, FK_DATA[#tag]]
+    →
+    %n⟪/***EMBEDPG: <!--2--> 'C-UnravelScope_†« NumericToString[Length[#HxSubstituteSorts]] »'[«If[#IsToken, %n⟨Hx_Literal[⟩, %n⟨⟩]»***/†«#MetaVar»/***EMBEDPG:«If[#IsToken, %n⟨, ()]⟩, %n⟨⟩]»]***/⟫
+    ;
+    P-CRSX-ArgumentWrapper[#IsToken, #HxSubstituteSorts, #MetaVar, FK_SCHEME[#tag]] → %n⟪/***EMBEDPG: <!--3--> 'C-UnravelScope_†« NumericToString[Length[#HxSubstituteSorts]] »'[***/†«#MetaVar»/***EMBEDPG:]***/⟫ ;
+    P-CRSX-ArgumentWrapper[#IsToken, #HxSubstituteSorts, #MetaVar, FK_SYMBOL[#stat, #token]] → %n⟪†«#MetaVar»⟫ ;
+    P-CRSX-ArgumentWrapper[#IsToken, #HxSubstituteSorts, #MetaVar, FK_SUGAR[#term]] → %n⟪†«#MetaVar»⟫ ;
+    P-CRSX-ArgumentWrapper[#IsToken, #HxSubstituteSorts, #MetaVar, FK_ALIAS] → %n⟪†«#MetaVar»⟫ ;
 
     P-SortMetaVar[HxSort, $Numeric] :: $String;
     -[Data[#Sort]]: P-SortMetaVar[#Sort, #n] → P-SortMetaVar2[#Sort, #n] ;
