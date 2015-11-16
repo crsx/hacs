@@ -251,7 +251,7 @@ U-GetConstructorScopeSorts2[#Constructor,{#C2SS}N2SS] → $[{#C2SS}Get[$List[HxS
 {#DM}U-IfSymbolForm[#ParsedForm, #ModuleName, t.#[t], #text] → #text ;
 
 {$String<!--Name--> : DeclarationMapEntry} U-IsToken[$String<!--Name-->] :: Boolean ;
-{#DM} U-IsToken[#Name] → ContainsName[{#DM}U-AllTokenNames, #Name] ;
+{#DM} U-IsToken[#Name] → ContainsName[{#DM}U-AllTokenNames, {#DM}U-Qualify[#Name]] ;
 
 /// {$String<!--SortName--> : DeclarationMapEntry}U-IfSymbolForm[HxParsedForm, $String<!--ModuleName-->, in::$String.Text, Text] :: Text;
 /// {#DM}U-IfSymbolForm[Hx_ParsedFormTerm[#HxScopeSortPrec, #ParsedForm], #ModuleName, t.#[t], #text] → {#DM}U-IfSymbolFormScopeSortPrec[#HxScopeSortPrec, #ParsedForm, #ModuleName, t.#[t], #text] ;
@@ -1329,6 +1329,16 @@ U-TokenOrQN[#ModuleName, #Kind, #Name]
 ///If[ContainsName[#TokenNames, #Name], #Name, U-QN[#ModuleName, #Kind, #Name]]
 U-QN[#ModuleName, #Kind, #Name]
 ;
+
+// Qualify with stored module name if needed.
+
+{$String<!--Name--> : DeclarationMapEntry} U-Qualify[$String<!--Name-->] :: $String ;
+-[Data[#name]]:
+{#DM}U-Qualify[#name] → $[If, $[Contains, #name, "$"], #name, U-Qualify2[$[{#DM}Get[DeclarationMapEntry], "Module$Name", DME_NONE], #name]] ;
+
+    U-Qualify2[DeclarationMapEntry, $String] :: $String ;
+    U-Qualify2[DME_STRING[#module], #name] → StringConcat3[U-LastName[#module], "$", #name] ;
+    U-Qualify2[DME_NONE, #name] → #name ;
 
 // Local name.
 

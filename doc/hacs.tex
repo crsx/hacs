@@ -1439,6 +1439,12 @@ and cannot be easily achieved with usual positional arguments to recursive schem
   \end{hacs}
 \end{example}
 
+One important constraint for inherited attributes is that there is \emph{precisely one} rule for the
+carrier scheme of the attribute per syntax case. This has an interesting consequence: \emph{if a
+  rule mixes several inherited attributes, those inherited attributes must share the same carrier.}
+
+%%TODO: Example with shared carrier.
+
 The addition of inherited attributes completes the list of possible attributes forms.
 
 \begin{table}[t]

@@ -2,6 +2,7 @@ module org.crsx.hacs.samples.IsCat {
 
 token WORD | [A-Za-z]+ ;
 main sort Word | ⟦⟨WORD⟩⟧ ;
+main sort Var | symbol ⟦⟨WORD⟩⟧ ;
 
 sort Boolean | ⟦True⟧ | ⟦False⟧ ;
 

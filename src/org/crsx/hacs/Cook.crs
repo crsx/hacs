@@ -101,7 +101,7 @@ Cook4[#ModuleName, #OriginalDeclarations, #DM]
 ;
 
 C-AddComputedSort[$String<!--ModuleName-->, DeclarationMap] :: DeclarationMap ;
--[Data[#Module]]:
+-[Data[#ModuleName]]:
 C-AddComputedSort[#ModuleName, #DM] → C-AddComputedSort1[U-QN[#ModuleName, "", "Computed"], #DM] ;
 
 C-AddComputedSort1[$String<!--Name-->, DeclarationMap] :: DeclarationMap ;
@@ -1095,63 +1095,55 @@ C-CrsxifyTermOrToken[HxScopeSort, HxTerm, NameSet<!--TopInherited-->, Declaratio
 C-CrsxifyTermOrToken[Hx_RawBoundVariable[#Term, #ScopeSort], #HxTerm#, #TopInherited, #DM, #SM] → C-CrsxifyTermOrToken[#ScopeSort, #HxTerm#, #TopInherited, #DM, #SM] ;
 C-CrsxifyTermOrToken[%rawHxScopeSort⟪ #HxSort# #HxRepeat# [ #HxSubstituteSorts# ] ⟫, #HxTerm#, #TopInherited, {#DM}DM, #SM]
 →
-C-CrsxifyTermOrToken2[ContainsName[{#DM}U-AllTokenNames, U-SortNameWithRepeat[#HxSort#, #HxRepeat#]], U-SortNameWithRepeat[#HxSort#, #HxRepeat#], #HxTerm#, #TopInherited, {#DM}DM, #SM]
+C-CrsxifyTermOrToken2[{#DM}U-IsToken[{#DM}U-Qualify[U-SortNameWithRepeat[#HxSort#, #HxRepeat#]]], U-SortNameWithRepeat[#HxSort#, #HxRepeat#], #HxTerm#, #TopInherited, {#DM}DM, #SM]
 ;
 
 C-CrsxifyTermOrToken2[Boolean<!--IsToken-->, $String, HxTerm, NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
--[Data[#name]]: C-CrsxifyTermOrToken2[B_TRUE, #name, #HxTerm#, #TopInherited, {#DM}DM, #SM] → %n⟪<!--TOKEN:--> « C-CrsxifyToken[#HxTerm#, #TopInherited, {#DM}DM, #SM] »⟫ ;
--[Data[#name]]: C-CrsxifyTermOrToken2[B_FALSE, #name, #HxTerm#, #TopInherited, {#DM}DM, #SM] → %n⟪<!--TERM:--> « C-CrsxifyTerm[#HxTerm#, #TopInherited, {#DM}DM, #SM] »⟫ ;
+-[Data[#name]]: C-CrsxifyTermOrToken2[B_TRUE, #name, #HxTerm#, #TopInherited, {#DM}DM, #SM] → %n⟪<!--TOKEN:†«#name»--> « C-CrsxifyToken[#HxTerm#, #TopInherited, {#DM}DM, #SM] »⟫ ;
+-[Data[#name]]: C-CrsxifyTermOrToken2[B_FALSE, #name, #HxTerm#, #TopInherited, {#DM}DM, #SM] → %n⟪<!--TERM:†«#name»--> « C-CrsxifyTerm[#HxTerm#, #TopInherited, {#DM}DM, #SM] »⟫ ;
 
 // Convert a token.
 
 C-CrsxifyToken[HxTerm, NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
 
--[Data[#token]] :
-C-CrsxifyToken[#token, #TopInherited, #DM, #SM]
-→
-$[If, $[Literal, #token], %n⟪†« $[Escape,$[Symbol,#token]] »⟫, C-CrsxifyToken1[#token, #TopInherited, #DM, #SM]]
-;
-
-C-CrsxifyToken1[HxTerm, NameSet<!--TopInherited-->, DeclarationMap, SortMap] :: Text ;
-
-C-CrsxifyToken1[%rawHxTerm⟪ #HxLiteral# #HxAttributes# ⟫, #TopInherited, #DM, #SM]
+C-CrsxifyToken[%rawHxTerm⟪ #HxLiteral# #HxAttributes# ⟫, #TopInherited, #DM, #SM]
 →
 %n⟪ « C-CrsxifyAttributes[#HxAttributes#, NoNames, #TopInherited, #DM, #SM] »« C-CrsxifyLiteral[#HxLiteral#] » ⟫
 ;
-C-CrsxifyToken1[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxLiteral# #HxAttributes# ⟫, #TopInherited, #DM, #SM]
+C-CrsxifyToken[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxLiteral# #HxAttributes# ⟫, #TopInherited, #DM, #SM]
 →
 %n⟪ « C-CrsxifyAttributes[#HxAttributes#, NoNames, #TopInherited, #DM, #SM] »« C-CrsxifyLiteral[#HxLiteral#] » ⟫
 ;
-C-CrsxifyToken1[%rawHxTerm⟪ #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫, #TopInherited, #DM, #SM]
+C-CrsxifyToken[%rawHxTerm⟪ #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫, #TopInherited, #DM, #SM]
 →
 %n⟪ « C-CrsxifyAttributes[#HxAttributes#, NoNames, #TopInherited, #DM, #SM] »« C-CrsxifyMetaApplication[#HxMetaVariable#, #HxTerms#, #TopInherited, #DM, #SM] » ⟫
 ;
-C-CrsxifyToken1[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫, #TopInherited, #DM, #SM]
+C-CrsxifyToken[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxMetaVariable# [ #HxTerms# ] #HxAttributes# ⟫, #TopInherited, #DM, #SM]
 →
 %n⟪ « C-CrsxifyAttributes[#HxAttributes#, NoNames, #TopInherited, #DM, #SM] »« C-CrsxifyMetaApplication[#HxMetaVariable#, #HxTerms#, #TopInherited, #DM, #SM] » ⟫
 ;
-C-CrsxifyToken1[%rawHxTerm⟪ special #HxConcreteText# #HxAttributes# ⟫, #TopInherited, #DM, #SM]
+C-CrsxifyToken[%rawHxTerm⟪ special #HxConcreteText# #HxAttributes# ⟫, #TopInherited, #DM, #SM]
 →
 %n⟪ « C-CrsxifyAttributes[#HxAttributes#, NoNames, #TopInherited, #DM, #SM] »« C-CrsxifySpecial[special, #HxConcreteText#] » ⟫
 ;
 -[Free[variable::HxTerm]]:
-C-CrsxifyToken1[%rawHxTerm⟪ variable #HxAttributes# ⟫, #TopInherited, #DM, #SM]
+C-CrsxifyToken[%rawHxTerm⟪ variable #HxAttributes# ⟫, #TopInherited, #DM, #SM]
 →
 $[Error,$[:,"Variable used with token sort."]]
 ;
 -[Free[variable::HxTerm]]:
-C-CrsxifyToken1[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# variable #HxAttributes# ⟫, #TopInherited, #DM, #SM]
+C-CrsxifyToken[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# variable #HxAttributes# ⟫, #TopInherited, #DM, #SM]
 →
 $[Error,$[:,"Variable used with token sort."]]
 ;
-C-CrsxifyToken1[%rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #TopInherited, {#DM}DM, #SM]
+C-CrsxifyToken[%rawHxTerm⟪ #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #TopInherited, {#DM}DM, #SM]
 →
 %n⟪« C-CrsxifyAttributes[#HxAttributes#, {#DM}U-GetFunctionInherited[#HxConstructor#], #TopInherited, {#DM}DM, #SM]
   »« C-CrsxifyConstructor[#HxConstructor#]
   »⟦« WrappedTextJoin[Map2x[s ss.C-CrsxifyScope[s, ss, #TopInherited, {#DM}DM, #SM], #HxScopes#, {#DM}U-GetConstructorScopeSorts[#HxConstructor#], NoScopeSort], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]
   »⟧⟫
 ;
-C-CrsxifyToken1[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #TopInherited, {#DM}DM, #SM]
+C-CrsxifyToken[%rawHxTerm⟪ #HxConstructor1# #HxRepeat1# #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫, #TopInherited, {#DM}DM, #SM]
 →
 %n⟪« C-CrsxifyAttributes[#HxAttributes#, {#DM}U-GetFunctionInherited[#HxConstructor#], #TopInherited, {#DM}DM, #SM]
   »« C-CrsxifyConstructor[#HxConstructor#]
