@@ -32,7 +32,7 @@
 \newcommand{\CK}[1]{\textcolor{blue}{CK: #1}}
 \newcommand{\KR}[1]{\textcolor{red}{KR: #1}}
 \newcommand{\LV}[1]{\textcolor{green}{LV: #1}}
-\newcommand{\MS}[1]{\textcolor{pink}{MS: #1}}
+\newcommand{\MS}[1]{\textcolor{violet}{MS: #1}}
 
 
 \begin{document}
@@ -51,7 +51,7 @@
   how the central constructs of the much richer \HAX and \CRSX formalisms can be represented in
   \hax. We also outline how \hax can be implemented, and summarize central properties of the system.
 
-  \CK{Cynthia's comments.} \KR{Kris' comments.} \LV{Lionel's comments.}
+  \CK{Cynthia's comments.} \KR{Kris' comments.} \LV{Lionel's comments.} \MS{Maria's comments.}
 \end{abstract}
 
 \compacttableofcontents
@@ -93,7 +93,7 @@ and finally Section~\ref{sec:conc} concludes and compares to related work.
 
 In this section we outline the \hax calculus, with a minimal syntax that supports the \HAX source
 language. \KR{Changed to Lionel's proposed syntax, except attributes are called ``associations''
-  (they are different) and can only occur as construction ``pieces.''}
+  (they are different) and can only occur as construction ``pieces.''} \MS{pieces == subterms?}
 
 \begin{figure*}[ht]
   \begin{align}
@@ -139,27 +139,55 @@ language. \KR{Changed to Lionel's proposed syntax, except attributes are called 
   \label{fig:syntax}
 \end{figure*}
 
+\MS{About Figure~\ref{fig:syntax}
+  \begin{itemize}
+  \item $ D ::= \kw{sort}~S~a^*~\kwm\{\, F^*\,\kwm\}$. What does the $a$ stand for?
+  \item The keyword $\kw{rule}$ is redundant? Maybe also $\kw{data}$ and $\kw{scheme}$?
+  \item $O ::= ~\mid \kw{default}$ \\
+    Is this really ``core''? I understand $\kw{default}$ as the ``fallback'' rule of a set of rules
+    with the same function symbol, e.g., $ Plus([]\#1(), []\#2[]) → \#2[] ;$ in
+    Figure~\ref{fig:peano}. But it would be easily computable whether a rule is a fallback rule,
+    i.e., the most general instance of a set of rules. Am I missing something?
+  \item There are three different ways to ``brace'' 
+     \begin{itemize}
+     \item $\kwm\{\ \kwm\} $: for associations
+     \item $\kw{[ ]}$: for variables and meta variable arguments
+     \item $\kw{()}$: for term, data and scheme arguments
+     \end{itemize}
+     I find this a bit confusing. Why not only one? Do the braces \emph{add} any info?
+  \end{itemize}
+}
+
 \begin{definition}[\hax syntax]
   %%
   The \hax syntax is shown in Figure~\ref{fig:syntax}. The top level of a \hax script is a sequence
-  of declarations $D^*$, and the grammar assumes that we have three categories of tokens defined:
+  of declarations $D^*$ and the grammar assumes that we have three categories of tokens defined:
+  %%
+  \MS{Wouldn't e.g., $¬$, $\kw{scheme}$, or $→$ also be a token?}
+  %%
   %%
   \begin{itemize}
 
   \item $c,s,d,f ∈ \mathcal{C}$ stand for \emph{constructor} tokens, which are capitalized words
     like "Integer" or "A" or "CamelCaseWord". They are used for sort, function symbol, and data
     symbol names. By convention, we use $s$/$d$/$f$ for sort/data/function names, respectively, and
-    $c$ when either a data or function constructor makes sense.
-
+    $c$ when either a data or function constructor makes sense.  
   \item $v,α ∈ \mathcal{V}$ stand for \emph{variable} tokens, which are lower case words like "x" or
-    "foo" or even "lowWord", used for term variables and sort variables (respectively).
-
+    "foo" or even "lowWord", used for term variables and sort variables (respectively). 
+    %%
+    \MS{Minor detail: Why don't we separate the two variable tokens in term and sort variables,
+      i.e., introduce them separately?}
+    %% 
   \item $M ∈ \mathcal{M}$ stands for \emph{meta-variable} tokens, which are tokens that start with
     "#" like "#arg" or "#BigFoot" or even just "#1" or merely~"#".
-
   \end{itemize}
   %%
-  The ``$A^{*\kw,}$'' notation means zero or more $A$s separated by commas. We shall use the
+  The ``$A^{*\kw,}$'' 
+  %%
+  \MS{We mix a bit notation here, sometimes ``$A^{*\kw,}$'', but also e.g., $c(P_1,…,P_n)$. I
+    personally prefer the latter, but I would stick to one. Or am I missing something?}
+  %%
+  notation means zero or more $A$s separated by commas. We shall use the
   following terminology:
   %%
   \begin{itemize}
@@ -168,6 +196,14 @@ language. \KR{Changed to Lionel's proposed syntax, except attributes are called 
     the top symbol $c$ is declared with a "scheme c {…}" declaration then it is called a
     \emph{function construction}, and if it is declared with "data d {…}" then it is called a
     \emph{data construction}.
+    %%
+    \MS{Here comes a really general question: How do data and function constructors/constructions
+      relate to constructor and defined symbols in term rewriting (To clarify: A symbol is
+      \emph{defined} wrt to a set of rules, if it occurs at the root of a left-hand side of a
+      rule. The other symbols are constructors.) I have a feeling, that this is actually similar? 
+      If so, I may argue, that the distinction is easily computable and is maybe not core?
+      }
+    %% 
 
   \item Arguments $P$ of constructions take one of two forms: \emph{scopes} $[v_1,…,v_n]T$, which
     introduce new local variables $v_1,…,v_n$ along with a term $T$ wherein they can occur, and
@@ -184,25 +220,77 @@ language. \KR{Changed to Lionel's proposed syntax, except attributes are called 
   
   %%
   \begin{itemize}
-
-  \item
-
-
-; if the terms $T_i$
-    are distinct bound variable occurrences then this is a \emph{pattern
+  \item ; if the terms $T_i$ are distinct bound variable occurrences then this is a \emph{pattern
       meta-application}. \KR{Notice that this means one \emph{cannot} substitute a variable by an
-      association!}
+      association!}  
 
-
-
-
- A term is called a \emph{pattern fragment} if all contained meta-applications are pattern
+    A term is called a \emph{pattern fragment} if all contained meta-applications are pattern
     meta-applications, and a \emph{pattern} if it is also a function construction.
-
-
   \end{itemize}
 
+  \MS{I next write down a couple of Terms wrt.\ to the grammar in Figure~\ref{fig:syntax}.
+      I'll start without Associations, just to get an idea.}
+   \begin{hacs}[numbers=right,texcl]
+     Zero                  
+     Plus(#X, #Y) 
+     S(Zero)         
+     x                    
+     #X                    
+    [x]#X[x]               // This pattern meta-application is not a Term. Is this intended?
+    [x,y]#F[y,x]           // ditto
+    S([x,y]#X[y,x,z])
+    #X[x]
+    #F[Zero]           
+    #F[#X]
+   \end{hacs}
+   \MS{So currently, a meta-application is not a term (except for $\#X$). Do we want this?}
+   
+   \MS{E.g., in KR thesis, TeReSe, a distinction between meta term and term (i.e., a meta term without
+     meta variables) is made. Do we also want to do this?}
+   
+   \MS{There are not any examples making use of Associations yet. So I am not sure I understand the
+     semantics here. I'll continue by writing down some Terms with Associations of the form $T \kw{:} T$:}
+   \begin{hacs}[numbers=right,texcl]
+     Plus(x, { x : Zero }) 
+     Plus(#X, { x : Zero }) 
+     S({ #X : #Y })                             
+     #Z[S({ #X : #Y })]                    
+     S({[x]#X[x] : Zero })  
+     Plus(Zero, {Zero : S(Zero)})
+     Plus( {x : y}, { z : #X })
+   \end{hacs}
+   \MS{I expect, most of them don't make sense. Could someone indicate which and why? They are all
+     derivable from the syntax.}
+   
+  \MS{I'll take the above examples and continue with Associations of the form  $¬T$:}
+   \begin{hacs}[numbers=right,texcl]
+     Plus(x, { ¬x }) 
+     Plus(x, { ¬Zero }) 
+     Plus(#X, { ¬Zero }) 
+     S({ ¬#X })                             
+     #Z[S({ ¬#Z[x] })]                    
+     S({ ¬S([x]#X[x]) })  
+     Plus(Zero, { ¬S(Zero)})
+     Plus( { ¬x}, { ¬z})
+   \end{hacs}
+   \MS{Again I expect that most of them don't make sense. Could someone indicate which and why? They
+     are all derivable from the syntax.}
+ 
+     \MS{Finally I'll take the above examples again and continue with Associations of the form  $: M$:}
+   \begin{hacs}[numbers=right,texcl]
+     Plus(x, { : #X }) 
+     Plus(#X, { : #X }) 
+     S({ : #X })                             
+     Plus(#X, { : #Y })
+     Plus([x].#X[x], { : #X })
+     Plus( { : #X}, { : #X})
+     Plus( { : #X}, { : #Y})
+   \end{hacs}
+   \MS{Again I expect that most of them don't make sense. Could someone indicate which and why? They
+     are all derivable from the syntax.}    
+
 \end{definition}
+
 
 \begin{figure*}[p]
   \vspace*{-1em}
@@ -277,6 +365,8 @@ sort List[α] { data Nil(); data Cons([]α, []List[α]);
 %%%   %%
 \end{figure*}
 
+
+
 \begin{example}[Peano]\label{ex:peano}
   The classical first order Peano arithmetic rules are a simple \hax system, shown in
   Figure~\ref{fig:peano}.  The example illustrates how a sort is defined with data constructors and
@@ -308,6 +398,13 @@ sort List[α] { data Nil(); data Cons([]α, []List[α]);
     "S([]S([]Z()))"
   \end{displaymath}
 \end{example}
+%%
+\MS{May I drop the empty parenthesis in Example~\ref{ex:peano}, Figure~\ref{fig:peano},
+  Figure~\ref{fig:lambda}, and Figure~\ref{fig:list}? They create a lot of noise.}
+%%
+
+\MS{Could I get an intution, why it is preferable to group data, scheme and rule declarations by the
+  return type?}
 
 \begin{remark}
   One difference between the CRSX family, including \hax, and other higher order rewriting
@@ -327,7 +424,10 @@ sort List[α] { data Nil(); data Cons([]α, []List[α]);
 
   \item The "Λ" sort includes a special "variable" case to indicate that variables can occur in
     terms. \CK{Should there be a qualifier like ``unbound'' in this sentence?}
-    \KR{Perhaps---suggestions?}
+    \KR{Perhaps---suggestions?} \MS{Wouldn't Figure~\ref{fig:list} then also require \kw{variable}?
+      It uses variables ($x, \beta, \alpha$) as well. However, neither Figure~\ref{fig:list} nor
+      Figure~\ref{fig:lambda} use unbound variables. What exactly do we want to express with the
+      \kw{variable}?}
 
   \item "Λ" also includes a usual case for application construction, which is a "scheme" because it
     can (sometimes) be rewritten.
