@@ -107,7 +107,7 @@ language. \KR{Changed to Lionel's proposed syntax, except attributes are called 
     F &::= \kw{data}~d\,\kw(\,\set{PF}^{*\kw,}\,\kw)\,\kw;
     \bigm| \kw{scheme}~f\,\kw(\,\set{PF}^{*\kw,}\,\kw)\,\kw;
     \bigm| \kw{variable}\,\kw;
-    \bigm| O~\kw{rule}~T~\kw{$→$}~T\,\kw;
+    \bigm| \kw{rule}~T~\kw{$→$}~T\,\kw;
     \\
     \tag{PieceForm}
     \set{PF} &::= \kw[\,S^{*\kw,}\,\kw]\,S
@@ -128,7 +128,6 @@ language. \KR{Changed to Lionel's proposed syntax, except attributes are called 
     \\
     \tag{Association}
     \set{A} &::= T\,\kw:\,T
-    \bigm| \KR{\ensuremath{v\,\kw:\,T \bigm| c\,\kw:\,T}}
     \bigm| \kw{$¬$}\,T
     \bigm| \kw:\,M
   \end{align}
