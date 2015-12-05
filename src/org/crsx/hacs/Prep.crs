@@ -1307,7 +1307,7 @@ P-ProduceBodyTerm3[$String<!--ModuleName-->, $String<!--HostSort-->, $String<!--
   #terms,
   #scopes,
   #consumer,
-  in after . #[%n⟪⟦( <†« {#DM} P-SymbolSortTokenName[#ModuleName, U-SortName[#HxSort#]] »>^«x» ⟦« in »⟧ ) ⟧⟫, after]]
+  in after . #[%n⟪⟦( †« {#DM} P-SymbolSortTokenName[#ModuleName, U-SortName[#HxSort#]] »^«x» ⟦« in »⟧ ) ⟧⟫, after]]
 ;
 
     // Extract token name 

@@ -217,6 +217,8 @@ HxRulePriority ::=(
 HxRuleOption ::=(
  %rawHxRuleOption⟪ global %HxTerm«HxTerm» ⟫;
  %rawHxRuleOption⟪ data %HxTerm«HxTerm» ⟫;
+ %rawHxRuleOption⟪ free %HxTerm«HxTerm» ⟫;
+ %rawHxRuleOption⟪ fresh %HxTerm«HxTerm» ⟫;
 );
 
 

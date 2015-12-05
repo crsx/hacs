@@ -4,7 +4,7 @@ module org.crsx.hacs.samples.Bool {
   // Syntax.
   sort B
     | ⟦ t ⟧@4 | ⟦ f ⟧@4				// true and false constants
-    | ⟦ ! ⟨B@3⟩ ⟧@3				// negation
+    | ⟦ ¬ ⟨B@3⟩ ⟧@3				// negation
     | ⟦ ⟨B@3⟩ & ⟨B@2⟩ ⟧@2			// conjunction
     | ⟦ ⟨B@2⟩ | ⟨B@1⟩ ⟧@1			// disjunction
     | sugar ⟦ ( ⟨B#⟩ ) ⟧@4 →   B#		// parenthesis
@@ -31,7 +31,7 @@ module org.crsx.hacs.samples.Bool {
   | scheme And(B, B) ;  And(⟦t⟧, #2) →  #2 ; And(⟦f⟧, #2) →  ⟦f⟧ ;
 
   // Negation.
-  ⟦ ! ⟨B# ↑b(#b)⟩ ⟧   ↑b(Not(#b)) ;
+  ⟦ ¬ ⟨B# ↑b(#b)⟩ ⟧   ↑b(Not(#b)) ;
   | scheme Not(B) ;  Not(⟦t⟧) →  ⟦f⟧ ;  Not(⟦f⟧) →  ⟦t⟧ ;
 
 }

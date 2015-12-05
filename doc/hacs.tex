@@ -1238,7 +1238,7 @@ sort Exp | ↑t ;           // expressions have an associated synthesized type, 
   \begin{code}[commandchars=\\\{\}]
 $ \textcolor{blue}{hacs Bool.hx}
 …
-$ \textcolor{blue}{./Bool.run --scheme=Eval --term='t|(!f)'}
+$ \textcolor{blue}{./Bool.run --scheme=Eval --term='t|(¬f)'}
  t
   \end{code}
 \end{example}
@@ -1595,11 +1595,21 @@ The addition of inherited attributes completes the list of possible attributes f
 
 \begin{example}
   Figure~\ref{fig:letrec} illustrates how an environment can be synthesized and then inherited. The
-  \HAX script implements variable substitutions of mutually recursive bindings, which is essentially achieved
-  by two ``passes,'' one for synthesizing an environment that contains the collected bindings, and a
-  second pass that actually distributes and applies the collected (now inherited) environment to the
-  target variable. The key rule is in line 21, where the environment that has been synthesized in
-  "b" is then copied over to the inherited attribute "e" to the "Apply" scheme.
+  \HAX script implements variable substitutions of mutually recursive bindings, which is essentially
+  achieved by two ``passes,'' one for synthesizing an environment that contains the collected
+  bindings, and a second pass that actually distributes and applies the collected (now inherited)
+  environment to the target variable. The key rule is in line 22, where the environment that has
+  been synthesized in "b" is then copied over to the inherited attribute "e" to the "Apply" scheme.
+
+  The following code tests that the lookup mechanism is truly recursive:
+  \begin{code}[commandchars=\^\{\}]
+energon1[~]$ ^textcolor{blue}{^texttt{hacs LetrecMap.hx}}
+…
+energon1[~]$ ^textcolor{blue}{^texttt{./LetrecMap.run --scheme=Reduce --term="a:b b:c in a"}}
+c
+energon1[~]$ ^textcolor{blue}{^texttt{./LetrecMap.run --scheme=Reduce --term="b:c a:b in a"}}
+c
+  \end{code}
 \end{example}
 
 The examples presented thus far have very simple attribute dependencies. A final example
@@ -1780,9 +1790,9 @@ fragments with scopes inside. These are the features where the ``H'' of \HAX mat
   The sample can be run the usual way:
   %%
   \begin{code}[commandchars=\\\{\}]
-$ \textcolor{blue}{hacs Lambda.hx}
+$ \textcolor{blue}{\texttt{hacs Lambda.hx}}
 …
-$ \textcolor{blue}{./Lambda.run --sort=T --term='(λx.x)y'}
+$ \textcolor{blue}{\texttt{./Lambda.run --sort=T --term='(λx.x)y'}}
  y
   \end{code}
   %%
@@ -1879,10 +1889,10 @@ in the old grammar from Example~\ref{ex:syntax} might look like
 \begin{hacs}
    Flip(⟦ ⟨ID#v1⟩ := ⟨Exp#2⟩; ⟨Stat#3⟩ ⟧) →    ⟦ { ⟨Stat#3⟩ } ⟨ID#v1⟩ := ⟨Exp#2⟩; ⟧ ;
 \end{hacs}
-which will take uses of "#v1" inside "#3" and move them outside of their scope. This is not
-immediately possible with HOAS without explicitly substituting the occurrences of the bound variable
-with something else in the copy, which would expose the error. (You may think that this is an
-obvious mistake that no one would make, but this sort of variable escaping is a real problem that
+which will take uses of "#v1" inside "#3" and move them outside of their scope. This will give a
+syntax error possible with HOAS without explicitly substituting the occurrences of the bound
+variable with something else in the copy, which would expose the error. (You may think that this is
+an obvious mistake that no one would make, but this sort of variable escaping is a real problem that
 leads to bugs in compilers.)
 %%
 The use of HOAS in \HAX in fact allows the full range of methods used in higher-order
@@ -1909,6 +1919,14 @@ rewriting~\cite{Jouannaud:klop2005,Klop+:tcs1993}, a very powerful mechanism.
   which is what makes it one pass, as there is no need to simplify any so-called ``administrative''
   (overlined) redices. Notice how the transformations define syntactic helper schemes, to make the
   recursive composition easier to express.
+
+  The script compiles and generates code as follows:
+  \begin{code}[commandchars=\\\{\}]
+$ \textcolor{blue}{\texttt{hacs CPS.hx}}
+…
+$ \textcolor{blue}{\texttt{./CPS.run --scheme=CPS --term="(λx.x x)"}}
+  λ k .  k (  λ x .   λ k_85 .   x x  (  λ m_40 .  k_85 m_40  )   )  
+  \end{code}
 \end{example}
 
 Finally, sometimes symbols serve as \emph{labels} or for some other purpose, when there is a need

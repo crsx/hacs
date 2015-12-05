@@ -977,7 +977,7 @@ C-CrsxifyRulePrefix[HxRulePrefix, $String<!--Sort-->, DeclarationMap, SortMap<!-
 C-CrsxifyRulePrefix[{#L}%rawHxRulePrefix⟪ #HxRulePriority# [ #HxRuleOptions# ] ⟫, #Sort, #DM, #SM1, #SM2, #Pattern, #Contractum]
 →
 %n⟪¶« {#L}C-CrsxifyRuleName[#HxRulePriority#, #HxRuleOptions#] »«
-  WrappedTextJoin[Append[C-CrsxifyRulePriority[#HxRulePriority#, #SM1], C-CrsxifyRuleOptions[#HxRuleOptions#, #DM, #SM1, #SM2, (), (), #Pattern, #Contractum, ss¹.ss¹]], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]
+  WrappedTextJoin[Append[C-CrsxifyRulePriority[#HxRulePriority#, #SM1], C-CrsxifyRuleOptions[#HxRuleOptions#, #DM, #SM1, #SM2, (), (), (), (), #Pattern, #Contractum, ss¹.ss¹]], %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩]
 »:⟫
 ;
 
@@ -993,48 +993,60 @@ C-CrsxifyRulePriority[%rawHxRulePriority⟪ priority ⟫, #SM] → (%n⟪Priorit
 C-CrsxifyRulePriority[%rawHxRulePriority⟪ default ⟫, SM[#fvs,#mvs]] → (%n⟪Fallback⟫; %n⟪Data[« TextJoin[Map[mv.%n⟨†‹mv›⟩, #mvs], %n⟨,⟩] »]⟫;) ;
 C-CrsxifyRulePriority[%rawHxRulePriority⟪ ⟫, #SM] → () ;
 
-C-CrsxifyRuleOptions[$List[HxRuleOption], DeclarationMap, SortMap<!--OnlyPattern-->, SortMap<!--Rule-->, $List[HxTerm]<!--Globals-->, $List[$String]<!--Data-->, HxTerm<!--Pattern-->, HxTerm<!--Contractum-->, ss¹::$List[Text].$List[Text]] :: $List[Text] ;
+C-CrsxifyRuleOptions[$List[HxRuleOption], DeclarationMap, SortMap<!--OnlyPattern-->, SortMap<!--Rule-->,
+					  $List[$String]<!--Data-->, $List[HxTerm]<!--Globals-->, $List[HxTerm]<!--Free-->, $List[HxTerm]<!--Fresh-->,
+					  HxTerm<!--Pattern-->, HxTerm<!--Contractum-->, ss¹::$List[Text].$List[Text]] :: $List[Text] ;
 
-C-CrsxifyRuleOptions[(), #DM, #SM1, #SM2, #Globals, #Data, #Pattern, #Contractum, ss¹.#[ss¹]]
+C-CrsxifyRuleOptions[(), #DM, #SM1, #SM2, #Data, #Globals, #Free, #Fresh, #Pattern, #Contractum, ss¹.#[ss¹]]
 →
 #[Append[
-  C-CrsxifyRuleVars[#DM, #SM1, #SM2, #Globals, #Pattern, #Contractum],
+  C-CrsxifyRuleVars[#DM, #SM1, #SM2, #Globals, #Free, #Fresh, #Pattern, #Contractum],
   C-CrsxifyData[#Data]
 ]];
 // TODO: automatically generate data option for non-left-linear meta-variables.
 
-C-CrsxifyRuleOptions[(#option ; #options), #DM, #SM1, #SM2, #Globals, #Data, #Pattern, #Contractum, ss¹.#[ss¹]]
+C-CrsxifyRuleOptions[(#option ; #options), #DM, #SM1, #SM2, #Data, #Globals, #Free, #Fresh, #Pattern, #Contractum, ss¹.#[ss¹]]
 →
-C-CrsxifyRuleOptions1[#option, #options, #DM, #SM1, #SM2, #Globals, #Data, #Pattern, #Contractum, ss¹.#[ss¹]]
+C-CrsxifyRuleOptions1[#option, #options, #DM, #SM1, #SM2, #Data, #Globals, #Free, #Fresh, #Pattern, #Contractum, ss¹.#[ss¹]]
 ;
 
-    C-CrsxifyRuleOptions1[HxRuleOption, $List[HxRuleOption], DeclarationMap, SortMap<!--OnlyPattern-->, SortMap<!--Rule-->, $List[HxTerm]<!--Globals-->, $List[$String]<!--Data-->, HxTerm<!--Pattern-->, HxTerm<!--Contractum-->, ss¹::$List[Text].$List[Text]] :: $List[Text] ;
+    C-CrsxifyRuleOptions1[HxRuleOption, $List[HxRuleOption], DeclarationMap, SortMap<!--OnlyPattern-->, SortMap<!--Rule-->,
+    					$List[$String]<!--Data-->, $List[HxTerm]<!--Globals-->, $List[HxTerm]<!--Free-->, $List[HxTerm]<!--Fresh-->,
+    					HxTerm<!--Pattern-->, HxTerm<!--Contractum-->, ss¹::$List[Text].$List[Text]] :: $List[Text] ;
 
-    C-CrsxifyRuleOptions1[%rawHxRuleOption⟪ global #HxTerm# ⟫, #options, #DM, #SM1, #SM2, #Globals, #Data, #Pattern, #Contractum, ss¹.#[ss¹]]
+    C-CrsxifyRuleOptions1[%rawHxRuleOption⟪ data #HxTerm# ⟫, #options, #DM, #SM1, #SM2, #Data, #Globals, #Free, #Fresh, #Pattern, #Contractum, ss¹.#[ss¹]]
     →
-    C-CrsxifyRuleOptions[#options, #DM, #SM1, #SM2, (C-ExtractVariable[#HxTerm#]; #Globals), #Data, #Pattern, #Contractum, ss¹.#[ss¹]]
-    ;
-	C-ExtractVariable[HxTerm] :: HxTerm ;
-	C-ExtractVariable[%rawHxTerm⟪ v ⟫] → v ;
-	C-ExtractVariable[%rawHxTerm⟪ #HxConstructor1# #HxRepeat# v ⟫] → v ;
-	-[Fallback,Data[#Term]] : C-ExtractVariable[#Term] → $[Error,"global option must be followed by symbol."] ;
-
-    C-CrsxifyRuleOptions1[%rawHxRuleOption⟪ data #HxTerm# ⟫, #options, #DM, #SM1, #SM2, #Globals, #Data, #Pattern, #Contractum, ss¹.#[ss¹]]
-    →
-    C-CrsxifyRuleOptions[#options, #DM, #SM1, #SM2, #Globals, (C-ExtractMetaVariable[#HxTerm#]; #Data), #Pattern, #Contractum, ss¹.#[ss¹]]
+    C-CrsxifyRuleOptions[#options, #DM, #SM1, #SM2, (C-ExtractMetaVariable[#HxTerm#]; #Data), #Globals, #Free, #Fresh, #Pattern, #Contractum, ss¹.#[ss¹]]
     ;
 	C-ExtractMetaVariable[HxTerm] :: $String ;
 	C-ExtractMetaVariable[%rawHxTerm⟪ #HxMetaVariable# ⟫] → #HxMetaVariable# ;
 	C-ExtractMetaVariable[%rawHxTerm⟪ #HxConstructor1# #HxRepeat# #HxMetaVariable# ⟫] → #HxMetaVariable# ;
 	-[Fallback,Data[#Term]] : C-ExtractMetaVariable[#Term] → $[Error,"data option must be followed by meta-variable."];
 
-C-CrsxifyRuleVars[DeclarationMap, SortMap<!--OnlyPattern-->, SortMap<!--Rule-->, $List[HxTerm]<!--Globals-->, HxTerm<!--Pattern-->, HxTerm<!--Contractum-->] :: $List[Text] ;
+    C-CrsxifyRuleOptions1[%rawHxRuleOption⟪ global #HxTerm# ⟫, #options, #DM, #SM1, #SM2, #Data, #Globals, #Free, #Fresh, #Pattern, #Contractum, ss¹.#[ss¹]]
+    →
+    C-CrsxifyRuleOptions[#options, #DM, #SM1, #SM2, #Data, (C-ExtractVariable[#HxTerm#]; #Globals), #Free, #Fresh, #Pattern, #Contractum, ss¹.#[ss¹]]
+    ;
+    C-CrsxifyRuleOptions1[%rawHxRuleOption⟪ free #HxTerm# ⟫, #options, #DM, #SM1, #SM2, #Data, #Globals, #Free, #Fresh, #Pattern, #Contractum, ss¹.#[ss¹]]
+    →
+    C-CrsxifyRuleOptions[#options, #DM, #SM1, #SM2, #Data, #Globals, (C-ExtractVariable[#HxTerm#]; #Free), #Fresh, #Pattern, #Contractum, ss¹.#[ss¹]]
+    ;
+    C-CrsxifyRuleOptions1[%rawHxRuleOption⟪ fresh #HxTerm# ⟫, #options, #DM, #SM1, #SM2, #Data, #Globals, #Free, #Fresh, #Pattern, #Contractum, ss¹.#[ss¹]]
+    →
+    C-CrsxifyRuleOptions[#options, #DM, #SM1, #SM2, #Data, #Globals, #Free, (C-ExtractVariable[#HxTerm#]; #Fresh), #Pattern, #Contractum, ss¹.#[ss¹]]
+    ;
+	C-ExtractVariable[HxTerm] :: HxTerm ;
+	C-ExtractVariable[%rawHxTerm⟪ v ⟫] → v ;
+	C-ExtractVariable[%rawHxTerm⟪ #HxConstructor1# #HxRepeat# v ⟫] → v ;
+	-[Fallback,Data[#Term]] : C-ExtractVariable[#Term] → $[Error,"global option must be followed by symbol."] ;
+
+C-CrsxifyRuleVars[DeclarationMap, SortMap<!--OnlyPattern-->, SortMap<!--Rule-->, $List[HxTerm]<!--Globals-->, $List[HxTerm]<!--Free-->, $List[HxTerm]<!--Fresh-->, HxTerm<!--Pattern-->, HxTerm<!--Contractum-->] :: $List[Text] ;
 -[Data[#Globals]]:
-C-CrsxifyRuleVars[#DM, #SM1, #SM2, #Globals, #Pattern, #Contractum]
+C-CrsxifyRuleVars[#DM, #SM1, #SM2, #Globals, #Free, #Fresh, #Pattern, #Contractum]
 →
-C-CrsxifyRuleVars0[#DM, #SM1, #SM2, #Globals, $[FreeVariables,#Pattern], $[FreeVariables,#Contractum]]
+C-CrsxifyRuleVars0[#DM, #SM1, #SM2, #Globals, #Free, #Fresh]
 ;
-    C-CrsxifyRuleVars0[DeclarationMap, SortMap<!--OnlyPattern-->, SortMap<!--Rule-->, $List[HxTerm]<!--Globals-->, $List[HxTerm]<!--ContractumFree-->, $List[HxTerm]<!--PatternFree-->] :: $List[Text] ;
+    C-CrsxifyRuleVars0[DeclarationMap, SortMap<!--OnlyPattern-->, SortMap<!--Rule-->, $List[HxTerm]<!--Globals-->, $List[HxTerm]<!--PatternFree-->, $List[HxTerm]<!--ContractumFree-->] :: $List[Text] ;
     C-CrsxifyRuleVars0[#DM, #SM1, #SM2, #Globals, #PatternFree, #ContractumFree]
     →
     C-CrsxifyRuleVars1[#DM, #SM2, #Globals, C-VariablesExcept[#PatternFree, #Globals], C-VariablesExcept[#ContractumFree, Append[#PatternFree, #Globals]]]

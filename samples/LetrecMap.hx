@@ -3,6 +3,7 @@ module org.crsx.hacs.samples.LetrecMap {
   token ID | [a-z][a-z0-9_]* ;
   sort B | ⟦ ⟨ID⟩ : ⟨ID⟩ ⟨B⟩ ⟧ | ⟦⟧ ;
   main sort P | ⟦ ⟨B⟩ in ⟨ID⟩ ⟧ ;
+  sort Out | ⟦⟨ID⟩⟧;
 
   // Synthesize environment.
   attribute ↑b{ID:ID} ;
@@ -12,11 +13,11 @@ module org.crsx.hacs.samples.LetrecMap {
 
   // Environment and application on variable.
   attribute ↓e{ID:ID} ;
-  sort ID | scheme Apply(ID) ↓e ;
+  sort Out | scheme Apply(ID) ↓e ;
   Apply(#v)  ↓e{#v : #v2}	→  Apply(#v2) ;
-  Apply(#v)  ↓e{¬#v}	→  #v ;
+  Apply(#v)  ↓e{¬#v}	→  ⟦ ⟨ID#v⟩ ⟧ ;
 
   // Main makes sure list is synthesized and passes control to conversion.
-  sort ID | scheme Reduce(P) ;
+  sort Out | scheme Reduce(P) ;
   Reduce(⟦ ⟨B#B ↑b{:#b}⟩ in ⟨ID#v⟩ ⟧) → Apply(#v) ↓e{:#b} ;
 }
