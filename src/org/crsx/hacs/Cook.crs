@@ -1044,9 +1044,11 @@ C-CrsxifyRuleVars[DeclarationMap, SortMap<!--OnlyPattern-->, SortMap<!--Rule-->,
 -[Data[#Globals]]:
 C-CrsxifyRuleVars[#DM, #SM1, #SM2, #Globals, #Free, #Fresh, #Pattern, #Contractum]
 →
-C-CrsxifyRuleVars0[#DM, #SM1, #SM2, #Globals, #Free, #Fresh]
+///C-CrsxifyRuleVars0[#DM, #SM1, #SM2, #Globals, #Free, #Fresh]
+C-CrsxifyRuleVars0[#DM, #SM1, #SM2, #Globals, Append[#Free,$[FreeVariables,#Pattern]], Append[#Fresh,$[FreeVariables,#Contractum]]]
 ;
     C-CrsxifyRuleVars0[DeclarationMap, SortMap<!--OnlyPattern-->, SortMap<!--Rule-->, $List[HxTerm]<!--Globals-->, $List[HxTerm]<!--PatternFree-->, $List[HxTerm]<!--ContractumFree-->] :: $List[Text] ;
+    -[Data[#Globals,#PatternFree,#ContractumFree]]:
     C-CrsxifyRuleVars0[#DM, #SM1, #SM2, #Globals, #PatternFree, #ContractumFree]
     →
     C-CrsxifyRuleVars1[#DM, #SM2, #Globals, C-VariablesExcept[#PatternFree, #Globals], C-VariablesExcept[#ContractumFree, Append[#PatternFree, #Globals]]]
