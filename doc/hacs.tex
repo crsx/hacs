@@ -1957,10 +1957,10 @@ expressions in ⟦⟧s, which include
 %%
 \begin{itemize}
 \item References to meta-variables of "Computed" and token sorts (the latter as strings).
+  With a \$ prefix, such references are converted from token strings to numbers.
 \item Integers in decimal and \texttt{0x}-hexadecimal notation.
 \item String literals enclosed in \verb|"|…\verb|"|.
 \item Standard operators (summarized in Table~\ref{tab:ops}) and parentheses.
-\item Conversion of tokens to integers (prefix the token meta-variable with "$"). %$
 \end{itemize}
 %%
 Notice that for "Computed", meta-variables are part of the syntax: essentially "#x" is used instead
