@@ -834,7 +834,7 @@ sort List | ⟦ ⟨Elem⟩ ⟨List⟩ ⟧ | ⟦⟧ ;
   There is sometimes a need to \emph{flatten} nested lists when working with complex expressions.
   This can, of course, be done with a usual syntax-directed semantic scheme and a lot of nested
   "⟦⟨⟩⟧" constructions. An alternative is to define a \emph{syntactic scheme}, which is a scheme
-  expressed in syntactic form but is in fact defined by rewrite rules. Flattening of lists can, for
+  expressed in syntactic form but in fact defined by rewrite rules. Flattening of lists can, for
   example, be defined as follows:
   %%
   \begin{hacs}[xleftmargin=\parindent,xrightmargin=\parindent]
@@ -852,10 +852,6 @@ sort List | scheme ⟦ { ⟨List⟩ } ⟨List⟩ ⟧ ;
   data shapes of lists -- indeed the rules are syntax-directed in the first list argument.
 \end{example}
 
-Syntactic schemes are very useful for working with output structures; for example, the flattening
-scheme of Example~\ref{ex:flatten} makes it much easier to manipulate sequences of assembler
-instructions.
-
 \begin{figure}[p]
   \begin{figureunit}[
       \caption{\emph{examples/Stack.hx}.}
@@ -864,6 +860,10 @@ instructions.
     \inputhacs[texcl,mathescape,xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/Stack.hx}
   \end{figureunit}
 \end{figure}
+
+Syntactic schemes are very useful for working with output structures; for example, the flattening
+scheme of Example~\ref{ex:flatten} makes it much easier to manipulate sequences of assembler
+instructions.
 
 \begin{example}[stack code compiler]\label{ex:stack}
   Figure~\ref{fig:stack} shows the \HAX script \emph{Stack.hx}, which contains a compiler from
