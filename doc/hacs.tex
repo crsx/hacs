@@ -1002,7 +1002,7 @@ sort Bool | True | False | scheme Or(Bool, Bool);
 \end{hacs}
 Defining the "Or" scheme as follows
 \begin{hacs}[texcl,xleftmargin=\parindent]
-Or(False, False) → False ;        //1
+Or(False, False) → False ;         //1
 default Or(#1, #2) → True ;       //2 \textcolor{red}{problematic}
 \end{hacs}
 is only correct under one condition: that the arguments to "Or" are never computed by
@@ -1947,30 +1947,6 @@ be globally unique? By default, \HAX follows the following rules:
 \end{itemize}
 
 
-\section{Compile-time Computations}
-\label{sec:comp}
-
-There is sometimes a need to compute helper values, most commonly for counting. \HAX supports this
-through a dedicated sort, "Computed", which has special syntax for operations on primitive values.
-%%
-The mechanism is quite simple: in rule replacements, arguments of sort "Computed" can contain
-expressions in ⟦⟧s, which include
-%%
-\begin{itemize}
-\item References to meta-variables of "Computed" and token sorts (the latter as strings).
-  With a \$ prefix, such references are converted from token strings to numbers.
-\item Integers in decimal and \texttt{0x}-hexadecimal notation.
-\item String literals enclosed in \verb|"|…\verb|"|.
-\item Standard operators (summarized in Table~\ref{tab:ops}) and parentheses.
-\end{itemize}
-%%
-Notice that for "Computed", meta-variables are part of the syntax: essentially "#x" is used instead
-of ``"⟨Computed#x⟩",'' which is not permitted, inside the special syntax.
-
-Also, since \emph{all} computed parts of a rule are evaluated as soon as the rule is expanded, only
-use this for calculations that can be safely computed in any case where the \emph{pattern} of the
-rule matches.
-
 %Note that in print, the bottow two lines of this table overhang their shaded box
 \begin{table}[h]
   \begin{figureunit}[
@@ -1999,6 +1975,30 @@ rule matches.
     \end{displaymath}
   \end{figureunit}
 \end{table}
+
+\section{Compile-time Computations}
+\label{sec:comp}
+
+There is sometimes a need to compute helper values, most commonly for counting. \HAX supports this
+through a dedicated sort, "Computed", which has special syntax for operations on primitive values.
+%%
+The mechanism is quite simple: in rule replacements, arguments of sort "Computed" can contain
+expressions in ⟦⟧s, which include
+%%
+\begin{itemize}
+\item References to meta-variables of "Computed" and token sorts (the latter as strings).
+  With a \$ prefix, such references are converted from token strings to numbers.
+\item Integers in decimal and \texttt{0x}-hexadecimal notation.
+\item String literals enclosed in \verb|"|…\verb|"|.
+\item Standard operators (summarized in Table~\ref{tab:ops}) and parentheses.
+\end{itemize}
+%%
+Notice that for "Computed", meta-variables are part of the syntax: essentially "#x" is used instead
+of ``"⟨Computed#x⟩",'' which is not permitted, inside the special syntax.
+
+Also, since \emph{all} computed parts of a rule are evaluated as soon as the rule is expanded, only
+use this for calculations that can be safely computed in any case where the \emph{pattern} of the
+rule matches.
 
 \begin{example}[count]\label{ex:count}
   Consider the list from Example~\ref{ex:flatten}. The following computes the length of the list,
