@@ -1746,6 +1746,15 @@ The examples thus far have analyzed and translated abstract syntax trees with st
 symbols. The next order of business is to construct \emph{new} structures with new scopes, or copied
 fragments with scopes inside. These are the features where the ``H'' of \HAX matter.
 
+\begin{figure}[t]
+  \begin{figureunit}[
+      \caption{λ calculus (\emph{examples/Lambda.hx}).}
+      \label{fig:lambda}
+    ]
+    \inputhacs[texcl,mathescape,xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/Lambda.hx}
+  \end{figureunit}
+\end{figure}
+
 \begin{example}[untyped λ calculus]
   A simple example of a system that does rewriting of ``higher order'' terms is the classic λ
   calculus. The λ calculus is specified in \HAX as shown in Figure~\ref{fig:lambda}.
@@ -1797,15 +1806,6 @@ $ \textcolor{blue}{\texttt{./Lambda.run --sort=T --term='(λx.x)y'}}
   \end{code}
   %%
 \end{example}
-
-\begin{figure}[t]
-  \begin{figureunit}[
-      \caption{λ calculus (\emph{examples/Lambda.hx}).}
-      \label{fig:lambda}
-    ]
-    \inputhacs[texcl,mathescape,xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/Lambda.hx}
-  \end{figureunit}
-\end{figure}
 
 More formally, \HAX provides support for manipulating scoped terms using \emph{higher-order abstract
   syntax} (HOAS) \cite{PfenningElliot:pldi1988} through some new constructs:
