@@ -1,0 +1,149 @@
+%% HACS 2 NOTES.
+%%
+%% Copyright (c) 2015 Kristoffer Rose <krisrose@crsx.org>
+%% 
+%%
+\documentclass[11pt]{article} %style: font size.
+\usepackage[utf8]{inputenc}
+
+\usepackage[type={CC},modifier={by},version={4.0}]{doclicense}
+\newcommand{\basecopyright}{\noindent
+  \HAX is © 2011, 2015 Kristoffer Rose and released under the
+  \href{https://www.eclipse.org/legal/epl-v10.html}{Eclipse Public License 1.0}.\\
+  \noindent Documentation is \doclicenseImage[imagewidth=3em]
+  2011,2015 Kristoffer Rose.}
+\newcommand{\documentcopyright}{\basecopyright}
+
+%% Style.
+\usepackage[margin=.7in]{geometry}
+\usepackage[T1]{fontenc}
+\bibliographystyle{plainurl}
+\renewcommand{\rmdefault}{pplx}\usepackage{eulervm}\AtBeginDocument{\SelectTips{eu}{11}}
+
+%% Base format.
+\input{setup}
+
+%% Topmatter.
+\title{
+  Evolution From \HAX\ 1 to 2
+}
+\author{
+  Kristoffer H. Rose\\
+  Two Sigma Investments / New York University
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}\noindent
+  This document discusses curious implementation details of \HAX version 1 and how they should be
+  fixed and new things added in \HAX version 2.
+
+  \compacttableofcontents
+
+  \vspace*{2em}\small\color{gray}\noindent%
+  \documentcopyright
+\end{abstract}
+
+
+\section{Lexing \& Parsing}\label{sec:parsing}
+
+In version 1, the Prep script translates a grammar to three parsers in mixed pg/JavaCC form:
+%%
+\begin{description}
+
+\item[User input parser.] Has all user syntax as specified by the grammar with no recognition of
+  \HAX meta-notation ("⟦⟨⟩⟧"). Generates user AST terms. Only parser that is used by the final
+  user script.
+
+\item[Raw parser.] Recognizes all declared ``raw'' constructs as well as generic \HAX syntax
+  (meta-variables with \#, \etc). All material in syntax brackets ("⟦⟧") results in invocation of
+  the embedded parser below. Generates Cook-ready internal \HAX AST.
+
+\item[Embedded parser.] Recognizes the user's specified syntax extended with \HAX meta-notation for
+  embedding ``raw'' \HAX into syntax. All raw syntax is delegated to the raw parser above. Generates
+  Cook-ready internal \HAX AST.
+
+\end{description}
+%%
+In version 2, we plan for several tweaks to this:
+%%
+\begin{enumerate}
+
+\item A syntactic production (both \kw{scheme} and data) can be defined \kw{private}, which means
+  that the construct is only included in the embedded syntax parser, not the user input parser.
+
+\item We reintroduce automatic list generation by having derived non-terminals of the form $NM$
+  where $N$ is a non-terminal and $M$ is one of "?", "*", and "+"$U$, with the usual RE semantics
+  and $U$ an optional unit as in \kw{token} declarations allowed just for "+". The resulting
+  non-terminal is registered as such, making the following kinds of definitions possible:
+  %%
+  \begin{itemize}
+
+  \item For $M="?"$ the required patterns are:
+    \begin{hacs}[mathescape]
+    sort … | scheme F($N$?);
+    F(⟦ ⟨$N$ #1⟩ ⟧) →  …;
+    F(⟦ ⟧) →  …;
+    \end{hacs}
+
+  \item For $M="*"$ the required patterns are:
+    %%
+    \begin{hacs}[mathescape]
+    sort … | scheme F($N$*);
+    F(⟦ ⟨$N$ #1⟩ ⟨$N$* #rest⟩ ⟧) →  …;
+    F(⟦ ⟧) →  …;
+    \end{hacs}
+    The first rule is applied for every list element, and the second at the end of the list
+    (innermost).
+
+  \item For $M="+"U$, the patterns include the special $U$ separator and must have this shape:
+    \begin{hacs}[mathescape]
+    sort … | scheme F($N$+$U$);
+    F(⟦ ⟨$N$ #1⟩ $U$ ⟨$N$+$U$ #rest⟩ ⟧) →  …;
+    F(⟦ ⟨$N$ #1⟩ ⟧) →  …;
+    \end{hacs}
+    where the second rule is applied to just the last list element (so innermost). The first rule
+    should insert the $U$ literally, of course, for example like this:
+    \begin{hacs}[mathescape]
+    sort Bool | scheme IsEmpty(Elem+[,]);
+    IsEmpty(⟦ ⟨Elem #1⟩ ,  ⟨Elem+[,] #rest⟩ ⟧) →  True;
+    IsEmpty(⟦ ⟨Elem #1⟩ ⟧) →  False;
+    \end{hacs}
+
+  \end{itemize}
+
+\item We plan to allow modular parsers, described in the Modules section~\ref{sec:modules}.
+\end{enumerate}
+
+
+\section{Modules}\label{sec:modules}
+
+In version 1, one can only have one top level module. In version 2, modules can \emph{import} other
+modules.
+
+The semantics of multiple modules is as follows:
+%%
+\begin{enumerate}
+
+\item Each module defines a \emph{separate parser family}. As in version 1, this effectively means
+  three parsers:
+  \begin{itemize}
+  \item A
+  \end{itemize}
+
+
+\end{enumerate}
+
+
+
+\end{document}
+
+
+%%---------------------------------------------------------------------
+% Tell Emacs that this is a LaTeX document and how it is formatted:
+% Local Variables:
+% mode:latex
+% fill-column:100
+% TeX-master: t
+% End:
