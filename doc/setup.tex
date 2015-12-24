@@ -52,21 +52,24 @@
   \newtheorem{note}[theorem]{Note}
 \fi
 \ifx\remark\undefined
-  \theoremstyle{definition}
-  \newtheorem{proposition}[theorem]{Proposition}
-  \newtheorem{practice}[theorem]{Practice}
-  \newtheorem{notation}[theorem]{Notation}
-  \newtheorem{manual}[theorem]{Manual}
-  %\newenvironment{manual}{\small\begin{manual-body}}{\end{manual-body}}
-  \newtheorem{invariant}[theorem]{Invariant}
-  \newtheorem{requirements}[theorem]{Requirements}
-  \newtheorem{limitations}[theorem]{Limitations}
-  \newtheorem{commands}[theorem]{Commands}
-  \newtheorem{error}[theorem]{Error}
-  \newtheorem{plan}[theorem]{Plan}
   %\theoremstyle{remark}
   \newtheorem{remark}[theorem]{Remark}
+  \theoremstyle{definition}
+  \newtheorem{proposition}[theorem]{Proposition}
 \fi
+\newtheorem{practice}[theorem]{Practice}
+\newtheorem{implementation}[theorem]{Implementation}
+\newtheorem{formalization}[theorem]{Formalization}
+\newtheorem{notation}[theorem]{Notation}
+\newtheorem{manual}[theorem]{Manual}
+%\newenvironment{manual}{\small\begin{manual-body}}{\end{manual-body}}
+\newtheorem{invariant}[theorem]{Invariant}
+\newtheorem{requirements}[theorem]{Requirements}
+\newtheorem{limitations}[theorem]{Limitations}
+\newtheorem{commands}[theorem]{Commands}
+\newtheorem{error}[theorem]{Error}
+\newtheorem{plan}[theorem]{Plan}
+\newtheorem{discussion}[theorem]{Discussion}
 
 %% Old code listings.
 \usepackage{alltt}
@@ -152,12 +155,13 @@
   string=[d]{"},morestring=[d]{'},upquote=true,showstringspaces=false,%
   comment=[l]{//},morecomment=[s]{/*}{*/},commentstyle=\color{blue}\rm,%
   keywordstyle=\kw,%
-  keywords={as,attribute,data,fragment,global,import,main,module,nested,property,rule,scheme,simplify,sort,%
-    space,static,sugar,symbol,tag,token,default,error,binds,template,variable},%
+  keywords={as,attribute,data,fragment,global,import,include,main,module,nested,private,property,rule,%
+    scheme,simplify,sort,space,static,sugar,symbol,tag,token,default,error,binds,template,variable},%
   literate=%
     {⟦}{{\ensuremath{\llbracket}}}1 {⟧}{{\ensuremath{\rrbracket}}}1 {⟨}{{\ensuremath{\langle}}}1 {⟩}{{\ensuremath{\rangle}}}1 %
     {[}{{\ensuremath{[\mkern.5mu}}}1 {]}{{\ensuremath{\mkern.5mu]}}}1 {⟨}{{\ensuremath{\langle}}}1 {⟩}{{\ensuremath{\rangle}}}1 %
     {→}{{\ensuremath{\rightarrow}}}2 {↑}{{\ensuremath{\uparrow}}}1 {↓}{{\ensuremath{\downarrow}}}1 {¬}{{\ensuremath{\lnot}}}2 {¶}{{\P}}1 %
+    {⇒}{{\ensuremath{\Rightarrow}}}2 %
     {ε}{{\ensuremath{\varepsilon}}}1 {…}{{\ensuremath{\dots}}}2 {∧}{{\ensuremath{\!\wedge}}}2 {∨}{{\ensuremath{\!\vee}}}2 {↦}{{\ensuremath{\mapsto}}}2 %
     {α}{{\ensuremath{\alpha}}}1 {β}{{\ensuremath{\beta}}}1 {γ}{{\ensuremath{\gamma}}}1 %
     {λ}{{\ensuremath{\lambda}}}1 {Λ}{{\ensuremath{\Lambda}}}1 %
