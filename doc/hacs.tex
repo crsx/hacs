@@ -221,16 +221,16 @@ computer.\footnote{Please report any problems with this procedure to \emph{hacs-
   If you have an old version of \HAX installed, then it is best to remove it first with a command like
   %%
   \begin{code}[commandchars=\^\{\}]
-energon1[~]$ ^textcolor{blue}{^texttt{rm -fr ~/.hacs hacs}}
+$ ^textcolor{blue}{^texttt{rm -fr ~/.hacs hacs}}
   \end{code}
   %%$
   Now retrieve the \emph{hacs-\version.zip} archive, extract it to a new directory, and install it, for
   example with the following commands:\footnote{User input is \textcolor{blue}{blue}.}
   %%
   \begin{code}[commandchars=\^\{\}]
-energon1[~]$ ^textcolor{blue}{^texttt{wget http://crsx.org/hacs-^version.zip}}
-energon1[~]$ ^textcolor{blue}{^texttt{unzip hacs-^version.zip}}
-energon1[~]$ ^textcolor{blue}{^texttt{cd hacs}}
+$ ^textcolor{blue}{^texttt{wget http://crsx.org/hacs-^version.zip}}
+$ ^textcolor{blue}{^texttt{unzip hacs-^version.zip}}
+$ ^textcolor{blue}{^texttt{cd hacs}}
 energon1[hacs]$ ^textcolor{blue}{^texttt{make FROMZIP=1 install install-support}}
   \end{code}
   %%
@@ -246,11 +246,11 @@ energon1[hacs]$ ^textcolor{blue}{^texttt{make FROMZIP=1 install install-support}
   Please check that your new installation works with these commands:
   \begin{code}[commandchars=\^\{\}]
 energon1[hacs]$ ^textcolor{blue}{^texttt{cd}}
-energon1[~]$ ^textcolor{blue}{^texttt{mkdir myfirst}}
-energon1[~]$ ^textcolor{blue}{^texttt{cd myfirst}}
-energon1[~]$ ^textcolor{blue}{^texttt{cp $HOME/.hacs/share/doc/hacs/examples/First.hx .}}
-energon1[~]$ ^textcolor{blue}{^texttt{$HOME/.hacs/bin/hacs First.hx}}
-energon1[~]$ ^textcolor{blue}{^texttt{./First.run --scheme=Compile \}}
+$ ^textcolor{blue}{^texttt{mkdir myfirst}}
+$ ^textcolor{blue}{^texttt{cd myfirst}}
+$ ^textcolor{blue}{^texttt{cp $HOME/.hacs/share/doc/hacs/examples/First.hx .}}
+$ ^textcolor{blue}{^texttt{$HOME/.hacs/bin/hacs First.hx}}
+$ ^textcolor{blue}{^texttt{./First.run --scheme=Compile \}}
                ^textcolor{blue}{^texttt{--term="^{initial := 1; rate := 1.0; position := initial + rate * 60;^}"}}
   LDF T,  #1 
     STF initial, T
@@ -1604,11 +1604,11 @@ The addition of inherited attributes completes the list of possible attributes f
 
   The following code tests that the lookup mechanism is truly recursive:
   \begin{code}[commandchars=\^\{\}]
-energon1[~]$ ^textcolor{blue}{^texttt{hacs LetrecMap.hx}}
+$ ^textcolor{blue}{^texttt{hacs LetrecMap.hx}}
 …
-energon1[~]$ ^textcolor{blue}{^texttt{./LetrecMap.run --scheme=Reduce --term="a:b b:c in a"}}
+$ ^textcolor{blue}{^texttt{./LetrecMap.run --scheme=Reduce --term="a:b b:c in a"}}
 c
-energon1[~]$ ^textcolor{blue}{^texttt{./LetrecMap.run --scheme=Reduce --term="b:c a:b in a"}}
+$ ^textcolor{blue}{^texttt{./LetrecMap.run --scheme=Reduce --term="b:c a:b in a"}}
 c
   \end{code}
 \end{example}
@@ -2005,10 +2005,10 @@ rule matches.
   using a helper.
   %%
   \begin{hacs}
-sort Computed | scheme ListLength(List) | scheme ListLength2(List, Computed) ;
-ListLength(#) → ListLength2(#, ⟦0⟧) ;
-ListLength2(⟦ ⟨Elem#1⟩ ⟨List#2⟩ ⟧, #n) →  ListLength2(#2, ⟦ #n + 1 ⟧) ;
-ListLength2(⟦ ⟧, #n) → #n ;
+    sort Computed | scheme ListLength(List) | scheme ListLength2(List, Computed) ;
+    ListLength(#) → ListLength2(#, ⟦0⟧) ;
+    ListLength2(⟦ ⟨Elem#1⟩ ⟨List#2⟩ ⟧, #n) →  ListLength2(#2, ⟦ #n + 1 ⟧) ;
+    ListLength2(⟦ ⟧, #n) → #n ;
   \end{hacs}
   %%
   Note how the declaration of the helper sets up the use of the "Computed" mechanism.
@@ -2055,6 +2055,16 @@ ListLength2(⟦ ⟧, #n) → #n ;
     that concatenates the two tokens as strings. This only works with arguments of token sort.
 
   \end{itemize}
+  %%
+  Here is a run illustrating the effect:
+  %%
+\begin{code}[commandchars=\\\{\}]
+$ \textcolor{blue}{hacs MakeToken.hx}
+...
+$ \textcolor{blue}{./MakeToken.run --scheme=Test --term="Hello Hello Hello John"}
+X_Hello_x_x_John
+  \end{code}
+  %%$
 \end{example}
 
 Notice that it is \emph{not} presently possible to nest computations, \ie, insert a value in a
@@ -2063,8 +2073,18 @@ Notice that it is \emph{not} presently possible to nest computations, \ie, inser
 by the simple desk calculator in the following example.
 
 \begin{example}
-  Figure~\ref{fig:desk} implements a simple integer desk calculator. Notice how it uses the "$"
+  Figure~\ref{fig:desk} implements a simple desk calculator. Notice how it uses the "$"
   marker to import a token as an integer value of sort "Computed". %$
+  %%
+  Here is a run:
+  %%
+\begin{code}[commandchars=\\\{\}]
+$ \textcolor{blue}{hacs MakeToken.hx}
+...
+$ \textcolor{blue}{./Desk.run --scheme=Eval --term="1+2*3/(2-1)"}
+7.0
+  \end{code}
+  %%$
 \end{example}
 
 
@@ -2095,7 +2115,6 @@ representation.  This section presents some examples of this.
   %%
 \begin{code}[commandchars=\\\{\}]
 $ \textcolor{blue}{hacs IsCat.hx}
-...
 $ \textcolor{blue}{./IsCat.run --scheme=IsCat --term="dog"}
 False
 $ \textcolor{blue}{./IsCat.run --scheme=IsCat --term="cat"}
@@ -2119,7 +2138,6 @@ True
   in use in rule cases and as map keys and set members.
   \begin{code}[commandchars=\\\{\}]
 $ \textcolor{blue}{hacs Symbols.hx}
-...
 $ \textcolor{blue}{./Symbols.run --scheme=Test --term="A A a a * A * a"}
 A A 2 a a * s A 3 s_39 a * END END END s_46 s_46 s_46 
 \end{code}
@@ -2174,10 +2192,10 @@ A A 2 a a * s A 3 s_39 a * END END END s_46 s_46 s_46
   The example runs as follows:
   %%
 \begin{code}[commandchars=\^\{\}]
-energon1[~]$ ^textcolor{blue}{^texttt{hacs WordSet.hx}}
-energon1[~]$ ^textcolor{blue}{^texttt{./WordSet.run --scheme=Check --term="a in a,b,b,a"}}
+$ ^textcolor{blue}{^texttt{hacs WordSet.hx}}
+$ ^textcolor{blue}{^texttt{./WordSet.run --scheme=Check --term="a in a,b,b,a"}}
 Yes, the list has a.
-energon1[~]$ ^textcolor{blue}{^texttt{./WordSet.run --scheme=Check --term="Foo in Bar"}}
+$ ^textcolor{blue}{^texttt{./WordSet.run --scheme=Check --term="Foo in Bar"}}
 No, the list does not have Foo.
 \end{code}
 %%$
@@ -2214,10 +2232,10 @@ No, the list does not have Foo.
   \end{itemize}
   Here is a run demonstrating the program:
 \begin{code}[commandchars=\^\{\}]
-energon1[~]$ ^textcolor{blue}{^texttt{hacs WordMap.hx}}
-energon1[~]$ ^textcolor{blue}{^texttt{./WordMap.run --scheme=Substitute --term="a:b in a b b a"}}
+$ ^textcolor{blue}{^texttt{hacs WordMap.hx}}
+$ ^textcolor{blue}{^texttt{./WordMap.run --scheme=Substitute --term="a:b in a b b a"}}
 b b b b
-energon1[~]$ ^textcolor{blue}{^texttt{./WordMap.run --scheme=Substitute --term="k:v in a b c"}}
+$ ^textcolor{blue}{^texttt{./WordMap.run --scheme=Substitute --term="k:v in a b c"}}
 a b c
 \end{code}
 %%$
@@ -2328,13 +2346,12 @@ Unitenv( ⟦ { ⟨Units#units⟩ } ⟧↑#s ) → ⟦ { ⟨Units Unitsenv(#units
   Here is a run with this system:
   %%
 \begin{code}[commandchars=\\\{\}]
-energon1[~]$ \textcolor{blue}{hacs WordSubst.hx}
-...
-energon1[~]$ \textcolor{blue}{./WordSubst.run --scheme=Run --term="a=1 a"}
+$ \textcolor{blue}{hacs WordSubst.hx}
+$ \textcolor{blue}{./WordSubst.run --scheme=Run --term="a=1 a"}
  a=1  1   
-energon1[~]$ \textcolor{blue}{./WordSubst.run --scheme=Run --term="b a \{a=1 b=2\}"}
+$ \textcolor{blue}{./WordSubst.run --scheme=Run --term="b a \{a=1 b=2\}"}
  2  1   {  a=1  b=2    }     
-energon1[~]$ \textcolor{blue}{./WordSubst.run --scheme=Run --term="\{a=1 b=2 c=3\} a b c \{a=4\} a b c"}
+$ \textcolor{blue}{./WordSubst.run --scheme=Run --term="\{a=1 b=2 c=3\} a b c \{a=4\} a b c"}
   \{  a=1  b=2  c=3     \}   4  2  3   \{  a=4   \}   4  2  3         
 \end{code}
   %%
