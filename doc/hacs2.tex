@@ -1,7 +1,7 @@
 %% HACS 2 NOTES.
 %%
 %% Copyright (c) 2015 Kristoffer Rose <krisrose@crsx.org>
-%% 
+%%
 \documentclass[11pt]{article} %style: font size.
 \usepackage[utf8]{inputenc}
 
@@ -151,11 +151,6 @@ Note that we will not allow $M="*"U$, which you can emulate with $"*"U"?"$:
     F2(⟦ ⟨$N$ #1⟩ ⟧) →  …; //last
 \end{hacs}
 
-\subsection{Modules}
-
-Modules, described in Section~\ref{sec:modules}, each define a \emph{separate parser family} of
-three parsers (user, embedded, raw); the \kw{private} declaration there affects the user parser.
-
 
 \section{Modules}\label{sec:modules}
 
@@ -218,18 +213,23 @@ multiple maps per instance, \eg, "↓e{a:A,b:B}" and "↓e{#1,#2}" (which in pat
 in both catchers and in contractions compute the biased union of the two, with "#2" dominating
 "#1").
 
-In addition, in \HAX2, we replace ``synthesized collectors'' ${↑}\text{\#as}$ with a ``generic
-collector'' ${↕}\text{\#as}$, which also preserves inherited attributes (why this makes sense is
-explained below).
+\subsection{Inherited Attributes on Data}
+
+In \HAX2, we allow inherited attributes declared on an entire sort (like synthesized
+attributes). What this means is that \emph{all} data constructions of that sort can carry that
+inherited attribute.
+
+This also means that the ``collect all synthesized'' construct ${↓}m$ is replaced with a ``collect
+all attributes'' construct ${↕}\text{\#as}$, which captures all inherited and synthesized attributes.
 
 \subsection{Unified Attribution Rules}
 
 In \HAX2 we unify all attribute rules into rules of the general form
 %%
-\begin{equation}
-  d\left(\,\ov{\, t\,\ov{{↑}s}\,\ov{{↓}i} \,}\,\right) ~ \ov{{↓}i_0}\,\ov{{↑}s_0}
+\begin{equation*}
+  \ov{{↓}i_0}  ~ d\!\left(\,\ov{\, \ov{{↓}i} \, t \, \ov{{↑}s} \,}\,\right) ~ \ov{{↑}s_0}
   \label{eq:attributes}
-\end{equation}
+\end{equation*}
 %%
 with the intent that
 %%
@@ -257,17 +257,16 @@ The above works with the following constraints:
 %%
 \begin{itemize}
 \item there are no attributes in the term than those explicitly covered by the rule;
-\item $\op{mv}\!\left( \ov{\ov{{↓}i}}\,\ov{{↑}s_0} \right) ⊆
-  \op{mv}\!\left( \ov{t_j\,\ov{{↑}s}}\,\ov{{↓}i_0}\right)$.
+\item the attribute values should follow an ``L-attributed pattern.''
 \end{itemize}
 %%
 With the above, if we modify an SDD inspired by the manual~\cite{Rose:ts2016} to have \emph{explicit
-  passes}:
+  L-attributed passes}:
 %%
 \begin{equation*}
   \begin{array}{r@{\;}l|lr}
     \Xhline{2\arrayrulewidth}
-    \multicolumn{2}{c|}{\textsc{Production}}  & \textsc{Semantic Rules} &\Bigstrut\\
+    \multicolumn{2}{l|}{\textsc{Production}}  & \textsc{Semantic Rules} &\Bigstrut\\
     \hline\Bigstrut
     S &→ \textbf{id} := E_1; S_2
     & E_1.e = S.e; &\thetag{S1a}\\
@@ -288,45 +287,67 @@ With the above, if we modify an SDD inspired by the manual~\cite{Rose:ts2016} to
 \end{equation*}
 %%
 The explicit passes can be seen as the ``a'' and ``b'' semantic rules. They are obtained by
-observing the dependencies of the attributes.
+observing the dependencies of the attributes and ensuring that \emph{each pass is L-attributed}.
 
-The \HAX2 encoding of the rules shows why (omitting syntax declarations from the manual and with the
-new catcher syntax):
-%%
-\begin{hacs}[texcl,numbers=right,xrightmargin=2em]
-    attribute ↓e{E:T};
-    attribute ↑t(T);
+\begin{figure}[p]
+  \begin{hacs}[texcl,numbers=right,xrightmargin=2em]
+// Implementation of simple type checking SDD.
+module org.crsx.hacs.samples2.Typing {
 
-    sort S | ↓e;
+  // Grammar.
+  token INT  | [0-9]+;
+  token ID  | [A-Z] [A-Za-z0-9_]*;
+  main sort S  | ⟦ ⟨ID⟩ := ⟨E⟩; ⟨S⟩ ⟧  | ⟦ { ⟨S⟩ } ⟨S⟩ ⟧  | ⟦⟧;
+  sort E  | ⟦ ⟨E@1⟩ + ⟨E⟩ ⟧  | ⟦⟨INT⟩⟧@1  | ⟦⟨ID⟩⟧@1;
 
-    // S1a: $E_1.e = S.e$
-    ⟦ id := ⟨E#1  ↓e{#Se}⟩; ⟨S#2⟩ ⟧ ↓e{#Se} ;
-    // S1b: $S_2.e = \op{Extend}(S.e, \textbf{id}.sym, E_1.t) $
-    ⟦ id := ⟨E#1 ↑t(#E1t) ⟩; ⟨S#2  ↓e{#Se,⟦id⟧:#E1t}⟩ ⟧ ↓e{#Se} ;
+  // Attributes.
+  sort T  | Int  | scheme Unif(T,T);
+  attribute ↓e{ID:T};
+  attribute ↑t(T);
+  //…(rules for Unif omitted)
 
-    // S2: $S_1.e = S.e; S_2.e = S.e $
-    ⟦ { ⟨S#1 ↓e{#Se}⟩ } ⟨S#2 ↓e{#Se}⟩ ⟧ ↓e{#Se} ;
+  // Rules for statements.
+  sort S | ↓e;
 
-    // S3:
-    ⟦ ⟧ ↓e{#Se} ;
+  // S1a: $E_1.e = S.e$
+  ⟦ id := ⟨E#1  ↓e{#Se}⟩; ⟨S#2⟩ ⟧  ↓e{#Se} ;
 
-    sort E | ↓e | ↑t;
+  // S1b: $S_2.e = \op{Extend}(S.e, \textbf{id}.sym, E_1.t) $
+  ⟦ id := ⟨E#1 ↑t(#E1t) ⟩; ⟨S#2  ↓e{#Se,⟦id⟧:#E1t}⟩ ⟧ ↓e{#Se} ;
 
-    // E1a: $E_1.e=E.e; E_2.e=E.e$
-    ⟦ ⟨E#1  ↓e{#Ee}⟩ + ⟨E#2  ↓e{#Ee}⟩ ⟧↓e{#Ee} ;
-    // E1b: $E.t = \op{Unif}(E_1.t, E_2.t)$
-    ⟦ ⟨E#1 ↑t(#E1t) ⟩ + ⟨E#2 ↑t(#E2t) ⟩ ⟧  ↑t(Unif(#E1t,#E2t));
+  // S2: $S_1.e = S.e; S_2.e = S.e $
+  ⟦ { ⟨S#1 ↓e{#Se}⟩ } ⟨S#2 ↓e{#Se}⟩ ⟧ ↓e{#Se} ;
 
-    // E2: $E.t = \op{Int}$
-    ⟦ ⟨INT#1⟩ ⟧  ↑t(Int);
+  // S3:
+  ⟦ ⟧ ↓e{#Se} ;
 
-    // E3: $E.t = \op{Lookup}(E.e,\textbf{id}.sym)$
-    ⟦ id ⟧ ↓e{⟦id⟧ : #t}   ↑t(#t);
-\end{hacs}
-%%
-The insight needed by the programmer is that two of the rules---\thetag{S1} and \thetag{E1}---need
-to be split into two passes: the first to propagate $e$, the second to synthesize~$t$. The reason
-for this is \thetag{E3}, where the synthesized $t$ \emph{depends} on the inherited~$e$.
+  // Rules for expressions.
+  sort E | ↓e | ↑t; // note: t depends on e from (E3)
+
+  // E1a: $E_1.e=E.e; E_2.e=E.e$
+  ⟦ ⟨E#1  ↓e{#Ee}⟩ + ⟨E#2  ↓e{#Ee}⟩ ⟧↓e{#Ee} ;
+
+  // E1b: $E.t = \op{Unif}(E_1.t, E_2.t)$
+  ⟦ ⟨E#1 ↑t(#E1t) ⟩ + ⟨E#2 ↑t(#E2t) ⟩ ⟧  ↑t(Unif(#E1t,#E2t));
+
+  // E2: $E.t = \op{Int}$
+  ⟦ ⟨INT#1⟩ ⟧  ↑t(Int);
+
+  // E3: $E.t = \op{Lookup}(E.e,\textbf{id}.sym)$
+  ⟦ id ⟧ ↓e{⟦id⟧ : #t}   ↑t(#t);
+}
+  \end{hacs}
+  \caption{Translation of sample SDD.}
+  \label{fig:sdd-in-hacs}
+\end{figure}
+
+Figure~\ref{fig:sdd-in-hacs} shows the \HAX2 encoding of the rules.  The insight needed by the
+programmer is that two of the rules---\thetag{S1} and \thetag{E1}---need to be split into two
+passes: the first to propagate $e$, the second to synthesize~$t$. The reason for this is
+\thetag{E3}, where the synthesized $t$ \emph{depends} on the inherited~$e$.
+
+One new notation permitted for \HAX2 is that the order or attributes and their associated term does
+not matter: "↓a(A)B" is the same as "B↓a(A)".
 
 The full formal details of how attribution rules are realized are given in
 Appendix~\ref{app:attributes}.
@@ -337,19 +358,23 @@ Appendix~\ref{app:attributes}.
 \HAX1 has no support for inference rules. In \HAX2, we hope to add (higher order) \emph{inference
   rules} of the form
 %%
-\begin{equation}
-  [L]~\kw{when}~[\ov{x}](\, C_1⇒P_1 ~\cdots~ C_n⇒P_n \,) ~ \kw{infer} ~ P_0 → C_{n+1}
+\begin{equation}\label{eq:when-infer}
+  \kw{sort}~S~;\quad
+  [R]~\kw{when}~[\ov{x~\kw{as}~S'}](\, C_1⇒P_1 ~\cdots~ C_n⇒P_n \,) ~ \kw{infer} ~ P_0 ⇒ C_{n+1} ~;
 \end{equation}
 %% 
 where
 %% 
 \begin{itemize}
-\item $L$ is the unique name of the rule (as also allowed on other rules).
+\item $R$ is the unique name of the rule (as also allowed on other rules).
 \item $P_0$ and all of $C_1,…,C_n$ are \emph{function constructions}.
 \item $P_0$ is a \emph{pattern} and all of $P_1,…,P_n$ are \emph{pattern fragments}.
 \item $∀i\colon \op{mv}(C_i) ⊆ \op{mv}(P_0…P_{i-1})$.
+\item Each of the $C_i,P_i$ terms have some sort $S_i$.
 \end{itemize}
 %%
+You must define the shape of $P_0$ as a \kw{scheme} of the sort $S$ in the usual way.
+
 The new syntax is meant to correspond to a traditional inference rule with explicit higher order
 binders that we could write
 %% 
@@ -357,7 +382,7 @@ binders that we could write
   \dfrac
   { ∀\,\ov{x} : (\, C_1⇒P_1 ~\cdots~ C_n⇒P_n \,) }
   { P_0 ⇒ C_{n+1}}
-  ~(L)
+  ~(R)
   \label{eq:infer}
 \end{equation}
 %%
@@ -433,370 +458,232 @@ eventually moving to \CRSX4/\hax). This would involve the following steps:
 \section{Core \HAX}
 \label{app:core}
 
-``Core \HAX'' is a new notion corresponding to ``the part of \HAX2 that can map directly to the \hax
-calculus.'' It is used below …
+``Core \HAX2'' is the part of \HAX2 that can be executed directly. It does not have attribution and
+inference rules, and there is no support for user syntax (including sugar and precedence). It is
+almost unchanged from \HAX1 (more specifically the ``raw'' subset of \HAX1).
 
+The terminals are $q$ for qualified module names, $m$ for meta-variable names, $c$ for constructor
+names (also used as sort names), and $v$ for variable names (also used as attribute names).
+%%
+\begin{align*}
+  M \tag{Module}
+  &::= \kw{module} ~ q ~ \kw\{ ~ U^* ~ \kw\}
+  \\
+  U \tag{Unit}
+  &::= \kw{import} ~ q ~ \kw; \\[-1pt]
+  &~~\bigm|~ \kw{main}^? ~ \kw{sort} ~ SF ~ \kw;
+  ~\bigm|~ \kw{attribute} ~ AR ~ AF ~ \kw;
+  ~\bigm|~ \kw{\texttt{|}}\, AR ~  \kw;
+  ~\bigm|~ \kw{\texttt{|}}\, CF ~ \kw;
+  ~\bigm|~ \kw{\texttt{|}}\, \kw{scheme} ~ CF ~ AR^* ~  \kw; \\[-1pt]
+  &~~\bigm|~ T ~ \kwm{→} ~ T ~  \kw;
+  \\[1ex]
+  SF \tag{SortForm}
+  &::= α ~\bigm|~ c ~ SA^*
+  \\
+  SA \tag{SortArgument}
+  &::= α ~\bigm|~ \kw( ~ SF ~ \kw)
+  \\
+  AR \tag{AttributeReference}
+  &::= (\kwm{↑}\bigm|\kwm{↓}) ~ v
+  \\
+  AF \tag{AttributeForm}
+  &::= \kw( ~ SF ~ \kw) ~\bigm|~ \kw\{ ~ SF ~ \kw: ~ SF ~ \kw\}
+  \\
+  CF \tag{ConstructorForm}
+  &::= c ~ \kw( ~ PF^{*\kw,} ~ \kw)
+  \\
+  PF \tag{PieceForm}
+  &::= \kw[ ~ SF^{*\kw,} ~ \kw] ~ SF
+  \\[1ex]
+  T \tag{Term}
+  &::= v ~ A^* ~\bigm|~ c ~ \kw( ~ P^{*\kw,} ~ \kw) ~ A^* ~\bigm|~ m ~ \kw[ ~ T^{*\kw,} ~ \kw] ~ A^*
+  \\
+  P \tag{Piece}
+  &::= \kw[ ~ v^{*\kw,} ~ \kw] ~ T
+  \\
+  A \tag{Attribute}
+  &::= AR ~ \kw( ~ T ~ \kw)
+  ~\bigm|~ AR ~ \kw\{ ~ T ~ \kw: ~ T ~ \kw\} ~\bigm|~ AR ~ \kw\{ ~ \kwm{¬} ~ T ~ \kw\} ~\bigm|~ AR ~ \kw\{ ~ m ~ \kw\}
+  ~\bigm|~ \kwm{↕} ~ m
+\end{align*}
+%%
+\TBD{Explain all constructs!}
 
 \section{Attribute Normalization}
 \label{app:attributes}
 
-In this appendix we give the formal rules for translating attribution rules to core \HAX2 rules. We
-first give a simple instance before we explain the general case.
+In this appendix we give the formal rules for translating the new attribution rules from
+Section~\ref{sec:attributes} to core \HAX2 rules.
 
 \begin{example}
-  A simple attribution rule scheme is the following:
-  %%
+  As an example, consider the \HAX2 attribution rule
   \begin{equation}
-    \kw{sort}~S;~D\left(\#_1\,{↑}b_1(P_1)\,{↓}a_1(T_1)\right)\,{↓}a_0(P_0)\,{↑}b_0(T_0);
+    \kw{sort}~S\kw; \quad
+    [R] ~~ {↓}i ~ d(\, {↓}i_1 \#_1 {↑}s_1 \,,\, {↓}i_2 \#_2 {↑}s_2 \,) ~ {↑}s
   \end{equation}
-  %%
-  This reads as follows:
-  %%
-  \begin{quotation}\noindent
-    \emph{If} we are presented with a $D$-node of sort $S$ from the abstract syntax, where we
-    \emph{already know} that the inherited attribute $a_0$ matches $P_0$ and the single parameter
-    matches $\#_1$ and has a value for the synthesized attribute $b_1$ that
-    matches~$P_1$. \emph{Then} we set the inherited attribute $a_1$ of the parameter to $T_1$ and we
-    set the synthesized attribute $b_0$ for the entire node to~$T_0$.
-  \end{quotation}
-  %%
-  We first transform this to a pair of rules:
-  %%
-  \begin{gather}
-    \op{Prop}_{a_0}(D(\#_1)\,{↕}\#_d)\,{↓}a_0(P_0)
-    → D(\op{Prop}_{a_1}(\#_1)\,{↓}a_1(T_1))\,{↕}\#_d\,{↑}a_0(P_0);
+  with $R$ the rule name, $d$ a data constructor of sort $S$, and each of $i,i_1,i_2,s,s_1,s_2$ a
+  \HAX2 ``attribution.''  Such a rule is translated into the following core \HAX rule system:
+  %% 
+  \begin{align}
+    \op{Prop}_i \bigl( d( \#_1, \#_2 ) ~ {↕}\#d \bigr) ~ {↓}i ~
+    & → \op{Susp}_{R,1} \bigl( d( \op{Need}_{s_1} ( \op{Prop}_{i_1}(\#_1) ~ {↓}i_1), \#_2 ) ~ {↕}\#d ~ {↓}i \bigr)
     \\
-    D(\#_1\,{↑}a_1(\#_a)\,{↑}b_1(P_1))\,{↑}a_0(P_0){↑}b_0(T_0);
-  \end{gather}
+    \op{Susp}_{R,1} \bigl( d( \#_1 \, {↓}i_1 \, {↑}s_1, \#_2 ) ~ {↕}\#d ~ {↓}i \bigr) ~
+    & → \op{Susp}_{R,2} \bigl( d( \#_1, \op{Need}_{s_2} ( \op{Prop}_{i_2}(\#_2) \, {↓}i_2) ) ~ {↕}\#d \bigr)
+    \\
+    \op{Susp}_{R,2} \bigl( d( \#_1 \, {↓}i_1 \, {↑}s_1, \#_2 \, {↓}i_2 \, {↑}s_2 ) ~ {↕}\#d ~ {↓}i \bigr) ~
+    & → d( \#_1, \#_2 ) ~ {↕}\#d ~ {↑}s
+  \end{align}
   %%
-  where we convert the inherited attribute to a synthesized one when storing on the data node.
-
 \end{example}
 
-
-
-\begin{definition}
-
-  The \emph{full attribution rules} for a data constructor $d$ are the full set of rules rooted with
-  $d$, which must have the shape.
-  %% 
-  \begin{gather*}
-    d\left(\,
-      [\ov{v_{1.1}}]t_{1.1}\,\ov{{↑}a_{1.1}} ⇒ \ov{{↓}b_{1.1}}
-      \,,…,\,
-      [\ov{v_{1.m_1}}]t_{1.m_1}\,\ov{{↑}a_{1.m_1}} ⇒ \ov{{↓}b_{1.m_1}}
-      \,\right) ~ \ov{{↓}b_{1.0}} ⇒ \ov{{↑}a_{1.0}} \\[-1ex]
-    \vdots\\
-    d\left(\,
-      [\ov{v_{n.1}}]t_{n.1}\,\ov{{↑}a_{n.1}} ⇒ \ov{{↓}b_{n.1}}
-      \,,…,\,
-      [\ov{v_{n.m_n}}]t_{n.m_n}\,\ov{{↑}a_{n.m_n}} ⇒ \ov{{↓}b_{n.m_n}}
-      \,\right) ~ \ov{{↓}b_{n.0}} ⇒ \ov{{↑}a_{n.0}}
-  \end{gather*}
-  %% 
-  with $n≥1$ and $∀j, 1≤j≤n\colon m_j≥0$, and where we have used $a$ and $b$ to denote complete
-  attribute valuations.
-
-\end{definition}
-
-\begin{notation}
-
-  As we'll have many layers of indices, we adopt the convention that \$ means ``last possible
-  index'' for the indicated vector index.
-
-\end{notation}
-
-\begin{definition}
-
-  All attributes are assumed to belong to an \emph{attribute class} and there is a partial order
-  between the attribute classes (discussed later). A vector $\ov{a}$ of attributes is in
-  \emph{attribute-ascending} (\emph{attribute-descending}) order if each non-first attribute belongs
-  to a class that compares greater (less) or equal to the preceeding attribute in the vector.
-
-\end{definition}
-
-\begin{definition}
-
-  The \emph{synthesis fall-back needs rule} for a value attribute $a$ is
-  \begin{equation}
-    \kw{priority}~\text{N-$a$}(\#\,{↑}a(\#\text{a})\,{↕}\text{\#as})
-    → \#\,{↕}\text{\#as}
-  \end{equation}
-  and for a map attribute $a$ is
-  \begin{equation}
-    \kw{priority}~\text{N-$a$}(\#\,{↑}a\{\}\,{↕}\text{\#as})
-    → \#\,{↕}\text{\#as}
-  \end{equation}
-  The N-$a$ symbol is called the \emph{synthesis need function} for~$a$.
-
-\end{definition}
-
-\begin{definition}
-
-  A rule is a \emph{pure synthesis rule} if it has the shape
+\begin{definition}\label{def:general-attribution}
+  A \HAX2 attribution rule has the form
   %% 
   \begin{equation}
-    d\left(\,
-      [\ov{v_{i.1}}]t_{i.1}\,\ov{{↑}a_{i.1}} ⇒ ε
-      \,,…,\,
-      [\ov{v_{i.\$}}]t_{i.\$}\,\ov{{↑}a_{i.\$}} ⇒ ε
-      \,\right) ~ ε ⇒ \ov{{↑}a_{i.0}}
+    \kw{sort}~S\kw; \quad
+    [R] ~~ \ov{{↓}i_0} ~ d\bigl(\,
+      [\ov{v_1}] \, \ov{{↓}i_1} \, M_1 \, \ov{{↑}s_1} \,,…,\,
+      [\ov{v_n}] \, \ov{{↓}i_n} \, M_n \, \ov{{↑}s_n}
+    \,\bigr) ~ \ov{{↑}s_0}
   \end{equation}
   %% 
-  where the vector $\ov{{↑}a_{i.0}}$ is not empty. We assume that all vectors are in
-  attribute-ascending order.
+  with $R$ the rule name, $d$ a data constructor of sort $S$, each of the $M_j$ a meta-term with
+  associated binders $\ov{v_j}$, and each of $i_j,s_j$ a \HAX2 ``attribution.''
+\end{definition}
 
-  The \emph{pure synthesis-need rules} for a pure synthesis rule as above are
-  %% 
-  \begin{align*}
-    \text{N-$a_{i.0.1}$}(d(\#)\,{↕}\text{\#as})
-    &→ \text{C-$d$-$i$}\bigl(d\bigl(\,
-    [\ov{v_{i.1}}] \text{N-$a_{i.1.\$}$}(…(\text{N-$a_{i.1.1}$}(t_{i.1})))
-    \,,…,\,
-    [\ov{v_{i.\$}}] \text{N-$a_{i.\$.\$}$}(…(\text{N-$a_{i.\$.1}$}(t_{i.\$})))
-    \,\bigr)\,{↕}\text{\#as}\bigr)
-    \\[-1ex]
-    &~\vdots
+\begin{definition}\label{def:L-attributed}
+  A \HAX2 attribution as defined in Definition~\ref{def:general-attribution} is \emph{locally
+    L-attributed} if
+  \begin{align}
+    ∀j, 1≤j≤\$\colon
+    \op{mv}\bigl( ~ \ov{{↓}i_0} ~ \ov{{↓}i_1}…\ov{{↓}i_{j-1}} ~ \ov{{↑}s_1}…\ov{{↑}s_{j-1}} ~ \bigr)
+    &⊇ \op{mv}\bigl( \ov{{↓}i_j} \bigr)
     \\
-    \text{N-$a_{i.0.\$}$}(d(\#)\,{↕}\text{\#as})
-    &→ \text{C-$d$-$i$}\bigl(d\bigl(\,
-    [\ov{v_{i.1}}] \text{N-$a_{i.1.\$}$}(…(\text{N-$a_{i.1.1}$}(t_{i.1})))
-    \,,…,\,
-    [\ov{v_{i.\$}}] \text{N-$a_{i.\$.\$}$}(…(\text{N-$a_{i.\$.1}$}(t_{i.\$})))
-    \,\bigr)\,{↕}\text{\#as}\bigr)
-  \end{align*}
-  %%
-  (note that the synthesis-need function wrappers are backwards).
-
-  The \emph{pure synthesis-collect rule} for the above pure synthesis rule is
-  %% 
-  \begin{equation*}
-    \text{C-$d$-$i$}\left(\,d\bigl(
-      [\ov{v_{i.1}}]t_{i.1}\,\ov{{↑}a_{i.1}}
-      \,,…,\,
-      [\ov{v_{i.\$}}]t_{i.\$}\,\ov{{↑}a_{i.\$}}
-      \,\bigr)\,{↕}\text{\#as}\right)
-    → 
-    d\bigl(\, [\ov{v_{i.1}}]t_{i.1} \,,…,\, [\ov{v_{i.\$}}]t_{i.\$} \,\bigr)\, \ov{{↑}a_{i.0}}\,{↕}\text{\#as}
-  \end{equation*}
-  %%
-  where the C-$d$-$i$ function symbol is called the \emph{synthesis collector function} for the pure
-  synthesis rule.
-  %Note that if all the inner terms $t_{i.j}$ are meta-applications and the
-  %corresponding vectors $\ov{{↑}a_{i.j}}$ are empty then the synthesis-collect can be inlined.
-
+    ∀j, 1≤j≤\$\colon
+    \op{mv}\bigl( ~ \ov{{↓}i_0} ~ \ov{{↓}i_1}…\ov{{↓}i_j} ~ \ov{{↑}s_1}…\ov{{↑}s_{j-1}} ~ \bigr)
+    &⊇ \op{mv}\bigl( \ov{{↑}s_j} \bigr)
+    \\
+    \op{mv}\bigl( ~ \ov{{↓}i_0} ~ \ov{\ov{{↓}i}} ~ \ov{\ov{{↑}s}} ~ \bigr)
+    &⊇ \op{mv}\bigl( \ov{{↑}s_0} \bigr)
+  \end{align}
 \end{definition}
 
-\begin{definition}
-  A rule is a \emph{pure inheritance rule} if it has the shape
-  %% 
-  \begin{equation}
-    d\left(\,
-      [\ov{v_{i.1}}]t_{i.1}\,ε ⇒ \ov{{↓}b_{i.1}}
-      \,,…,\,
-      [\ov{v_{i.\$}}]t_{i.\$}\,ε ⇒ \ov{{↓}b_{i.\$}}
-      \,\right) ~ \ov{{↓}b_{i.0}} ⇒ ε
-  \end{equation}
-  %% 
-  where the vector $\ov{{↓}b_{i.0}}$ is not empty, and each of the vectors
-  $\ov{{↓}b_{i.1}}…\ov{{↓}b_{i.\$}}$ and $\ov{{↓}b_{i.0}}$ captures all the attributes of an
-  attribute class, which we shall call $B_1,…,B_{\$},B_0$ (respectively).
+\begin{lemma}
+  Every L-attributed attribute grammar can be expressed as a collection of locally L-attributed
+  \HAX2 attributions.
+\end{lemma}
 
-  The \emph{pure inheritance propagation rule} for such a pure inheritance rule is the following
+\begin{formalization}
   %%
-  \begin{equation}
-    \text{P-$B_0$}\bigl( d\left(
-      [\ov{v_{i.1}}]t_{i.1}
-      \,,…,\,
-      [\ov{v_{i.\$}}]t_{i.\$}
-    \right)\,{↕}\text{\#as} \bigr)\, \ov{{↓}b_{i.0}} 
-    →
-    d\left(
-      [\ov{v_{i.1}}]\text{P-$B_1$}(t_{i.1})\ov{{↓}b_{i.1}}
-      \,,…,\,
-      [\ov{v_{i.\$}}]\text{P-$B_{\$}$}(t_{i.\$})\ov{{↓}b_{i.\$}}
-    \right)\ov{{↓}b_{i.0}} \,{↕}\text{\#as}
-  \end{equation}
+  Given a \HAX2 attribution as defined in Definition~\ref{def:general-attribution}. The following
+  core \HAX rule system is the \emph{attribute simplification} of the attribution:
+  %% 
+  \begin{align}
+    %%
+    \lefteqn{ \kw{sort}~S ~; }\qquad
+    \\[\jot]
+    %%
+    \lefteqn{\kw{|} ~ \kw{scheme} ~ \op{Prop}_{\ov{i_0}}(S) ~ \ov{{↓}i_0} ~; }\qquad
+    \\
+    \lefteqn{ \op{Prop}_{\ov{i_0}} \bigl( d( [\ov{v_1}]M_1{↕}\#_1,…, [\ov{v_n}]M_n{↕}\#_n ) ~ {↕}\#d \bigr) ~ \ov{{↓}i_0 } }\qquad\\*[-1pt]
+    &→ \op{Susp}_{R,1} \bigl( d( [\ov{v_1}] \op{Need}_{s_{1,1}}(\cdots(\op{Need}_{s_{1,\$}} ( \op{Prop}_{\ov{i_1}}(M_1{↕}\#_1) ~ \ov{{↓}i_1}))\cdots), [\ov{v_2}] M_2{↕}\#_2, …, [\ov{v_n}] M_n{↕}\#_n ) ~ {↕}\#d ~ \ov{{↓}i_0} \bigr) ~;
+    \notag
+    \\[\jot]
+    %%
+    \lefteqn{ \kw{|} ~ \kw{scheme} ~ \op{Susp}_{R,1}(S); }\qquad
+    \\
+    \lefteqn{ \op{Susp}_{R,1} \bigl( d( [\ov{v_1}]M_1 \,{↕}\#_1 \ov{{↓}i_1} \, \ov{{↑}s_1}, [\ov{v_2}]M_2{↕}\#_2, …, [\ov{v_n}]M_n{↕}\#_n ) ~ {↕}\#d ~ \ov{{↓}i_0} ~\bigr) }\qquad\\*[-1pt]
+    & → \op{Susp}_{R,2} \bigl( d( [\ov{v_1}]M_1{↕}\#_1, [\ov{v_2}]\op{Need}_{s_{2,1}}(\cdots( \op{Need}_{s_{2,\$}} ( \op{Prop}_{i_2}(M_2{↕}\#_2) \, {↓}i_2))\cdots), [\ov{v_3}]M_3{↕}\#_3, …, [\ov{v_n}]M_n{↕}\#_n ) ~ {↕}\#d \bigr) ~;
+    \notag
+    \\[-\jot]
+    \vdots\!\qquad\notag
+    \\
+    %%
+    \lefteqn{ \kw{|} ~ \kw{scheme} ~ \op{Susp}_{R,n-1}(S); }\qquad
+    \\
+    \lefteqn{ \op{Susp}_{R,n-1} \bigl( d( [\ov{v_1}]M_1 \,{↕}\#_1 \ov{{↓}i_1} \, \ov{{↑}s_1}, … , [\ov{v_{n-1}}]M_{n-1}{↕}\#_{n-1} \ov{{↓}i_{n-1}} \, \ov{{↑}s_{n-1}}, [\ov{v_n}]M_n{↕}\#_n ) ~ {↕}\#d ~ \ov{{↓}i_0} ~\bigr) }\qquad\\*[-1pt]
+    & → \op{Susp}_{R,n} \bigl( d( [\ov{v_1}]M_1{↕}\#_1, …, [\ov{v_{n-1}}]M_{n-1}{↕}\#_{n-1}, [\ov{v_n}]\op{Need}_{s_{n,1}}(\cdots( \op{Need}_{s_{n,\$}} ( \op{Prop}_{i_n}(M_n{↕}\#_n) \, {↓}i_n))\cdots) ) ~ {↕}\#d \bigr) ~;
+    \notag
+    \\[\jot]
+    %%
+    \lefteqn{ \kw{|} ~ \kw{scheme} ~ \op{Susp}_{R,n}(S); }\qquad
+    \\
+    \lefteqn{ \op{Susp}_{R,n} \bigl( d( [\ov{v_1}]M_1 \,{↕}\#_1 \ov{{↓}i_1} \, \ov{{↑}s_1}, … , [\ov{v_n}]M_n{↕}\#_n \ov{{↓}i_n} \, \ov{{↑}s_n} ) ~ {↕}\#d ~ \ov{{↓}i_0} ~\bigr) }\qquad\\*[-1pt]
+    & → d( M_1\,{↕}\#_1,…, M_n\,{↕}\#_n ) ~ {↕}\#d ~ \ov{{↑}s_0} ~;
+    \notag
+  \end{align}
   %%
-  It provides one rule for the \emph{attribute class propagation function} P-$B$.
+\end{formalization}
 
-  \TBD{Figure out the attribute class set stuff…}
-    
-\end{definition}
+\begin{itemize}
+
+\item We have been slightly sloppy with the notations: The attributes in the \kw{scheme} declaration
+  for and constructor name for $\op{Prop}_{\ov{i_0}}$ should not include the attribute values, just
+  the names.
+
+\item Notice how the rule patterns progressively capture more and more of the available attributes,
+  following the rules for local L-attributed specifications.
+
+\end{itemize}
+%%
+
+
 
 
 \section{Inference System Normalization}
 \label{app:infer}
 
-Recall~\thetag{\ref{eq:infer}} from Section~\ref{sec:infer}:
-%% 
+Recall~\thetag{\ref{eq:when-infer}} from Section~\ref{sec:infer}:
+%%
 \begin{equation}
-  \dfrac
-  { ∀\,\ov{x} : (\, C_1⇒P_1 ~\cdots~ C_n⇒P_n \,) }
-  { P_0 ⇒ C_{n+1}}
-  ~(L)
-  \tag{\ref{eq:infer}}
+  \kw{sort}~S; \quad [R]~\kw{when}~[\ov{x~\kw{as}~S'}](\, C_1⇒P_1 ~\cdots~ C_n⇒P_n \,) ~ \kw{infer} ~ P_0 ⇒ C_{n+1}
+  \tag{\ref{eq:when-infer}}
 \end{equation}
-
+%% 
 \begin{formalization}
-  The \emph{inference simplification system} for the rule \thetag{\ref{eq:infer}} is the system
+  %%
+  Assume rule \thetag{\ref{eq:when-infer}}, where furthermore the $C_i,P_i$ pairs have sort $S_i$.
+  The \emph{inference simplification system} for the rule is
   %% 
   \begin{align}
-    P_0 &→ L_1(P_0, [\ov{x}]C_1) \tag{$L_0$}\\
-    L_1(P_0, [\ov{x}]P_1) &→ L_2(P_0, [\ov{x}]P_1, [\ov{x}]C_2) \tag{$L_1$}\\[-\jot]
+    &\kw{sort}~S~;
+    & P_0 &→ R_1(P_0, [\ov{x}]C_1) \tag{$R_0$} ~;
+    \\
+    &\kw{|scheme} ~ R_1(S, [\ov{S'}]S_1) ~;
+    & R_1(P_0, [\ov{x}]P_1) &→ R_2(P_0, [\ov{x}]P_1, [\ov{x}]C_2) \tag{$R_1$} ~;
+    \\[-\jot]
     &~~\vdots\notag\\
-    L_{n-1}(P_0, [\ov{x}]P_1, …, [\ov{x}]P_{n-1}) &→ L_n(P_0, [\ov{x}]P_1, …, [\ov{x}]P_{n-1}, [\ov{x}]C_n) \tag{$L_{n-1}$}\\
-    L_n(P_0, [\ov{x}]P_1, …, [\ov{x}]P_n) &→ C_{n+1} \tag{$L_n$}
+    &\kw{|scheme} ~ R_{n-1}(S, [\ov{S'}]S_1,…, [\ov{S'}]S_{n-1}) ~;
+    & R_{n-1}(P_0, [\ov{x}]P_1, …, [\ov{x}]P_{n-1}) &→ R_n(P_0, [\ov{x}]P_1, …, [\ov{x}]P_{n-1}, [\ov{x}]C_n) \tag{$R_{n-1}$} ~;
+    \\
+    &\kw{|scheme} ~ R_n(S, [\ov{S'}]S_1,…, [\ov{S'}]S_n) ~;
+    & R_n(P_0, [\ov{x}]P_1, …, [\ov{x}]P_n) &→ C_{n+1} \tag{$R_n$} ~;
   \end{align}
   %% 
   (where all symbols, including the variables $\ov{x}$, are the same as in the initial rule). All
   these rules need to be part of the "sort" declaration for the sort of $P_0$ and $C_{n+1}$, along
-  with "scheme" declarations for all the introduced $L_i$ symbols.
+  with "scheme" declarations for all the introduced $R_i$ symbols.
 \end{formalization}
 
-The following develops the details on how this generalizes to multiple inference rules.
 
-\begin{definition}
-  %%
-  A \HAX \emph{ground sequential inference rule} has the form
-  %%
-  \begin{equation}
-    \dfrac{ M_1 ⇒ P_1 \quad\cdots\quad M_n ⇒ P_n }{ P_0 ⇒ M_{n+1} }
-  \end{equation}
-  %%
-  where $n≥0$ and
-  %%
-  \begin{enumerate}
-  \item $P_0$ (the \emph{initial} pattern) can be any \HAX pattern.
-  \item $M_i$ (the \emph{tests}, $1≤i≤n$) are \HAX terms, and are allowed occurrences of
-    meta-variables from $P_0…P_{i-1}$.
-  \item $P_i$ (the \emph{constraints}, $i>0$) must be \HAX subpatterns.
-  \item $M_{n+1}$ (the \emph{conclusion}) is allowed occurrences of all meta-variables.
-  \end{enumerate}
-  %%
-  An inference rule with $n=0$ is called an \emph{axiom}, with $n>0$ a \emph{proper inference}.
-  %%
-  The $M_i⇒P_i$ over the line are called \emph{premise judgments}. The $P_0⇒M_{n+1}$ under the line
-  is called the \emph{conclusion judgment}.
-  %%
-  Below we will vary the indexing scheme to capture various enumerations of sets of inference rules.
-\end{definition}
 
-\begin{definition}[pattern family]\label{def:patfam}
-  Consider a set of ground sequential inference rules.  Such a set can obviously be indexed by the
-  distinct initial patterns into families of rules
-  \begin{displaymath}
-    \dfrac{ M_{ij1} ⇒ P_{ij1} \cdots M_{ijn_{ij}} ⇒ P_{ijn_{ij}} }{ P_i ⇒ M_{ij} } ~(L_{ij})
-  \end{displaymath}
-  where all the $P_i$ used to index the family are pairwise distinct.  The groups obtained in this
-  way are a \emph{pattern family}.
-\end{definition}
+\section{Necessary Optimizations}
+\label{app:optim}
 
-\begin{definition}[leftmost matching]
-  Consider a pattern family as in Definition~\ref{def:patfam}.  The family is said to be
-  \emph{leftmost matching} if the group of rules for each $P_i$ satisfies one of the following
-  conditions:
-  \begin{itemize}
-  \item either the family contains a single axiom, \ie, $1≤j≤1$ with $n_{ij}=0$,
-  \item or the family contains only proper inferences, \ie, $1≤j≤m_i$ with $n_{ij}>0$.
-  \end{itemize}
-\end{definition}
-
-%% Sub-index each non-axiom $P_i$-group by leftmost premise construction into sub-families of
-%%    the form
-%%    \begin{displaymath}
-%%      \dfrac{ M_{ij} ⇒ P_{ijk1} \quad M_{ijk2} ⇒ P_{ijk2} \quad\cdots\quad M_{ijkn_{ijk}} ⇒ P_{ijkn_{ijk}} }{ P_i ⇒ T_{ijk} }
-%%    \end{displaymath}
-%%    where all the $T_{ij}$ used to index the sub-family within a $P_i$-group are pairwise disjoint.
-
-\begin{definition}[left-operations]
-  Given a leftmost-matching pattern family. Each $P$-indexed group of proper inference rules will
-  have the following form:
-  \begin{displaymath}
-    \dfrac{ T_{j1} ⇒ P_{j1} \quad T_{j2} ⇒ P_{j2} \quad\cdots\quad T_{jn_j} ⇒ P_{jn_j} }{ P ⇒ T_j } ~ (L_j)
-  \end{displaymath}
-  with one $j$ per rule in the family, which is by definition non-empty ($1≤j≤n$) and contains only
-  proper inferences ($n_j≥1$).
-  %%
-  \begin{enumerate}
-
-  \item Given a label $L$, the \emph{left-flattening} rewrite rules of the group are
-    %% 
-    \begin{align*}
-      L(P) &→ L'(T_{11}, …,T_{n1}, P) \\[\jot]
-      L'(P_{11}, m_2, …, m_n, P) &→ L_1(P, P_{11}) \\[-\jot]
-      &~\vdots\\
-      L'(m_1, …, m_{n-1}, P_{n1}, P) &→ L_n(P, P_{n1})
-    \end{align*}
-    %% 
-    with $L'$ a fresh symbol associated with the group and the $m_j$ fresh meta-variables.
-
-  \item The \emph{left-eliminated} rules for the group are the rules
-    \begin{displaymath}
-      \dfrac{ T_{j2} ⇒ P_{j2} \quad\cdots\quad T_{jn_j} ⇒ P_{jn_j} }{ L_j(P, P_{j1}) ⇒ T_j } ~ (L'_j)
-    \end{displaymath}
-    with the $L'_j$ fresh labels derived from the $L_j$ labels.
-
-  \end{enumerate}
-\end{definition}
-
-\begin{definition}[left-unfolded]
-  Given a leftmost-matching pattern family and consider the proper inference rule group indexed by
-  $P$. The following system is the \emph{left-unfolded} inference system for the $P$-indexed group:
-  \begin{enumerate}
-
-  \item The left-flattening rewrite rules of the group for a fresh~$L$.
-
-  \item The new inference rule (which refers to the rewrite rules)
-    \begin{displaymath}
-      \dfrac{ L(P) → m \quad m ⇒ m' }{ P ⇒ m } ~ (L)
-    \end{displaymath}
-
-  \item The left-eliminated inference rules (which may be axioms or proper inferences).
-
-  \end{enumerate}
-\end{definition}
-
-\begin{proposition}
-  Given a set of ground sequential inference rules, which is a leftmost-matching pattern
-  family. Pick one group of proper inference rules, indexed by the initial pattern $P$. The original
-  system and the system where the group has been replaced with the left-unfolded group have the same
-  normal forms.
-\end{proposition}
-\begin{proof}
-  Easy: full proof tree before corresponds to proof tree after with simple conversion of the
-  eliminated eliminated premise to an application of the new rule and a single use of the rewrite
-  rule.
-\end{proof}
-
-Note that we can only prove that full ``big-step'' evaluations are equivalent: the new rules may
-``get stuck'' in interesting ways (\TBD{example with overlapping patterns}).
-
-\begin{lemma}
-  Start with any leftmost matching ground sequential inference rule system and apply left-unfolding
-  repeatedly except on axioms and the introduced inference rules
-  \begin{displaymath}
-    \dfrac{ L(P) → m \quad m ⇒ m' }{ P ⇒ m }
-  \end{displaymath}
-  The resulting system has the same normal forms as the original system.
-\end{lemma}
-
-To finish the transform from inference rules to \HAX rules we need two additional notions.
-
-\begin{definition}
-  An inference system is \emph{rooted} if it has one rule that occurs as the root rule of every
-  proof tree.
-\end{definition}
-
-\begin{definition}
-  A leftmost-matching ground sequential inference rule system is \emph{left deterministic} if the
-  left-flattening 
-\end{definition}
-
-\begin{theorem}
-  A rooted and leftmost matching ground sequential inference system can be implemented by a rewrite
-  system \TBD{fix the details!!}
-\end{theorem}
+With the attribute and inference rule simplifications above, multiple conflicting rules may be
+generated. Therefore we'll need a \emph{left factoring} phase. The principle is simple: if there are
+two rules that have the same pattern and only differ in a function names:
+%%
+\begin{align*}
+  P &→ …f_1(…)… \\
+  P &→ …f_2(…)…
+\end{align*}
+%%
+then the two functions $f_1$ and $f_2$ must be \emph{merged}, for example by removing the second
+rule and then replace all occurrences of $f_2$ with $f_1$. This will (recursively) create some new
+situations, and so on.
 
 
 \bibliography{crs}
