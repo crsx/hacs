@@ -260,6 +260,8 @@ The above works with the following constraints:
 \item the attribute values should follow an ``L-attributed pattern.''
 \end{itemize}
 %%
+Note that the involved attributes should be declared.
+
 With the above, if we modify an SDD inspired by the manual~\cite{Rose:ts2016} to have \emph{explicit
   L-attributed passes}:
 %%
@@ -370,10 +372,13 @@ where
 \item $P_0$ and all of $C_1,…,C_n$ are \emph{function constructions}.
 \item $P_0$ is a \emph{pattern} and all of $P_1,…,P_n$ are \emph{pattern fragments}.
 \item $∀i\colon \op{mv}(C_i) ⊆ \op{mv}(P_0…P_{i-1})$.
-\item Each of the $C_i,P_i$ terms have some sort $S_i$.
+\item Each of the $C_i,P_i$ terms has some sort $S_i$.
+\item The variables $x_i$ can occur in all the $C_j,P_j$ of sort $S'_i$.
 \end{itemize}
 %%
-You must define the shape of $P_0$ as a \kw{scheme} of the sort $S$ in the usual way.
+You must define the shape of $P_0$ as a \kw{scheme} of the sort $S$ in the usual way, and the
+inference rule translate to rewrite rules that simplify $P_0$, however, the inference rule mechanism
+allows multiple inference rules for the same $P_0$ as long as they differ in some $P_i$.
 
 The new syntax is meant to correspond to a traditional inference rule with explicit higher order
 binders that we could write
@@ -386,12 +391,8 @@ binders that we could write
   \label{eq:infer}
 \end{equation}
 %%
-To be practical, we intend to also allow ``filters premises'' of the form $C_i=P_i$, which simply
-require that the function construction $C_i$ can be matched by~$P_i$ (but otherwise satisfy the same
-constraints as for regular premises).
-
 Note that inference rules as described here are \emph{not} ``Conditional Term Rewriting Systems:''
-no restrictions on evaluation are implied beyond the requirement to match the patterns.
+no restrictions on evaluation are implied.
 
 We formalize in some detail in Appendix~\ref{app:infer}.
 
@@ -410,8 +411,8 @@ We formalize in some detail in Appendix~\ref{app:infer}.
 
 \item In \HAX2, we will extend the "scheme" declaration to allow
   \begin{displaymath}
-    \kw{scheme}~P~\kw{$→$}~M\,\kw;  \quad\text{for}\quad
-    \kw{scheme}~P'\,\kw; ~ P~\kw{$→$}~M\,\kw;
+    \kw{|scheme}~P~\kw{$→$}~M\,\kw;  \quad\text{for}\quad
+    \kw{|scheme}~P'\,\kw; ~ P~\kw{$→$}~M\,\kw;
   \end{displaymath}
   where $P'$ is $P$ cleared of "#"s. (Alternatively, we can simply allow "#"s in productions.)
 
@@ -462,53 +463,198 @@ eventually moving to \CRSX4/\hax). This would involve the following steps:
 inference rules, and there is no support for user syntax (including sugar and precedence). It is
 almost unchanged from \HAX1 (more specifically the ``raw'' subset of \HAX1).
 
-The terminals are $q$ for qualified module names, $m$ for meta-variable names, $c$ for constructor
-names (also used as sort names), and $v$ for variable names (also used as attribute names).
+The terminals are $q$ for qualified module names, $m$ for meta-variable names (written with leading
+\#), $c$ for constructor names (capitalized and may include a $q$ qualification prefix; also when
+used for sort names), and $v$ for variable names (starts with lower case, also used as attribute
+names and sort variables).
 %%
 \begin{align*}
+  \lefteqn{\textsc{Production}}\qquad &&& \textsc{Notes} \tag{\textsc{Name}}
+  \\
   M \tag{Module}
   &::= \kw{module} ~ q ~ \kw\{ ~ U^* ~ \kw\}
+  &&\ref{note:module}
   \\
   U \tag{Unit}
-  &::= \kw{import} ~ q ~ \kw; \\[-1pt]
-  &~~\bigm|~ \kw{main}^? ~ \kw{sort} ~ SF ~ \kw;
+  &::= \kw{import} ~ q ~ \kw;
   ~\bigm|~ \kw{attribute} ~ AR ~ AF ~ \kw;
+  &&\ref{note:u-import},\ref{note:u-a} \\[-1pt]
+  &~~\bigm|~ \kw{main}^? ~ \kw{sort} ~ SF ~ \kw;
   ~\bigm|~ \kw{\texttt{|}}\, AR ~  \kw;
   ~\bigm|~ \kw{\texttt{|}}\, CF ~ \kw;
-  ~\bigm|~ \kw{\texttt{|}}\, \kw{scheme} ~ CF ~ AR^* ~  \kw; \\[-1pt]
-  &~~\bigm|~ T ~ \kwm{→} ~ T ~  \kw;
+  ~\bigm|~ \kw{\texttt{|}}\, \kw{scheme} ~ CF ~ AR^* ~  \kw;
+  ~\bigm|~ \kw{\texttt{|}}\, \kw{variable} ~ \kw;
+  &&\ref{note:u-sort},\ref{note:u-ar},\ref{note:u-cf},\ref{note:u-scheme},\ref{note:u-var} \\[-1pt]
+  &~~\bigm|~ \kw[~O^{*\kw,}~\kw] ~ T ~ \kwm{→} ~ T ~  \kw;
+  &&\ref{note:u-rule}
   \\[1ex]
   SF \tag{SortForm}
-  &::= α ~\bigm|~ c ~ SA^*
+  &::= v ~\bigm|~ c ~ SA^*
+  &&\ref{note:sf}
   \\
   SA \tag{SortArgument}
-  &::= α ~\bigm|~ \kw( ~ SF ~ \kw)
+  &::= v ~\bigm|~ c ~\bigm|~ \kw( ~ SF ~ \kw)
+  &&\ref{note:sa}
   \\
   AR \tag{AttributeReference}
-  &::= (\kwm{↑}\bigm|\kwm{↓}) ~ v
+  &::= \kwm{↑} ~ v ~\bigm|~ \kwm{↓} ~ v
+  &&\ref{note:ar}
   \\
   AF \tag{AttributeForm}
   &::= \kw( ~ SF ~ \kw) ~\bigm|~ \kw\{ ~ SF ~ \kw: ~ SF ~ \kw\}
+  &&\ref{note:af}
   \\
   CF \tag{ConstructorForm}
   &::= c ~ \kw( ~ PF^{*\kw,} ~ \kw)
+  &&\ref{note:pf}
   \\
   PF \tag{PieceForm}
   &::= \kw[ ~ SF^{*\kw,} ~ \kw] ~ SF
+  &&\ref{note:pf}
   \\[1ex]
   T \tag{Term}
-  &::= v ~ A^* ~\bigm|~ c ~ \kw( ~ P^{*\kw,} ~ \kw) ~ A^* ~\bigm|~ m ~ \kw[ ~ T^{*\kw,} ~ \kw] ~ A^*
+  &::= c ~ \kw( ~ P^{*\kw,} ~ \kw) ~ A^* ~\bigm|~ v ~ A^* ~\bigm|~ m ~ \kw[ ~ T^{*\kw,} ~ \kw] ~ A^*
+  &&\ref{note:t-cons},\ref{note:t-var},\ref{note:t-meta}
   \\
   P \tag{Piece}
   &::= \kw[ ~ v^{*\kw,} ~ \kw] ~ T
+  &&\ref{note:piece}
   \\
   A \tag{Attribute}
   &::= AR ~ \kw( ~ T ~ \kw)
   ~\bigm|~ AR ~ \kw\{ ~ T ~ \kw: ~ T ~ \kw\} ~\bigm|~ AR ~ \kw\{ ~ \kwm{¬} ~ T ~ \kw\} ~\bigm|~ AR ~ \kw\{ ~ m ~ \kw\}
   ~\bigm|~ \kwm{↕} ~ m
+  &&\ref{note:a-value},\ref{note:a-map},\ref{note:a-not},\ref{note:a-catch},\ref{note:a-all}
+  \\[1ex]
+  O \tag{Option}
+  &::= c ~\bigm|~ \kw{priority} ~\bigm|~ \kw{default}
+  ~\bigm|~ \kw{free}\kw(~v~\kw{as}~SF~\kw) ~\bigm|~ \kw{fresh}\kw(~v~\kw{as}~SF~\kw)
+  &&\ref{note:o-name},\ref{note:o-priority},\ref{note:o-ff}
 \end{align*}
 %%
-\TBD{Explain all constructs!}
+Notes on the semantics of the core.
+%%
+\begin{enumerate}
+
+\item\label{note:module} \kw{module} sets it up such that all unqualified names in all the $U^*$
+  declarations are implicitly prefixed with the $q$ qualification.
+
+\item\label{note:u-import} \kw{import} allows references to names that start with the imported prefix $q$ in
+  the module.
+
+\item\label{note:u-a} \kw{attribute} declares the allowed values of an attribute: the $AR$ specifies
+  which attribute and the $AF$ specifies the allowed forms of the attribute. There must be exactly
+  one attribute declaration for each used attribute reference.
+
+\item\label{note:u-sort} \kw{sort} sets the \emph{current sort form}. If \kw{main} is included then
+  the sort form must be primary (see point \ref{note:primary} below) and the sort is the default
+  input sort.
+
+\item\label{note:u-ar} A declaration $\kw{|}AR\kw;$ declares that the referenced attribute can be
+  associated with data constructors of the current sort, which must be primary.
+
+\item\label{note:u-cf} A declaration $\kw{|}CF\kw;$ declares that the current sort, which must be
+  primary, owns the data constructor described by~$CF$.
+
+\item\label{note:u-scheme} A declaration $\kw{|scheme}~CF\kw;$ declares that the constructor
+  described by $CF$ is a function construction, which is permitted by all sorts that instantiate the
+  current sort form. The added $AR$, restricted to inherited attributes, declares that all
+  invocations of the function must be annotated with values for those attributes.
+
+\item\label{note:u-var} A declaration \kw{|variable;} declares that all variables of the current
+  sort, which must be primary, are \emph{syntactic}. This allows use of ``free'' and ``fresh''
+  variables of the sort in rules but prevents substitution of non-variables for the sort; \TBD{see
+    the explanation of variables below}.
+
+\item\label{note:u-rule} A rule $T_1\kwm{→}T_2\kw;$ expresses that terms that match the $T_1$
+  \emph{pattern} of the current sort may be replaced by $T_2$ after suitable substitutions of
+  meta-variables and bound variables. The rule may be subject to some options; the precise rules for
+  how rewrites are performed \TBD{are given in the rewriting section}.
+
+\item\label{note:sf}\label{note:primary} A sort form $SF$ is either a polymorphic sort variable or a
+  parametric named sort. If $SF$ has the form $c~v^*$ with distinct $v_i$, we say that it is a
+  \emph{primary sort form}. A sort $c$ must always have the same number of sort parameters. A sort
+  form with no variables is called a \emph{ground} sort. We say that a ground sort
+  \emph{instantiates} a sort form if usual substitution in the form can be used to generate it.
+
+\item\label{note:sa} A sort argument $SA$ is either a sort variable or a proper sort; if a sort
+  argument has arguments of its own it must be parenthesized.
+
+\item\label{note:ar} An attribute reference $AR$ identifies an attribute: \kwm{↓} for inherited,
+  \kwm{↑} for synthesized, in each case followed by the name.
+
+\item\label{note:af} An attribute form $AF$ declares what shape an attribute must take. It may
+  either be a \emph{simple} attribute of sort $S$, written $\kw(S\kw)$, or an \emph{environment}
+  from variables of a sort $S_1$ to values of another sort $S_2$, written $\kw\{S_1\kw:S_2\kw\}$.
+
+\item\label{note:cf} A construction form $CF$ declares the arity and shape of the parameter pieces of a
+  construction (either data or function).
+
+\item\label{note:pf} A piece form $PF$ gives the shape of one parameter piece to a constructor: that
+  parameter must always bind distinct local variables of the sorts in the brackets (in order), and
+  must contain a term of the sort after the bracket.
+
+\item\label{note:t-cons} A term $T$ can be a \emph{construction} $c\kw(\ov{P}\kw)$ optionally
+  followed by some attribute values~$\ov{A}$. The pieces $P_i$ must correspond in order to the
+  declared piece forms for the constructor, and the attributes must be allowed for the sort for data
+  constructors, or allowed for the function construction.
+
+\item\label{note:t-var} A term $T$ can be a \emph{variable occurrence} $v$, optionally followed by
+  some attribute values~$\ov{A}$. $v$ must have a sort from the context, and if attribute values are
+  given they must be permitted for that sort.
+
+\item\label{note:t-meta} Finally, a term $T$ can be a \emph{meta-application} $m\kw[\ov{T}\kw]$
+  optionally followed by some attribute values~$\ov{A}$. A meta-application must be used
+  consistently inside a rewrite rule according to specific constraints.
+
+\item\label{note:piece} A piece $P$ has a list of \emph{binders} $\kw[\ov{v}\kw]$ followed by a term $T$, which is the
+  scope for the bound variables. The variables will be assigned sorts according to the $PF$ that the
+  piece must correspond to, and with this assigment, $T$ must have the term sort of the~$PF$.
+
+\item\label{note:a-value} An attribute $A$ can be a \emph{simple attribute value} written as the reference to the
+  attribute followed by the value in parenthesis. The attribute reference must be declared to take
+  such a value and the sort must match. There can be at most one simple attribute value for a given
+  attribute reference in a list of attributes.
+
+\item\label{note:a-map} An \emph{environment attribute mapping} $AR\,\kw\{T_1\kw:T_2\}$ is permitted
+  if the $AR$ is declared as an environment and the two subterms have the appropriate types. In
+  addition, there are some constraints on what $T_1$ can be, which are described along with rule
+  matching. Essentially the mapping expresses the constraint that the actual environment associated
+  with the $AR$ contains a mapping where the variable matches $T_1$ and the value matches~$T_2$
+
+\item\label{note:a-not} An \emph{environment attribute exclusion} $AR\,\kw\{¬T_1\}$ is permitted if
+  the $AR$ is declared as an environment with $T$ of the key sort. In addition, there are some
+  constraints on what $T_1$ can be, which are described along with rule matching. Essentially the
+  mapping expresses the constraint that the actual environment associated with the $AR$ does not
+  contain a mapping where the variable matches~$T_1$.
+
+\item\label{note:a-catch} An \emph{environment attribute catcher} $AR\kw\{m\kw\}$ is permitted if
+  the $AR$ is declared as an environment. The precise semantics is described along with rule
+  matching, essentially the catcher expresses the constraint that $m$ contains mappings that must be
+  associated with as many mappings in the~$AR$ as possible. An $m$ used in this way in a rule should
+  only be used in this way.
+
+\item\label{note:a-all} Finally, the \emph{attribute catch-all} $\kwm{↕}m$ expresses that the meta-variable $m$ should
+  capture as many of the attributes associated with the current term as possible.
+
+\item\label{note:o-name} Specifying a $c$ as an option names the rule~$c$. All names must be unique.
+
+\item\label{note:o-priority} The \kw{priority} and \kw{default} options make \HAX try the rule before
+  and after other rules, respectively.
+
+\item\label{note:o-ff} The $\kw{free}\kw(v~\kw{as}~SF\kw)$ and $\kw{fresh}\kw(v~\kw{as}~SF\kw)$ allow
+  for using syntactic variables in rules (consistent with sorts with the \kw{variable} declaration);
+  for details \TBD{see varables}.
+
+\end{enumerate}
+%%
+Notes on translating to \hax.
+%%
+\begin{enumerate}
+
+\item 
+
+\end{enumerate}
 
 \section{Attribute Normalization}
 \label{app:attributes}
