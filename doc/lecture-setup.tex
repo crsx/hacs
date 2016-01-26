@@ -170,6 +170,7 @@ Yellow,1,1,0;%
 YellowGreen,.604,.804,.196}
 \usepackage{hyperref}
 \usepackage{rcs}
+\usepackage{makecell}
 
 %% Macros.
 \newcommand{\HAX}{\text{H\kern-.1em A\kern-.1em C\kern-.05em S}\xspace}
@@ -181,6 +182,10 @@ YellowGreen,.604,.804,.196}
 \newcommand{\aka}{\textit{aka.}\xspace}
 \newcommand{\TBD}[1][]{\textit{To Be Done…#1}\marginpar{\bf TBD}}
 
+\def\Bigstrut{\ensuremath{\vphantom{\Bigm|}}}
+\newcommand\caret{\mathbin{\char`\^}}
+\newcommand{\ov}[1]{\ensuremath{\mkern2mu\overline{\mkern-1.8mu{#1}\mkern-.8mu}\mkern1mu}}
+
 \newcommand*{\cf}[1]{\texttt{\small #1}}
 \newcommand*{\si}[1]{\textit{\small #1}}
 \newcommand*{\surl}[1]{\mbox{\small\url{#1}}}
@@ -191,8 +196,6 @@ YellowGreen,.604,.804,.196}
 \newcommand{\qqquad}{{\qquad\quad}}
 \newcommand{\qqqquad}{{\qquad\qquad}}
 \newcommand{\opt}{{\ensuremath{_{\text{\it opt}}}}}
-
-\newcommand\caret{\mathbin{\char`\^}}
 
 \def\SubScript{\textit{SubScript}\xspace}
 \def\vacuum{\endgraf\vskip 0pt plus 1filll\relax}
@@ -284,6 +287,7 @@ YellowGreen,.604,.804,.196}
 \newcommand{\mv}[1]{\textsc{#1}}
 %\newcommand{\kw}[1]{\text{\rm\textbf{\color{gray}#1}}}
 \newcommand{\kw}[1]{\textsf{\bf\color{gray}#1}}
+\newcommand{\kwm}[1]{\textcolor{black!60}{\ensuremath{\pmb{#1}}}}
 \newcommand{\cw}[1]{\textsf{\color{gray}#1}}
 \newcommand{\con}[1]{\textup{#1}}
 \newcommand{\var}[1]{\textit{#1}}
@@ -294,7 +298,7 @@ YellowGreen,.604,.804,.196}
   string=[d]{"},morestring=[d]{'},upquote=true,showstringspaces=false,%
   comment=[l]{//},morecomment=[s]{/*}{*/},commentstyle=\color{blue}\rm,%
   keywordstyle=\kw,%
-  keywords={attribute,data,fragment,import,main,module,nested,property,rule,scheme,simplify,sort,%
+  keywords={attribute,data,fragment,import,include,main,module,nested,private,property,rule,scheme,simplify,sort,%
     space,static,sugar,symbol,tag,token,default,error,binds,as,template,data,variable},%
   literate=%
     {⟦}{{\ensuremath{\llbracket}}}1 {⟧}{{\ensuremath{\rrbracket}}}1 {⟨}{{\ensuremath{\langle}}}1 {⟩}{{\ensuremath{\rangle}}}1 %
