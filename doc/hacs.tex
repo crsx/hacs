@@ -51,7 +51,7 @@
 }
 \author{
   \authorname1{Kristoffer H. Rose}
-  \authorinstitution1{Two Sigma Investments \also New York University}
+  \authorinstitution1{Two Sigma Investments}
 }
 \reportnumber{2016-1}
 
@@ -720,7 +720,7 @@ Leftmost(⟦⟨FLOAT#⟩⟧)                  →   ⟦⟨FLOAT#⟩⟧ ;
   guaranteed (by the declaration) to return something of "Exp" sort. The last two rules explicitly
   return the argument form of sort "Exp". Notice that in the last two rules, the pattern sets up "#"
   to be of sort "INT" and "FLOAT", respectively, disallowing their use directly as the result, as
-  they have the wrong sort. Rather, we use syntax construction to obtain the correct sort by making
+  they have the wrong sort. Instead it uses syntax construction to obtain the correct sort by making
   use of an appropriate production.
 \end{example}
 
@@ -1762,11 +1762,11 @@ fragments with scopes inside. These are the features where the ``H'' of \HAX mat
   %%
   \begin{itemize}
 
-  \item The specification has properties like others we have seen: it is a \emph{module} (lines 1
+  \item The specification has properties like others presented above: it is a \emph{module} (lines 1
     and 12); it has a lexical specification of \emph{spacing} (line 2) and \emph{identifiers} (line
     3); it has a \emph{main sort} (line 5) of terms "T"; the term grammar uses "@" precedence
     markers (lines 7--9) and syntactic sugar for grouping (line 9); the term has one \emph{scheme},
-    which means that we may have rules for application (line 7), which is so basic in λ calculus
+    which means that there can be rules for application (line 7), which is so basic in λ calculus
     that it is denoted by simple concatenation.
 
   \item The first syntax production (line 6) is different:
