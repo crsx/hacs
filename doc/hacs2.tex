@@ -262,8 +262,8 @@ The above works with the following constraints:
 %%
 Note that the involved attributes should be declared.
 
-With the above, if we modify an SDD inspired by the manual~\cite{Rose:ts2016} to have \emph{explicit
-  L-attributed passes}:
+With the above, we can observe that the following SDD (inspired by the manual~\cite{Rose:ts2016}) is
+\emph{L-attributed}:
 %%
 \begin{equation*}
   \begin{array}{r@{\;}l|lr}
@@ -271,25 +271,20 @@ With the above, if we modify an SDD inspired by the manual~\cite{Rose:ts2016} to
     \multicolumn{2}{l|}{\textsc{Production}}  & \textsc{Semantic Rules} &\Bigstrut\\
     \hline\Bigstrut
     S &→ \textbf{id} := E_1; S_2
-    & E_1.e = S.e; &\thetag{S1a}\\
-    && S_2.e = \op{Extend}(S.e, \textbf{id}.sym, E_1.t) &\thetag{S1b}
+    & E_1.e = S.e; S_2.e = \op{Extend}(S.e, \textbf{id}.sym, E_1.t) &\thetag{S1}
     \\[\jot]
     &\mid \{~S_1~\}~S_2 & S_1.e = S.e; S_2.e = S.e &\thetag{S2}
     \\[\jot]
     &\mid ε & &\thetag{S3}
     \\[\jot]
     \hline\Bigstrut
-    E &→ E_1 + E_2 & E_1.e=E.e; E_2.e=E.e; &\thetag{E1a}\\
-    && E.t = \op{Unif}(E_1.t, E_2.t) &\thetag{E1b}\\[\jot]
+    E &→ E_1 + E_2 & E_1.e=E.e; E_2.e=E.e; E.t = \op{Unif}(E_1.t, E_2.t) &\thetag{E1}\\[\jot]
     &\mid \textbf{int} & E.t = \op{Int}&\thetag{E2}\\[\jot]
     &\mid \textbf{id} & E.t = \op{Lookup}(E.e,\textbf{id}.sym)&\thetag{E3}
     \\[\jot]
     \Xhline{2\arrayrulewidth}
   \end{array}
 \end{equation*}
-%%
-The explicit passes can be seen as the ``a'' and ``b'' semantic rules. They are obtained by
-observing the dependencies of the attributes and ensuring that \emph{each pass is L-attributed}.
 
 \begin{figure}[p]
   \begin{hacs}[texcl,numbers=right,xrightmargin=2em]
@@ -311,46 +306,37 @@ module org.crsx.hacs.samples2.Typing {
   // Rules for statements.
   sort S | ↓e;
 
-  // S1a: $E_1.e = S.e$
-  ⟦ id := ⟨E#1  ↓e{#Se}⟩; ⟨S#2⟩ ⟧  ↓e{#Se} ;
-
-  // S1b: $S_2.e = \op{Extend}(S.e, \textbf{id}.sym, E_1.t) $
-  ⟦ id := ⟨E#1 ↑t(#E1t) ⟩; ⟨S#2  ↓e{#Se,⟦id⟧:#E1t}⟩ ⟧ ↓e{#Se} ;
+  // S1: $E_1.e = S.e; S_2.e = \op{Extend}(S.e, \textbf{id}.sym, E_1.t) $
+  ↓e{#Se} ⟦ id := ⟨↓e{#Se} E#1 ↑t(#E1t)⟩; ⟨↓e{#Se,⟦id⟧:#E1t}⟩ S#2⟩ ⟧;
 
   // S2: $S_1.e = S.e; S_2.e = S.e $
-  ⟦ { ⟨S#1 ↓e{#Se}⟩ } ⟨S#2 ↓e{#Se}⟩ ⟧ ↓e{#Se} ;
+  ↓e{#Se} ⟦ { ⟨S#1 ↓e{#Se}⟩ } ⟨S#2 ↓e{#Se}⟩ ⟧;
 
   // S3:
-  ⟦ ⟧ ↓e{#Se} ;
+  ↓e{#Se} ⟦ ⟧;
 
   // Rules for expressions.
   sort E | ↓e | ↑t; // note: t depends on e from (E3)
 
-  // E1a: $E_1.e=E.e; E_2.e=E.e$
-  ⟦ ⟨E#1  ↓e{#Ee}⟩ + ⟨E#2  ↓e{#Ee}⟩ ⟧↓e{#Ee} ;
-
-  // E1b: $E.t = \op{Unif}(E_1.t, E_2.t)$
-  ⟦ ⟨E#1 ↑t(#E1t) ⟩ + ⟨E#2 ↑t(#E2t) ⟩ ⟧  ↑t(Unif(#E1t,#E2t));
+  // E1: $E_1.e=E.e; E_2.e=E.e; E.t = \op{Unif}(E_1.t, E_2.t)$
+  ↓e{#Ee} ⟦ ⟨↓e{#Ee} E#1 ↑t(#E1t)⟩  + ⟨↓e{#Ee} E#2 ↑t(#E2t) ⟩ ⟧  ↑t(Unif(#E1t,#E2t));
 
   // E2: $E.t = \op{Int}$
   ⟦ ⟨INT#1⟩ ⟧  ↑t(Int);
 
   // E3: $E.t = \op{Lookup}(E.e,\textbf{id}.sym)$
-  ⟦ id ⟧ ↓e{⟦id⟧ : #t}   ↑t(#t);
+  ↓e{⟦id⟧ : #t} ⟦id⟧ ↑t(#t);
 }
   \end{hacs}
   \caption{Translation of sample SDD.}
   \label{fig:sdd-in-hacs}
 \end{figure}
 
-Figure~\ref{fig:sdd-in-hacs} shows the \HAX2 encoding of the rules.  The insight needed by the
-programmer is that two of the rules---\thetag{S1} and \thetag{E1}---need to be split into two
-passes: the first to propagate $e$, the second to synthesize~$t$. The reason for this is
-\thetag{E3}, where the synthesized $t$ \emph{depends} on the inherited~$e$.
-
-One new notation permitted for \HAX2 is that the order or attributes and their associated term does
-not matter: "↓a(A)B" is the same as "B↓a(A)".
-
+Figure~\ref{fig:sdd-in-hacs} shows the \HAX2 encoding of the rules.
+%%
+Note that we are here using the new notation permitted for \HAX2: that the order or attributes and
+their associated term does not matter: "↓a(A)B" is the same as "B↓a(A)".
+%%
 The full formal details of how attribution rules are realized are given in
 Appendix~\ref{app:attributes}.
 
@@ -431,7 +417,7 @@ would be---alternatives include
 \item Eliminate "Computed" and instead make numeric and atom types native to \HAX with the
   expression syntax native to (raw) \HAX.
 
-\item Create a way to access ``C primitives'' directly from \HAX on basic values.
+\item 
 
 \end{itemize}
 
@@ -652,7 +638,7 @@ Notes on translating to \hax.
 %%
 \begin{enumerate}
 
-\item 
+\item \TBD{?}
 
 \end{enumerate}
 
