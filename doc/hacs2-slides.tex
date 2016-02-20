@@ -1,0 +1,389 @@
+\documentclass[pdftex,aspectratio=169,14pt]{beamer}
+\input{lecture-setup}
+
+%% Style.
+\usepackage[T1]{fontenc}
+\usetheme{default}
+\useinnertheme{rounded}
+\setbeamercovered{transparent=5}
+\def\vacuum{\endgraf\vskip 0pt plus 1filll\relax}
+\setbeamercolor{alerted text}{fg=red}
+\usepackage{charter}
+\renewcommand{\ttdefault}{txtt}
+\usefonttheme{serif}
+\def\q#1{~\text{`\texttt{#1}'}~}
+\def\t#1{\texttt{#1}}
+\def\tup#1{\ensuremath{\left\langle{#1}\right\rangle}}
+
+%% Topmatter
+\title{Proposals for New \HAX2 Features}
+\author[Kris Rose]{Kristoffer H. Rose\\Two Sigma}
+\date{January 26, 2016\\CHUM 5, Two Sigma, New York}
+
+%%
+\begin{document}
+\frame{\titlepage}
+
+\begin{frame}{Outline}
+  \tableofcontents
+\end{frame}
+
+
+\section{Lexing \& Parsing}
+\begin{frame}{Outline}
+  \tableofcontents[current]
+\end{frame}
+
+\begin{frame}[fragile]{Optional}
+  \begin{hacs}[mathescape]
+    sort … | scheme F($N$?);
+    F(⟦ ⟨$N$ #1⟩ ⟧) →  …; //present
+    F(⟦ ⟧) →  …; //absent
+  \end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{Many}
+  \begin{hacs}[mathescape]
+    sort … | scheme F($N$*);
+    F(⟦ ⟨$N$ #1⟩ ⟨$N$* #rest⟩ ⟧) →  …; //one more
+    F(⟦ ⟧) →  …; //end
+  \end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{List}
+  \begin{hacs}[mathescape]
+    sort … | scheme F($N$+$U$);
+    F(⟦ ⟨$N$ #1⟩ $U$ ⟨$N$+$U$ #rest⟩ ⟧) →  …; //non-last
+    F(⟦ ⟨$N$ #1⟩ ⟧) →  …; //last
+  \end{hacs}
+  \pause
+  \begin{hacs}[mathescape]
+    sort Bool | scheme IsSingle(Elem+[,]);
+    IsSingle(⟦ ⟨Elem #1⟩ ,  ⟨Elem+[,] #rest⟩ ⟧) →  False;
+    IsSingle(⟦ ⟨Elem #1⟩ ⟧) →  True;
+  \end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{Optional List}
+  \begin{hacs}[mathescape]
+    sort … | scheme F($N$+$U$?) | scheme F2($N$+$U$);
+    F(⟦ ⟨$N$+$U$ #⟩ ⟧) →  F2(#);
+
+    F(⟦ ⟧) →  …;  //empty
+    F2(⟦ ⟨$N$ #1⟩ $U$ ⟨$N$*$U$ #rest⟩ ⟧) →  …; //non-last
+    F2(⟦ ⟨$N$ #1⟩ ⟧) →  …; //last
+  \end{hacs}
+\end{frame}
+
+
+\section{Modules}
+\begin{frame}{Outline}
+  \tableofcontents[current]
+\end{frame}
+
+\begin{frame}[fragile]{Inclusion}
+\begin{hacs}
+    include org.crsx.hacs.Grammar;
+\end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{Import}
+\begin{hacs}
+    import org.crsx.hacs.Grammar;
+\end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{Private}
+\begin{hacs}
+    sort List α | private scheme ⟦ { ⟨List α⟩ } ⟨List α⟩ ⟧;
+\end{hacs}
+\end{frame}
+
+
+\section{Attributes}
+\begin{frame}{Outline}
+  \tableofcontents[current]
+\end{frame}
+
+\begin{frame}[fragile]{Syntax}
+  \begin{itemize}
+  \item \hacsc"↓a{#}" to catch all binders.
+  \item \hacsc"↓a{x:A, y:B}" same as \hacsc"↓a{x:A} ↓a{y:B}".
+  \item Set membership changes to \hacsc"↓a{x:}".
+  \item Data can carry inherited attributes.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Inherited Attributions}
+  \begin{equation*}
+    \ov{{↓}i_0}  ~ d\!\left(\,\ov{\, \ov{{↓}i} \, t \, \ov{{↑}s} \,}\,\right) ~ \ov{{↑}s_0}
+  \end{equation*}
+  \pause
+  \begin{definition}\label{def:L-attributed}
+    A \HAX2 attribution is \emph{locally L-attributed} if
+    \begin{align}
+      ∀j, 1≤j≤\$\colon
+      \op{mv}\bigl( ~ \ov{{↓}i_0} ~ \ov{{↓}i_1}…\ov{{↓}i_{j-1}} ~ \ov{{↑}s_1}…\ov{{↑}s_{j-1}} ~ \bigr)
+      &⊇ \op{mv}\bigl( \ov{{↓}i_j} \bigr)
+      \\
+      ∀j, 1≤j≤\$\colon
+      \op{mv}\bigl( ~ \ov{{↓}i_0} ~ \ov{{↓}i_1}…\ov{{↓}i_j} ~ \ov{{↑}s_1}…\ov{{↑}s_{j-1}} ~ \bigr)
+      &⊇ \op{mv}\bigl( \ov{{↑}s_j} \bigr)
+      \\
+      \op{mv}\bigl( ~ \ov{{↓}i_0} ~ \ov{\ov{{↓}i}} ~ \ov{\ov{{↑}s}} ~ \bigr)
+      &⊇ \op{mv}\bigl( \ov{{↑}s_0} \bigr)
+    \end{align}
+  \end{definition}
+\end{frame}
+
+\begin{frame}{SDD with Explicit Passes}
+  \vspace*{-1em}
+  \begin{equation*}
+    \begin{array}{r@{\;}l|lr}
+      \Xhline{2\arrayrulewidth}
+      \multicolumn{2}{l|}{\textsc{Production}}  & \textsc{Semantic Rules} &\Bigstrut\\
+      \hline\Bigstrut
+      S &→ \textbf{id} := E_1; S_2
+      & E_1.e = S.e; &\thetag{S1a}\\
+      && S_2.e = \op{Extend}(S.e, \textbf{id}.sym, E_1.t) &\thetag{S1b}
+      \\[\jot]
+      &\mid \{~S_1~\}~S_2 & S_1.e = S.e; S_2.e = S.e &\thetag{S2}
+      \\[\jot]
+      &\mid ε & &\thetag{S3}
+      \\[\jot]
+      \hline\Bigstrut
+      E &→ E_1 + E_2 & E_1.e=E.e; E_2.e=E.e; &\thetag{E1a}\\
+      && E.t = \op{Unif}(E_1.t, E_2.t) &\thetag{E1b}\\[\jot]
+      &\mid \textbf{int} & E.t = \op{Int}&\thetag{E2}\\[\jot]
+      &\mid \textbf{id} & E.t = \op{Lookup}(E.e,\textbf{id}.sym)&\thetag{E3}
+      \\[\jot]
+      \Xhline{2\arrayrulewidth}
+    \end{array}
+  \end{equation*}
+\end{frame}
+
+\begin{frame}[fragile]{New SDD Encoding (I)}\small
+  \begin{hacs}[texcl,numbers=right,xrightmargin=2em]
+// Implementation of simple type checking SDD.
+module org.crsx.hacs.samples2.Typing {
+
+  // Grammar.
+  token INT  | [0-9]+;
+  token ID  | [A-Z] [A-Za-z0-9_]*;
+  main sort S  | ⟦ ⟨ID⟩ := ⟨E⟩; ⟨S⟩ ⟧  | ⟦ { ⟨S⟩ } ⟨S⟩ ⟧  | ⟦⟧;
+  sort E  | ⟦ ⟨E@1⟩ + ⟨E⟩ ⟧  | ⟦⟨INT⟩⟧@1  | ⟦⟨ID⟩⟧@1;
+
+  // Attributes.
+  sort T  | Int  | scheme Unif(T,T);
+  attribute ↓e{ID:T};
+  attribute ↑t(T);
+  //…(rules for Unif omitted)
+  \end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{New SDD Encoding (II)}\small
+  \begin{hacs}[texcl,numbers=right,xrightmargin=2em]
+  // Rules for statements.
+  sort S | ↓e;
+
+  // S1a: $E_1.e = S.e$
+  ⟦ id := ⟨E#1  ↓e{#Se}⟩; ⟨S#2⟩ ⟧  ↓e{#Se} ;
+
+  // S1b: $S_2.e = \op{Extend}(S.e, \textbf{id}.sym, E_1.t) $
+  ⟦ id := ⟨E#1 ↑t(#E1t) ⟩; ⟨S#2  ↓e{#Se,⟦id⟧:#E1t}⟩ ⟧ ↓e{#Se} ;
+
+  // S2: $S_1.e = S.e; S_2.e = S.e $
+  ⟦ { ⟨S#1 ↓e{#Se}⟩ } ⟨S#2 ↓e{#Se}⟩ ⟧ ↓e{#Se} ;
+
+  // S3:
+  ⟦ ⟧ ↓e{#Se} ;
+  \end{hacs}
+\end{frame}
+
+\begin{frame}[fragile]{New SDD Encoding (III)}\small
+  \begin{hacs}[texcl,numbers=right,xrightmargin=2em]
+  // Rules for expressions.
+  sort E | ↓e | ↑t; // note: t depends on e from (E3)
+
+  // E1a: $E_1.e=E.e; E_2.e=E.e$
+  ⟦ ⟨E#1  ↓e{#Ee}⟩ + ⟨E#2  ↓e{#Ee}⟩ ⟧↓e{#Ee} ;
+
+  // E1b: $E.t = \op{Unif}(E_1.t, E_2.t)$
+  ⟦ ⟨E#1 ↑t(#E1t) ⟩ + ⟨E#2 ↑t(#E2t) ⟩ ⟧  ↑t(Unif(#E1t,#E2t));
+
+  // E2: $E.t = \op{Int}$
+  ⟦ ⟨INT#1⟩ ⟧  ↑t(Int);
+
+  // E3: $E.t = \op{Lookup}(E.e,\textbf{id}.sym)$
+  ⟦ id ⟧ ↓e{⟦id⟧ : #t}   ↑t(#t);
+}
+  \end{hacs}
+\end{frame}
+
+
+\section{Inference Rules}
+\begin{frame}{Outline}
+  \tableofcontents[current]
+\end{frame}
+
+\begin{frame}{New Syntax}
+  \vspace*{-1em}
+  \begin{equation*}
+    \kw{sort}~S~;~~
+    [R]~\kw{when}~[\ov{x~\kw{as}~S'}](\, C_1⇒P_1 ~\cdots~ C_n⇒P_n \,) ~ \kw{infer} ~ P_0 ⇒ C_{n+1} ~;
+  \end{equation*}
+  %% 
+  \pause
+  %% 
+  \begin{equation*}
+    \dfrac
+    { ∀\,\ov{x} : (\, C_1⇒P_1 ~\cdots~ C_n⇒P_n \,) }
+    { P_0 ⇒ C_{n+1}}
+    ~(R)
+    \label{eq:infer}
+  \end{equation*}
+  %% 
+  \pause
+  %% 
+  \begin{itemize}
+  \item $R$ is the unique name of the rule (as also allowed on other rules).
+  \item $P_0$ and all of $C_1,…,C_n$ are \emph{function constructions}.
+  \item $P_0$ is a \emph{pattern} and all of $P_1,…,P_n$ are \emph{pattern fragments}.
+  \item $∀i\colon \op{mv}(C_i) ⊆ \op{mv}(P_0…P_{i-1})$.
+  \item Each of the $C_i,P_i$ terms has some sort $S_i$.
+  \item The variables $x_i$ can occur in all the $C_j,P_j$ of sort $S'_i$.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Translation}
+  \vspace*{-1em}
+  \begin{align*}
+    &\kw{sort}~S~;\\
+    & P_0 → R_1(P_0, [\ov{x}]C_1) \tag{$R_0$} ~;
+    \\
+    &\kw{|scheme} ~ R_1(S, [\ov{S'}]S_1) ~;\\
+    &R_1(P_0, [\ov{x}]P_1) → R_2(P_0, [\ov{x}]P_1, [\ov{x}]C_2) \tag{$R_1$} ~;
+    \\[-\jot]
+    &~~\vdots\notag\\
+    &\kw{|scheme} ~ R_{n-1}(S, [\ov{S'}]S_1,…, [\ov{S'}]S_{n-1}) ~;\\
+    &R_{n-1}(P_0, [\ov{x}]P_1, …, [\ov{x}]P_{n-1}) → R_n(P_0, [\ov{x}]P_1, …, [\ov{x}]P_{n-1}, [\ov{x}]C_n) \tag{$R_{n-1}$} ~;
+    \\
+    &\kw{|scheme} ~ R_n(S, [\ov{S'}]S_1,…, [\ov{S'}]S_n) ~;\\
+    &R_n(P_0, [\ov{x}]P_1, …, [\ov{x}]P_n) → C_{n+1} \tag{$R_n$} ~;
+  \end{align*}
+\end{frame}
+
+
+\section{Miscellaneous}
+\begin{frame}{Outline}
+  \tableofcontents[current]
+\end{frame}
+
+\begin{frame}[fragile]{Other things…}
+  \begin{itemize}
+  \item Fix \kw{sugar}, allow short form \kw{scheme}.
+  \item Fix Computed.
+  \item Allow non-primary sorts for non-data declarations:
+    \begin{hacs}
+      sort α | scheme If(Bool, α, α);
+      If(True, #1, #2) → #1;
+      If(False, #1, #2) → #2;
+
+      sort List Bool | scheme Flip(List Bool);
+      Flip(#s) →  Map([x]Not(x), #s);
+    \end{hacs}
+  \end{itemize}
+\end{frame}
+
+
+\section{Core \HAX}
+\begin{frame}{Outline}
+  \tableofcontents[current]
+\end{frame}
+
+\begin{frame}\footnotesize
+  \vspace*{-2em}
+  \begin{align*}
+    \lefteqn{\textsc{Production}}\qquad \tag{\textsc{Name}}
+    \\
+    M \tag{Module} &::= \kw{module} ~ q ~ \kw\{ ~ U^* ~ \kw\}
+    \\
+    U \tag{Unit} &::= \kw{import} ~ q ~ \kw; ~\bigm|~ \kw{attribute} ~ AR ~ AF ~ \kw; \\[-1pt]
+    &~~\bigm|~ \kw{main}^? ~ \kw{sort} ~ SF ~ \kw; ~\bigm|~ \kw{\texttt{|}}\, AR ~ \kw; ~\bigm|~
+    \kw{\texttt{|}}\, CF ~ \kw; ~\bigm|~ \kw{\texttt{|}}\, \kw{scheme} ~ CF ~ AR^* ~ \kw; ~\bigm|~
+    \kw{\texttt{|}}\, \kw{variable} ~ \kw; \\[-1pt]
+    &~~\bigm|~ \kw[~O^{*\kw,}~\kw] ~ T ~ \kwm{→} ~ T ~ \kw;
+    \\[1ex]
+    SF \tag{SortForm} &::= v ~\bigm|~ c ~ SA^*
+    \\
+    SA \tag{SortArgument} &::= v ~\bigm|~ c ~\bigm|~ \kw( ~ SF ~ \kw) 
+    \\
+    AR \tag{AttributeReference} &::= \kwm{↑} ~ v ~\bigm|~ \kwm{↓} ~ v
+    \\
+    AF \tag{AttributeForm} &::= \kw( ~ SF ~ \kw) ~\bigm|~ \kw\{ ~ SF ~ \kw: ~ SF ~ \kw\}
+    \\
+    CF \tag{ConstructorForm} &::= c ~ \kw( ~ PF^{*\kw,} ~ \kw) 
+    \\
+    PF \tag{PieceForm} &::= \kw[ ~ SF^{*\kw,} ~ \kw] ~ SF
+    \\[1ex]
+    T \tag{Term} &::= c ~ \kw( ~ P^{*\kw,} ~ \kw) ~ A^* ~\bigm|~ v ~ A^* ~\bigm|~ m ~ \kw[ ~
+    T^{*\kw,} ~ \kw] ~ A^*
+    \\
+    P \tag{Piece} &::= \kw[ ~ v^{*\kw,} ~ \kw] ~ T
+    \\
+    A \tag{Attribute} &::= AR ~ \kw( ~ T ~ \kw) ~\bigm|~ AR ~ \kw\{ ~ T ~ \kw: ~ T ~ \kw\} ~\bigm|~
+    AR ~ \kw\{ ~ \kwm{¬} ~ T ~ \kw\} ~\bigm|~ AR ~ \kw\{ ~ m ~ \kw\} ~\bigm|~ \kwm{↕} ~ m
+    \\[1ex]
+    O \tag{Option} &::= c ~\bigm|~ \kw{priority} ~\bigm|~ \kw{default} ~\bigm|~
+    \kw{free}\kw(~v~\kw{as}~SF~\kw) ~\bigm|~ \kw{fresh}\kw(~v~\kw{as}~SF~\kw)
+  \end{align*}
+\end{frame}
+
+
+\section{Implementation…}
+\begin{frame}{Outline}
+  \tableofcontents[current]
+\end{frame}
+
+\begin{frame}[shrink]{Hacs.mk is a mess…}
+  \begin{itemize}
+
+  \item Control program is shell script.
+
+  \item User script is first parsed with generic \emph{RawHx.pg} parser to \CRSX term file.
+
+  \item User ``raw \HAX'' term is processed by \emph{Prep.crs} to generate two derived parsers:
+    \begin{enumerate}
+    \item ``Meta-parser'' that combines raw parsing with custom parsing of the declared raw
+      notations and of ``embedded'' fragment parsing user syntax with embedded references.
+    \item User parser just for user syntax.
+    \end{enumerate}
+
+  \item User script is parsed again with the generated meta-parser to \CRSX term file.
+
+  \item User ``custom parsed \HAX'' is processed by \emph{Cook.crs} to generate the rewrite system
+    for the user's script, which is a \CRSX program.
+
+  \item Finally, a custom shell script is generated that invokes the \CRSX interpreter configured to
+    use the user parser (so interpreted).
+
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \begin{center}
+    \alert{\emph{What do y'all think?}}
+  \end{center}
+\end{frame}
+ 
+
+\end{document}
+
+
+
+%%---------------------------------------------------------------------
+% Local Variables:
+% mode: latex
+% fill-column:100
+% TeX-master: t
+% End:
