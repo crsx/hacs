@@ -34,7 +34,7 @@ gitclean :: realclean
 
 # External library setup.
 ifndef CRSXJAR
-CRSXVERSION = 3.3.8.1
+CRSXVERSION = 3.3.8.2
 CRSXJAR = $(abspath ../lib/crsx-$(CRSXVERSION).jar)
 all :: $(CRSXJAR)
 endif

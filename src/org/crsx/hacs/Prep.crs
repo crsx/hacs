@@ -6,7 +6,7 @@ Prep[(
 // "Preparation" stage for converting HACS specification to PG/JavaCC parser + CRSX rules combination.
 //
 // Input: HACS (.hx) file as a "raw Hx" term.
-// Output: single text containing multiple files (using /***...***/ delimiters):
+// Output: single text containing multiple files (using /*****...*****/ delimiters):
 // * .pg parser for user's language (unmarked + USERPG).
 // * .pgtemplate for HACS parser extended with user's meta-terms (unmarked + METAPG).
 // * .pg parser for user's meta-terms as embedded in rules (unmarked + EMBEDPG).
@@ -70,56 +70,56 @@ Prep3[DeclarationMap, $List[HxDeclaration], $String<!--ModuleName-->, NameSet<!-
 -[Data[#SortsWithUserConstructors]]:
 Prep3[{#DM}DM, #Declarations, #ModuleName, #SortsWithUserConstructors]
 →
-%n⟪/* PG Grammar for /***METAPG&EMBED: HACS module specialized for parsed***/ †« #ModuleName » terms /***EMBEDPG: (embedded terms)***/ */
+%n⟪/* PG Grammar for /*****METAPG&EMBED: HACS module specialized for parsed*****/ †« #ModuleName » terms /*****EMBEDPG: (embedded terms)*****/ */
 
 /* INTERFACE. */
 
-class †« U-ClassName[#ModuleName] »/***USERPG:Parser***//***METAPG:Hx***//***EMBEDPG:Embed***/ :⟦
-/***USERPG:<†« U-Local[{#DM}U-MainSymbol] »>« TextJoin[MapWhen[ok n.%n⟨,<†‹ U-then-Local[ok, n] ›>⟩, {#DM}U-NonMainSyntacticSymbols], %n⟨⟩] » ***/
-/***EMBEDPG:<†« U-Local[{#DM}U-MainSymbol] »>« TextJoin[MapWhen[ok n.%n⟨,<†‹ U-then-Local[ok, n] ›>⟩, {#DM}U-NonMainSymbols], %n⟨⟩] » ***/
-/***METAPG:
+class †« U-ClassName[#ModuleName] »/*****USERPG:Parser*****//*****METAPG:Hx*****//*****EMBEDPG:Embed*****/ :⟦
+/*****USERPG:<†« U-Local[{#DM}U-MainSymbol] »>« TextJoin[MapWhen[ok n.%n⟨,<†‹ U-then-Local[ok, n] ›>⟩, {#DM}U-NonMainSyntacticSymbols], %n⟨⟩] » *****/
+/*****EMBEDPG:<†« U-Local[{#DM}U-MainSymbol] »>« TextJoin[MapWhen[ok n.%n⟨,<†‹ U-then-Local[ok, n] ›>⟩, {#DM}U-NonMainSymbols], %n⟨⟩] » *****/
+/*****METAPG:
 %%%HXNONTERMINALS%%%
 <HxTopTerm>, <HxTopPattern>, <HxAttributes>, <HxSortName>, <HxAttributeName>, <HxConstructor>,
 <PresortedMetaApplication>, <PresortedVariable>, <PresortedParsed>, <SortedTerm>,
 <BracketedTerms>, <Terms>, <Term>, <Attribute>
-***/
+*****/
 ⟧
 
-/***USERPG: prefix "†« P-User-Prefix[#ModuleName] »" ***/
-/***METAPG: prefix "†« P-Meta-Prefix[#ModuleName] »" ***/
-/***EMBEDPG: prefix "†« P-Embed-Prefix[#ModuleName] »" ***/
+/*****USERPG: prefix "†« P-User-Prefix[#ModuleName] »" *****/
+/*****METAPG: prefix "†« P-Meta-Prefix[#ModuleName] »" *****/
+/*****EMBEDPG: prefix "†« P-Embed-Prefix[#ModuleName] »" *****/
 
-/***METAPG:
+/*****METAPG:
 declarations
 %{
 %%%HXDECLARATIONS%%%
 String hx(String s) { return "Hx_"+s; }
 String user(String s) { return "†« U-LastName[#ModuleName] »_"+s; }
 %}
-***/
+*****/
 
-/***EMBEDPG:
+/*****EMBEDPG:
 declarations
 %{
 static String unwrap(String s) {return s.substring(1, s.length()-1);}
 String hx(String s) { return "Hx_"+s; }
 String user(String s) { return "†« U-LastName[#ModuleName] »_"+s; }
 %}
-***/
+*****/
 
-/***USERPG&EMBEDPG:
+/*****USERPG&EMBEDPG:
 %{
 TOKEN_MGR_DECLS : { int nesting; int nestedState;} /* Used by all nesting constructs. */
 %}
-***/
+*****/
 
-/***METAPG:
+/*****METAPG:
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 %%%HXPREPRODUCTIONS%%%
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-***/
+*****/
 
-/***METAPG:
+/*****METAPG:
 /* HX INTERFACE. */
 
 <HxTopTerm> ::= <PresortedVariable> | <PresortedMetaApplication> | <HxTopPattern> .
@@ -212,24 +212,24 @@ net.sf.crsx.Sink N_Attribute(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleM
 %}
 
 <HxSystemAttribute> ::= {SystemAttribute}:hx HX_DOT <HxVariable> HX_LPAREN <HxTopPattern> HX_RPAREN .
-***/
+*****/
 
 /* USER GRAMMAR. */
 
 « {#DM}P-Productions[#ModuleName] »
 
 
-/***METAPG:
+/*****METAPG:
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 %%%HXPOSTPRODUCTIONS%%%
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-***/
+*****/
 
-/***USERPG&EMBEDPG:
+/*****USERPG&EMBEDPG:
 /* TOKENS. */
 
 « P-Lexical[#Declarations, #ModuleName] »
-***/
+*****/
 ⟫
 ;
 
@@ -392,14 +392,14 @@ P-Production1[#ModuleName, DME_TOKEN[#SortName]]
 %n⟪
 /* Productions for †«#SortName» token. */
 
-/***USERPG:<†« U-Local[#SortName] »> ::= ‹P-TokenNameText[#SortName]›$ .***/
-/***EMBEDPG:
+/*****USERPG:<†« U-Local[#SortName] »> ::= ‹P-TokenNameText[#SortName]›$ .*****/
+/*****EMBEDPG:
 <†« U-Local[#SortName] »> ::= ⟦‹ P-Embed-Head[B_TRUE, B_TRUE, #ModuleName, #SortName, #SortName, B_FALSE, 0]›
 ‹P-TokenNameText[#SortName]›$:# {{ 'Hx_LiteralSorted'["†‹#SortName›", 'Hx_RepeatSingle', #, ()] }} ⟧ .
 « P-Embed-Tail[B_TRUE, #SortName, #SortName] »
-***/
+*****/
 
-/***METAPG:
+/*****METAPG:
 /* <†« U-Local[#SortName] »> covers Hacs terms restricted to †«#SortName» token sort. */
 %{
 net.sf.crsx.Sink N_†« U-Local[#SortName] »$WithEOF(net.sf.crsx.Sink sink, net.sf.crsx.util.ExtensibleMap<String, net.sf.crsx.Variable> env) : {}{ sink=N_†« U-Local[#SortName] »(sink, env) <EOF> {return sink;} }
@@ -415,7 +415,7 @@ net.sf.crsx.Sink N_†« U-Local[#SortName] »(net.sf.crsx.Sink sink, net.sf.crs
   {return sink;}
 }
 %}
-***/
+*****/
 ⟫
 ;
 
@@ -424,12 +424,12 @@ net.sf.crsx.Sink N_†« U-Local[#SortName] »(net.sf.crsx.Sink sink, net.sf.crs
 {#DM} P-Production1[#ModuleName, DME_ATTRIBUTE[#Kind, #Name, #AttributeForm, #AttributeOptions]]
 →
 %n⟪
-/***METAPG:
+/*****METAPG:
 /* Productions for †«#Name» attribute. */
 %{
 « P-MetaJJ-Production-Attribute[#ModuleName, #Kind, #Name, #AttributeForm, #AttributeOptions] »
 %}
-***/
+*****/
 ⟫;
 
     // Handle an attribute definition.
@@ -497,11 +497,11 @@ net.sf.crsx.Sink N_Attribute« AttributeKindCategory[#Kind] »_†«#Name»(net.
 {#DM} P-Production1[#ModuleName, DME_SORT[#Defines, #SortName, #Precs, #Wrapper, #IsMain]]
 →
 %n⟪« {#DM} P-Production-Defines[#ModuleName, #Defines, #SortName, 0, ()] »
-/***METAPG:
+/*****METAPG:
 %{
 « {#DM} P-MetaJJ-Production-Defines[#ModuleName, #Defines, #SortName, {#DM}U-then-SortHasUserHx[OK, #SortName]] »
 %}
-***/⟫
+*****/⟫
 ;
 
 // Helper for ParsedForm and FK.
@@ -513,11 +513,11 @@ PFK_SORT ::=( PFK[HxParsedForm, FormKind]; );
 
 {#DM} P-Production-Defines[#ModuleName, (), #SortName, #Prec, ()]
 →
-%n⟪/***EMBEDPG:
+%n⟪/*****EMBEDPG:
 /* Productions for †«#SortName» sort with (highest) precedence †«$[FormatNumber,#Prec]». */
 
 <«P-ProductionNameWithPrecText[#SortName,#Prec]»> ::= « P-Embed-Head[B_TRUE, B_FALSE, #ModuleName, #SortName, #SortName, B_FALSE, #Prec] » .
-« P-Embed-Tail[B_TRUE, #SortName, #SortName] »***/⟫
+« P-Embed-Tail[B_TRUE, #SortName, #SortName] »*****/⟫
 ;
 
 {#DM} P-Production-Defines[#ModuleName, (), #SortName, #Prec, (#PFK1;#PFKs)]
@@ -579,10 +579,10 @@ $[If, $[NumericEqual,#Prec1,#Prec],
 →
 $[If, $[NumericEqual,#Prec1,#Prec],
   {#DM} P-Production-Defines[#ModuleName, #Defines, #SortName, #Prec, Append[(#PFK;#PFKs), (PFK[#ParsedForm1, #Kind1];)]],
-  %n⟪/***USERPG&EMBEDPG:
+  %n⟪/*****USERPG&EMBEDPG:
 /* Productions for †«#SortName» sort with precedence †«$[FormatNumber,#Prec]». */
 « {#DM} P-Expand[#ModuleName, (#PFK;#PFKs), #SortName, #Prec, B_FALSE] »
-***/
+*****/
 « {#DM} P-Production-Defines[#ModuleName, #Defines, #SortName, #Prec1, (PFK[#ParsedForm1, #Kind1];)] »
 ⟫]
 ;
@@ -893,16 +893,16 @@ IfEmpty[#LeftRecursivePFKs,
   {#DM} P-Produce[#ModuleName, #SortName, #Prec, #Last?, #OtherPFKs, C_BUFFER[#SortName, #Prec]],
   // There is left recursion...hack the expansion directly.
   {#DM} P-ProduceBody[#ModuleName, #SortName, #SortName, #LeftRecursivePFKs, 2, (), (%n⟨#1⟩;),
-  	(%n⟨/***EMBEDPG: <!--lefthack--> C-UnravelScope_0[***/#1/***EMBEDPG:]***/⟩;),
+  	(%n⟨/*****EMBEDPG: <!--lefthack--> C-UnravelScope_0[*****/#1/*****EMBEDPG:]*****/⟩;),
 	C_LEFTRECURSIVE[#SortName, #Prec],
 	in after . %n⟪
-/***USERPG&EMBEDPG:
+/*****USERPG&EMBEDPG:
 /* Handle left recursion. */
 <«P-ProductionNameWithPrecText[#SortName, #Prec]»LR #1> ::= ⟦
-/***EMBEDPG: « P-Embed-Head[#Last?, B_TRUE, #ModuleName, #SortName, #SortName, B_FALSE, 0] »***/
+/*****EMBEDPG: « P-Embed-Head[#Last?, B_TRUE, #ModuleName, #SortName, #SortName, B_FALSE, 0] »*****/
 «in»
 | {{#1}}⟧
-. ***/
+. *****/
 
 « TextJoinMap[after, %n⟨
 ⟩] »
@@ -917,16 +917,16 @@ IfEmpty[#LeftRecursivePFKs,
 →
 {#DM} P-ProduceBody[#ModuleName, #SortName, "", #PFKs, 1, (), (), (), C_BUFFER[#SortName, #Prec], in after .
   %n⟪
-/***USERPG&EMBEDPG:
+/*****USERPG&EMBEDPG:
 <«P-ProductionNameWithPrecText[#SortName,#Prec]»> ::= ⟦
-/***EMBEDPG: « P-Embed-Head[#Last?, B_TRUE, #ModuleName, #SortName, #SortName, B_FALSE, 0] »***/
+/*****EMBEDPG: « P-Embed-Head[#Last?, B_TRUE, #ModuleName, #SortName, #SortName, B_FALSE, 0] »*****/
 «in»⟧ .
-***/
+*****/
 
-/***EMBEDPG:
+/*****EMBEDPG:
 « P-Embed-Tail[#Last?, #SortName, #SortName] »« TextJoinMap[after, %n⟨
 ⟩] »
-***/
+*****/
 ⟫]
 ;
 
@@ -934,15 +934,15 @@ IfEmpty[#LeftRecursivePFKs,
 →
 {#DM} P-ProduceBody[#ModuleName, #SortName, "", #PFKs, 1, (), (), (), C_LEFTRECURSIVE[#SortName9, #Prec9], in after .
   %n⟪
-/***USERPG&EMBEDPG:
+/*****USERPG&EMBEDPG:
 <«P-ProductionNameWithPrecText[#SortName, #Prec]»> ::= ⟦
 «in»⟧ .
-***/
+*****/
 
-/***EMBEDPG:
+/*****EMBEDPG:
 « P-Embed-Tail[#Last?, #SortName, #SortName] »« TextJoinMap[after, %n⟨
 ⟩] »
-***/
+*****/
 ⟫]
 ;
 
@@ -999,7 +999,7 @@ P-ProduceBody0[$String<!--ModuleName-->, $String<!--HostSort-->, $String<!--tagp
 /// {#DM}U-IfSymbolForm[#Form, #ModuleName,
 ///   t . {#DM} P-ProduceBody0[#ModuleName, #SortName, StringJoin[(#tagprefix; "_"; #SortName; "_";), ""], #Rest, $[Plus,#n,1], #words, #terms, #scopes, #consumer,
 ///     in after . #[%n⟪⟦( <†« t »>:#_†«$[FormatNumber,#n]»
-/// {{<!--USE--> /***EMBEDPG: †« P-hx[#ModuleName, "VariableUseSorted"] »["†« U-Local[#SortName] »", †« P-hx[#ModuleName, "RepeatSingle"] », ***/ #_†«$[FormatNumber,#n]» /***EMBEDPG: , ()]***/ }}
+/// {{<!--USE--> /*****EMBEDPG: †« P-hx[#ModuleName, "VariableUseSorted"] »["†« U-Local[#SortName] »", †« P-hx[#ModuleName, "RepeatSingle"] », *****/ #_†«$[FormatNumber,#n]» /*****EMBEDPG: , ()]*****/ }}
 /// « If[Empty[#Rest], %n⟨⟩, %n⟨| ⟩] » ⟦« in »⟧ ) ⟧⟫, after]],
 ///   {#DM} P-ProduceBody2[#ModuleName, #SortName, #tagprefix, #Form, #Kind, #Rest, #n, #words, #terms, #scopes, #consumer, in after . #[in,after]]
 /// ];
@@ -1073,9 +1073,9 @@ P-ProductionConstructionText[$String<!--ModuleName-->, $String, $Numeric, FormKi
     {#DM}P-CRSX-GenerateConstructionTerm[#ModuleName, #SortName, #Prec, #tag, #scopes]
     →
     %n⟪<!-- †«#SortName» - †«#tag» -->
-      /***USERPG: '†« U-QN[#ModuleName, #SortName, #tag] »'« WrappedTextJoin[#scopes, %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩] » ***/
-      /***EMBEDPG: †« P-hx[#ModuleName, "ConstructionSorted"] »["†« U-QN[#ModuleName, "", #SortName] »", '†« P-hx[#ModuleName, "RepeatSingle"] »',
-	"†« U-QN[#ModuleName, #SortName, #tag] »", (« TextJoin[Map[t.%n⟨‹t›;⟩, #scopes], %n⟨ ⟩] »), ()] ***/
+      /*****USERPG: '†« U-QN[#ModuleName, #SortName, #tag] »'« WrappedTextJoin[#scopes, %n⟨[⟩, %n⟨, ⟩, %n⟨]⟩] » *****/
+      /*****EMBEDPG: †« P-hx[#ModuleName, "ConstructionSorted"] »["†« U-QN[#ModuleName, "", #SortName] »", '†« P-hx[#ModuleName, "RepeatSingle"] »',
+	"†« U-QN[#ModuleName, #SortName, #tag] »", (« TextJoin[Map[t.%n⟨‹t›;⟩, #scopes], %n⟨ ⟩] »), ()] *****/
     ⟫;
 
 P-ProductionConstructionText[#ModuleName, #SortName, #Prec, FK_SUGAR[#Inh], #tag, #words, #terms, #scopes]
@@ -1092,7 +1092,7 @@ P-ProductionConstructionText[#ModuleName, #SortName, #Prec, FK_ALIAS, #tag, #wor
 -[Data[#SortName]]:
 P-ProductionConstructionText[#ModuleName, #SortName, #Prec, FK_SYMBOL[#isStatic, #t], #tag, #words, #terms, #scopes]
 →
-%n⟪ {{<!--SYMBOL--> /***EMBEDPG: †« P-hx[#ModuleName, "VariableUseSorted"] »["†« U-Local[#SortName] »", †« P-hx[#ModuleName, "RepeatSingle"] », ***/ « WrappedTextJoin[#terms, %n⟨⟩, %n⟨ ⟩, %n⟨⟩] » /***EMBEDPG: , ()]***/ }}
+%n⟪ {{<!--SYMBOL--> /*****EMBEDPG: †« P-hx[#ModuleName, "VariableUseSorted"] »["†« U-Local[#SortName] »", †« P-hx[#ModuleName, "RepeatSingle"] », *****/ « WrappedTextJoin[#terms, %n⟨⟩, %n⟨ ⟩, %n⟨⟩] » /*****EMBEDPG: , ()]*****/ }}
 ⟫;
 
     /// ∀ a . IfAliasKind[FormKind, a, a] :: a;
@@ -1344,10 +1344,10 @@ P-ProduceBodyTerm3[$String<!--ModuleName-->, $String<!--HostSort-->, $String<!--
     -[Data[#Name,#HxSeparator#]]:        P-RegExpSubNameText[#Name, %rawHxRegExpSub⟪ #HxSeparator# ⟫] → %n⟪†«#Name»_SomeW†« $[Mangle,#HxSeparator#] »⟫ ;
 
     P-CRSX-ArgumentWrapper[Boolean<!--IsToken-->, $String<!--SortName-->, $List[HxSubstituteSort], $String<!--MetaVar-->, FormKind] :: Text ;
-    P-CRSX-ArgumentWrapper[#IsToken, #Sort, #HxSubstituteSorts, #MetaVar, FK_DATA[#tag]] → %n⟪/***EMBEDPG: <!--data--> 'C-UnravelScope_†« NumericToString[Length[#HxSubstituteSorts]] »'[***/†«#MetaVar»/***EMBEDPG:]***/⟫ ;
+    P-CRSX-ArgumentWrapper[#IsToken, #Sort, #HxSubstituteSorts, #MetaVar, FK_DATA[#tag]] → %n⟪/*****EMBEDPG: <!--data--> 'C-UnravelScope_†« NumericToString[Length[#HxSubstituteSorts]] »'[*****/†«#MetaVar»/*****EMBEDPG:]*****/⟫ ;
 
 
-    P-CRSX-ArgumentWrapper[#IsToken, #Sort, #HxSubstituteSorts, #MetaVar, FK_SCHEME[#tag]] → %n⟪/***EMBEDPG: <!--scheme--> 'C-UnravelScope_†« NumericToString[Length[#HxSubstituteSorts]] »'[***/†«#MetaVar»/***EMBEDPG:]***/⟫ ;
+    P-CRSX-ArgumentWrapper[#IsToken, #Sort, #HxSubstituteSorts, #MetaVar, FK_SCHEME[#tag]] → %n⟪/*****EMBEDPG: <!--scheme--> 'C-UnravelScope_†« NumericToString[Length[#HxSubstituteSorts]] »'[*****/†«#MetaVar»/*****EMBEDPG:]*****/⟫ ;
     P-CRSX-ArgumentWrapper[#IsToken, #Sort, #HxSubstituteSorts, #MetaVar, FK_SYMBOL[#stat, #token]] → %n⟪†«#MetaVar»⟫ ;
     P-CRSX-ArgumentWrapper[#IsToken, #Sort, #HxSubstituteSorts, #MetaVar, FK_SUGAR[#term]] → %n⟪†«#MetaVar»⟫ ;
     P-CRSX-ArgumentWrapper[#IsToken, #Sort, #HxSubstituteSorts, #MetaVar, FK_ALIAS] → %n⟪†«#MetaVar»⟫ ;

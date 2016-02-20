@@ -409,6 +409,27 @@ Notice that while it is possible to make every keyword of your language into a n
 way, this is not necessary, as keywords can be given as literals in syntax productions, covered in
 the next section.
 
+\begin{example}[comments]
+  One common question is what to do with comments. A common choice is to ignore them
+  completely. This is achieved by including your comment syntax in your "space" declaration.  For
+  C/Java ``modern'' end of line comments, this is for example done as follows:
+  %%
+  \begin{hacs}
+    space [ \n\t]  |  '//' .* ;
+  \end{hacs}
+  %%
+  (as in most regular expression formalisms, "." (dot) abbreviates "[^\n]").
+
+  In addition, \HAX has special support for nested comments in the "space" declaration:
+  %%
+  \begin{hacs}
+    space [ \n\t]  |  nested '(*' '*)' ;
+  \end{hacs}
+  %%
+  recognizes multi-line comments starting with "(*" and ending with "*)", which may nest, \ie, the
+  text "(*a(*b*)c*)" is skipped as one single space.
+\end{example}
+
 \begin{commands}[lexical analysis]
   The fragment above is part of \emph{First.run} from Section~\ref{sec:intro}, which can thus be
   used as a lexical analyzer.  This is achieved by passing two arguments to the \emph{First.run}
