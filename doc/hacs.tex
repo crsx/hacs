@@ -1931,16 +1931,10 @@ rewriting~\cite{Jouannaud:klop2005,Klop+:tcs1993}, a very powerful mechanism.
 
 \begin{example}
   Next consider a real example from the literature~\cite{DanvyRose:rta1998}. Figure~\ref{fig:cps}
-  shows two systems for transforming λ-terms to continuation-passing style with call-by-value
-  evaluation semantics. The grammar uses higher-order binding to define the two forms of abstraction
-  (with "λ" and "λ̅") using specific unicode characters. The overlined application is a scheme
-  because it can be evaluated, which is specified by the rule in line 16 (where the outermost
-  operator is the overlined application). The two blocks of rules in lines 18--24 and 26--33 specify
-  two variants of continuation-style conversion: the traditional form and a one-pass variant,
-  respectively. The two systems are equivalent, but the second never constructs overlined redices ,
-  which is what makes it one pass, as there is no need to simplify any so-called ``administrative''
-  (overlined) redices. Notice how the transformations define syntactic helper schemes, to make the
-  recursive composition easier to express.
+  shows a system for transforming λ-terms to continuation-passing style with call-by-value
+  evaluation semantics. Lines 14--19 specify a \emph{one-pass} variant of continuation-style
+  conversion. Notice how the transformation defines a syntactic helper scheme to make the recursive
+  composition easier to express.
 
   The script compiles and generates code as follows:
   \begin{code}[commandchars=\\\{\}]
@@ -1969,28 +1963,53 @@ be globally unique? By default, \HAX follows the following rules:
 
 
 %Note that in print, the bottow two lines of this table overhang their shaded box
-\begin{table}[h]
+\begin{table}[t]
   \begin{figureunit}[
-      \caption{Operations permitted in Computed syntax.}
+      \caption{Summary of Computed syntax.}
       \label{tab:ops}
     ]
     \begin{displaymath}
-      \begin{array}{c|p{.55\linewidth}}
+      \begin{array}{c|p{.7\linewidth}}\multicolumn{2}{c}{}\\
         \Xhline{2\arrayrulewidth}
-        \textit{Operators} & \textit{Explanation} \\
+        \textit{Expression} & \textit{Explanation} \\
         \Xhline{2\arrayrulewidth}
-        \texttt{?:} & \text{ternary test} \\
+        \#x & refer to Computed value or token string $\#x$ \\
+        \texttt{\$}\,\#x & extract integer value from token string $\#x$ \\
+        \texttt{\%}\,\#x & convert integer Computed value $\#x$ to string value \\
+        \verb|"foo"|\quad\texttt{42}\quad\texttt{0x2A} & literal strings and integers \\
+        \texttt{(}E\texttt{)} & grouping \\
         \hline
-        \texttt{=}~\texttt{≠}~\texttt{<}~\texttt{>}~\texttt{≤}~\texttt{≥} & \text{comparisons} \\
+        E\,\texttt{[}E\texttt{:}E\texttt{]} & substring (optional indices are
+          \texttt{[}\emph{first}\texttt{:}\emph{after-last}\texttt{]} with $0$-based indexing) \\
         \hline
-        \texttt{*}~\texttt{/}~\texttt{\%} & \text{multiplication, division, modulo} \\
-        \texttt{\&} & \text{bitwise and} \\
-        \verb|<<|~\verb|>>| & \text{bitwise shift left and right} \\
+        \texttt{+}E\quad\texttt{-}E & unary integer plus and minus \\
+        \verb|~|E & bitwise not \\
+        \texttt{length}\,E & length of (Unicode) string \\
+        \texttt{up-case}\,E & convert string to upper case \\
+        \texttt{down-case}\,E & convert string to lower case \\
+        \texttt{escape}\,E & convert all special characters to their Java escape equivalent \\
+        \texttt{unescape}\,E & convert all Java escape sequences to special characters \\
+        \texttt{trim}\,E & remove leading and trailing spacing \\
+        T\,E & generate constants in user's type $T$ \\
         \hline
-        \texttt{+}~\texttt{-}~\texttt{@} & \text{unary plus and minus, and string concatenation}\\
-        \verb|~| & \text{bitwise not} \\
-        \texttt{escape~unescape} & \text{unary function that inserts/removes C string escapes} \\
-        \texttt{length} & \text{unary function that returns length of (Unicode) string} \\
+        E\texttt{*}E\quad E\texttt{/}E\quad E\texttt{\%}E & integer multiplication, division, modulo \\
+        E\texttt{\&}E & bitwise and \\
+        E\verb|<<|E\quad E\verb|>>|E & bitwise shift left and right \\
+        \hline
+        E\texttt{+}E\quad E\texttt{-}E & integer sum and difference \\
+        E\texttt{|}E\quad E\texttt{\^{}}E\quad E\texttt{\textbackslash}E & bitwise or, exclusive or, subtraction \\
+        E\texttt{@}E & string concatenation \\
+        \hline
+        E\texttt{=}E\quad E\texttt{/=}E & integer equality and inequality \\
+        E\texttt{<}E\quad E\texttt{<=}E & integer less than and less than or equal \\
+        E\texttt{>}E\quad E\texttt{>=}E & integer greater than and greater than or equal \\
+        E\,\texttt{same-as}\,E & string equality \\
+        E\,\texttt{contains}\,E & right string is contained as a substring of left \\
+        E\,\texttt{starts-with}\,E & right string is a prefix of left \\
+        E\,\texttt{ends-with}\,E & right string is a suffix of left \\
+        %%
+        \hline
+        E\texttt{?}E\texttt{:}E & ternary test \\
         \Xhline{2\arrayrulewidth}
       \end{array}
     \end{displaymath}
@@ -2002,18 +2021,14 @@ be globally unique? By default, \HAX follows the following rules:
 
 There is sometimes a need to compute helper values, most commonly for counting. \HAX supports this
 through a dedicated sort, "Computed", which has special syntax for operations on primitive values.
-%%
+
 The mechanism is quite simple: in rule replacements, arguments of sort "Computed" can contain
-expressions in ⟦⟧s, which include
-%%
-\begin{itemize}
-\item References to meta-variables of "Computed" and token sorts (the latter as strings).
-  With a \$ prefix, such references are converted from token strings to numbers.
-\item Integers in decimal and \texttt{0x}-hexadecimal notation.
-\item String literals enclosed in \verb|"|…\verb|"|.
-\item Standard operators (summarized in Table~\ref{tab:ops}) and parentheses.
-\end{itemize}
-%%
+expressions in ⟦⟧ of the shape summarized in Table~\ref{tab:ops}. In the table, $E$ in general
+stands for ``any expression above the nearest line,'' however, there are exceptions: the binary
+operators in the multiplicative and additive groups in the middle have the usual left recursive
+syntax, so "⟦1+2+3⟧" is the same as "⟦(1+2)+3⟧", and any $E$ inside some kind of parenthesis can, in
+fact, come from the entire table.
+
 Notice that for "Computed", meta-variables are part of the syntax: essentially "#x" is used instead
 of ``"⟨Computed#x⟩",'' which is not permitted, inside the special syntax.
 
@@ -2100,12 +2115,26 @@ by the simple desk calculator in the following example.
   Here is a run:
   %%
 \begin{code}[commandchars=\\\{\}]
-$ \textcolor{blue}{hacs MakeToken.hx}
+$ \textcolor{blue}{hacs Desk.hx}
 ...
 $ \textcolor{blue}{./Desk.run --scheme=Eval --term="1+2*3/(2-1)"}
 7.0
   \end{code}
   %%$
+\end{example}
+
+\begin{example}
+  It is possible to select between structures with the "Computed" ternary choice operator and
+  special ``pass-through'' parameters. Consider the following definition:
+  \begin{hacs}
+    sort S | scheme IfPositive(Computed, S, S) | scheme ComputedToS(Computed);
+    IfPositive(#n, #1, #2) →  ComputedToS(⟦ #n >= 0 ? #1 : #2 ⟧);
+    ComputedToS(#s) → #s;
+  \end{hacs}
+  Note the use of the extra ``cast-like'' function "ComputedToS", which ensures that our ternary
+  expression is computed (because the argument is "Computed") yet is returned as something of
+  sort~"S". This would appear to not type check, but is explicitly allowed by \HAX to permit passing
+  term structures through "Computed" expressions.
 \end{example}
 
 

@@ -127,7 +127,7 @@ token HX_ESCAPEDCHAR (DEFAULT,HX_RE) ::=
   [\\] ~[0-9ux]
 | [\\] [0-3]? [0-7]? [0-7]
 | [\\] [u] HX_HEX? HX_HEX? HX_HEX? HX_HEX
-| [\\] [x] (HX_HEX HX_HEX | '{' HX_HEX+ '}')
+| [\\] [x] HX_HEX HX_HEX
 .
 token fragment HX_HEX ::= [0-9A-Fa-f] .
 

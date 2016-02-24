@@ -201,6 +201,9 @@ PreludeTest[#HxTerm#, #HxTerm1#, #HxTerm2#] → %rawHxTerm⟪ Computed If ( #HxT
 PreludeCompare[$String, HxTerm, HxTerm] :: HxTerm ;
 PreludeCompare[#HxConstructor#, #HxTerm1#, #HxTerm2#] → %rawHxTerm⟪ Computed #HxConstructor# ( #HxTerm1#, #HxTerm2# ) ⟫ ;
 
+PreludeTernary[$String, HxTerm, HxTerm, HxTerm] :: HxTerm ;
+PreludeTernary[#HxConstructor#, #HxTerm1#, #HxTerm2#, #HxTerm3#] → %rawHxTerm⟪ Computed #HxConstructor# ( #HxTerm1#, #HxTerm2#, #HxTerm3# ) ⟫ ;
+
 PreludeBinary[$String, HxTerm, HxTerm] :: HxTerm ;
 PreludeBinary[#HxConstructor#, #HxTerm1#, #HxTerm2#] → %rawHxTerm⟪ Computed #HxConstructor# ( #HxTerm1#, #HxTerm2# ) ⟫ ;
 
@@ -217,7 +220,7 @@ PreludeHex[$String] :: HxTerm ;
 PreludeHex[#HxString#] → %rawHxTerm⟪ Computed HexToNumeric ( #HxString# ) ⟫ ;
 
 PreludeString[$String] :: HxTerm ;
-PreludeString[#HxString#] → %rawHxTerm⟪ Computed UnString ( #HxString# ) ⟫ ;
+PreludeString[#HxString#] → %rawHxTerm⟪ Computed UnStringify ( #HxString# ) ⟫ ;
 
 PreludeCast[$String, HxTerm] :: HxTerm ;
 PreludeCast[#HxConstructor1#, %rawHxTerm⟪ #HxConstructor2# #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫] → %rawHxTerm⟪ #HxConstructor1# #HxConstructor# ( #HxScopes# ) #HxAttributes# ⟫ ;

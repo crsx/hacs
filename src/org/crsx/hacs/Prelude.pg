@@ -23,6 +23,10 @@ prefix "prelude_"
        | ">" <ComputedAdd>:#2 {{ PreludeCompare["Less2", #2, #1] }}
        | ("<="|"≤") <ComputedAdd>:#2 {{ PreludeCompare["LessEq2", #1, #2] }}
        | (">="|"≥") <ComputedAdd>:#2 {{ PreludeCompare["LessEq2", #2, #1] }}
+       | "same-as" <ComputedAdd>:#2 {{ PreludeCompare["SameString", #1, #2] }}
+       | "contains" <ComputedAdd>:#2 {{ PreludeCompare["StringContains", #1, #2] }}
+       | "starts-with" <ComputedAdd>:#2 {{ PreludeCompare["StringStartsWith", #1, #2] }}
+       | "ends-with" <ComputedAdd>:#2 {{ PreludeCompare["StringEndsWith", #1, #2] }}
        | {{#1}}
        ).
 
@@ -45,8 +49,8 @@ prefix "prelude_"
        | ("/"|"÷") <ComputedPre>:#2 <ComputedMult2 {{ PreludeBinary["Div", #1,#2] }}>
        | "%" <ComputedPre>:#2 <ComputedMult2 {{ PreludeBinary["Mod", #1,#2] }}>
        | "&" <ComputedPre>:#2 <ComputedMult2 {{ PreludeBinary["BitAnd", #1,#2] }}>
-       | "<<" <ComputedPre>:#2 <ComputedMult2 {{ PreludeBinary["BitShiftLeft", #1,#2] }}>
-       | ">>" <ComputedPre>:#2 <ComputedMult2 {{ PreludeBinary["BitShiftRight", #1,#2] }}>
+       | ("<<"|"«") <ComputedPre>:#2 <ComputedMult2 {{ PreludeBinary["BitShiftLeft", #1,#2] }}>
+       | (">>"|"»") <ComputedPre>:#2 <ComputedMult2 {{ PreludeBinary["BitShiftRight", #1,#2] }}>
        | {{#1}}
        .
 
@@ -54,13 +58,29 @@ prefix "prelude_"
          "-" <ComputedPre>:# {{ PreludeUnary["StringToNumeric", #] }}
        | "+" <ComputedPre>
        | "~" <ComputedPre>:# {{ PreludeUnary["BitNot", #] }}
-       | "ord" <ComputedPrim>:# {{ PreludeUnary["StringOrd", #] }}
-       | "tail" <ComputedPrim>:# {{ PreludeUnary["StringTail", #] }}
-       | "escape" <ComputedPrim>:# {{ PreludeUnary["StringEscape", #] }}
-       | "unescape" <ComputedPrim>:# {{ PreludeUnary["StringUnescape", #] }}
-       | "length" <ComputedPrim>:# {{ PreludeUnary["StringLength", #] }}
+       | "length" <ComputedSub>:# {{ PreludeUnary["StringLength", #] }}
+       | "up-case" <ComputedSub>:# {{ PreludeUnary["StringUpCase", #] }}
+       | "down-case" <ComputedSub>:# {{ PreludeUnary["StringDownCase", #] }}
+       | "escape" <ComputedSub>:# {{ PreludeUnary["EnString", #] }}
+       | "unescape" <ComputedSub>:# {{ PreludeUnary["UnStringify", #] }}
+       | "trim" <ComputedSub>:# {{ PreludeUnary["StringTrim", #] }}
        | NAME$:# <ComputedPrim>:#1 {{ PreludeCast[#, #1] }}
-       | <ComputedPrim>
+       | <ComputedSub>
+       .
+
+<ComputedSub> ::= <ComputedPrim>:#1 <ComputedSub2 #1> .
+<ComputedSub2 #1> ::=
+         "[" (
+	     <Computed>:#2 ":" (
+	     		   <Computed>:#3 "]" <ComputedSub2 {{ PreludeTernary["Substring", #1, #2, #3] }}>
+			   | "]"  <ComputedSub2 {{ PreludeBinary["Substring1", #1, #2] }}>
+			   )
+             | ":" (
+	     		   <Computed>:#3 "]" <ComputedSub2 {{ PreludeTernary["Substring", #1, 0, #3] }}>
+			   | "]"  <ComputedSub2 #1>
+			   )
+	     )
+       | {{#1}}
        .
 
 <ComputedPrim> ::= "(" <Computed> ")"

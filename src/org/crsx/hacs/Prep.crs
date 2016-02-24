@@ -1539,7 +1539,7 @@ P-InlineRegExpSimple[HxRegExpSimple, $String<!--ModuleName-->, $String] :: Text;
 
 P-InlineRegExpSimple[%rawHxRegExpSimple⟪ #HxString# ⟫, #ModuleName, #id]
 →
-%n⟪†«#HxString#»⟫ // TODO: manually decode HACS and recode P escapes (or at least check)!
+%n⟪†«$[Replace, #HxString#, "\\x", "\\u00"]»⟫ // TODO: safer escape decoding...
 ;
 
 P-InlineRegExpSimple[%rawHxRegExpSimple⟪ #HxRegExpWord# ⟫, #ModuleName, #id]
@@ -1601,7 +1601,7 @@ P-InlineRegExpRangeChar[$String, $String<!--ModuleName-->, $String] :: Text;
 -[Data[#HxRegExpRangeStartChar#]]:
 P-InlineRegExpRangeChar[#HxRegExpRangeStartChar#, #ModuleName, #id]
 →
-$[If, $[StringEqual,#HxRegExpRangeStartChar#,"\""], %n⟪\"⟫, %n⟪"†«#HxRegExpRangeStartChar#»"⟫]
+$[If, $[StringEqual,#HxRegExpRangeStartChar#,"\""], %n⟪\"⟫, %n⟪"†«$[Replace, #HxRegExpRangeStartChar#, "\\x", "\\u00"]»"⟫]
 ;
 
 //
@@ -1728,9 +1728,9 @@ P-SubRepeat-somesep-maybe: P-SubRepeat[%rawHxRepeat⟪ + _ #HxRegExpSub1# ⟫, %
 P-SubRepeat-somesep-many: P-SubRepeat[%rawHxRepeat⟪ + _ #HxRegExpSub1# ⟫, %rawHxRepeat⟪ * ⟫] → B_FALSE;
 P-SubRepeat-somesep-some: P-SubRepeat[%rawHxRepeat⟪ + _ #HxRegExpSub1# ⟫, %rawHxRepeat⟪ + ⟫] → B_FALSE;
 
-P-SubRepeat-somesep-string-string: P-SubRepeat[%rawHxRepeat⟪ + _ #HxString1# ⟫, %rawHxRepeat⟪ + _ #HxString2# ⟫] → SameString[UnString[#HxString1#], UnString[#HxString2#]] ;
-P-SubRepeat-somesep-string-word: P-SubRepeat[%rawHxRepeat⟪ + _ #HxString1# ⟫, %rawHxRepeat⟪ + _ #HxSeparator2# ⟫] → SameString[UnString[#HxString1#], #HxSeparator2#] ;
-P-SubRepeat-somesep-word-string: P-SubRepeat[%rawHxRepeat⟪ + _ #HxSeparator1# ⟫, %rawHxRepeat⟪ + _ #HxString2# ⟫] → SameString[#HxSeparator1#, UnString[#HxString2#]] ;
+P-SubRepeat-somesep-string-string: P-SubRepeat[%rawHxRepeat⟪ + _ #HxString1# ⟫, %rawHxRepeat⟪ + _ #HxString2# ⟫] → SameString[UnStringify[#HxString1#], UnStringify[#HxString2#]] ;
+P-SubRepeat-somesep-string-word: P-SubRepeat[%rawHxRepeat⟪ + _ #HxString1# ⟫, %rawHxRepeat⟪ + _ #HxSeparator2# ⟫] → SameString[UnStringify[#HxString1#], #HxSeparator2#] ;
+P-SubRepeat-somesep-word-string: P-SubRepeat[%rawHxRepeat⟪ + _ #HxSeparator1# ⟫, %rawHxRepeat⟪ + _ #HxString2# ⟫] → SameString[#HxSeparator1#, UnStringify[#HxString2#]] ;
 P-SubRepeat-somesep-word-word: P-SubRepeat[%rawHxRepeat⟪ + _ #HxSeparator1# ⟫, %rawHxRepeat⟪ + _ #HxSeparator2# ⟫] → SameString[#HxSeparator1#, #HxSeparator2#] ;
 
 

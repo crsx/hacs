@@ -284,7 +284,13 @@ FilterWhen[ok n.#[ok,n], (#x;#xs)] → Filter2[#[OK,#x], #x, FilterWhen[ok n.#[o
 // Conversions.
 
 Stringify[$String] :: $String ;
--[Data[#]]: Stringify[#] → $[Escape,#] ;
+-[Data[#]]: Stringify[#] → $[Escape, #] ;
+
+UnStringify[$String] :: $String ;
+-[Data[#]]: UnStringify[#] → $[Rescape, #] ;
+
+EnString[$String] :: $String ;
+-[Data[#]]: EnString[#] → $[:, "\"", $[Escape,#], "\""] ;
 
 UnString[$String] :: $String ;
 -[Data[#]]: UnString[#] → $[Rescape, #] ;
@@ -292,34 +298,48 @@ UnString[$String] :: $String ;
 StringTrim[$String] :: $String ;
 -[Data[#]]: StringTrim[#] → $[Trim, #] ;
 
-StringEscape[$String] :: $String ;
--[Data[#]]: StringEscape[#] → $[Escape, #] ;
-
-StringUnescape[$String] :: $String ;
--[Data[#]]: StringUnescape[#] → $[Rescape, #] ;
-
 StringLength[$String] :: $Numeric ;
 -[Data[#]]: StringLength[#] → $[Length,$[Rescape,#]] ;
 
-StringConcat[$String, $String] :: $String ;
--[Data[#1,#2]]: StringConcat[#1,#2] → $[:,#1,#2] ;
+StringUpCase[$String] :: $String ;
+-[Data[#]]: StringUpCase[#] → $[UpCase, #] ;
+
+StringDownCase[$String] :: $String ;
+-[Data[#]]: StringDownCase[#] → $[DownCase, #] ;
 
 // Tests.
 
 SameString[$String, $String] :: Boolean ;
 -[Data[#1,#2]]: SameString[#1,#2] → $[If, $[Equal, $[:,#1,""], $[:,#2,""]], B_TRUE, B_FALSE] ;
 
+StringContains[$String, $String] :: Boolean ;
+-[Data[#,#sub]]: StringContains[#, #sub] → $[If, $[Contains, #, #sub], B_TRUE, B_FALSE] ;
+
 StringContainsWhen[Ok, $String, $String] :: Boolean ;
 -[Data[#,#sub]]: StringContainsWhen[OK, #, #sub] → $[If, $[Contains, #, #sub], B_TRUE, B_FALSE] ;
 
+StringStartsWith[$String, $String] :: Boolean ;
+-[Data[#,#sub]]: StringStartsWith[#, #sub] → $[If, $[StartsWith, #, #sub], B_TRUE, B_FALSE] ;
+
 StringStartsWithWhen[Ok, $String, $String] :: Boolean ;
 -[Data[#,#sub]]: StringStartsWithWhen[OK, #, #sub] → $[If, $[StartsWith, #, #sub], B_TRUE, B_FALSE] ;
+
+StringEndsWith[$String, $String] :: Boolean ;
+-[Data[#,#sub]]: StringEndsWith[#, #sub] → $[If, $[EndsWith, #, #sub], B_TRUE, B_FALSE] ;
 
 StringEndsWithWhen[Ok, $String, $String] :: Boolean ;
 -[Data[#,#sub]]: StringEndsWithWhen[OK, #, #sub] → $[If, $[EndsWith, #, #sub], B_TRUE, B_FALSE] ;
 
 StringEmpty[$String] :: Boolean ;
 -[Data[#]]: StringEmpty[#] → $[IfEmpty ,#, B_TRUE, B_FALSE] ;
+
+// Substring.
+
+Substring[$String, $Numeric, $Numeric] :: $String;
+-[Data[#,#1,#2]]: Substring[#, #1, #2] → $[Substring, #, #1, #2] ;
+
+Substring1[$String, $Numeric] :: $String;
+-[Data[#,#1]]: Substring1[#, #1] → $[Substring, #, #1] ;
 
 // Concatenation.
 
