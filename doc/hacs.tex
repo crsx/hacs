@@ -221,17 +221,17 @@ computer.\footnote{Please report any problems with this procedure to \emph{hacs-
   If you have an old version of \HAX installed, then it is best to remove it first with a command like
   %%
   \begin{code}[commandchars=\^\{\}]
-$ ^textcolor{blue}{^texttt{rm -fr ~/.hacs hacs}}
+$ ^textcolorinput{^texttt{rm -fr ~/.hacs hacs}}
   \end{code}
   %%$
   Now retrieve the \emph{hacs-\version.zip} archive, extract it to a new directory, and install it, for
-  example with the following commands:\footnote{User input is \textcolor{blue}{blue}.}
+  example with the following commands:\footnote{User input is \textcolorinput{like this}.}
   %%
   \begin{code}[commandchars=\^\{\}]
-$ ^textcolor{blue}{^texttt{wget http://crsx.org/hacs-^version.zip}}
-$ ^textcolor{blue}{^texttt{unzip hacs-^version.zip}}
-$ ^textcolor{blue}{^texttt{cd hacs}}
-energon1[hacs]$ ^textcolor{blue}{^texttt{make FROMZIP=1 install install-support}}
+$ ^textcolorinput{^texttt{wget http://crsx.org/hacs-^version.zip}}
+$ ^textcolorinput{^texttt{unzip hacs-^version.zip}}
+$ ^textcolorinput{^texttt{cd hacs}}
+energon1[hacs]$ ^textcolorinput{^texttt{make FROMZIP=1 install install-support}}
   \end{code}
   %%
   These commands will need Internet access to use the \texttt{wget} command to retrieve support
@@ -245,13 +245,13 @@ energon1[hacs]$ ^textcolor{blue}{^texttt{make FROMZIP=1 install install-support}
 
   Please check that your new installation works with these commands:
   \begin{code}[commandchars=\^\{\}]
-energon1[hacs]$ ^textcolor{blue}{^texttt{cd}}
-$ ^textcolor{blue}{^texttt{mkdir myfirst}}
-$ ^textcolor{blue}{^texttt{cd myfirst}}
-$ ^textcolor{blue}{^texttt{cp $HOME/.hacs/share/doc/hacs/examples/First.hx .}}
-$ ^textcolor{blue}{^texttt{$HOME/.hacs/bin/hacs First.hx}}
-$ ^textcolor{blue}{^texttt{./First.run --scheme=Compile \}}
-               ^textcolor{blue}{^texttt{--term="^{initial := 1; rate := 1.0; position := initial + rate * 60;^}"}}
+energon1[hacs]$ ^textcolorinput{^texttt{cd}}
+$ ^textcolorinput{^texttt{mkdir myfirst}}
+$ ^textcolorinput{^texttt{cd myfirst}}
+$ ^textcolorinput{^texttt{cp $HOME/.hacs/share/doc/hacs/examples/First.hx .}}
+$ ^textcolorinput{^texttt{$HOME/.hacs/bin/hacs First.hx}}
+$ ^textcolorinput{^texttt{./First.run --scheme=Compile \}}
+               ^textcolorinput{^texttt{--term="^{initial := 1; rate := 1.0; position := initial + rate * 60;^}"}}
   LDF T,  #1 
     STF initial, T
     LDF T_77,  #1.0 
@@ -271,7 +271,7 @@ $ ^textcolor{blue}{^texttt{./First.run --scheme=Compile \}}
   command available for use:
   %%
   \begin{code}[commandchars=\^\{\}]
-energon1[hacs]$ ^textcolor{blue}{^texttt{alias hacs=$HOME/.hacs/bin/hacs}}
+energon1[hacs]$ ^textcolorinput{^texttt{alias hacs=$HOME/.hacs/bin/hacs}}
   \end{code}
   %%
   (It may be worth including this command in your setup, or including the
@@ -437,14 +437,14 @@ the next section.
     will be introduced as needed.}  Execution proceeds by parsing the string following the syntax of
   the token. For example, the following checks the lexical analysis of a number:
   \begin{code}[commandchars=\\\{\}]
-$ \textcolor{blue}{./First.run --sort=FLOAT --term=34.56}
+$ \textcolorinput{./First.run --sort=FLOAT --term=34.56}
 34.56
   \end{code}
   Note that the term \verb|34.56| could also have been provided enclosed in quotes, such as
   \verb|"34.56"| or \verb|'34.56'|.  If there is an error, the lexical analyzer will inform us of
   this:
   \begin{code}[commandchars=^\{\}]
-$ ^textcolor{blue}{./First.run --sort=INT --term=34.56}
+$ ^textcolorinput{./First.run --sort=INT --term=34.56}
 Exception in thread "main" java.lang.RuntimeException: net.sf.crsx.CRSException:
   Encountered " <T_FLOAT> "34.56 "" at line 1, column 1.
 Was expecting:
@@ -600,7 +600,7 @@ specified, eliminating the need to be aware that this conversion happens.
   It is possible to parse an expression from the command line:
   %%
   \begin{code}[commandchars=\\\{\}]
-$ \textcolor{blue}{./First.run --sort=Exp --term="(2+(3*(4+5)))"}
+$ \textcolorinput{./First.run --sort=Exp --term="(2+(3*(4+5)))"}
 2 + 3 * ( 4 + 5 )
   \end{code}
   %%$
@@ -608,7 +608,7 @@ $ \textcolor{blue}{./First.run --sort=Exp --term="(2+(3*(4+5)))"}
   the AST with minimal reinsertion of the sugared syntax.
   %%
   \begin{code}[commandchars=\\\{\}]
-$ \textcolor{blue}{./First.run --sort=Exp --term="2 ** 3"}
+$ \textcolorinput{./First.run --sort=Exp --term="2 ** 3"}
 Exception in thread "main" java.lang.RuntimeException: net.sf.crsx.CRSException: 
   Encountered " "*" "* "" at line 1, column 4.
 Was expecting one of:
@@ -754,7 +754,7 @@ is declared without any new syntax, \ie, without any use of "⟦⟧".
   follows:
   %%
   \begin{code}[commandchars=\\\{\}]
-$ \textcolor{blue}{./First.run --scheme=Leftmost --sort=Exp --term="2*3+4"}
+$ \textcolorinput{./First.run --scheme=Leftmost --sort=Exp --term="2*3+4"}
  2
   \end{code}
   %%$
@@ -898,10 +898,10 @@ instructions.
   expressions to stack code. It is used it in the usual way,
   %%
   \begin{code}[commandchars=\\\{\}]
-$ \textcolor{blue}{hacs Stack.hx}
+$ \textcolorinput{hacs Stack.hx}
 HACS \version
 …
-$ \textcolor{blue}{./Stack.run --scheme=Compile --term="(1+2)*(3+4)"}
+$ \textcolorinput{./Stack.run --scheme=Compile --term="(1+2)*(3+4)"}
   PUSH 1 
   PUSH 2 
   ADD 
@@ -992,9 +992,9 @@ Unif(Unif(Int, Float), Int) → Unif(Float, Int) → Float
   semantic "Value" form. However, an attempt to run the "Load" scheme of the script on a single
   example like this:
   \begin{code}[commandchars=\\\{\}]
-$ \textcolor{blue}{hacs SZ.hx}
+$ \textcolorinput{hacs SZ.hx}
 …
-$ \textcolor{blue}{./SZ.run --scheme=Load --term="s 0+s 0"}
+$ \textcolorinput{./SZ.run --scheme=Load --term="s 0+s 0"}
 « $Print2-SZ$Value[SZ$Value_Succ[SZ$Value_Succ[SZ$Value_Zero]], 0] »
   \end{code}
   delivers the right result, which is the Peano numeral for $2$,
@@ -1002,9 +1002,9 @@ $ \textcolor{blue}{./SZ.run --scheme=Load --term="s 0+s 0"}
   is because \emph{semantic data structures have no syntax and therefore cannot be printed}. The
   proper way is to use the "Calc" script, which translates back to external form, like this:
   \begin{code}[commandchars=\\\{\}]
-$ \textcolor{blue}{hacs SZ.hx}
+$ \textcolorinput{hacs SZ.hx}
 …
-$ \textcolor{blue}{./SZ.run --scheme=Calc --term="s 0+s 0"}
+$ \textcolorinput{./SZ.run --scheme=Calc --term="s 0+s 0"}
  s  s  0   
   \end{code}
   which generates the correct result. This uses the "Calc" scheme defined in lines 34--35 and the
@@ -1258,9 +1258,9 @@ sort Exp | ↑t ;           // expressions have an associated synthesized type, 
   synthesized attribute, which then triggers the evaluation of the Boolean expression. An example
   run would be
   \begin{code}[commandchars=\\\{\}]
-$ \textcolor{blue}{hacs Bool.hx}
+$ \textcolorinput{hacs Bool.hx}
 …
-$ \textcolor{blue}{./Bool.run --scheme=Eval --term='t|(¬f)'}
+$ \textcolorinput{./Bool.run --scheme=Eval --term='t|(¬f)'}
  t
   \end{code}
 \end{example}
@@ -1625,11 +1625,11 @@ The addition of inherited attributes completes the list of possible attributes f
 
   The following code tests that the lookup mechanism is truly recursive:
   \begin{code}[commandchars=\^\{\}]
-$ ^textcolor{blue}{^texttt{hacs LetrecMap.hx}}
+$ ^textcolorinput{^texttt{hacs LetrecMap.hx}}
 …
-$ ^textcolor{blue}{^texttt{./LetrecMap.run --scheme=Reduce --term="a:b b:c in a"}}
+$ ^textcolorinput{^texttt{./LetrecMap.run --scheme=Reduce --term="a:b b:c in a"}}
 c
-$ ^textcolor{blue}{^texttt{./LetrecMap.run --scheme=Reduce --term="b:c a:b in a"}}
+$ ^textcolorinput{^texttt{./LetrecMap.run --scheme=Reduce --term="b:c a:b in a"}}
 c
   \end{code}
 \end{example}
@@ -1821,9 +1821,9 @@ fragments with scopes inside. These are the features where the ``H'' of \HAX mat
   The sample can be run the usual way:
   %%
   \begin{code}[commandchars=\\\{\}]
-$ \textcolor{blue}{\texttt{hacs Lambda.hx}}
+$ \textcolorinput{\texttt{hacs Lambda.hx}}
 …
-$ \textcolor{blue}{\texttt{./Lambda.run --sort=T --term='(λx.x)y'}}
+$ \textcolorinput{\texttt{./Lambda.run --sort=T --term='(λx.x)y'}}
  y
   \end{code}
   %%
@@ -1938,9 +1938,9 @@ rewriting~\cite{Jouannaud:klop2005,Klop+:tcs1993}, a very powerful mechanism.
 
   The script compiles and generates code as follows:
   \begin{code}[commandchars=\\\{\}]
-$ \textcolor{blue}{\texttt{hacs CPS.hx}}
+$ \textcolorinput{\texttt{hacs CPS.hx}}
 …
-$ \textcolor{blue}{\texttt{./CPS.run --scheme=CPS --term="(λx.x x)"}}
+$ \textcolorinput{\texttt{./CPS.run --scheme=CPS --term="(λx.x x)"}}
   λ k .  k (  λ x .   λ k_85 .   x x  (  λ m_40 .  k_85 m_40  )   )  
   \end{code}
 \end{example}
@@ -2095,9 +2095,9 @@ rule matches.
   Here is a run illustrating the effect:
   %%
 \begin{code}[commandchars=\\\{\}]
-$ \textcolor{blue}{hacs MakeToken.hx}
+$ \textcolorinput{hacs MakeToken.hx}
 ...
-$ \textcolor{blue}{./MakeToken.run --scheme=Test --term="Hello Hello Hello John"}
+$ \textcolorinput{./MakeToken.run --scheme=Test --term="Hello Hello Hello John"}
 X_Hello_x_x_John
   \end{code}
   %%$
@@ -2115,9 +2115,9 @@ by the simple desk calculator in the following example.
   Here is a run:
   %%
 \begin{code}[commandchars=\\\{\}]
-$ \textcolor{blue}{hacs Desk.hx}
+$ \textcolorinput{hacs Desk.hx}
 ...
-$ \textcolor{blue}{./Desk.run --scheme=Eval --term="1+2*3/(2-1)"}
+$ \textcolorinput{./Desk.run --scheme=Eval --term="1+2*3/(2-1)"}
 7.0
   \end{code}
   %%$
@@ -2164,10 +2164,10 @@ representation.  This section presents some examples of this.
   Here is a possible run using this command:
   %%
 \begin{code}[commandchars=\\\{\}]
-$ \textcolor{blue}{hacs IsCat.hx}
-$ \textcolor{blue}{./IsCat.run --scheme=IsCat --term="dog"}
+$ \textcolorinput{hacs IsCat.hx}
+$ \textcolorinput{./IsCat.run --scheme=IsCat --term="dog"}
 False
-$ \textcolor{blue}{./IsCat.run --scheme=IsCat --term="cat"}
+$ \textcolorinput{./IsCat.run --scheme=IsCat --term="cat"}
 True
   \end{code}
   %%$
@@ -2187,8 +2187,8 @@ True
   uppercase words---and using symbols---here lowercase words. In the comments, notice the difference
   in use in rule cases and as map keys and set members.
   \begin{code}[commandchars=\\\{\}]
-$ \textcolor{blue}{hacs Symbols.hx}
-$ \textcolor{blue}{./Symbols.run --scheme=Test --term="A A a a * A * a"}
+$ \textcolorinput{hacs Symbols.hx}
+$ \textcolorinput{./Symbols.run --scheme=Test --term="A A a a * A * a"}
 A A 2 a a * s A 3 s_39 a * END END END s_46 s_46 s_46 
 \end{code}
 %%$
@@ -2242,10 +2242,10 @@ A A 2 a a * s A 3 s_39 a * END END END s_46 s_46 s_46
   The example runs as follows:
   %%
 \begin{code}[commandchars=\^\{\}]
-$ ^textcolor{blue}{^texttt{hacs WordSet.hx}}
-$ ^textcolor{blue}{^texttt{./WordSet.run --scheme=Check --term="a in a,b,b,a"}}
+$ ^textcolorinput{^texttt{hacs WordSet.hx}}
+$ ^textcolorinput{^texttt{./WordSet.run --scheme=Check --term="a in a,b,b,a"}}
 Yes, the list has a.
-$ ^textcolor{blue}{^texttt{./WordSet.run --scheme=Check --term="Foo in Bar"}}
+$ ^textcolorinput{^texttt{./WordSet.run --scheme=Check --term="Foo in Bar"}}
 No, the list does not have Foo.
 \end{code}
 %%$
@@ -2282,10 +2282,10 @@ No, the list does not have Foo.
   \end{itemize}
   Here is a run demonstrating the program:
 \begin{code}[commandchars=\^\{\}]
-$ ^textcolor{blue}{^texttt{hacs WordMap.hx}}
-$ ^textcolor{blue}{^texttt{./WordMap.run --scheme=Substitute --term="a:b in a b b a"}}
+$ ^textcolorinput{^texttt{hacs WordMap.hx}}
+$ ^textcolorinput{^texttt{./WordMap.run --scheme=Substitute --term="a:b in a b b a"}}
 b b b b
-$ ^textcolor{blue}{^texttt{./WordMap.run --scheme=Substitute --term="k:v in a b c"}}
+$ ^textcolorinput{^texttt{./WordMap.run --scheme=Substitute --term="k:v in a b c"}}
 a b c
 \end{code}
 %%$
@@ -2396,12 +2396,12 @@ Unitenv( ⟦ { ⟨Units#units⟩ } ⟧↑#s ) → ⟦ { ⟨Units Unitsenv(#units
   Here is a run with this system:
   %%
 \begin{code}[commandchars=\\\{\}]
-$ \textcolor{blue}{hacs WordSubst.hx}
-$ \textcolor{blue}{./WordSubst.run --scheme=Run --term="a=1 a"}
+$ \textcolorinput{hacs WordSubst.hx}
+$ \textcolorinput{./WordSubst.run --scheme=Run --term="a=1 a"}
  a=1  1   
-$ \textcolor{blue}{./WordSubst.run --scheme=Run --term="b a \{a=1 b=2\}"}
+$ \textcolorinput{./WordSubst.run --scheme=Run --term="b a \{a=1 b=2\}"}
  2  1   {  a=1  b=2    }     
-$ \textcolor{blue}{./WordSubst.run --scheme=Run --term="\{a=1 b=2 c=3\} a b c \{a=4\} a b c"}
+$ \textcolorinput{./WordSubst.run --scheme=Run --term="\{a=1 b=2 c=3\} a b c \{a=4\} a b c"}
   \{  a=1  b=2  c=3     \}   4  2  3   \{  a=4   \}   4  2  3         
 \end{code}
   %%
