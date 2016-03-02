@@ -148,12 +148,13 @@
 \newcommand{\cw}[1]{\textsf{\color{gray}#1}}
 \newcommand{\con}[1]{\textsf{#1}}
 \newcommand{\var}[1]{\text{\sffamily\itshape#1}}
+\newcommand{\commentstylecolor}{\color{blue}}
 
 \lstdefinelanguage{HACS}{basicstyle=\sf,%
   extendedchars=true,inputencoding=utf8,sensitive,%
   identifierstyle=\Identifier,%
   string=[d]{"},morestring=[d]{'},upquote=true,showstringspaces=false,%
-  comment=[l]{//},morecomment=[s]{/*}{*/},commentstyle=\color{blue}\rm,%
+  comment=[l]{//},morecomment=[s]{/*}{*/},commentstyle=\commentstylecolor\rm,%
   keywordstyle=\kw,%
   keywords={as,attribute,data,fragment,global,import,include,main,module,nested,private,property,rule,%
     scheme,simplify,sort,space,static,sugar,symbol,tag,token,default,error,binds,template,variable},%
