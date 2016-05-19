@@ -23,14 +23,14 @@ sort List | scheme ListE(List) ↓e ;
 Substitute( ⟦ ⟨Map#map ↑m{:#ms}⟩ in ⟨List#list⟩ ⟧ ) → ListE( #list ) ↓e{:#ms} ;
 
 // Replace any mapped words.
-ListE( ⟦ ⟨WORD#word⟩ ⟨List#words⟩ ⟧ ↑#syn ) ↓e{#word : #replacement}
+ListE( ⟦ ⟨WORD#word⟩ ⟨List#words⟩ ⟧ ↑#syn ) ↓e{:#ms}↓e{#word : #replacement}
 → 
-⟦ ⟨WORD#replacement⟩ ⟨List ListE(#words)⟩ ⟧↑#syn
+⟦ ⟨WORD#replacement⟩ ⟨List ListE(#words)↓e{:#ms}⟩ ⟧↑#syn
 ;
 
-ListE( ⟦ ⟨WORD#word⟩ ⟨List#words⟩ ⟧ ↑#syn ) ↓e{¬#word}
+ListE( ⟦ ⟨WORD#word⟩ ⟨List#words⟩ ⟧ ↑#syn ) ↓e{:#ms}↓e{¬#word}
 → 
-⟦ ⟨WORD#word⟩ ⟨List ListE(#words)⟩ ⟧↑#syn
+⟦ ⟨WORD#word⟩ ⟨List ListE(#words)↓e{:#ms}⟩ ⟧↑#syn
 ;
 
 ListE( ⟦ ⟧ ↑#syn ) → ⟦ ⟧ ↑#syn ;

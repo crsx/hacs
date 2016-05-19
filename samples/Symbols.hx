@@ -26,20 +26,20 @@ module org.crsx.hacs.tests.Symbols { //-*-hacs-*-
   sort L | scheme Emit(L) ↓ups ↓los ;
 
   // Rules for tokens (not seen before and already seen).
-  Emit(⟦ ⟨UP#id⟩ ⟨L#⟩ ⟧) ↓ups{¬#id}
-    → ⟦ ⟨UP#id⟩ ⟨L Emit(#) ↓ups{#id : Two}⟩ ⟧ ;
-  Emit(⟦ ⟨UP#id⟩ ⟨L#⟩ ⟧) ↓ups{#id : #n}
-    → ⟦ ⟨UP#id⟩ ⟨INT#n⟩ ⟨L Emit(#) ↓ups{#id : ⟦ #n + 1 ⟧}⟩ ⟧ ;
+  Emit(⟦ ⟨UP#id⟩ ⟨L#⟩ ⟧) ↓ups{:#ups}↓ups{¬#id} ↓los{:#los}
+    → ⟦ ⟨UP#id⟩ ⟨L Emit(#) ↓ups{:#ups}↓ups{#id : Two} ↓los{:#los}⟩ ⟧ ;
+  Emit(⟦ ⟨UP#id⟩ ⟨L#⟩ ⟧) ↓ups{:#ups}↓ups{#id : #n} ↓los{:#los}
+    → ⟦ ⟨UP#id⟩ ⟨INT#n⟩ ⟨L Emit(#) ↓ups{:#ups}↓ups{#id : ⟦ #n + 1 ⟧ ↓los{:#los}}⟩ ⟧ ;
 
   // Rule for symbols (not and already seen) - note how an exemplar symbol is used.
-  Emit(⟦ s ⟨L#⟩ ⟧) ↓los{¬⟦s⟧} → ⟦ s ⟨L Emit(#) ↓los{⟦s⟧}⟩ ⟧ ;
-  Emit(⟦ s ⟨L#⟩ ⟧) ↓los{⟦s⟧} → ⟦ s * ⟨L Emit(#)⟩ ⟧ ;
+  Emit(⟦ s ⟨L#⟩ ⟧) ↓ups{:#ups}↓los{:#los}↓los{¬⟦s⟧} → ⟦ s ⟨L Emit(#) ↓ups{:#ups}↓los{:#los}↓los{⟦s⟧}⟩ ⟧ ;
+  Emit(⟦ s ⟨L#⟩ ⟧) ↓ups{:#ups}↓los{:#los}↓los{⟦s⟧} → ⟦ s * ⟨L Emit(#) ↓ups{:#ups}↓los{:#los}⟩ ⟧ ;
 
   // Rule to generate a random symbol.
-  Emit(⟦ * ⟨L#⟩ ⟧) → ⟦ s ⟨L Emit(#)⟩ ⟧ ;
+  Emit(⟦ * ⟨L#⟩ ⟧) ↓ups{:#ups}↓los{:#los} → ⟦ s ⟨L Emit(#)↓ups{:#ups}↓los{:#los}⟩ ⟧ ;
 
   // Rule to skip existing counts.
-  Emit(⟦ ⟨INT#n⟩ ⟨L#⟩ ⟧) → Emit(#) ;
+  Emit(⟦ ⟨INT#n⟩ ⟨L#⟩ ⟧) ↓ups{:#ups}↓los{:#los} → Emit(#) ↓ups{:#ups}↓los{:#los} ;
 
   // Rule to finish off with thrice END and a symbol.
   Emit(⟦⟧) → ⟦ END END END s s s ⟧ ;

@@ -14,11 +14,11 @@ module org.crsx.hacs.tests.MakeToken {
   // The aggregator.
   sort Word | scheme Test2(Words, Word) ↓dup ;
   
-  Test2(⟦ ⟨WORD#w1⟩ ⟨Words#ws⟩ ⟧, ⟦⟨WORD#w⟩⟧) ↓dup{¬#w1}
-  → Test2(#ws, ⟦⟨WORD Concat(#w, #w1)⟩⟧) ↓dup{#w1 : ⟦x⟧} ;
+  Test2(⟦ ⟨WORD#w1⟩ ⟨Words#ws⟩ ⟧, ⟦⟨WORD#w⟩⟧) ↓dup{:#dup}↓dup{¬#w1}
+  → Test2(#ws, ⟦⟨WORD Concat(#w, #w1)⟩⟧) ↓dup{:#dup}↓dup{#w1 : ⟦x⟧} ;
   
-  Test2(⟦ ⟨WORD#w1⟩ ⟨Words#ws⟩ ⟧, ⟦⟨WORD#w⟩⟧) ↓dup{#w1 : #w2}
-  → Test2(#ws, ⟦⟨WORD Concat(#w, #w2)⟩⟧) ;
+  Test2(⟦ ⟨WORD#w1⟩ ⟨Words#ws⟩ ⟧, ⟦⟨WORD#w⟩⟧) ↓dup{:#dup}↓dup{#w1 : #w2}
+  → Test2(#ws, ⟦⟨WORD Concat(#w, #w2)⟩⟧) ↓dup{:#dup} ;
   
   Test2(⟦ ⟧, #w) →  #w ;
 

@@ -1377,21 +1377,22 @@ and cannot be easily achieved with usual positional arguments to recursive schem
     \begin{hacs}
    ⟦ ⟨E#1⟩ + ⟨E#2⟩ ⟧
     \end{hacs}
-    Now insert the pattern into the scheme, as was done for recursive syntax-directed schemes:
+    Now insert the pattern into the scheme, as was done for recursive syntax-directed schemes, but
+    include the inherited attribute with the special "↓e{:#Ee}": syntax:
     \begin{hacs}
-   Ee(⟦⟨E#1⟩ + ⟨E#2⟩⟧)
+   Ee(⟦⟨E#1⟩ + ⟨E#2⟩⟧)↓e{:#Ee)
     \end{hacs}
     This clearly respects the sort constraints defined above, with "Ee" being applied to an "E"
-    expression. Since there are no complicated dependencies in \thetag{2}, the process is almost
-    complete. All that is left to do is create a rule that, on the right side of the "→" applies the
-    "Ee" scheme recursively to the subexpressions that should inherit the "e" attribute, which are
-    the two marked subexpression, \emph{inside the syntax markers}:
+    expression and an "e" attribute. Since there are no complicated dependencies in \thetag{2}, the
+    process is almost complete. All that is left to do is create a rule that, on the right side of
+    the "→" applies the "Ee" scheme recursively to the subexpressions that should inherit the "e"
+    attribute, which are the two marked subexpression, \emph{inside the syntax markers}:
     \begin{hacs}
-   Ee(⟦⟨E#1⟩ + ⟨E#2⟩⟧)  →  ⟦⟨E Ee(#1)⟩ + ⟨E Ee(#2)⟩⟧ ;
+   Ee(⟦⟨E#1⟩ + ⟨E#2⟩⟧)↓e{:#Ee)  →  ⟦⟨E Ee(#1)↓e{:#Ee)⟩ + ⟨E Ee(#2)↓e{:#Ee)⟩⟧ ;
     \end{hacs}
-    Notice that there is no explicit mention of the "e" attribute, only the \emph{implicit} copying
-    that follows from the use of the "Ee" scheme. The recursive arrangement of the "Ee" wrappers
-    implies the two attribute equations $E_1.e=E.e$ and $E_2.e=E.e$ from \thetag{2}.
+    Notice that the "e" attribute behaves just like a parameter, just added after the usual
+    parameter list. The recursive arrangement of the "Ee" wrappers implies the two attribute
+    equations $E_1.e=E.e$ and $E_2.e=E.e$ from \thetag{2}.
 
     Also notice that for inherited attributes \emph{all} the equations are handled by \emph{one}
     rule, unlike for synthesized, where there is a synthesis rule for every equation.
@@ -1408,7 +1409,7 @@ and cannot be easily achieved with usual positional arguments to recursive schem
     first capturing the ``Lookup'' in the inherited environment. \HAX has a special notation for
     this. Write the pattern as follows:
     \begin{hacs}
-   Ee(⟦⟨ID#1⟩⟧) ↓e{#1 : #t}  →     …
+   Ee(⟦⟨ID#1⟩⟧)↓e{#1 : #t}  →     …
     \end{hacs}
     The pattern of this rule is equipped with a \emph{mapping constraint} on the "e" inherited
     attribute, which corresponds to the "Lookup" notation of \thetag{3} above. It will match when
@@ -1416,14 +1417,16 @@ and cannot be easily achieved with usual positional arguments to recursive schem
     attribute to a type, denoted~"#t". After capturing the mapped type this way, complete the rule
     by explicitly associating it to the "t" attribute associated with "ID" expressions.
     \begin{hacs}
-   Ee(⟦⟨ID#1⟩⟧) ↓e{#1 : #t}  →   ⟦⟨ID#1⟩⟧ ↑t(#t) ;
+   Ee(⟦⟨ID#1⟩⟧)↓e{#1 : #t}  →   ⟦⟨ID#1⟩⟧ ↑t(#t) ;
     \end{hacs}
     Notice how mappings like "e" use "{}" notation for both declarations and constraints, and simply
-    valued attributes like "t" use~"()".
+    valued attributes like "t" use~"()". Also note that we did not include any "↓e{:#Ee}"
+    fragments, because the attribute is not passed anywhere.
 
   \item The semantic rules of the SDD can now be completed by encoding \thetag{1}. Begin with
     \begin{hacs}
-   Se(⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E#3⟩; ⟨S#4⟩⟧)  →    ⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E Ee(#3)⟩; ⟨S Se(#4)⟩⟧ ;
+   Se(⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E#3⟩; ⟨S#4⟩⟧)↓e{:#Se}
+     →  ⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E Ee(#3)↓e{:#Se}⟩; ⟨S Se(#4)↓e{:#Se}⟩⟧ ;
     \end{hacs}
     which merely establishes that the basic rules that the $S.e$ attribute inherited from the
     context (through the left hand "Se") are passed to both $E_3$ and $S_4$ through the right "Ee"
@@ -1431,12 +1434,14 @@ and cannot be easily achieved with usual positional arguments to recursive schem
     this by allowing mapping constraints also on the right side of the "→" acting as
     \emph{extensions} of the map.
     \begin{hacs}
-   Se(⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E#3⟩; ⟨S#4⟩⟧)
-   →   ⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E Ee(#3)⟩; ⟨S Se(#4) ↓e{#2 : #1}⟩⟧ ;
+   Se(⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E#3⟩; ⟨S#4⟩⟧)↓e{:#Se}
+     →  ⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E Ee(#3)↓e{:#Se}⟩; ⟨S Se(#4)↓e{:#Se}↓e{#2 : #1}⟩⟧ ;
     \end{hacs}
-    Consider carefully how the "⟦…⟧" and "⟨…⟩" nest: the first set wraps syntax fragments, and the
-    second wraps raw (non-syntax) fragments inside syntax. Attribute constraints are always in the
-    raw fragments.
+    Note that this means the last "Se" call has two ``contributions'' to the passed "e"
+    attribute. This is not a problem (except you cannot have two ``base'' contributions of the form
+    "{:…}").  Consider carefully how the "⟦…⟧" and "⟨…⟩" nest: the first set wraps syntax fragments,
+    and the second wraps raw (non-syntax) fragments inside syntax. Attribute constraints are always
+    in the raw fragments.
 
   \item Finally, \thetag{4} does not contain any semantic rules but a case must still be provided
     for the scheme:
@@ -1451,10 +1456,10 @@ and cannot be easily achieved with usual positional arguments to recursive schem
   synthesized attributes through the inheritance scheme, which makes the whole system look as
   follows.
   \begin{hacs}
- Se(⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E#3⟩; ⟨S#4⟩⟧ ↑#syn)
-   →   ⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E Ee(#3)⟩; ⟨S Se(#4) ↓e{#2 : #1}⟩⟧ ↑#syn ;
+ Se(⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E#3⟩; ⟨S#4⟩⟧ ↑#syn)↓e{:#Se}
+   →   ⟦⟨T#1⟩ ⟨ID#2⟩ = ⟨E Ee(#3)↓e{:#Se}⟩; ⟨S Se(#4)↓e{:#Se}↓e{#2 : #1}⟩⟧ ↑#syn ;
 
- Ee(⟦⟨E#1⟩ + ⟨E#2⟩⟧ ↑#syn)  →  ⟦⟨E Ee(#1)⟩ + ⟨E Ee(#2)⟩⟧ ↑#syn ;
+ Ee(⟦⟨E#1⟩ + ⟨E#2⟩⟧ ↑#syn)↓e{:#Ee}  →  ⟦⟨E Ee(#1)↓e{:#Ee}⟩ + ⟨E Ee(#2)↓e{:#Ee}⟩⟧ ↑#syn ;
  Ee(⟦⟨ID#1⟩⟧ ↑#syn) ↓e{#1 : #t}  →   ⟦⟨ID#1⟩⟧ ↑#syn ↑t(#t) ;
  Ee(⟦⟨NUM#1⟩⟧ ↑#syn)  →  ⟦⟨NUM#1⟩⟧ ↑#syn ;
   \end{hacs}
@@ -1466,7 +1471,8 @@ carrier scheme of the attribute per syntax case. This has an interesting consequ
 
 %%TODO: Example with shared carrier.
 
-The addition of inherited attributes completes the list of possible attributes forms.
+The addition of inherited attributes completes the list of possible attribute forms, except that in
+fact all combinatons of the shown forms and synthesized/inherited are permitted.
 
 \begin{table}[t]
   \begin{figureunit}[\caption{Attribute constraints.}\label{tab:attributes}]
@@ -1525,6 +1531,8 @@ The addition of inherited attributes completes the list of possible attributes f
     \end{displaymath}
   \end{figureunit}
 \end{table}
+
+\pagebreak[2]
 
 \begin{notation}[attributes]\leavevmode
   \begin{enumerate}
@@ -1667,31 +1675,32 @@ sort Exp | scheme Ee(Exp) ↓e ;  // propagates $e$ over Exp
 Ee(⟦⟨ID#v⟩⟧) ↓e{#v : #t} →  ⟦⟨ID#v⟩⟧ ↑t(#t);
 Ee(⟦⟨ID#v⟩⟧) ↓e{¬#v} →  error⟦Undefined identifier⟧;
 
-Ee(⟦⟨Exp#1⟩ + ⟨Exp#2⟩⟧ ↑#syn) → ⟦ ⟨Exp Ee(#1)⟩ + ⟨Exp Ee(#2)⟩ ⟧ ↑#syn ;
-Ee(⟦⟨Exp#1⟩ * ⟨Exp#2⟩⟧ ↑#syn) → ⟦ ⟨Exp Ee(#1)⟩ * ⟨Exp Ee(#2)⟩ ⟧ ↑#syn ;
-Ee(⟦⟨INT#⟩⟧ ↑#syn) → ⟦⟨INT#⟩⟧ ↑#syn ;
-Ee(⟦⟨FLOAT#⟩⟧ ↑#syn) → ⟦⟨FLOAT#⟩⟧ ↑#syn ;
+Ee(⟦⟨Exp#1⟩ + ⟨Exp#2⟩⟧↑#syn)↓e{:#Ee} → ⟦ ⟨Exp Ee(#1)↓e{:#Ee}⟩ + ⟨Exp Ee(#2)↓e{:#Ee}⟩ ⟧↑#syn ;
+Ee(⟦⟨Exp#1⟩ * ⟨Exp#2⟩⟧↑#syn)↓e{:#Ee} → ⟦ ⟨Exp Ee(#1)↓e{:#Ee}⟩ * ⟨Exp Ee(#2)↓e{:#Ee}⟩ ⟧↑#syn ;
+Ee(⟦⟨INT#⟩⟧↑#syn) → ⟦⟨INT#⟩⟧↑#syn ;
+Ee(⟦⟨FLOAT#⟩⟧↑#syn) → ⟦⟨FLOAT#⟩⟧↑#syn ;
 
 sort Stat | scheme Se(Stat) ↓e ;  // propagates $e$ over Stat
 
-Se(⟦⟨ID#v⟩ := ⟨Exp#1⟩; ⟨Stat#2⟩⟧ ↑#syn)
-  → SeB(⟦⟨ID#v⟩ := ⟨Exp Ee(#1)⟩; ⟨Stat#2⟩⟧ ↑#syn);
+Se(⟦⟨ID#v⟩ := ⟨Exp#1⟩; ⟨Stat#2⟩⟧↑#syn) ↓e{:#Se}
+  → SeB(⟦⟨ID#v⟩ := ⟨Exp Ee(#1)↓e{:#Se}⟩; ⟨Stat#2⟩⟧↑#syn) ↓e{:#Se};
 {
   | scheme SeB(Stat) ↓e;  // helper scheme for assignment after expression type analysis
-  SeB(⟦⟨ID#v⟩ := ⟨Exp#1 ↑t(#t1)⟩; ⟨Stat#2⟩ ⟧ ↑#syn)
-   → ⟦⟨ID#v⟩ := ⟨Exp#1⟩; ⟨Stat Se(#2) ↓e{#v : #t1}⟩⟧ ↑#syn ;
+  SeB(⟦⟨ID#v⟩ := ⟨Exp#1↑t(#t1)⟩; ⟨Stat#2⟩ ⟧↑#syn) ↓e{:#Se}
+   → ⟦⟨ID#v⟩ := ⟨Exp#1⟩; ⟨Stat Se(#2)↓e{:#Se}↓e{#v : #t1}⟩⟧↑#syn ;
 }
 
-Se (⟦ { ⟨Stat#1⟩ } ⟨Stat#2⟩ ⟧ ↑#syn) → ⟦ { ⟨Stat Se(#1)⟩ } ⟨Stat Se(#2)⟩ ⟧ ↑#syn ;
+Se (⟦ { ⟨Stat#1⟩ } ⟨Stat#2⟩ ⟧↑#syn) ↓e{:#Se}
+ → ⟦ { ⟨Stat Se(#1)↓e{:#Se}⟩ } ⟨Stat Se(#2)↓e{:#Se}⟩ ⟧↑#syn ;
 
-Se (⟦ ⟧ ↑#syn) → ⟦ ⟧ ↑#syn ;
+Se (⟦ ⟧↑#syn) → ⟦ ⟧↑#syn ;
 \end{hacs}
   \end{figureunit}
 \end{figure}
 
 \begin{example}
   Figure~\ref{fig:sdd} shows a more realistic SDD for type checking, and Figure~\ref{fig:sdd-hacs}
-  shows the corresponding \HAX. Here are the steps followed to obtain this script:
+  shows the corresponding \HAX. fragment Here are the steps followed to obtain this script:
   %% 
   \begin{enumerate}
 
@@ -1784,9 +1793,9 @@ fragments with scopes inside. These are the features where the ``H'' of \HAX mat
   \begin{itemize}
 
   \item The specification has properties like others presented above: it is a \emph{module} (lines 1
-    and 12); it has a lexical specification of \emph{spacing} (line 2) and \emph{identifiers} (line
+    and 11); it has a lexical specification of \emph{spacing} (line 2) and \emph{identifiers} (line
     3); it has a \emph{main sort} (line 5) of terms "T"; the term grammar uses "@" precedence
-    markers (lines 7--9) and syntactic sugar for grouping (line 9); the term has one \emph{scheme},
+    markers (lines 7--8) and syntactic sugar for grouping (line 8); the term has one \emph{scheme},
     which means that there can be rules for application (line 7), which is so basic in λ calculus
     that it is denoted by simple concatenation.
 
@@ -1808,12 +1817,8 @@ fragments with scopes inside. These are the features where the ``H'' of \HAX mat
 
     \end{itemize}
 
-  \item The third production (line 8) is also special: it declares that if a term is a simple "ID",
-    then in fact it is a \emph{symbol}, which is required for identifiers to occur bound as
-    sort~"T".
-
   \item Finally, the defined scoping in the classic $β$ rewrite rule is used for our one scheme in
-    line~11: it expresses that a λ term which is an application (of the scheme declared in line~7)
+    line~10: it expresses that a λ term which is an application (of the scheme declared in line~7)
     where the first subterm is a λ-abstraction (declared in line~6) can be rewritten.
 
   \end{itemize}
@@ -1856,7 +1861,14 @@ More formally, \HAX provides support for manipulating scoped terms using \emph{h
 \item Replacements (right of $→$) should always have scoped metavariables applied to the same number
   of arguments in $[\,]$s as the corresponding pattern sets up. The result of such an application is
   to replace all bound occurrences of the variable that was indicated in the pattern with whatever
-  is used in the replacement.
+  is used in the replacement. This is known as \emph{substitution}.
+
+\item The only thing that cannot be done with a variable defined following the above rules is
+  \emph{use them directly in patterns}, \ie, allow a pattern that will \emph{only} match a
+  variable. If you look at the syntax productions for the λ-calculus above, you see why: there is no
+  syntax case for variables. If you want to use patterns that explicitly match variables, then you
+  must add an appropriate "symbol" declaration, and then substitution is restricted to only
+  replace with other "symbol" variables. The next example illustrates this.
 
 \end{itemize}
 %%
@@ -1889,20 +1901,18 @@ sort Exp  | ⟦ ⟨Exp⟩ + ⟨Exp@1⟩ ⟧
 sort Stat | scheme Duplicate(Stat) | scheme Append(Stat,Stat) ;
 Duplicate(#S) →  Append(#S, #S) ;
 Append(⟦⟧, #S2) → #S2 ;
-Append(⟦ old := ⟨Exp#2⟩; ⟨Stat#3[old]⟩ ⟧, #S2)
-  → ⟦ new := ⟨Exp#2⟩; ⟨Stat Append(#3[new], #S2⟩ ⟧ ;
+Append(⟦ old := ⟨Exp#2⟩; ⟨Stat#3[Exp⟦old⟧]⟩ ⟧, #S2)
+  → ⟦ new := ⟨Exp#2⟩; ⟨Stat Append(#3[Exp⟦new⟧], #S2⟩ ⟧ ;
   \end{hacs}
   %%
   Notice how the pattern of the last rule in lines 13--14 explicitly calls out the used binding: the
   actual variable that is used in the program is referenced in the pattern as "old", and the pattern
   matching should also keep track of all the occurrences inside the scope, which is~"#3", by writing
-  it as "#3[old]". (This exploits the aforementioned \HAX hack, where \HAX variables that are also
-  ``raw'' variables can be written in this short form instead of the full "#3[Exp⟦old⟧]".)  This
-  setup makes it possible to now \emph{systematically replace the symbol} with a new and fresh one,
-  referred to as "new" in the replacement in line 16, but which the system will in fact replace with
-  a new and unique name, both the binder \emph{and all the in-scope occurrences} inside~"#3". This
-  ensures that there is no so-called ``variable capture,'' \ie, that occurrences of the "old" name
-  inside "#S2" accidentally become double-bound.
+  it as "#3[Exp⟦old⟧]". This setup makes it possible to now \emph{systematically replace the symbol}
+  with a new and fresh one, referred to as "new" in the replacement in line 16, but which the system
+  will in fact replace with a new and unique name, both the binder \emph{and all the in-scope
+    occurrences} inside~"#3". This ensures that there is no so-called ``variable capture,'' \ie,
+  that occurrences of the "old" name inside "#S2" accidentally become double-bound.
   %%
 \end{example}
 
@@ -1920,7 +1930,7 @@ leads to bugs in compilers.)
 The use of HOAS in \HAX in fact allows the full range of methods used in higher-order
 rewriting~\cite{Jouannaud:klop2005,Klop+:tcs1993}, a very powerful mechanism.
 
-\begin{figure}[t!]
+\begin{figure}[h!]
   \begin{figureunit}[
       \caption{Definitions of Call-by-Value Continuation Passing Style (\emph{examples/CPS.hx}).}
       \label{fig:cps}
@@ -1944,7 +1954,16 @@ $ \textcolorinput{\texttt{./CPS.run --scheme=CPS --term="(λx.x x)"}}
   λ k .  k (  λ x .   λ k_85 .   x x  (  λ m_40 .  k_85 m_40  )   )  
   \end{code}
 \end{example}
-
+%%
+\begin{figure}[t!]\scriptsize
+  \begin{figureunit}[
+      \caption{Managing labels and names.}
+      \label{fig:jose}
+    ]
+    \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/JoseMaps.hx}
+  \end{figureunit}
+\end{figure}
+%%
 Finally, sometimes symbols serve as \emph{labels} or for some other purpose, when there is a need
 for globally unique symbols. This creates a dilemma: writing "⟦x⟧" for some symbol sort, how to
 distinguish between the actual variable written "x" and a variable that is automatically renamed to
@@ -1960,6 +1979,27 @@ be globally unique? By default, \HAX follows the following rules:
   this automatic conversion.
 
 \end{itemize}
+
+\begin{example}
+  Figure~\ref{fig:jose} is a more realistic example showing how to use an symbol sort and a normal
+  identifier by exploiting HACS built-in maps to store the latter and lookup with the former. The
+  specification uses ``identifiers'' for the source grammar, lines 7--8, however, the target
+  language uses automatic symbols for its special "Label" sort, line~16. Line 28 declares our
+  mapping attribute. Lines 31--32 is a helper to add four to an integer string; such rules are
+  explained in the next section.
+
+  The new stuff is the "CompileS" scheme in lines 34--40. Line 35 is the pattern for a variable
+  declaration in the source grammar. It rewrites to a target contraction in line 36, which has two
+  special features: it creates a ``fresh'' new "Label", "id", and it records that label in the "loc"
+  environment to pass on this information to the next statement and move the current offset as
+  appropriate. The rule also adds a quick comment with the original "ID" for readability.
+  
+  The following rule in line 37--38 replaces \emph{uses} of a source variable by lookup of label
+  using our constant "ID". (This ignores the case where "#1" is not in the map for simplicity.) The
+  rest of the "CompileS" rules are normal, and the rest of the script has standard helpers.
+\end{example}
+
+
 
 
 %Note that in print, the bottow two lines of this table overhang their shaded box
@@ -2030,7 +2070,7 @@ syntax, so "⟦1+2+3⟧" is the same as "⟦(1+2)+3⟧", and any $E$ inside some
 fact, come from the entire table.
 
 Notice that for "Computed", meta-variables are part of the syntax: essentially "#x" is used instead
-of ``"⟨Computed#x⟩",'' which is not permitted, inside the special syntax.
+of ``"⟨Computed#x⟩",'' which is not permitted inside the special syntax.
 
 Also, since \emph{all} computed parts of a rule are evaluated as soon as the rule is expanded, only
 use this for calculations that can be safely computed in any case where the \emph{pattern} of the
@@ -2141,8 +2181,7 @@ $ \textcolorinput{./Desk.run --scheme=Eval --term="1+2*3/(2-1)"}
 \section{Examples}
 \label{sec:examples}
 
-Once the structure of a specification is clear, it is possible to start analyzing and manipulating the internal
-representation.  This section presents some examples of this.
+This section presents some examples of using \HAX to solve specific tasks.
 
 \begin{figure}[h]
   \begin{figureunit}[
@@ -2296,71 +2335,7 @@ a b c
       \caption{\emph{examples/WordSubst.hx}: Combining list, maps, and transformation.}
       \label{fig:wordsubst}
     ]\scriptsize
-\begin{hacs}[xleftmargin=\parindent,xrightmargin=3em,numbers=right,texcl]
-module org.crsx.hacs.samples.WordSubst {
-
-// Grammar.
-sort Units | ⟦ ⟨Unit⟩ ⟨Units⟩ ⟧ | ⟦⟧ ;
-sort Unit | ⟦⟨Variable⟩=⟨NAT⟩⟧ | ⟦⟨Variable⟩⟧ | ⟦⟨NAT⟩⟧ | ⟦ { ⟨Units⟩ } ⟧ ;
-sort Variable | symbol ⟦⟨ID⟩⟧ ;
-
-token ID | [A-Za-z]+ ;
-token NAT | [0-9]+ ;
-space [\ \t\n\r] ;
-
-// Helper Subst structure: lists of variable-NAT pairs.
-sort Subst | MoreSubst(Variable, NAT, Subst) | NoSubst ;
-
-// Append operation for Subst structures.
-| scheme SubstAppend(Subst, Subst) ;
-SubstAppend(MoreSubst(#var, #nat, #subst1), #subst2) → MoreSubst(#var, #nat, SubstAppend(#subst1, #subst2)) ;
-SubstAppend(NoSubst, #subst2) → #subst2 ;
-
-// Attributes.
-attribute ↑subst(Subst) ;        // collected Subst structure
-attribute ↓env{Variable:NAT} ;   // mappings to apply
-
-// Top scheme.
-main sort Units | scheme Run(Units) ;
-Run(#units) → Run1(#units) ;
-
-// Strategy: two passes.
-// 1. force synthesis of subst attribute.
-// 2. convert subst attribute to inherited environment (which forces replacement).
-
-| scheme Run1(Units) ;
-Run1(#units ↑subst(#subst)) → Run2(#units, #subst) ;
-
-| scheme Run2(Units, Subst) ↓env ;
-Run2(#units, MoreSubst(#var, #nat, #subst)) → Run2(#units, #subst) ↓env{#var : #nat} ;
-Run2(#units, NoSubst) → Unitsenv(#units) ;
-
-// Synthesis of subst.
-
-sort Units | ↑subst ;
-⟦ ⟨Unit #1 ↑subst(#subst1) ⟩ ⟨Units #2 ↑subst(#subst2)⟩ ⟧ ↑subst(SubstAppend(#subst1, #subst2)) ;
-⟦ ⟧ ↑subst(NoSubst) ;
-
-sort Unit | ↑subst ;
-⟦v=⟨NAT#n⟩⟧ ↑subst(MoreSubst(⟦v⟧, #n, NoSubst)) ;
-⟦v⟧ ↑subst(NoSubst) ;
-⟦⟨NAT#n⟩⟧ ↑subst(NoSubst) ;
-⟦ { ⟨Units#units ↑subst(#subst)⟩ } ⟧ ↑subst(#subst) ;
-
-// Inheritance of env combined with substitution.
-
-sort Units | scheme Unitsenv(Units) ↓env ;
-Unitsenv( ⟦ ⟨Unit#1⟩ ⟨Units#2⟩ ⟧↑#s ) →  ⟦ ⟨Unit Unitenv(#1)⟩ ⟨Units Unitsenv(#2)⟩ ⟧↑#s ;
-Unitsenv( ⟦ ⟧↑#s ) → ⟦ ⟧↑#s ;
-
-sort Unit | scheme Unitenv(Unit) ↓env ;
-Unitenv( ⟦v=⟨NAT#n⟩ ⟧↑#s) → ⟦v=⟨NAT#n⟩⟧↑#s ;
-Unitenv( ⟦v⟧ ) ↓env{⟦v⟧:#n} → ⟦⟨NAT#n⟩⟧ ;
-Unitenv( ⟦v⟧↑#s ) ↓env{¬⟦v⟧} → ⟦v⟧↑#s ;
-Unitenv( ⟦⟨NAT#n⟩⟧↑#s ) → ⟦⟨NAT#n⟩⟧↑#s ;
-Unitenv( ⟦ { ⟨Units#units⟩ } ⟧↑#s ) → ⟦ { ⟨Units Unitsenv(#units)⟩ } ⟧↑#s ;
-}
-\end{hacs}
+    \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right,texcl]{../samples/WordSubst.hx}
   \end{figureunit}
 \end{figure}
 

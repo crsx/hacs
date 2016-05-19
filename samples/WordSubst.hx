@@ -30,11 +30,11 @@ Run(#units) → Run1(#units) ;
 // 2. convert subst attribute to inherited environment (which forces replacement).
 
 | scheme Run1(Units) ;
-Run1(#units ↑subst(#subst)) → Run2(#units, #subst) ;
+Run1(#units ↑subst(#subst)) → Run2(#units, #subst) ↓env{} ;
 
 | scheme Run2(Units, Subst) ↓env ;
-Run2(#units, MoreSubst(#var, #nat, #subst)) → Run2(#units, #subst) ↓env{#var : #nat} ;
-Run2(#units, NoSubst) → Unitsenv(#units) ;
+ Run2(#units, MoreSubst(#var, #nat, #subst)) ↓env{:#env} → Run2(#units, #subst) ↓env{:#env} ↓env{#var : #nat} ;
+Run2(#units, NoSubst) → Unitsenv(#units) ↓env{:#env} ;
 
 // Synthesis of subst.
 
@@ -51,7 +51,7 @@ sort Unit | ↑subst ;
 // Inheritance of env combined with substitution.
 
 sort Units | scheme Unitsenv(Units) ↓env ;
-Unitsenv( ⟦ ⟨Unit#1⟩ ⟨Units#2⟩ ⟧↑#s ) →  ⟦ ⟨Unit Unitenv(#1)⟩ ⟨Units Unitsenv(#2)⟩ ⟧↑#s ;
+Unitsenv( ⟦ ⟨Unit#1⟩ ⟨Units#2⟩ ⟧↑#s ) ↓env{:#env} →  ⟦ ⟨Unit Unitenv(#1) ↓env{:#env}⟩ ⟨Units Unitsenv(#2) ↓env{:#env}⟩ ⟧↑#s ;
 Unitsenv( ⟦ ⟧↑#s ) → ⟦ ⟧↑#s ;
 
 sort Unit | scheme Unitenv(Unit) ↓env ;
@@ -59,5 +59,5 @@ Unitenv( ⟦v=⟨NAT#n⟩ ⟧↑#s) → ⟦v=⟨NAT#n⟩⟧↑#s ;
 Unitenv( ⟦v⟧ ) ↓env{⟦v⟧:#n} → ⟦⟨NAT#n⟩⟧ ;
 Unitenv( ⟦v⟧↑#s ) ↓env{¬⟦v⟧} → ⟦v⟧↑#s ;
 Unitenv( ⟦⟨NAT#n⟩⟧↑#s ) → ⟦⟨NAT#n⟩⟧↑#s ;
-Unitenv( ⟦ { ⟨Units#units⟩ } ⟧↑#s ) → ⟦ { ⟨Units Unitsenv(#units)⟩ } ⟧↑#s ;
+Unitenv( ⟦ { ⟨Units#units⟩ } ⟧↑#s ) ↓env{:#env} → ⟦ { ⟨Units Unitsenv(#units) ↓env{:#env}⟩ } ⟧↑#s ;
 }

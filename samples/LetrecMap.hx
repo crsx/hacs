@@ -14,7 +14,7 @@ module org.crsx.hacs.samples.LetrecMap {
   // Environment and application on variable.
   attribute ↓e{ID:ID} ;
   sort Out | scheme Apply(ID) ↓e ;
-  Apply(#v)  ↓e{#v : #v2}	→  Apply(#v2) ;
+  Apply(#v) ↓e{:#e}↓e{#v : #v2}	→  Apply(#v2) ↓e{:#e};
   Apply(#v)  ↓e{¬#v}	→  ⟦ ⟨ID#v⟩ ⟧ ;
 
   // Main makes sure list is synthesized and passes control to conversion.
