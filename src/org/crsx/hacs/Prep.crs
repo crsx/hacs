@@ -736,10 +736,13 @@ N_HxVariable(s, env)
     -[Data[#n]]:
     {#DM} P-MetaJJ-Production-HxScopeSort[#ModuleName, %rawHxScopeSort⟪ #HxSort# #HxRepeat# [ #HxSubstituteSorts# ] ⟫, #SortName, #env, #n]
     →
-    TextConcat[« $[If, $[NumericEqual,0,#n], %n⟨(<T_HX_LBRACKET><T_HX_RBRACKET>)?⟩, %n⟨<T_HX_RBRACKET>¶⟩] »,
-      JJ-Construction[%n⟪hx("Scope")⟫, %n⟪« JJ-Construction[%n⟨"$Nil"⟩, %n⟨⟩] »¶{sink=sink.binds(vs.toArray(new net.sf.crsx.Variable[vs.size()]));} ¶« JJ-Nonterminal[%n⟨sink⟩, U-SortName[#HxSort#], #env] »⟫]
+    TextConcat[
+		« $[If, $[NumericEqual,0,#n], %n⟨(<T_HX_LBRACKET><T_HX_RBRACKET>)?⟩, %n⟨<T_HX_RBRACKET>¶⟩] »,
+      		JJ-Construction[%n⟪"C-UnravelScope_†«NumericToString[#n]»"⟫,
+			%n⟪{sink=sink.binds(vs.toArray(new net.sf.crsx.Variable[vs.size()]));} ¶« JJ-Nonterminal[%n⟨sink⟩, U-SortName[#HxSort#], #env] »⟫]
     ]
     ;
+
     // TODO: should not ignore #Repeat.
 
 // Meta-definitions for sorts.

@@ -1,0 +1,922 @@
+%% HACS tutorial.
+%%
+%% Copyright (c) 2016 Kristoffer Rose <krisrose@crsx.org>
+%% License: 
+%%
+\documentclass[11pt]{article} %style: font size.
+\usepackage[utf8]{inputenc}
+
+\usepackage[type={CC},modifier={by},version={4.0}]{doclicense}
+
+%% Style.
+\usepackage[margin=.7in]{geometry}
+\usepackage[T1]{fontenc}
+\bibliographystyle{plainurl}
+\renewcommand{\rmdefault}{pplx}\usepackage{eulervm}\AtBeginDocument{\SelectTips{eu}{11}}
+
+%% Base format.
+\input{setup}
+
+%% Topmatter.
+\title{
+  A Simple \HAX Compiler 
+}
+\author{
+  Kristoffer H. Rose
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}\noindent
+  We develop a compiler in the \HAX language from a simple but non-trivial programming language to a
+  fictive machine language. The full \HAX code is included in literate programming style.
+
+  \compacttableofcontents
+
+  \bigskip\noindent\doclicenseImage[imagewidth=3em]\quad%
+  This document is © 2016 Kristoffer Rose licensed under \doclicenseNameRef.
+\end{abstract}
+
+
+\section{Introduction}
+
+In this document we will introduce the \HAX compiler specification language by implementing a
+compiler from a small but non-trivial programming language to a realistic target assembly language.
+
+This is not a manual: we expect you to have access to the proper \HAX manual~\cite{Rose:ts2016}, as
+well as some knowledge of programming languages, assembly programming, and compiler construction, in
+particular the notion of syntax-directed definitions (\aka attribute grammars) as explained, for
+example, in the dragon book~\cite{Aho+:2006}.
+
+The \HAX code will be introduced as we write it, inline in ``Code'' blocks; you can always consult
+the full \emph{simple.hx} file if you need a more compact version.\footnote{The \emph{simple.hx}
+  file is actually generated from the \LaTeX source of this document.}  Indeed, we have to start the
+\HAX specification by defining which module we are creating, which is done as follows, where you can
+see the line number used to indicate that this is \HAX code:
+%%
+\begin{hacs}{module}
+module org.crsx.hacs.tut.Simple {
+\end{hacs}
+
+
+\section{Simple Programming Language}
+
+Our programming language ``Simple'' is a procedural language that can manipulate numbers and
+constant strings, and includes records. It allows for a number of function and structure definitions
+to be given, where one function must be named ``main'' and serve as the main program called
+initially. There is a small standard library.
+
+Before we give the formal rules, here is hello world in Simple:
+\begin{code}
+function main(who : string) {
+    print("Hello ");
+    print(who);
+    print("\n");
+}
+\end{code}
+The parameter to main is taken from the command line or whichever means is used to
+actually invoke the program.
+
+We give the details of Simple as numbered ``definitions'' so we can refer to them later.
+
+\begin{definition}[simple token]\label{def:token}
+  Simple programs have three kinds of non-trivial tokens identifiers, numbers, and strings, referred
+  to in grammars as \tk{id}, \tk{num}, and \tk{str}, respectively. Identifiers consist of letters,
+  numbers, and underscores, and must start with a letter. Numbers follow the usual rules for
+  floating point numbers, allowing integer, decimal, and scientific (``e'') notations. Strings are
+  enclosed in double quotes, and use backslash (\verb|\|) inside the quotes to escape one character
+  and allow the usual C style escapes (like \verb|\n| in the example above).
+\end{definition}
+
+\begin{definition}[comment]\label{def:comment}
+  Comments are like in C: \verb|//| starts a comment to the end of the line, and material between
+  \verb|/*| and \verb|*/| is a comment; these do not nest. Comments are like white space.
+\end{definition}
+
+\begin{definition}[program]\label{def:program}
+  A Simple program \nt{Prog} consists of a sequence of function declarations.
+  \begin{equation}
+    \nt{Prog} ::= \nt{Decl}^+
+  \end{equation}
+  One of these function declarations must define a function named ``main'' with no return type.
+\end{definition}
+
+\begin{definition}[declaration]\label{def:declaration}
+  Simple includes two kinds of declaration \nt{Decl}. A function declaration declares the function
+  name, formal parameters, and optional return type, as well as the statements for the code of the
+  function. A structure declaration defines a record type with some fields.
+  \begin{align}
+    \nt{Decl} &::=
+    \tx{function}~\tk{id}~\tx(~\nt{Form}^{*,}~\tx)~\tx\{~\nt{Stat}^*~\tx\}
+    \\
+    &\mid~
+    \tx{function}~\tk{id}~\tx(~\nt{Form}^{*,}~\tx)~\tx:~\nt{Type}~\tx\{~\nt{Stat}^*~\tx\}
+    \\
+    &\mid~ \tx{struct}~\tk{id}~\tx\{~\nt{Field}^*~\tx\} \\[1pt]
+    \nt{Form} &::= \tk{id}~\tx:~\nt{Type} \\
+    \nt{Field} &::= \tk{id}~\tx:~\nt{Type}~\tx; \\
+  \end{align}
+  The ``$*,$'' annotation on \nt{Form} indicates zero or more repetitions using comma as a
+  separator.
+\end{definition}
+
+\begin{definition}[statement]\label{def:statement}
+  The statements of Simple have these forms:
+  \begin{align}
+    \nt{Stat}
+    &::= \tx{var}~\tk{id}~\tx:~\nt{Type}~\tx; \\
+    &\mid~ \nt{Expr}?~\tx; \\
+    &\mid~ \tx{if (}~\nt{Expr}~\tx)~\tx\{~\nt{Stat}^*~\tx\} \\
+    &\mid~ \tx{if (}~\nt{Expr}~\tx)~\tx\{~\nt{Stat}^*~\tx\}~\tx{else}~\tx\{~\nt{Stat}^*~\tx\} \\
+    &\mid~ \tx{while (}~\nt{Expr}~\tx)~\tx\{~\nt{Stat}^*~\tx\} \\
+    &\mid~ \tx\{~\nt{Stat}^*~\tx\}
+  \end{align}
+  An \tx{else} always associates to the closest preceeding \tx{if}. Conditions must be
+  numeric expressions, with $0$ denoting false and all other values denoting true.
+\end{definition}
+
+\begin{definition}[type]\label{def:type}
+  Simple supports simple types and references to structures.
+  \begin{align}
+    \nt{Type} 
+    &::= \tx{number} \\
+    &\mid~ \tx{string} \\
+    &\mid~ \tk{id}
+  \end{align}
+\end{definition}
+
+\begin{definition}[expression]\label{def:expression}
+  The following expressions are supported.
+  \begin{align}
+    \nt{Expr}
+    &::= \tk{id} ~\mid~ \tx(~\nt{Expr}~\tx) \\
+    &\mid~ \tk{id}~\tx(~\nt{Expr}^{*,}~\tx) \\
+    &\mid~ \nt{Expr}~\tx.~\tk{id} \label{eq:expr-access}\\
+    &\mid~ \tx+~\nt{Expr} ~\mid~ \tx-~\nt{Expr} ~\mid~ \tx!~\nt{Expr} \label{eq:expr-unary}\\
+    &\mid~ \nt{Expr}~\tx*~\nt{Expr} ~\mid~ \nt{Expr}~\tx/~\nt{Expr} ~\mid~ \nt{Expr}~\tx\%~\nt{Expr} \label{eq:expr-mult}\\
+    &\mid~ \nt{Expr}~\tx+~\nt{Expr} ~\mid~ \nt{Expr}~\tx-~\nt{Expr} \label{eq:expr-add}\\
+    &\mid~ \nt{Expr}~\tx{==}~\nt{Expr} ~\mid~ \nt{Expr}~\tx{!=}~\nt{Expr}
+    ~\mid~ \nt{Expr}~\tx<~\nt{Expr} ~\mid~ \nt{Expr}~\tx>~\nt{Expr}
+    ~\mid~ \nt{Expr}~\tx{<=}~\nt{Expr} ~\mid~ \nt{Expr}~\tx{>=}~\nt{Expr} \\
+    &\mid~ \nt{Expr}~\tx{\&\&}~\nt{Expr} \label{eq:expr-and}\\
+    &\mid~ \nt{Expr}~\tx{||}~\nt{Expr} \label{eq:expr-or}\\
+    &\mid~ \nt{Expr} ~\tx=~\nt{Expr} \label{eq:expr-assign}
+  \end{align}
+  Expressions in lower lines have lower precedence than expressions in lines above. Structure access
+  \thetag{\ref{eq:expr-access}} associates to the left. The unary operators
+  \thetag{\ref{eq:expr-unary}} associate to the right.  The binary mathematical operators
+  \thetag{\ref{eq:expr-mult},\ref{eq:expr-add}} associate to the left. The binary logical operators
+  \thetag{\ref{eq:expr-and},\ref{eq:expr-or}} associate to the right, and only evaluate the right argument
+  if needed. The assignment operator \thetag{\ref{eq:expr-assign}} associates to the right, and the
+  left expression must be an l-value, \ie, either an \tk{id} or a structure field access
+  $\nt{Expr}\tx.\tk{id}$.
+\end{definition}
+
+
+\section{\HAX Grammar}
+
+In this section we encode the syntax of Simple in \HAX.
+
+\begin{hacs}{grammar section}
+// GRAMMAR.
+\end{hacs}
+
+We will first do the lexical tokens from Def.~\ref{def:token}. We start by identifying our
+character classes.
+%%
+\begin{hacs}{fragments}
+token fragment LETTER [A-Za-z];
+token fragment DIGIT  [0-9];
+\end{hacs}
+%%
+With these, we can write the full definitions. We take care to ensure that numbers must have at
+least one digit.
+%%
+\begin{hacs}{tokens}
+token ID     ⟨LETTER⟩ ( ⟨LETTER⟩ | ⟨DIGIT⟩ | "_" )* ;
+token NUM    ( ⟨DIGIT⟩+ "."? | ⟨DIGIT⟩* "." ⟨DIGIT⟩+ ) ( [Ee] [-+]? ⟨DIGIT⟩+ )? ;
+token STR    \" ( [^\\""] | \\ ⟨ESCAPED⟩ )* \" ;
+
+token fragment ESCAPED
+            [01]? [0-7]? [0-7]       // octal escapes
+         |  [ntrfa]                  // special control chars
+         |  \\
+         |  \"
+;
+\end{hacs}
+%%
+where we introduce an extra fragment for what can follow a backslash.
+
+Comments from Def.~\ref{def:comment} are defined as spacing.
+%%
+\begin{hacs}{spaces and comments}
+space  [ \t\n\r\f]
+   |   "//" .*
+   |   "/*" ( [^*] | "*"+ [^*/] )* "*"+ "/"
+\end{hacs}
+
+Now we can do the grammar itself. Programs of Def.~\ref{def:program} are easy: we shall use ``$X$s''
+for sequences in \HAX code.
+%%
+\begin{hacs}{program}
+sort Prog  |  ⟦ ⟨Decls⟩ ⟧ ;
+\end{hacs}
+
+Declarations of Def.~\ref{def:statement} involve some more elaborate repetition with separators,
+which we encode with ``Tail'' sorts that capture each separator.
+%%
+\begin{hacs}{declarations}
+sort Decl
+|  ⟦ function ⟨ID⟩ ( ⟨Forms⟩ ) { ⟨Stats⟩ } ⟧
+|  ⟦ function ⟨ID⟩ ( ⟨Forms⟩ ) : ⟨Type⟩ { ⟨Stats⟩ } ⟧
+|  ⟦ struct ⟨ID⟩ { ⟨Fields⟩ } ⟧
+;
+sort Decls  |  ⟦ ⟨Decl⟩ ⟨Decls⟩ ⟧  |  ⟦⟧ ;
+
+sort Form
+|  ⟦ ⟨ID⟩ : ⟨Type⟩ ⟧
+;
+sort Forms  |  ⟦ ⟨Form⟩ ⟨FormsTail⟩ ⟧  |  ⟦⟧ ;
+sort FormsTail  |  ⟦ , ⟨Form⟩ ⟨FormsTail⟩ ⟧  |  ⟦⟧ ;
+
+sort Stats  |  ⟦ ⟨Stat⟩ ⟨Stats⟩ ⟧  |  ⟦⟧ ;
+
+sort Field
+|  ⟦ ⟨ID⟩ : ⟨Type⟩ ; ⟧
+;
+sort Fields  |  ⟦ ⟨Field⟩ ⟨Fields⟩ ⟧  |  ⟦⟧ ;
+\end{hacs}
+
+For statements from Def.~\ref{def:statement}, we expand the optionality expression statements, and
+reorder the \tx{if} statements to exploit the \HAX search order. We also include a sequence of
+statements here.
+%%
+\begin{hacs}{statement}
+sort Stat
+|  ⟦ var ⟨ID⟩ : ⟨Type⟩ ; ⟧
+|  ⟦ ⟨Expr⟩ ; ⟧
+|  ⟦ ; ⟧
+|  ⟦ if ( ⟨Expr⟩ ) { ⟨Stats⟩ } else { ⟨Stats⟩ } ⟧
+|  ⟦ if ( ⟨Expr⟩ ) { ⟨Stats⟩ } ⟧
+|  ⟦ while ( ⟨Expr⟩ ) { ⟨Stats⟩ } ⟧
+|  ⟦ { ⟨Stats⟩ } ⟧
+;
+\end{hacs}
+
+Types (Def.~\ref{def:type}) are simple.
+%%
+\begin{hacs}{types}
+sort Type
+|  ⟦ number ⟧
+|  ⟦ string ⟧
+|  ⟦ ⟨ID⟩ ⟧
+;
+\end{hacs}
+
+Expressions of Def.~\ref{def:expression} require some encoding to handle all the precedence and
+associativity rules.
+%%
+\begin{hacs}{expressions}
+sort Expr
+|  ⟦ ⟨ID⟩ ⟧@9   |  sugar ⟦ ( ⟨Expr@0⟩ ) ⟧@9
+|  ⟦ ⟨ID⟩ ( ⟨Exprs⟩ ) ⟧@8
+|  ⟦ ⟨Expr@7⟩ . ⟨ID⟩ ⟧@7
+|  ⟦ + ⟨Expr@6⟩ ⟧@6   |  ⟦ - ⟨Expr@6⟩ ⟧@6   |  ⟦ ! ⟨Expr@6⟩ ⟧@6
+|  ⟦ ⟨Expr@5⟩ * ⟨Expr@6⟩ ⟧@5   |  ⟦ ⟨Expr@5⟩ / ⟨Expr@6⟩ ⟧@5   |  ⟦ ⟨Expr@5⟩ % ⟨Expr@6⟩ ⟧@5
+|  ⟦ ⟨Expr@4⟩ + ⟨Expr@5⟩ ⟧@4   |  ⟦ ⟨Expr@4⟩ - ⟨Expr@5⟩ ⟧@4
+|  ⟦ ⟨Expr@4⟩ == ⟨Expr@4⟩ ⟧@3   |  ⟦ ⟨Expr@4⟩ != ⟨Expr@4⟩ ⟧@3   |  ⟦ ⟨Expr@4⟩ < ⟨Expr@4⟩ ⟧@3
+|  ⟦ ⟨Expr@4⟩ > ⟨Expr@4⟩ ⟧@3   |  ⟦ ⟨Expr@4⟩ <= ⟨Expr@4⟩ ⟧@3   |  ⟦ ⟨Expr@4⟩ >= ⟨Expr@4⟩ ⟧@3
+|  ⟦ ⟨Expr@3⟩ && ⟨Expr@2⟩ ⟧@2
+|  ⟦ ⟨Expr@2⟩ || ⟨Expr@1⟩ ⟧@1
+|  ⟦ ⟨Expr@1⟩ = ⟨Expr@0⟩ ⟧@0
+;
+
+sort Exprs  |  ⟦ ⟨Expr⟩ ⟨ExprsTail⟩ ⟧  |  ⟦⟧ ;
+sort ExprsTail  |  ⟦ , ⟨Expr⟩ ⟨ExprsTail⟩ ⟧  |  ⟦⟧ ;
+\end{hacs}
+%%
+Note that the \HAX grammar does not check that the left side of an assignment is an l-value, so this
+must be remembered in the next phase.
+
+
+\section{Type Assignment for Simple}
+
+Type assignment is the task of associating a type with every subexpression in a program.  We will
+give the basic rules and then define the type assignment for Simple by outlining a
+\emph{syntax-directed definition} (SDD) in the style of the dragon book~\cite{Aho+:2006}.
+
+\begin{definition}[type assignment]\label{def:type-assign}
+  Simple is typed according to these rules (using $E$ for \nt{Expr}s):
+  \begin{enumerate}
+  \item A variable \tk{id} has the type declared for the variable.
+  \item A function call $\tk{id}\tx(E_1,…,E_n\tx)$ has the return type of the function
+    and requires that the $E_i$ have the type of the corresponding formal parameter.
+  \item For structure access $E\tx.\tk{id}$, $E$ must be of a structure type with an \tk{id}
+    field, and then has the type of that field.
+  \item All arithmetic and logic expressions must have component expressions of type \tx{number} and have
+    type \tx{number}.
+  \item All comparison operators have type \tx{number} and must have two components of the same
+    type, which must be \tx{number} or \tx{string}.
+  \item Assignment must have components of the same type, which also becomes the type of the assignment.
+  \end{enumerate}
+\end{definition}
+
+The type assignment process will associate a synthesized attribute ``\nt{Expr}.\nt{type}'' to each
+expression. We also need to handle errors, and choose an SDD description that propagates an ``error
+type.'' The SDD rules will look something like this:
+%%
+\begin{equation}
+  \begin{array}{l|l}
+    \Xhline{2\arrayrulewidth}
+    \textsc{Production}  & \textsc{Semantic Rules} \Bigstrut\\
+    \hline
+    E → E_1 + E_2 \Bigstrut
+    &E.\nt{type} = (\kw{if}~E_1.\nt{type}=E_2.\nt{type}=\tx{number}~\kw{then}~\tx{number}~\kw{else}~\tx{error})
+    \\
+    \Xhline{2\arrayrulewidth}
+  \end{array}
+  \label{eq:type-E-plus-type}
+\end{equation}
+%%
+Note that we will systematically use single letter productions for brevity; this should be
+unambiguous throughout, \ie, $E$ stands for \nt{Expr}.
+
+The rule for identifiers reveals how we have to maintain a mapping from names to types. We make this
+available in the inherited attribute $\nt{Expr}.\nt{vars}$.
+%%
+\begin{equation}
+  \begin{array}{l|l}
+    \Xhline{2\arrayrulewidth}
+    \textsc{Production}  & \textsc{Semantic Rules} \Bigstrut\\
+    \hline
+    E → \tk{id} \Bigstrut
+    &E.\nt{type} = \kw{lookup}(E.\nt{vars}, \tk{id})
+    \\
+    \Xhline{2\arrayrulewidth}
+  \end{array}
+  \label{eq:type-E-id-type}
+\end{equation}
+%%
+This means that we must add rules for propagating this through all other rules, \eg,
+%%
+\begin{equation}
+  \begin{array}{l|l}
+    \Xhline{2\arrayrulewidth}
+    \textsc{Production}  & \textsc{Semantic Rules} \Bigstrut\\
+    \hline
+    E → E_1 + E_2 \Bigstrut& 
+    E_1.\nt{vars} = E_2.\nt{vars} = E.\nt{vars}
+    \\
+    \Xhline{2\arrayrulewidth}
+  \end{array}
+  \label{eq:type-E-plus-vars}
+\end{equation}
+
+We of course need to initialize and populate the \nt{vars} attribute. The natural place to do this
+in when processing each function declaration, where we can initialize it to contain the types of the
+formal parameters.
+%%
+\begin{equation}
+  \begin{array}{l|l}
+    \Xhline{2\arrayrulewidth}
+    \textsc{Production}  & \textsc{Semantic Rules} \Bigstrut\\
+    \hline
+    D → \tx{function}~\tk{id}~\tx(\tk{id}_1:T_1,…,\tk{id}_n:T_n\tx)~… \tx\{S^*\tx\}\Bigstrut
+    &S^*.\nt{vars} = \{\tk{id}_1↦T_1,…,\tk{id}_n↦T_n\}
+    \\
+    \Xhline{2\arrayrulewidth}
+  \end{array}
+  \label{eq:type-D-function-vars}
+\end{equation}
+
+For convenience, we will give rules for statement sequences $S^*$ rather than individual
+statements~$S$ because a statement sequence that starts with a variable declaration propagates an
+extended \nt{vars} attribute to the following statements:
+%%
+\begin{equation}
+  \begin{array}{l|l}
+    \Xhline{2\arrayrulewidth}
+    \textsc{Production}  & \textsc{Semantic Rules} \Bigstrut\\
+    \hline
+    S^* → \tx{var}~\tk{id}~\tx:~T_1\,\tk;~S^*_2 \Bigstrut
+    &S^*_2.\nt{vars} = S^* + \{\tk{id}↦T_1\}
+    \\
+    \Xhline{2\arrayrulewidth}
+  \end{array}
+  \label{eq:type-Ss-var-vars}
+\end{equation}
+%%
+where the ``$+$'' notation is meant to indicate the operation that builds a new mapping with the
+mappings on the left and the mappings on the right, with the latter taking precedence (this
+corresponds to variable shadowing).
+
+Scopes and single statements are managed with these rules:
+%%
+\begin{equation}
+  \begin{array}{l|l}
+    \Xhline{2\arrayrulewidth}
+    \textsc{Production}  & \textsc{Semantic Rules} \Bigstrut\\
+    \hline
+    S^* → \tx\{~S^*_1~\tx\}~S^*_2 \Bigstrut
+    &S^*_1.\nt{vars} = S^*_2.\nt{vars} = S^*.\nt{vars}
+    \\
+    S^* → ε \Bigstrut
+    &
+    \\
+    S → … \Bigstrut
+    & \text{Handle as } \tx\{~S~\tx\}
+    \\
+    \Xhline{2\arrayrulewidth}
+  \end{array}
+  \label{eq:type-Ss-scope-vars}
+\end{equation}
+
+The rule for a function call is only slightly more involved. Here we assume that we have a
+``function environment'' available inherited on $\nt{Expr}.\nt{funs}$, which in turn has fields
+``$\op{formal}_i$'' for the type of the $i$'th formal parameter and ``$\op{return}$'' with the
+return type or the special (non-)type \kw{void}. With that we get the following.
+%%
+\begin{equation}
+  \begin{array}{l|l}
+    \Xhline{2\arrayrulewidth}
+    \textsc{Production}  & \textsc{Semantic Rules} \Bigstrut\\
+    \hline
+    E → \tk{id}\tx(E_1,…,E_n\tx) \Bigstrut
+    &E.\nt{type} = {
+    \begin{aligned}[t]
+      &(\kw{if}~∀i\colon E_i.\nt{type}=\kw{lookup}(E.\nt{funs},\tk{id}).\op{formal}_i \\
+      &~\kw{then}~\kw{lookup}(E.\nt{funs},\tk{id}).\op{return}~\kw{else}~\tx{error})
+    \end{aligned} }
+    \\
+    \Xhline{2\arrayrulewidth}
+  \end{array}
+  \label{eq:type-E-call-type}
+\end{equation}
+%%
+However, because functions can be defined \emph{after} the call, we have to be a little more careful
+with how we collect the definitions. Basically, we need two ``passes'' over the entire program: one
+that merely collects all function declarations (and, as we shall see, \kw{struct} declarations), and
+a second pass that does type assignment using the completed mappings for functions (and structures).
+
+Such a pass is conveniently done over declaration sequences, with a special \nt{funs1} synthesized
+attribute:
+%%
+\begin{equation}
+  \begin{array}{l|l}
+    \Xhline{2\arrayrulewidth}
+    \textsc{Production}  & \textsc{Semantic Rules} \Bigstrut\\
+    \hline
+    {
+      \begin{aligned}[t]
+        D^* → \tx{function}~\tk{id}~\tx(\tk{id}_1\tx:T_1,…,\tk{id}_n\tx:T_n\tx)\\[-1pt]
+        \tx:~T~\tx\{~S^*~\tx\}~D^*_1
+      \end{aligned}
+    }\Bigstrut
+    &
+    {
+      \begin{aligned}[t]
+        D^*.\nt{funs1} = \bigl\{ \tk{id}↦\{\op{formal}_1{↦}T_1,…,\op{formal}_n{↦}T_n,\\[-1pt]
+        \op{return}↦T\} \bigr\} + D^*_1.\nt{funs1}
+      \end{aligned}
+    }\Bigstrut
+    \\
+    \Xhline{2\arrayrulewidth}
+  \end{array}
+  \label{eq:type-Ds-fun-funs1}
+\end{equation}
+%%
+Functions with no return type insert the aforementioned \kw{void}. Declarations that do not
+contribute functions just propagate, \ie,
+%%
+\begin{equation}
+  \begin{array}{l|l}
+    \Xhline{2\arrayrulewidth}
+    \textsc{Production}  & \textsc{Semantic Rules} \Bigstrut\\
+    \hline
+    D^* → \tx{struct}~\tk{id}~\tx\{~F^*~\tx\} ~D^*_1 \Bigstrut
+    & D^*.\nt{funs1} = D^*_1.\nt{funs1}
+    \\
+    \Xhline{2\arrayrulewidth}
+  \end{array}
+  \label{eq:type-Ds-struct-funs1}
+\end{equation}
+
+The passes are managed by at the top level having something like
+%%
+\begin{equation}
+  \begin{array}{l|l}
+    \Xhline{2\arrayrulewidth}
+    \textsc{Production}  & \textsc{Semantic Rules} \Bigstrut\\
+    \hline
+    P → D^*_1 \Bigstrut
+    & D^*_1.\nt{funs} = D^*_1.\nt{funs1}
+    \\
+    \Xhline{2\arrayrulewidth}
+  \end{array}
+  \label{eq:type-P-Ds-funs1}
+\end{equation}
+%%
+which establishes the dependency that we cannot start an analysis of a sequence of declarations
+needing the \nt{funs} inherited attribute before we have fully synthesized the \nt{funs1} attribute
+for the full sequence.
+
+Again we have to take care of distributing $D^*.\nt{funs}$ and $E.\nt{funs}$ over all productions.
+
+For structures, we shall follow the same scheme as for functions with a synthesized \nt{structs1}
+collected during the first pass and an inherited \nt{structs} used but not extended during the
+second actual analysis pass. The form of the two mappings is apparent from the use of \nt{structs}
+in the rule for field access:
+%%
+\begin{equation}
+  \begin{array}{l|l}
+    \Xhline{2\arrayrulewidth}
+    \textsc{Production}  & \textsc{Semantic Rules} \Bigstrut\\
+    \hline
+    E → E_1 ~\tx.~ \tk{id} \Bigstrut
+    &E.\nt{type} = \kw{lookup}\left(\,\kw{lookup}(E_1.\nt{struct}, E_1.\nt{type}), \tk{id}\,\right)
+    \\
+    \Xhline{2\arrayrulewidth}
+  \end{array}
+  \label{eq:type-E-field-type}
+\end{equation}
+%%
+We first lookup the type (which must be an identifier itself) and then the field in the map that
+comes back. So we must define
+%%
+\begin{equation}
+  \begin{array}{l|l}
+    \Xhline{2\arrayrulewidth}
+    \textsc{Production}  & \textsc{Semantic Rules} \Bigstrut\\
+    \hline
+    D^* → \tx{struct}~\tk{id}~\tx\{\tk{id}_1\tx:T_1\tx;…\tx;\tk{id}_n\tx:T_n\tx\} ~D^*_1 \Bigstrut
+    & {
+      \begin{aligned}[t]
+        D^*.\nt{structs1} = \bigl\{\tk{id} ↦ \{\tk{id}_1{↦}T_1,…,\tk{id}_n{↦}T_n\}\bigr\}\\[-1pt]
+        {} + D^*_1.\nt{structs1}
+      \end{aligned}
+    }
+    \\
+    \Xhline{2\arrayrulewidth}
+  \end{array}
+  \label{eq:type-Ds-struct-structs1}
+\end{equation}
+%%
+We'll of course need propagation rules for \nt{structs} across all forms of $S^*$ and $E$.
+
+
+\section{\HAX Type Analysis}
+
+\begin{hacs}{type analysis section}
+// TYPE ANALYSIS.
+\end{hacs}
+
+First we declare the attributes that we discussed above, along with a new semantic "Type" for
+components with no value.
+%%
+\begin{hacs}{type analysis attributes}
+attribute ↑funs1{ID:Fun} ;
+attribute ↑structs1{ID:Struct} ;
+
+attribute ↓funs{ID:Fun} ;
+attribute ↓structs{ID:Struct} ;
+
+sort Type  |  Void  ;
+sort Types  |  NoTypes  |  MoTypes(Type, Types) ;
+
+sort Fun  |  Fn(Types, Type) ;
+
+attribute ↑fields{ID:Type} ;
+sort Struct  |  Strct ↑fields ;
+\end{hacs}
+%%
+Note how a helper attribute "fields" is being used to attach maps per individual structures.
+
+The \HAX type analysis is made available as a scheme "TypeCheck", which can then be invoked as
+appropriate from the main program.
+%%
+\begin{hacs}{typing programs}
+sort Prog  |  scheme TypeCheck(Prog) ;
+
+TypeCheck(⟦ ⟨Decls#1 ↑funs1{:#funs} ↑structs1{:#structs}⟩ ⟧)
+  →  ⟦ ⟨Decls TcDs(#1) ↓funs{:#funs} ↓structs{:#structs}⟩ ⟧ ;
+\end{hacs}
+%%
+The rule encodes \thetag{\ref{eq:type-P-Ds-funs1}} that to evaluate "TypeCheck" on a "Prog"
+consisting of a "Decls" we first depend on having synthesized "funs1" and "structs1" for the
+"Decls". Then the result is obtained by invoking the recursive carrier scheme "TcDs" where the two
+inherited attributes are initialized to what was synthesized. Note that the result is wrapped so it
+remains a "Prog" as required by the scheme declaration (as a carrier scheme, "TcDs" returns what it
+receives, a "Decls").
+
+Note that we will not represent the \kw{error} type value from the SDD but rather use \HAX's error
+exit mechanism to signal errors.
+
+Next we define all rules for synthesizing the "funs1" and "structs1" attributes.
+%%
+\begin{hacs}{collecting declarations}
+// Synthesize top-level declarations.
+
+sort Decls  |  ↑funs1  |  ↑structs1;
+
+⟦ function ⟨ID#1⟩ ( ⟨Forms#2 ↑types(#ts)⟩ ) { ⟨Stats#3⟩ } ⟨Decls#4 ↑funs1{:#f} ↑structs1{:#s}⟩ ⟧
+  ↑funs1{:#f} ↑funs1{#1 : Fn(#ts, Void)} ↑structs1{:#s};
+
+⟦ function ⟨ID#1⟩ ( ⟨Forms#2 ↑types(#ts)⟩ ) : ⟨Type#3⟩ { ⟨Stats#4⟩ } ⟨Decls#5 ↑funs1{:#f} ↑structs1{:#s}⟩ ⟧
+  ↑funs1{:#f} ↑funs1{#1 : Fn(#ts, #3)} ↑structs1{:#s};
+
+⟦ struct ⟨ID#1⟩ { ⟨Fields#2 ↑fields{:#fs}⟩ } ⟨Decls#3 ↑funs1{:#f} ↑structs1{:#s}⟩ ⟧
+  ↑funs1{:#f} ↑structs1{:#s} ↑structs1{#1 : Strct ↑fields{:#fs}};
+
+⟦⟧ ↑funs{} ↑structs{};
+\end{hacs}
+%%
+Next the synthesis rules to extract the components of the "Fun" and "Struct" sorts from the lists of
+formals and fields, respectively.
+%%
+\begin{hacs}{types of parameter and field lists}
+attribute ↑types(Types);
+
+sort Forms  |  ↑types;
+⟦ ⟨ID#1⟩ : ⟨Type#2⟩ ⟨FormsTail#3 ↑types(#ts)⟩ ⟧ ↑types(MoTypes(#2, #ts));
+⟦⟧ ↑types(NoTypes) ;
+
+sort FormsTail  |  ↑types;
+⟦ , ⟨ID#1⟩ : ⟨Type#2⟩ ⟨FormsTail#3 ↑types(#ts)⟩ ⟧ ↑types(MoTypes(#2, #ts));
+⟦⟧ ↑types(NoTypes) ;
+
+sort Fields  |  ↑fields;
+⟦ ⟨ID#1⟩ : ⟨Type#2⟩ ; ⟨Fields#3 ↑fields{:#fs}⟩ ⟧ ↑fields{:#fs} ↑fields{#1 : #2} ;
+⟦⟧ ↑fields{:#fs} ;
+\end{hacs}
+
+Once the declarations are collected, the "TcDs" scheme takes over to do the actual full traversal of
+the program, making sure every expression has a type. For declarations, these are
+straight propagation rules, with "Stat" adding the "vars" attribute.
+%%
+\begin{hacs}{declarations type analysis}
+// Assign types.
+
+sort Decls  |  scheme TcDs(Decls) ↓funs ↓structs;
+
+TcDs(⟦ function ⟨ID#1⟩ ( ⟨Forms#2⟩ ) { ⟨Stats#3⟩ } ⟨Decls#4⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s}
+  →  ⟦ function ⟨ID#1⟩ ( ⟨Forms#2⟩ ) { ⟨Stats TcSs(#3) ↓funs{:#f} ↓structs{:#s} ↓vars{}⟩ }
+       ⟨Decls TcDs(#4) ↓funs{:#f} ↓structs{:#s}⟩ ⟧↑# ;
+
+TcDs(⟦ function ⟨ID#1⟩ ( ⟨Forms#2⟩ ) : ⟨Type#3⟩ { ⟨Stats#4⟩ } ⟨Decls#5⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s}
+  →  ⟦ function ⟨ID#1⟩ ( ⟨Forms#2⟩ ) : ⟨Type#3⟩ { ⟨Stats TcSs(#4) ↓funs{:#f} ↓structs{:#s} ↓vars{}⟩ }
+       ⟨Decls TcDs(#5) ↓funs{:#f} ↓structs{:#s}⟩ ⟧↑# ;
+
+TcDs(⟦ struct ⟨ID#1⟩ { ⟨Fields#2⟩ } ⟨Decls#3⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s}
+  →  ⟦ struct ⟨ID#1⟩ { ⟨Fields#2⟩ } ⟨Decls TcDs(#3) ↓funs{:#f} ↓structs{:#s}⟩ ⟧↑# ;
+
+TcDs(⟦⟧↑#) ↓funs{:#f} ↓structs{:#s}
+  →  ⟦⟧↑# ;
+;
+\end{hacs}
+
+The "Stats" rules propagate the top-level environment and manage the scoping rules through "vars".
+%%
+\begin{hacs}{statement type analysis}
+sort Stats  |  scheme TcSs(Stats) ↓funs ↓structs ↓vars;
+
+TcSs(⟦ var ⟨ID#1⟩ : ⟨Type#2⟩ ; ⟨Stats#3⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  ⟦ var ⟨ID#1⟩ : ⟨Type#2⟩ ; ⟨Stats TcSs(#3) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v} ↓vars{#1 : #2}⟩ ⟧↑# ;
+
+TcSs(⟦ ⟨Expr#1⟩ ; ⟨Stats#2⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  ⟦ ⟨Expr TcE(#1) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ ;
+        ⟨Stats TcSs(#2) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ ⟧↑# ;
+
+TcSs(⟦ ; ⟨Stats#1⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  ⟦ ; ⟨Stats TcSs(#1) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ ⟧↑# ;
+
+TcSs(⟦ if ( ⟨Expr#1⟩ ) { ⟨Stats#2⟩ } else { ⟨Stats#3⟩ } ⟨Stats#4⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  ⟦ if ( ⟨Expr TcETest(#1, ⟦number⟧) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ )
+        { ⟨Stats TcSs(#2) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ }
+        else { ⟨Stats TcSs(#3) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ }
+        ⟨Stats TcSs(#4) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ ⟧↑# ;
+
+TcSs(⟦ if ( ⟨Expr#1⟩ ) { ⟨Stats#2⟩ } ⟨Stats#3⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  ⟦ if ( ⟨Expr TcETest(#1, ⟦number⟧) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ )
+        { ⟨Stats TcSs(#2) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ }
+        ⟨Stats TcSs(#3) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ ⟧↑# ;
+
+TcSs(⟦ while ( ⟨Expr#1⟩ ) { ⟨Stats#2⟩ } ⟨Stats#3⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  ⟦ while ( ⟨Expr TcETest(#1, ⟦number⟧) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ )
+        { ⟨Stats TcSs(#2) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ }
+        ⟨Stats TcSs(#3) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ ⟧↑# ;
+
+TcSs(⟦ { ⟨Stats⟩ } ⟨Stats⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  ⟦ { ⟨Stats TcSs(#1) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ }
+        ⟨Stats TcSs(#2) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ ⟧↑# ;
+\end{hacs}
+%%
+Note how we use the scheme "TcETest" where a number is expected; it will be defined with the "TcE"
+carrier for expressions.
+
+The final code group is for expressions. This is the largest because we have to give a rule for each
+form of expression. Most involve simple use of the "TcETest" helper, a few invoke helper schemes for
+cases that need the component types to determine the result type.
+
+First the declaration of the carrier and a helper carrier.
+%%
+\begin{hacs}{type assignment for expressions}
+sort Expr  |  scheme TcE(Expr) ↓funs ↓structs ↓vars;
+\end{hacs}
+%%
+Simple identifiers get their type from the environment; if they are missing there it is an error.
+%%
+\begin{hacs}{type assignment for identifier access}
+TcE(⟦ ⟨ID#1⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v} ↓vars{#1 : #t}
+  →  ⟦ ⟨ID#1⟩ ⟧↑# ↑type(#t);
+
+TcE(⟦ ⟨ID#1⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v} ↓vars{¬#1}
+  →  error⟦Type error: undefined identifier⟧;
+\end{hacs}
+%%
+Field access needs the helper scheme because the type cannot be assigned until the structure is
+known. We have several indirections just from finding the type of a field in a named struct.
+%%
+\begin{hacs}{type assignment for field access}
+TcE(⟦ ⟨Expr#1⟩ . ⟨ID#2⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  TcEField1(⟦ ⟨Expr TcE(#1) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ . ⟨ID#2⟩ ⟧↑#)
+      ↓funs{:#f} ↓structs{:#s} ↓vars{:#v};
+
+| scheme TcEField2(Expr)
+
+TcEField1(⟦ ⟨Expr#1 ↑type(⟦⟨ID#t1⟩⟧)⟩ . ⟨ID#2⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓structs{#t1 : #strct} ↓vars{:#v}
+  →  TcEField2(#1, #2, #strct) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v};
+
+[data #1] default
+TcEField1(⟦ ⟨Expr#1⟩ . ⟨ID#2⟩ ⟧↑#)
+  →  error⟦Type error: no such structure⟧;
+
+| scheme TcEField2(Expr)
+TcEField2(#1, #2, Strct ↑fields{#2 : #t})   →  #1 ↑type(#t)
+[data #3] default TcEField2(#1, #2, #3)   →  error⟦Type error: no such field⟧;
+\end{hacs}
+%%
+All the usual operator arithmetic expressions expect and deliver numbers.
+%%
+\begin{hacs}{type assignment for arithmetic}
+TcE(⟦ + ⟨Expr#1⟩ ⟧↑#) ↓funs{:#f} ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  ⟦ + ⟨Expr TcETest(#1, ⟦number⟧) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ ⟧↑# ↑type(⟦number⟧);
+
+TcE(⟦ - ⟨Expr#1⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  ⟦ - ⟨Expr TcETest(#1, ⟦number⟧) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ ⟧↑# ↑type(⟦number⟧);
+
+TcE(⟦ ⟨Expr#1⟩ * ⟨Expr#2⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  ⟦ ⟨Expr TcETest(#1, ⟦number⟧) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩
+        * ⟨Expr TcETest(#2, ⟦number⟧) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ ⟧↑# ↑type(⟦number⟧);
+
+TcE(⟦ ⟨Expr#1⟩ / ⟨Expr#2⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  ⟦ ⟨Expr TcETest(#1, ⟦number⟧) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩
+        / ⟨Expr TcETest(#2, ⟦number⟧) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ ⟧↑# ↑type(⟦number⟧);
+
+TcE(⟦ ⟨Expr#1⟩ % ⟨Expr#2⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  ⟦ ⟨Expr TcETest(#1, ⟦number⟧) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩
+        % ⟨Expr TcETest(#2, ⟦number⟧) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ ⟧↑# ↑type(⟦number⟧);
+
+TcE(⟦ ⟨Expr#1⟩ + ⟨Expr#2⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  ⟦ ⟨Expr TcETest(#1, ⟦number⟧) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩
+        + ⟨Expr TcETest(#2, ⟦number⟧) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ ⟧↑# ↑type(⟦number⟧);
+
+TcE(⟦ ⟨Expr#1⟩ - ⟨Expr#2⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  ⟦ ⟨Expr TcETest(#1, ⟦number⟧) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩
+        - ⟨Expr TcETest(#2, ⟦number⟧) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ ⟧↑# ↑type(⟦number⟧);
+\end{hacs}
+%%
+Comparisons work for two values of the same type, so here the delayed helper scheme checks
+that. Because the cases are all similar, the helper uses an abstraction to handle all cases.
+%%
+\begin{hacs}{type assignment for comparisons}
+TcE(⟦ ⟨Expr#1⟩ == ⟨Expr#2⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  TcECompare([e1,e2] ⟦ ⟨Expr e1⟩ == ⟨Expr e2⟩ ⟧↑# ↑type⟦number⟧,
+       TcE(#1) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v},
+       TcE(#2) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v});
+
+| scheme TcECompare([Expr,Expr]Expr, Expr, Expr);
+
+TcECompare([e1,e2]#e[e1,e2], #1 ↑type(#t), #2 ↑type(#t))   →  #e[#1,#2] ;
+
+[data #1, data #2] default
+TcECompare([e1,e2]#e[e1,e2], #1↑type(#t1), #2↑type(#t2))
+  →  error⟦Type error: comparison of different types.⟧;
+
+
+TcE(⟦ ⟨Expr#1⟩ != ⟨Expr#2⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  TcE2(⟦ ⟨Expr TcE(#1) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩
+               == ⟨Expr TcE(#2) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ ⟧↑# ↑type⟦number⟧)
+      ↓funs{:#f} ↓structs{:#s} ↓vars{:#v};
+
+TcE(⟦ ⟨Expr#1⟩ < ⟨Expr#2⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  TcE2(⟦ ⟨Expr TcE(#1) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩
+               == ⟨Expr TcE(#2) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ ⟧↑# ↑type⟦number⟧)
+      ↓funs{:#f} ↓structs{:#s} ↓vars{:#v};
+
+TcE(⟦ ⟨Expr#1⟩ > ⟨Expr#2⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  TcE2(⟦ ⟨Expr TcE(#1) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩
+               == ⟨Expr TcE(#2) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ ⟧↑# ↑type⟦number⟧)
+      ↓funs{:#f} ↓structs{:#s} ↓vars{:#v};
+
+TcE(⟦ ⟨Expr#1⟩ <= ⟨Expr#2⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  TcE2(⟦ ⟨Expr TcE(#1) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩
+               == ⟨Expr TcE(#2) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ ⟧↑# ↑type⟦number⟧)
+      ↓funs{:#f} ↓structs{:#s} ↓vars{:#v};
+
+TcE(⟦ ⟨Expr#1⟩ >= ⟨Expr#2⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  TcE2(⟦ ⟨Expr TcE(#1) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩
+               == ⟨Expr TcE(#2) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ ⟧↑# ↑type⟦number⟧)
+      ↓funs{:#f} ↓structs{:#s} ↓vars{:#v};
+\end{hacs}
+%%
+%%
+\begin{hacs}{type assignment for }
+TcE(⟦ ! ⟨Expr#1⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  ⟦ ! ⟨Expr TcETest(#1, ⟦number⟧) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ ⟧↑# ↑type(⟦number⟧);
+
+TcE(⟦ ⟨Expr#1⟩ && ⟨Expr#2⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  ⟦ ⟨Expr TcETest(#1, ⟦number⟧) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩
+        && ⟨Expr TcETest(#2, ⟦number⟧) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ ⟧↑# ↑type(⟦number⟧);
+
+TcE(⟦ ⟨Expr#1⟩ || ⟨Expr#2⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  ⟦ ⟨Expr TcETest(#1, ⟦number⟧) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩
+        || ⟨Expr TcETest(#2, ⟦number⟧) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ ⟧↑# ↑type(⟦number⟧);
+\end{hacs}
+%%
+%%
+\begin{hacs}{type assignment for }
+TcE(⟦ ⟨Expr#1⟩ = ⟨Expr#2⟩ ⟧↑#) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  TcE2(⟦ ⟨Expr TcE(#1) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩
+               = ⟨Expr TcE(#2) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}⟩ ⟧↑# ↑type⟦number⟧)
+      ↓funs{:#f} ↓structs{:#s} ↓vars{:#v};
+
+\end{hacs}
+%%
+As you can see, most of the operators can be handled with simple recursive use of "TcETest" and
+assignment of a constant type. Let us quickly code "TcETest":
+%%
+\begin{hacs}{test for specific otherwise unused type}
+sort Expr  |  scheme TcETest(Expr, Type) ↓funs ↓structs ↓vars;
+
+[data #t]
+TcETest(#1 ↑type(#t), #t) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  TcE(#1) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v};
+
+[data #1, data #t2] default
+TcETest(#1, #t2) ↓funs{:#f} ↓structs{:#s} ↓vars{:#v}
+  →  error⟦Type error: mismatched type⟧;
+\end{hacs}
+
+
+
+
+
+
+
+\section{An Assembler}
+
+
+\section{\HAX for the Assembler}
+
+
+\section{Simple Code Generation}
+
+
+\section{\HAX Code Generation}
+
+Code generation.
+%%
+\begin{hacs}{code generation}
+sort Asm  |  scheme CodeGen(Prog) ;
+CodeGen(#P) → ⟦⟧ ;
+\end{hacs}
+
+
+\section{Wrapping Up}
+
+The compiler components are done. We can now write the main scheme, invoked from the command line.
+%%
+\begin{hacs}{main}
+sort Asm  |  scheme Compile(Prog) ;
+Compile(#P) → CodeGen(TypeCheck(#P)) ;
+\end{hacs}
+
+Finally, we need is to close up the module opened in the introduction.
+%%
+\begin{hacs}{end}
+}
+\end{hacs}
+
+
+\bibliography{crs}
+
+\end{document}
+
+%%---------------------------------------------------------------------
+% Tell Emacs that this is a LaTeX document and how it is formatted:
+% Local Variables:
+% mode:latex
+% fill-column:100
+% TeX-master: t
+% End:

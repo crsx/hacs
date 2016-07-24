@@ -1826,9 +1826,9 @@ fragments with scopes inside. These are the features where the ``H'' of \HAX mat
   The sample can be run the usual way:
   %%
   \begin{code}[commandchars=\\\{\}]
-$ \textcolorinput{\texttt{hacs Lambda.hx}}
+$ \textcolorinput{hacs Lambda.hx}
 …
-$ \textcolorinput{\texttt{./Lambda.run --sort=T --term='(λx.x)y'}}
+$ \textcolorinput{./Lambda.run --sort=T --term='(λx.x)y'}
  y
   \end{code}
   %%
@@ -1930,40 +1930,6 @@ leads to bugs in compilers.)
 The use of HOAS in \HAX in fact allows the full range of methods used in higher-order
 rewriting~\cite{Jouannaud:klop2005,Klop+:tcs1993}, a very powerful mechanism.
 
-\begin{figure}[h!]
-  \begin{figureunit}[
-      \caption{Definitions of Call-by-Value Continuation Passing Style (\emph{examples/CPS.hx}).}
-      \label{fig:cps}
-    ]
-    \inputhacs[texcl,mathescape,xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/CPS.hx}
-  \end{figureunit}
-\end{figure}
-
-\begin{example}
-  Next consider a real example from the literature~\cite{DanvyRose:rta1998}. Figure~\ref{fig:cps}
-  shows a system for transforming λ-terms to continuation-passing style with call-by-value
-  evaluation semantics. Lines 14--19 specify a \emph{one-pass} variant of continuation-style
-  conversion. Notice how the transformation defines a syntactic helper scheme to make the recursive
-  composition easier to express.
-
-  The script compiles and generates code as follows:
-  \begin{code}[commandchars=\\\{\}]
-$ \textcolorinput{\texttt{hacs CPS.hx}}
-…
-$ \textcolorinput{\texttt{./CPS.run --scheme=CPS --term="(λx.x x)"}}
-  λ k .  k (  λ x .   λ k_85 .   x x  (  λ m_40 .  k_85 m_40  )   )  
-  \end{code}
-\end{example}
-%%
-\begin{figure}[t!]\scriptsize
-  \begin{figureunit}[
-      \caption{Managing labels and names.}
-      \label{fig:jose}
-    ]
-    \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/JoseMaps.hx}
-  \end{figureunit}
-\end{figure}
-%%
 Finally, sometimes symbols serve as \emph{labels} or for some other purpose, when there is a need
 for globally unique symbols. This creates a dilemma: writing "⟦x⟧" for some symbol sort, how to
 distinguish between the actual variable written "x" and a variable that is automatically renamed to
@@ -1979,6 +1945,49 @@ be globally unique? By default, \HAX follows the following rules:
   this automatic conversion.
 
 \end{itemize}
+
+\begin{figure}[t]
+  \begin{figureunit}[
+      \caption{Using \HAX abstractions to create templates (\emph{examples/Template.hx}).}
+      \label{fig:template}
+    ]
+    \inputhacs[texcl,mathescape,xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/Template.hx}
+  \end{figureunit}
+\end{figure}
+
+\begin{figure}[t!]\scriptsize
+  \begin{figureunit}[
+      \caption{Managing labels and names.}
+      \label{fig:jose}
+    ]
+    \inputhacs[xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/JoseMaps.hx}
+  \end{figureunit}
+\end{figure}
+
+\begin{example}[templates]
+  Figure~\ref{fig:template} shows how one can use a higher order ``raw'' abstraction to define a
+  template that can be used for several cases. The "Flip" scheme will just call the "Flip2" scheme,
+  in each rule (in lines 9--10) packing up what syntax it actually uses in an abstraction:
+  %%
+  "[s1,s2] ⟦⟨Sum s1⟩+⟨Sum s2⟩⟧" should be read ``an abstraction that when \emph{applied} to two
+  arguments, which we call "s1" and "s2", generates the syntactic construct
+  %%
+  "⟦⟨Sum s1⟩+⟨Sum s2⟩⟧" with "s1" and "s2" replaced by the actual arguments.''  If needed, the
+  term after the "[]"s can be a semantic term instead, it just needs to use the variables where the
+  arguments should be replaced.  As can be seen in line 14, the syntax for application is in a sense
+  already ``raw,'' and thus does not change.
+
+  While the ``flipping'' example shown here does not really save lines, the technique is very useful
+  in large specifications with groups of symbols with similar behaviour. Here is what a run looks
+  like:
+  %%
+  \begin{code}[commandchars=\\\{\}]
+$ \textcolorinput{hacs Template.hx}
+…
+$ \textcolorinput{./Template.run --scheme=Flip --term="a+b+c"}
+ (  c  +  b  ) +  a
+  \end{code}
+\end{example}
 
 \begin{example}
   Figure~\ref{fig:jose} is a more realistic example showing how to use an symbol sort and a normal
@@ -1999,8 +2008,36 @@ be globally unique? By default, \HAX follows the following rules:
   rest of the "CompileS" rules are normal, and the rest of the script has standard helpers.
 \end{example}
 
+Finally we show an example of using higher order syntax with semantic structures, where the syntax
+for abstractions is different.
 
+\begin{figure}[h!]
+  \begin{figureunit}[
+      \caption{Definitions of Call-by-Value Continuation Passing Style (\emph{examples/CPS.hx}).}
+      \label{fig:cps}
+    ]
+    \inputhacs[texcl,mathescape,xleftmargin=\parindent,xrightmargin=2em,numbers=right]{../samples/CPS.hx}
+  \end{figureunit}
+\end{figure}
 
+\begin{example}
+  Finally consider a real example from the literature~\cite{DanvyRose:rta1998}. Figure~\ref{fig:cps}
+  shows a system for transforming λ-terms to continuation-passing style with call-by-value
+  evaluation semantics. Lines 14--19 specify a \emph{one-pass} variant of continuation-style
+  conversion. Notice how the transformation defines a syntactic helper scheme to make the recursive
+  composition easier to express.
+
+  The script compiles and generates code as follows:
+  \begin{code}[commandchars=\\\{\}]
+$ \textcolorinput{hacs CPS.hx}
+…
+$ \textcolorinput{./CPS.run --scheme=CPS --term="(λx.x x)"}
+  λ k .  k (  λ x .   λ k_85 .   x x  (  λ m_40 .  k_85 m_40  )   )  
+  \end{code}
+\end{example}
+
+\section{Compile-time Computations}
+\label{sec:comp}
 
 %Note that in print, the bottow two lines of this table overhang their shaded box
 \begin{table}[t]
@@ -2055,9 +2092,6 @@ be globally unique? By default, \HAX follows the following rules:
     \end{displaymath}
   \end{figureunit}
 \end{table}
-
-\section{Compile-time Computations}
-\label{sec:comp}
 
 There is sometimes a need to compute helper values, most commonly for counting. \HAX supports this
 through a dedicated sort, "Computed", which has special syntax for operations on primitive values.

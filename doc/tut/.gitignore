@@ -1,0 +1,14 @@
+auto/
+*~
+*.aux
+*.bbl
+*.blg
+*.log
+*.toc
+*.out
+*.nav
+*.pdf
+*.snm
+*.vrb
+*.lhx.*
+*.o
