@@ -418,7 +418,8 @@ the next section.
     space [ \n\t]  |  '//' .* ;
   \end{hacs}
   %%
-  (as in most regular expression formalisms, "." (dot) abbreviates "[^\n]").
+  (as in most regular expression formalisms, "." (dot) abbreviates "[^\n]", where "^" first in a
+  character class means ``everything but'').
 
   In addition, \HAX has special support for nested comments in the "space" declaration:
   %%
@@ -431,11 +432,12 @@ the next section.
 \end{example}
 
 \begin{commands}[lexical analysis]
-  The fragment above is part of \emph{First.run} from Section~\ref{sec:intro}, which can thus be
-  used as a lexical analyzer.  This is achieved by passing two arguments to the \emph{First.run}
-  command: a \emph{token sort} and a \emph{token term}.\footnote{The command has more options that
-    will be introduced as needed.}  Execution proceeds by parsing the string following the syntax of
-  the token. For example, the following checks the lexical analysis of a number:
+  The fragment in Example~\ref{ex:lexical} is part of \emph{First.run} from Section~\ref{sec:intro},
+  which can be used just as a lexical analyzer.  This is achieved by passing two arguments to the
+  \emph{First.run} command: a \emph{token sort} and a \emph{token term}.\footnote{The command has
+    more options that will be introduced as needed.}  Execution proceeds by parsing the string
+  following the syntax of the token. For example, the following checks the lexical analysis of a
+  number:
   \begin{code}[commandchars=\\\{\}]
 $ \textcolorinput{./First.run --sort=FLOAT --term=34.56}
 34.56
