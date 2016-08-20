@@ -13,6 +13,7 @@
 \usepackage[T1]{fontenc}
 \bibliographystyle{plainurl}
 \renewcommand{\rmdefault}{pplx}\usepackage{eulervm}\AtBeginDocument{\SelectTips{eu}{11}}
+\numberwithin{equation}{theorem}
 
 %% Base format.
 \input{setup}
