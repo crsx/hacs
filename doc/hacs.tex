@@ -484,12 +484,12 @@ main sort Stat  | ⟦ ⟨ID⟩ := ⟨Exp⟩ ; ⟨Stat⟩ ⟧
                 | ⟦ { ⟨Stat⟩ } ⟨Stat⟩ ⟧
                 | ⟦⟧ ;
 
-sort Exp  | ⟦ ⟨Exp⟩ + ⟨Exp@1⟩ ⟧
+sort Exp  | ⟦ ⟨Exp@0⟩ + ⟨Exp@1⟩ ⟧@0
            | ⟦ ⟨Exp@1⟩ * ⟨Exp@2⟩ ⟧@1
            | ⟦ ⟨INT⟩ ⟧@2
            | ⟦ ⟨FLOAT⟩ ⟧@2
            | ⟦ ⟨ID⟩ ⟧@2
-           | sugar ⟦ ( ⟨Exp#⟩ ) ⟧@2 → Exp# ;
+           | sugar ⟦ ( ⟨Exp#@0⟩ ) ⟧@2 → Exp# ;
   \end{hacs}
   %%
   The grammar structures the generated AST with two sorts: "Stat" for statements and "Exp" for
@@ -535,7 +535,7 @@ which helps the subsequent steps.
   \begin{hacs}[xleftmargin=\parindent]
 sort Exp0 | ⟦ ⟨Exp0⟩ + ⟨Exp1⟩ ⟧ | ⟦ ⟨Exp1⟩ ⟧ ;
 sort Exp1 | ⟦ ⟨Exp1⟩ * ⟨Exp2⟩ ⟧ | ⟦ ⟨Exp2⟩ ⟧ ;
-sort Exp2 | ⟦ ⟨Int⟩ ⟧ | ⟦ ⟨Float⟩ ⟧ | ⟦ ⟨ID⟩ ⟧ | ⟦ ( ⟨Exp⟩ ) ⟧ ;
+sort Exp2 | ⟦ ⟨Int⟩ ⟧ | ⟦ ⟨Float⟩ ⟧ | ⟦ ⟨ID⟩ ⟧ | ⟦ ( ⟨Exp0⟩ ) ⟧ ;
   \end{hacs}%|
   %%
   However, this grammar generates a different result tree, where the nodes have the three different
