@@ -82,7 +82,7 @@ clean ::; rm -f crsx*.jar
 all :: $(JAVACCJAR)
 $(JAVACCJAR) :
 	rm -fr javacc*
-	wget "https://java.net/projects/javacc/downloads/download/$(basename $(notdir $(JAVACCJAR))).zip"
+	wget "http://javacc.org/downloads/$(basename $(notdir $(JAVACCJAR))).zip"
 	unzip $(basename $(notdir $(JAVACCJAR))).zip
 	@mkdir -p $(dir $(CRSXJAR))
 	cp -a $(basename $(notdir $(JAVACCJAR)))/bin/lib/javacc.jar $(JAVACCJAR)
